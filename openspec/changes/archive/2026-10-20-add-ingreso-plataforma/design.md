@@ -2,7 +2,7 @@
 
 ## Context
 
-Ver `proposal.md` (Why) para la motivación. Estado actual de `Vinilos/`: proyecto Android de plantilla (Kotlin 1.9.0, AGP 8.6.0, Compose BOM 2024.04.01, compilador de Compose 1.5.1, `minSdk` 26, `compileSdk`/`targetSdk` 34) con una sola `MainActivity` que muestra "Hello Android!". No hay navegación, red, `ViewModel` ni inyección de dependencias, y el manifest no declara `INTERNET`.
+Ver `proposal.md` (Why) para la motivación. Estado inicial del proyecto Android: plantilla (Kotlin 1.9.0, AGP 8.6.0, Compose BOM 2024.04.01, compilador de Compose 1.5.1, `minSdk` 26, `compileSdk`/`targetSdk` 34) con una sola `MainActivity` que muestra "Hello Android!". No hay navegación, red, `ViewModel` ni inyección de dependencias, y el manifest no declara `INTERNET`.
 
 Restricciones que vienen de la wiki del equipo (Sprint 1):
 - Arquitectura **MVVM + Repository + Retrofit** sobre `com.example.vinilos`, con paquetes `ui`, `viewmodel`, `data.repository`, `data.remote`, `data.model` y `navigation`. Cada capa tiene responsabilidades acotadas (la vista no llama a la API; el `ViewModel` no conoce Compose; el repositorio traduce errores).

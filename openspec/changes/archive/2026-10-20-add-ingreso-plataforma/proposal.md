@@ -34,7 +34,7 @@ No hay cambios incompatibles (**BREAKING**): el proyecto no tiene código de pro
 ## Impact
 
 - **Diseño visual**: el selector de coleccionistas está en el Figma "Vinilos App" (marco `Coleccionistas Disponibles`, de donde salen colores, tipografía y logo para el tema). La pantalla de ingreso (la de "Make Endless Beats") está en ese mismo archivo como el componente `Html → Body → Main` (`125:460`), con sus SVG decorativos; sus dos ilustraciones las entregó además el equipo como archivos. El marco `Html → Body` es la pantalla de inicio ("Secciones"), que sí es parte de este cambio y de la que se exportaron las ilustraciones de las tarjetas. No hay marcos de Figma para los estados de carga, error y vacío de la HU00; se siguen los textos de los criterios de aceptación.
-- **Código** (`Vinilos/app`): nuevos paquetes `ui.ingreso`, `viewmodel`, `data.repository`, `data.remote`, `data.model`, `navigation`; `MainActivity` pasa de la plantilla a alojar el grafo de navegación.
+- **Código** (`app/`): nuevos paquetes `ui.ingreso`, `viewmodel`, `data.repository`, `data.remote`, `data.model`, `navigation`; `MainActivity` pasa de la plantilla a alojar el grafo de navegación.
 - **Dependencias** (`gradle/libs.versions.toml`, `app/build.gradle.kts`): Retrofit con conversor JSON, OkHttp, Navigation Compose, `lifecycle-viewmodel-compose`, corrutinas, y librerías de prueba para unitarias (corrutinas de prueba, mock de red).
 - **Manifest**: permiso `INTERNET` y acceso HTTP sin cifrar hacia el backend local de desarrollo (`http://localhost:3000`, que el emulador alcanza como `10.0.2.2`).
 - **API consumida**: `GET /collectors` del backend BackVynils (solo `id`, `name` y `email`; el resto de `CollectorDetail` se ignora).
