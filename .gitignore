@@ -3,6 +3,11 @@
 ### Gradle y compilación ###
 .gradle/
 build/
+# Un paquete fuente llamado "build" no debe perderse por la regla anterior ("**/" por el mismo motivo
+# que el wrapper: sin él, el patrón se ancla a la raíz y no alcanza Vinilos/app/src/).
+!**/src/**/build/
+gradle-app.setting
+.gradletasknamecache
 .kotlin/
 .cxx/
 .externalNativeBuild/
@@ -46,7 +51,8 @@ google-services.json
 !**/gradle/wrapper/gradle-wrapper.jar
 
 ### Herramientas de IA y editores (configuración personal) ###
-.claude/settings.local.json
+# Comandos, skills y ajustes de Claude Code (los genera OpenSpec; se regeneran con "openspec update").
+.claude/
 
 ### Sistema operativo ###
 .DS_Store
