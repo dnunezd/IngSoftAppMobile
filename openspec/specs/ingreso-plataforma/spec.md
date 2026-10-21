@@ -83,14 +83,6 @@ Cuando el listado de coleccionistas está cargado, la app SHALL mostrar un campo
 - **WHEN** el listado está cargando, en error o sin coleccionistas registrados
 - **THEN** no se muestra el campo de búsqueda
 
-### Requirement: Ingreso como coleccionista
-Al seleccionar un coleccionista del listado, la app SHALL llevar al usuario a la pantalla de inicio con las acciones de coleccionista habilitadas y con ese coleccionista como identidad activa.
-
-#### Scenario: Selección de un coleccionista
-- **WHEN** el usuario selecciona un coleccionista del listado
-- **THEN** la app navega a la pantalla de inicio
-- **AND** el rol activo es coleccionista y el coleccionista activo es el seleccionado
-
 ### Requirement: Indicador de progreso al cargar coleccionistas
 Mientras se obtiene el listado de coleccionistas, la app SHALL mostrar un indicador de progreso en lugar de una pantalla en blanco.
 
@@ -133,8 +125,16 @@ Si no hay coleccionistas registrados, la app SHALL mostrar el mensaje "Aún no h
 - **THEN** se muestra "Aún no hay coleccionistas registrados"
 - **AND** se ofrece la opción de volver para ingresar como visitante
 
+### Requirement: Ingreso como coleccionista
+Al seleccionar un coleccionista del listado, la app SHALL llevar al usuario a la pantalla de inicio con las acciones de coleccionista habilitadas y con ese coleccionista como identidad activa.
+
+#### Scenario: Selección de un coleccionista
+- **WHEN** el usuario selecciona un coleccionista del listado
+- **THEN** la app navega a la pantalla de inicio
+- **AND** el rol activo es coleccionista y el coleccionista activo es el seleccionado
+
 ### Requirement: Regreso desde el listado de coleccionistas
-Desde el listado de coleccionistas, al presionar "Atrás", la app SHALL regresar a la pantalla de ingreso sin que quede ningún coleccionista seleccionado.
+Desde el listado de coleccionistas, tanto la flecha de atrás del encabezado como el botón "Atrás" del sistema SHALL llevar al usuario de vuelta a la pantalla de ingreso sin que quede ningún coleccionista seleccionado.
 
 #### Scenario: Atrás desde el listado
 - **WHEN** el usuario está en el listado de coleccionistas y presiona "Atrás"

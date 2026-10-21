@@ -23,6 +23,11 @@ Después de ingresar, como Visitante o como coleccionista, la app SHALL mostrar 
 - **WHEN** el usuario vuelve al ingreso desde la pantalla de inicio y entra con otro perfil
 - **THEN** el saludo corresponde al nuevo perfil
 
+#### Scenario: Sin sesión se muestra el saludo del visitante
+- **WHEN** se muestra la pantalla de inicio y no hay rol activo (por ejemplo, si Android recrea la app sin la sesión)
+- **THEN** el saludo es "¡Hola, melómano!"
+- **AND** no se muestra ningún nombre de coleccionista
+
 #### Scenario: Contenido de las tarjetas
 - **WHEN** se muestra la pantalla de inicio
 - **THEN** la tarjeta "Catálogo de Álbumes" tiene su etiqueta "CATÁLOGO COMPLETO · LPS", una descripción, una ilustración y el botón "Ver álbumes"
