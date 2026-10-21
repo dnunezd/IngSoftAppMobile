@@ -1,27 +1,69 @@
-# Compiled class file
-*.class
+# Proyecto Android (Vinilos/) con Gradle y Android Studio. Un solo .gitignore en la raíz del repositorio.
 
-# Log file
+### Gradle y compilación ###
+.gradle/
+build/
+.kotlin/
+.cxx/
+.externalNativeBuild/
+output.json
+captures/
+.navigation/
+
+### Archivos locales de cada máquina ###
+local.properties
 *.log
-
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
-
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+*.hprof
 hs_err_pid*
 replay_pid*
 
-# Kotlin Gradle plugin data, see https://kotlinlang.org/docs/whatsnew20.html#new-directory-for-kotlin-data-in-gradle-projects
-.kotlin/
+### Android Studio / IntelliJ ###
+# Se ignora toda la carpeta: guarda rutas y preferencias de cada persona y cambia sin que nadie la edite.
+.idea/
+*.iml
+*.ipr
+*.iws
+
+### Artefactos generados ###
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+
+### Firmas y servicios (secretos) ###
+*.jks
+*.keystore
+google-services.json
+
+### Paquetes y comprimidos ###
+*.jar
+*.zip
+*.tar.gz
+*.rar
+# El wrapper de Gradle SÍ se versiona; la regla *.jar lo excluiría. El "**/" es necesario: un patrón
+# con "/" en medio se ancla a la raíz del repositorio y no alcanzaría Vinilos/gradle/wrapper/.
+!**/gradle/wrapper/gradle-wrapper.jar
+
+### Herramientas de IA y editores (configuración personal) ###
+.claude/settings.local.json
+
+### Sistema operativo ###
+.DS_Store
+._*
+.AppleDouble
+.LSOverride
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.lnk
+*.stackdump
+*~
+*.swp
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
