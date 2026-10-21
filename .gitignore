@@ -1,10 +1,9 @@
-# Proyecto Android (Vinilos/) con Gradle y Android Studio. Un solo .gitignore en la raíz del repositorio.
+# Proyecto Android con Gradle y Android Studio, en la raíz del repositorio. Un solo .gitignore.
 
 ### Gradle y compilación ###
 .gradle/
 build/
-# Un paquete fuente llamado "build" no debe perderse por la regla anterior ("**/" por el mismo motivo
-# que el wrapper: sin él, el patrón se ancla a la raíz y no alcanza Vinilos/app/src/).
+# Un paquete fuente llamado "build" dentro de src/ no debe perderse por la regla anterior.
 !**/src/**/build/
 gradle-app.setting
 .gradletasknamecache
@@ -46,8 +45,9 @@ google-services.json
 *.zip
 *.tar.gz
 *.rar
-# El wrapper de Gradle SÍ se versiona; la regla *.jar lo excluiría. El "**/" es necesario: un patrón
-# con "/" en medio se ancla a la raíz del repositorio y no alcanzaría Vinilos/gradle/wrapper/.
+# El wrapper de Gradle SÍ se versiona; la regla *.jar lo excluiría. Se usa "**/" para que siga
+# funcionando aunque el proyecto vuelva a quedar en una subcarpeta (un patrón con "/" en medio se
+# ancla a la raíz del repositorio).
 !**/gradle/wrapper/gradle-wrapper.jar
 
 ### Herramientas de IA y editores (configuración personal) ###
