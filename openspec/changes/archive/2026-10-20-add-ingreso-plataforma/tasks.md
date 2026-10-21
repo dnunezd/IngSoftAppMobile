@@ -1,0 +1,58 @@
+# Tasks
+
+## 1. Base técnica (dependencias, manifest y estructura)
+
+- [x] 1.1 Agregar al catálogo de versiones y a `app/build.gradle.kts` Retrofit + conversor Gson, OkHttp, Navigation Compose, `lifecycle-viewmodel-compose` y corrutinas; para pruebas, `kotlinx-coroutines-test` y `MockWebServer`. Verificar que `./gradlew assembleDebug` compila sin errores.
+- [x] 1.2 Declarar el permiso `INTERNET` en el manifest y una configuración de seguridad de red que permita HTTP sin cifrar solo hacia `10.0.2.2` y `localhost`; definir la URL base en un `buildConfigField` (`http://10.0.2.2:3000/`). Verificar que el manifest se fusiona y la app compila con `buildConfig` habilitado.
+- [x] 1.3 Crear los paquetes `ui.ingreso`, `ui.catalogo`, `viewmodel`, `data.repository`, `data.remote`, `data.model` y `navigation` bajo `com.example.vinilos`, y el contenedor de dependencias (`Application` + `AppContainer`) registrado en el manifest. Verificar que la app arranca en el emulador sin fallos.
+- [x] 1.4 Leer del Figma "Vinilos App" (marco `Coleccionistas Disponibles`) los colores y la tipografía con `get_design_context`, aplicarlos en `ui.theme`, y exportar el logo a `res/drawable`. El equipo entregó las dos ilustraciones de las tarjetas del ingreso como archivos y se agregaron a `res/drawable-nodpi` como `ingreso_visitante.jpg` (mujer con audífonos) e `ingreso_coleccionista.jpg` (hombre con discos). Verificar en el dispositivo que la paleta coincide con el mockup y que el peso de los recursos agregados es razonable.
+
+## 2. Consulta de coleccionistas (T00-2)
+
+- [x] 2.1 Crear el modelo `Collector` (`id`, `name`, `email`), el `CollectorDto` con solo esos campos y `CollectorApi` con `GET collectors`. Verificar con una prueba que un JSON con campos extra (`comments`, `favoritePerformers`, `collectorAlbums`) se deserializa ignorándolos.
+- [x] 2.2 Escribir primero las pruebas (TDD) e implementar `CollectorRepository.obtenerColeccionistas()` devolviendo `Result<List<Collector>>`: mapea DTO a modelo, descarta elementos sin `id`, traduce `IOException` y `HttpException` a un error de carga y relanza `CancellationException`. Verificar con pruebas unitarias con `MockWebServer`: 200 con datos, 200 con lista vacía, 500, desconexión y tiempo de espera.
+
+## 3. Sesión según el rol (T00-4)
+
+- [x] 3.1 Escribir primero las pruebas (TDD) y crear el tipo sellado `Session` (`None`, `Visitor`, `Collector`) y `SessionViewModel` atado a la `Activity`, con `enterAsVisitor()`, `enterAsCollector(collector)`, `clear()` y la propiedad derivada de acciones de coleccionista habilitadas. Verificar con pruebas unitarias: estado inicial `None`, sesión de visitante sin coleccionista, sesión de coleccionista con sus datos, cambio de perfil sin restos del anterior, `clear()` y acciones habilitadas solo para coleccionista.
+
+## 4. Pantalla de ingreso y selector de coleccionista (T00-3)
+
+- [x] 4.1 Escribir primero las pruebas (TDD) e implementar `CollectorsViewModel` con `CollectorsUiState` (`Cargando`, `Exito`, `Vacio`, `Error`): carga al crearse, `reintentar()` que vuelve a `Cargando` y cancela la carga anterior. Verificar con pruebas unitarias y repositorio falso: `Cargando → Exito`, `Cargando → Vacio`, `Cargando → Error`, `Error → Cargando → Exito` tras `reintentar()` y `Error → Cargando → Error` si el reintento falla.
+- [x] 4.2 Escribir primero las pruebas (TDD) y agregar a `CollectorsViewModel` el texto de búsqueda y la lista visible (filtro por nombre o correo, sin distinguir mayúsculas ni tildes; vacío devuelve todos). Verificar con pruebas unitarias: filtrar por nombre, por correo, "JAIME" contra "Jaime", "monsálve" contra "Monsalve", texto vacío o de espacios, sin coincidencias, y que el texto se conserva al recrear la pantalla.
+- [x] 4.3 Agregar a `strings.xml` los textos de los criterios de aceptación y del mockup ("Visitante", "Coleccionista", "Entrar", "¿Quién eres?", "Buscar coleccionista...", "No pudimos cargar los coleccionistas", "Reintentar", "Aún no hay coleccionistas registrados", "No encontramos coleccionistas con esa búsqueda" y la acción de volver) y usarlos desde las pantallas. Verificar con una prueba de UI que los textos mostrados coinciden literalmente con los de la HU00.
+- [x] 4.4 Implementar la pantalla de ingreso (`ui.ingreso`) con las tarjetas "Visitante" y "Coleccionista" (ilustración, etiqueta y botón "Entrar"), que limpia la sesión al mostrarse, y la pantalla de coleccionistas con indicador de progreso, campo de búsqueda, lista con avatar de iniciales, nombre y correo, mensaje de sin coincidencias, estado de error con "Reintentar" y "Visitante" disponible, y estado vacío con la opción de volver. Verificar con pruebas de UI de Compose para cada estado y con la vista previa de cada uno comparada con el mockup.
+- [x] 4.5 Agregar la franja decorativa "AUDIO WAVE · 94 BPM" (sin la insignia de versión) bajo el subtítulo del ingreso, con la onda dibujada con `Canvas` y los textos en `strings.xml`. Verificar con una prueba de UI (escrita primero) que se muestran "AUDIO WAVE" y "94 BPM" y no "v1.0.4", y comparando la pantalla en el Samsung con el mockup.
+
+## 5. Navegación y arranque (T00-3, T00-4)
+
+- [x] 5.1 Crear el grafo en `navigation` (`ingreso` como inicio, `coleccionistas`, `catalogo`), conectar "Visitante" → `catalogo` con `enterAsVisitor()`, "Coleccionista" → `coleccionistas`, un coleccionista elegido → `catalogo` con `enterAsCollector(...)` y `popUpTo(ingreso)` sin inclusive (el selector sale de la pila, el ingreso se queda); añadir el destino provisional `catalogo` con flecha de atrás, el título y el rol activo. Verificar con una prueba de navegación (`TestNavHostController`) cada transición, que "Atrás" desde el listado regresa a `ingreso` sin sesión, que "Atrás" desde el catálogo (como visitante y como coleccionista) regresa a `ingreso` y no al selector, y que "Atrás" en `ingreso` cierra la app.
+- [x] 5.2 Reemplazar el contenido de plantilla de `MainActivity` por el grafo de navegación y la creación de `SessionViewModel` y `CollectorsViewModel` con sus fábricas. Verificar en el dispositivo (Samsung, no el emulador) que la app abre en la pantalla de ingreso y que al rotar en el listado de coleccionistas no se repite la consulta (una sola consulta, comprobada con un repositorio contador en una prueba instrumentada que recrea la Activity; el conteo contra el registro del backend queda para las E2E de 6.1).
+
+## 6. Pruebas E2E y cierre (T00-5)
+
+- [x] 6.1 Escribir pruebas instrumentadas de Compose contra el backend real BackVynils en `localhost:3000`: ingresar como Visitante, ingresar como Coleccionista eligiendo uno de la lista, filtrar la lista con el buscador y elegir un resultado, ver el error con el backend detenido y recuperarse con "Reintentar" al levantarlo, regresar con "Atrás" desde el listado y desde el catálogo, y cambiar de perfil tras volver al ingreso. Verificar con `./gradlew connectedDebugAndroidTest` que pasan en el dispositivo (Samsung, no el emulador). La prueba de recuperación necesita que alguien levante el backend mientras corre, así que solo corre con `-Pandroid.testInstrumentationRunnerArguments.e2eRecuperacion=true` (detener la API, lanzar la prueba y levantarla cuando el registro muestre `ERROR_VISIBLE`).
+- [x] 6.2 Ejecutar la definición de terminado del Sprint 1 para este cambio: `./gradlew assembleDebug`, `./gradlew lint`, `./gradlew test`, y la prueba manual de rotación y de que la app no se cierra ante fallos de red. Verificar que los tres comandos terminan sin errores ni avisos de lint nuevos.
+
+## 7. Pantalla de inicio (secciones)
+
+- [x] 7.1 Descargar a `res/drawable-nodpi` las ilustraciones y los íconos circulares de las dos tarjetas del marco `Html → Body` del Figma (`inicio_albumes.png`, `inicio_artistas.png`, `inicio_icono_albumes.png`, `inicio_icono_artistas.png`). Verificar que los 4 archivos existen, no están vacíos y se ven como el diseño.
+- [x] 7.2 Escribir primero las pruebas de UI (TDD) e implementar `PantallaInicio` en `ui.inicio` y el destino provisional de artistas en `ui.artistas`, con sus textos en `strings.xml`. Verificar con pruebas de UI de Compose: saludo, titular, etiquetas, descripciones y botones "Ver álbumes" y "Ver artistas" con sus textos literales, que cada botón avisa solo a su callback, y que no hay buscador ni perfil en el encabezado.
+- [x] 7.3 Agregar al grafo las rutas `inicio` y `artistas`: "Visitante" y el coleccionista elegido ahora van a `inicio` (con `popUpTo(ingreso)` sin inclusive), "Ver álbumes" a `catalogo` y "Ver artistas" a `artistas`, y "Atrás" desde `catalogo` y `artistas` regresa a `inicio`. Actualizar primero las pruebas de navegación, de rotación y las E2E al nuevo flujo (este grupo reemplaza el flujo de 5.1). Verificar que fallan antes del cambio y que pasan después, incluida la rotación en `inicio`.
+- [x] 7.4 Verificación final del grupo: `./gradlew lint testDebugUnitTest connectedDebugAndroidTest` con el backend arriba, y la pantalla de inicio comparada con el mockup en el Samsung. Verificar 0 errores de lint, 0 fallos y la captura coherente con el diseño.
+
+## 8. Ajustes de saludo, AUDIO FEED y decoraciones
+
+- [x] 8.1 Escribir primero las pruebas (TDD) y hacer que el saludo de `PantallaInicio` dependa de la sesión: "¡Hola, melómano!" para el Visitante y "¡Hola, <nombre>!" para el coleccionista. Verificar con pruebas de UI (ambos saludos, y que el del coleccionista no muestra "melómano"), una de navegación (entrar como un coleccionista muestra su saludo) y la E2E contra el backend real.
+- [x] 8.2 Escribir primero la prueba (TDD) y agregar la franja "AUDIO FEED" con dos ondas de barras bajo el titular del selector. Verificar con pruebas de UI que el texto se muestra en los estados cargando, con datos, error y vacío, y comparando con el mockup en el Samsung.
+- [x] 8.3 Convertir a `VectorDrawable` los SVG decorativos del Figma de las tres pantallas (componente `Html → Body → Main` del ingreso, marcos `Coleccionistas Disponibles` y `Html → Body`) con un script que copia las rutas a `pathData`; reemplazar los glifos de texto y la estrella genérica en el selector y el inicio. Verificar que los 18 vectores existen, que ninguno tiene rutas vacías, que compila y que las pruebas siguen pasando.
+- [x] 8.4 Ajustar la pantalla de ingreso al componente `Html → Body → Main` del Figma: doodle de "Make", corcheas, etiqueta "Beats & Sound" con su ícono, franja AUDIO WAVE (contenedor de esquinas de 16dp con la onda SVG), etiquetas de las tarjetas con sus íconos, "Acceso Libre" y "PRO" en fuente monoespaciada y la estrella "sticker" de la tarjeta de Coleccionista. Verificar con las pruebas de UI existentes y comparando la pantalla con el Figma en el Samsung.
+
+## Workflow follow-up
+
+- Actualizar la wiki y los mockups de HU00 (T00-6, issue #63) en el repositorio de la wiki con el resultado final.
+- Abrir el Pull Request enlazando su issue (`Closes #n`) y solicitar la revisión de al menos dos integrantes, según la definición de terminado.
+- Avisar a Jeffrey Díaz (T01-4) y a Michael Mora (T03-4) de que `catalogo` y `artistas` son destinos provisionales a los que se llega desde la pantalla de inicio (no desde el ingreso), de cómo leer la sesión, y de que el catálogo debe tener la flecha de atrás hacia el inicio y el indicador del rol (VISITANTE o COLECCIONISTA) que muestra el mockup.
+- Actualizar el criterio de la HU00 en la wiki ("entra directamente al catálogo") para que diga que entra a la pantalla de inicio.
+- En la wiki y el Figma de HU00 (T00-6): agregar los marcos de carga, error y vacío del ingreso, que hoy no existen, y decidir si el buscador pasa a los criterios de aceptación.
+- Archivar el cambio cuando se cumplan los requisitos de revisión del proyecto.
