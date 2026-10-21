@@ -24,28 +24,42 @@ Flujo actual: `ingreso → (selector de coleccionistas) → inicio → catálogo
 
 | Herramienta | Versión |
 |---|---|
-| JDK | 17 |
+| Sistema operativo | Windows 10 u 11, macOS o Linux |
+| JDK | 17. Android Studio incluye uno propio (JetBrains Runtime 17); para compilar por terminal define `JAVA_HOME` apuntando a un JDK 17 |
 | Android Studio | Una versión compatible con AGP 8.6.0 (Koala Feature Drop, 2024.1.2, o superior) |
-| Android SDK | Plataforma 34 (`minSdk` 26, `compileSdk` y `targetSdk` 34) |
+| Android SDK | Plataforma 34 (`minSdk` 26, `compileSdk` y `targetSdk` 34). Trae `adb` en `platform-tools` |
 | Gradle | 8.7, ya incluido con el wrapper (`gradlew`) |
-| Docker | Para levantar el backend BackVynils |
-| Dispositivo Android | Físico o emulador (API 26 o superior) |
+| Docker | Docker Desktop (Windows y macOS) o Docker Engine con el plugin Compose (Linux), para levantar BackVynils |
+| Dispositivo Android | Físico o emulador (API 26 o superior). En Mac con chip Apple el emulador necesita una imagen ARM64 |
 
 Stack: Kotlin 1.9.0, Jetpack Compose (BOM 2024.04.01) con Material 3, MVVM + Repository, Retrofit 2.9.0 + OkHttp 4.12.0, Navigation Compose 2.7.7 y corrutinas 1.8.0.
 
 ## Puesta en marcha
 
-Los comandos se ejecutan desde la raíz del repositorio. En Windows con PowerShell o CMD usa `gradlew.bat` en lugar de `./gradlew`.
+Los comandos se ejecutan desde la raíz del repositorio y los ejemplos están escritos para **macOS, Linux o Git Bash**. En **Windows** cambian estas cosas:
+
+| Shell | Gradle | Variable de entorno | `curl` |
+|---|---|---|---|
+| macOS, Linux, Git Bash | `./gradlew` | `VAR=valor comando` | `curl` |
+| PowerShell | `.\gradlew.bat` | `$env:VAR="valor"` | `curl.exe` (en Windows PowerShell 5.1 `curl` es otro comando) |
+| CMD | `gradlew.bat` | `set VAR=valor` | `curl` |
+
+Pon entre comillas los argumentos `-P` cuyo nombre lleva puntos (como `"-Pandroid.testInstrumentationRunnerArguments.class=..."`): en PowerShell pueden partirse si no.
 
 ### 1. Abrir el proyecto
 
-Abre la **raíz del repositorio** en Android Studio y deja que sincronice Gradle. Android Studio crea `local.properties` con la ruta del SDK. Si compilas solo por terminal y Gradle dice `SDK location not found`, crea ese archivo (no se versiona):
+Abre la **raíz del repositorio** en Android Studio y deja que sincronice Gradle. Android Studio crea `local.properties` con la ruta del SDK. Si compilas solo por terminal y Gradle dice `SDK location not found`, crea ese archivo (no se versiona) con la ruta de tu sistema:
 
 ```properties
+# Windows
 sdk.dir=C\:\\Users\\TU_USUARIO\\AppData\\Local\\Android\\Sdk
+# macOS
+sdk.dir=/Users/TU_USUARIO/Library/Android/sdk
+# Linux
+sdk.dir=/home/TU_USUARIO/Android/Sdk
 ```
 
-o define la variable de entorno `ANDROID_HOME`.
+o define la variable de entorno `ANDROID_HOME` con esa misma ruta.
 
 ### 2. Levantar el backend (BackVynils)
 
@@ -53,7 +67,7 @@ En la carpeta del repositorio de BackVynils:
 
 ```bash
 docker compose up -d --build
-curl http://localhost:3000/collectors
+curl http://localhost:3000/collectors      # PowerShell: curl.exe http://localhost:3000/collectors
 ```
 
 La respuesta debe incluir a **Manolo Bellon** y **Jaime Monsalve** (ids 100 y 101). Las pruebas E2E dependen de esos datos.
@@ -69,10 +83,11 @@ Dos ajustes que pueden hacer falta:
   ```
 
   y vuelve a ejecutar `docker compose up -d --build`.
-- **Si `/collectors` responde `[]`**, carga los datos de ejemplo (el archivo trae una marca BOM al inicio que `psql` no tolera, por eso el `sed`):
+- **Si `/collectors` responde `[]`**, carga los datos de ejemplo. El archivo trae una marca BOM al inicio que `psql` no tolera, así que se copia al contenedor y se limpia allí; como el `sed` corre dentro del contenedor (Linux), los dos comandos son los mismos en Windows, macOS y Linux:
 
   ```bash
-  sed '1s/^\xEF\xBB\xBF//' sql/data.sql | docker compose exec -T db psql -U postgres -d vinyls
+  docker compose cp sql/data.sql db:/tmp/data.sql
+  docker compose exec db sh -c "sed -i '1s/^\xEF\xBB\xBF//' /tmp/data.sql && psql -U postgres -d vinyls -f /tmp/data.sql"
   ```
 
 ### 3. Conectar la app con el backend
@@ -84,11 +99,13 @@ La URL base sale de la propiedad de Gradle `baseUrl` y vale `http://10.0.2.2:300
 | **Emulador** | Nada: `10.0.2.2` es el `localhost` de tu computador visto desde el emulador. |
 | **Dispositivo físico** | Ejecuta `adb reverse tcp:3000 tcp:3000` y compila con `-PbaseUrl=http://localhost:3000/`. |
 
-Para no repetir `-PbaseUrl` en cada comando, guárdala una vez en `~/.gradle/gradle.properties` (en tu usuario, fuera del repositorio):
+Para no repetir `-PbaseUrl` en cada comando, guárdala una vez en el `gradle.properties` de tu usuario, fuera del repositorio (macOS y Linux: `~/.gradle/gradle.properties`; Windows: `%USERPROFILE%\.gradle\gradle.properties`):
 
 ```properties
 baseUrl=http://localhost:3000/
 ```
+
+`adb` viene en la carpeta `platform-tools` del SDK. Si tu terminal no lo encuentra, agrégala al `PATH`: Windows `%LOCALAPPDATA%\Android\Sdk\platform-tools`, macOS `~/Library/Android/sdk/platform-tools`, Linux `~/Android/Sdk/platform-tools`.
 
 El tráfico HTTP sin cifrar solo está permitido hacia `localhost` y `10.0.2.2` (`app/src/main/res/xml/network_security_config.xml`). Si usas la IP de tu computador en la red local, agrégala allí o la app no podrá conectarse (`Cleartext HTTP traffic not permitted`).
 
@@ -102,7 +119,16 @@ El tráfico HTTP sin cifrar solo está permitido hacia `localhost` y `10.0.2.2` 
 Si hay más de un dispositivo conectado (`adb devices`), elige uno con la variable `ANDROID_SERIAL`:
 
 ```bash
-ANDROID_SERIAL=<serial> ./gradlew installDebug              # PowerShell: $env:ANDROID_SERIAL="<serial>"
+ANDROID_SERIAL=<serial> ./gradlew installDebug              # macOS, Linux, Git Bash
+```
+
+```powershell
+$env:ANDROID_SERIAL="<serial>"; .\gradlew.bat installDebug  # PowerShell
+```
+
+```bat
+set ANDROID_SERIAL=<serial>
+gradlew.bat installDebug
 ```
 
 ### Resumen de ajustes
@@ -121,11 +147,11 @@ ANDROID_SERIAL=<serial> ./gradlew installDebug              # PowerShell: $env:A
 |---|---|---|---|
 | Unitarias | `./gradlew testDebugUnitTest` | 43 | Nada (corren en el computador) |
 | Lint | `./gradlew lint` | | Nada |
-| Instrumentadas sin E2E | `./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.notClass=com.example.vinilos.IngresoE2ETest` | 45 | Dispositivo desbloqueado |
+| Instrumentadas sin E2E | `./gradlew connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.notClass=com.example.vinilos.IngresoE2ETest"` | 45 | Dispositivo desbloqueado |
 | Todas las instrumentadas (con E2E) | `./gradlew connectedDebugAndroidTest -PbaseUrl=http://localhost:3000/` | 50 (1 se omite) | Dispositivo desbloqueado, backend con datos y `adb reverse` |
 | Todo | `./gradlew lint testDebugUnitTest connectedDebugAndroidTest -PbaseUrl=http://localhost:3000/` | | Lo de las dos filas anteriores |
 
-Las unitarias corren en pocos segundos con la compilación ya hecha (la primera vez, con Gradle descargando dependencias, tardan más). Las instrumentadas instalan la app y las pruebas en el dispositivo y tardan alrededor de un minuto.
+En Windows, los comandos de `gradlew` cambian como se explicó arriba (`.\gradlew.bat` en PowerShell). Las unitarias corren en pocos segundos con la compilación ya hecha (la primera vez, con Gradle descargando dependencias, tardan más). Las instrumentadas instalan la app y las pruebas en el dispositivo y tardan alrededor de un minuto.
 
 ### Qué cubre cada prueba
 
@@ -143,7 +169,7 @@ Las unitarias corren en pocos segundos con la compilación ya hecha (la primera 
 
 ```bash
 # Una clase
-./gradlew connectedDebugAndroidTest -Pandroid.testInstrumentationRunnerArguments.class=com.example.vinilos.ui.inicio.PantallaInicioTest
+./gradlew connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=com.example.vinilos.ui.inicio.PantallaInicioTest"
 
 # Un método
 ./gradlew connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=com.example.vinilos.ui.inicio.PantallaInicioTest#sinSesionElSaludoEsElDelVisitante"
@@ -160,10 +186,10 @@ Comprueba que, con la API detenida, aparece "No pudimos cargar los coleccionista
 2. Lanza la prueba:
 
    ```bash
-   ./gradlew connectedDebugAndroidTest -PbaseUrl=http://localhost:3000/ \
-     -Pandroid.testInstrumentationRunnerArguments.e2eRecuperacion=true \
-     "-Pandroid.testInstrumentationRunnerArguments.class=com.example.vinilos.IngresoE2ETest#conElBackendCaidoSeVeElErrorYReintentarRecuperaLaLista"
+   ./gradlew connectedDebugAndroidTest -PbaseUrl=http://localhost:3000/ "-Pandroid.testInstrumentationRunnerArguments.e2eRecuperacion=true" "-Pandroid.testInstrumentationRunnerArguments.class=com.example.vinilos.IngresoE2ETest#conElBackendCaidoSeVeElErrorYReintentarRecuperaLaLista"
    ```
+
+   Es una sola línea para que funcione igual en cualquier shell; recuerda cambiar `./gradlew` según la tabla del inicio.
 
 3. Cuando `adb logcat -s E2E:I` muestre `ERROR_VISIBLE`, levanta la API: `docker compose start web`.
 4. La prueba reintenta sola hasta ver la lista (hasta 2 minutos) y registra `RECUPERADO`.
@@ -189,9 +215,11 @@ Referencia actual del lint: 0 errores y 47 avisos, todos de la plantilla de Andr
 |---|---|
 | `No compose hierarchies found in the app` | El dispositivo está bloqueado o con la pantalla apagada. Desbloquéalo y repite. |
 | La app muestra "No pudimos cargar los coleccionistas" o las E2E fallan | Backend caído, falta `adb reverse`, o la app se instaló con otra `baseUrl`. Revisa `curl http://localhost:3000/collectors` y vuelve a instalar con `-PbaseUrl`. |
-| `more than one device/emulator` | Hay varios dispositivos conectados: usa `ANDROID_SERIAL`. |
+| `more than one device/emulator` | Hay varios dispositivos conectados: elige uno con `ANDROID_SERIAL` (ver el paso 4, según tu shell). |
+| `adb` no se reconoce o `command not found` | Agrega `platform-tools` del SDK al `PATH` (rutas en el paso 3). |
+| PowerShell: `gradlew.bat is not recognized` | En PowerShell hay que anteponer `.\`: `.\gradlew.bat`. |
 | `SDK location not found` | Falta `local.properties` o `ANDROID_HOME`. |
-| `Permission denied` al ejecutar `./gradlew` | `chmod +x gradlew` (en el repositorio ya va con permiso de ejecución). |
+| `Permission denied` al ejecutar `./gradlew` (macOS y Linux) | `chmod +x gradlew` (en el repositorio ya va con permiso de ejecución). |
 | `Cleartext HTTP traffic not permitted` | El host del backend no está en `network_security_config.xml`. |
 
 ## Estructura
