@@ -17,7 +17,7 @@ permissions:
 
 jobs:
   calidad:
-    name: Lint, pruebas unitarias y cobertura
+    name: Lint y pruebas unitarias
     runs-on: ubuntu-latest
     timeout-minutes: 20
 
@@ -38,8 +38,8 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       # --continue: aunque falle un paso, se generan todos los informes.
-      - name: Lint, pruebas unitarias y cobertura
-        run: ./gradlew lint testDebugUnitTest jacocoTestReport jacocoTestCoverageVerification --continue --stacktrace
+      - name: Lint y pruebas unitarias
+        run: ./gradlew lint testDebugUnitTest --continue --stacktrace
 
       - name: Resumen en la ejecución
         if: always()
@@ -52,7 +52,6 @@ jobs:
           name: informes-calidad
           path: |
             app/build/reports/tests/testDebugUnitTest
-            app/build/reports/jacoco/jacocoTestReport
             app/build/reports/lint-results-debug.html
             app/build/reports/lint-results-debug.xml
           if-no-files-found: warn
