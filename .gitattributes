@@ -1,0 +1,8 @@
+# Normaliza los finales de línea; los scripts deben conservar el que necesita su intérprete.
+* text=auto
+gradlew text eol=lf
+*.sh text eol=lf
+*.bat text eol=crlf
+*.jar binary
+*.png binary
+*.webp binary

@@ -1,0 +1,65 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">Vinilos</string>
+    <string name="marca">Vinilo</string>
+    <string name="logo_descripcion">Logo de Vinilo</string>
+    <string name="atras_descripcion">Atrás</string>
+
+    <!-- Pantalla de ingreso -->
+    <string name="ingreso_hero_1">Make Endless</string>
+    <string name="ingreso_hero_2">Beats,</string>
+    <string name="ingreso_hero_pill">Sound</string>
+    <string name="ingreso_hero_3">Amazing</string>
+    <string name="ingreso_chip_superior">Beats &amp; Sound</string>
+    <string name="ingreso_subtitulo">Selecciona tu perfil de acceso a la biblioteca musical y sumérgete en el universo de vinilos.</string>
+    <string name="ingreso_audio_wave">Audio Wave</string>
+    <string name="ingreso_bpm">94 BPM</string>
+    <string name="ingreso_visitante">Visitante</string>
+    <string name="ingreso_visitante_etiqueta">Acceso Libre</string>
+    <string name="ingreso_visitante_chip">Explorar &amp; Aprender</string>
+    <string name="ingreso_coleccionista">Coleccionista</string>
+    <string name="ingreso_coleccionista_etiqueta">PRO</string>
+    <string name="ingreso_coleccionista_chip">Mi bóveda &amp; Vinilos</string>
+    <string name="ingreso_entrar">Entrar</string>
+
+    <!-- Selector de coleccionista -->
+    <string name="coleccionistas_chip_curado">Curated Vinyls</string>
+    <string name="coleccionistas_chip_explora">Explore Sounds</string>
+    <string name="coleccionistas_audio_feed">Audio Feed</string>
+    <string name="coleccionistas_titulo_1">¿Quién</string>
+    <string name="coleccionistas_titulo_2">eres?</string>
+    <string name="coleccionistas_subtitulo">Elige tu perfil de coleccionista registrado para continuar.</string>
+    <!-- Los tres puntos son el texto exacto del mockup y de la spec. -->
+    <string name="coleccionistas_buscar" tools:ignore="TypographyEllipsis">Buscar coleccionista...</string>
+    <string name="coleccionistas_sin_resultados">No encontramos coleccionistas con esa búsqueda</string>
+    <string name="coleccionistas_error">No pudimos cargar los coleccionistas</string>
+    <string name="coleccionistas_reintentar">Reintentar</string>
+    <string name="coleccionistas_ingresar_visitante">Ingresar como Visitante</string>
+    <string name="coleccionistas_vacio">Aún no hay coleccionistas registrados</string>
+    <string name="coleccionistas_volver">Volver</string>
+    <string name="coleccionistas_cargando_descripcion">Cargando coleccionistas</string>
+    <string name="coleccionistas_seleccionar_descripcion">Ingresar como %1$s</string>
+
+    <!-- Pantalla de inicio (secciones) -->
+    <string name="inicio_chip">Vinilo Club</string>
+    <string name="inicio_saludo">¡Hola, melómano!</string>
+    <string name="inicio_saludo_nombre">¡Hola, %1$s!</string>
+    <string name="inicio_titular">Descubre música en su formato más puro</string>
+    <string name="inicio_subtitulo">Elige qué deseas explorar hoy en tu colección y viaja por el sonido análogo.</string>
+    <string name="inicio_albumes_etiqueta">Catálogo completo · LPS</string>
+    <string name="inicio_albumes_titulo">Catálogo de Álbumes</string>
+    <string name="inicio_albumes_descripcion">Explora cientos de discos clásicos, joyas vintage y ediciones limitadas en vinilo de 33 RPM.</string>
+    <string name="inicio_albumes_boton">Ver álbumes</string>
+    <string name="inicio_artistas_etiqueta">Leyendas &amp; Bandas</string>
+    <string name="inicio_artistas_titulo">Listado de Artistas</string>
+    <string name="inicio_artistas_descripcion">Conoce las trayectorias, bandas, discografías y reconocimientos de tus músicos favoritos.</string>
+    <string name="inicio_artistas_boton">Ver artistas</string>
+
+    <!-- Destino provisional de artistas (lo reemplaza HU03) -->
+    <string name="artistas_titulo">Listado de artistas</string>
+
+    <!-- Destino provisional del catálogo (lo reemplaza HU01) -->
+    <string name="catalogo_titulo">Catálogo de álbumes</string>
+    <string name="catalogo_rol_visitante">Visitante</string>
+    <string name="catalogo_rol_coleccionista">Coleccionista: %1$s</string>
+    <string name="catalogo_rol_ninguno">Sin perfil</string>
+</resources>
