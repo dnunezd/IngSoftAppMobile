@@ -147,8 +147,8 @@ gradlew.bat installDebug
 |---|---|---|---|
 | Unitarias | `./gradlew testDebugUnitTest` | 43 | Nada (corren en el computador) |
 | Lint | `./gradlew lint` | | Nada |
-| Instrumentadas sin E2E | `./gradlew connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.notClass=com.example.vinilos.IngresoE2ETest"` | 45 | Dispositivo desbloqueado |
-| Todas las instrumentadas (con E2E) | `./gradlew connectedDebugAndroidTest -PbaseUrl=http://localhost:3000/` | 50 (1 se omite) | Dispositivo desbloqueado, backend con datos y `adb reverse` |
+| Instrumentadas sin E2E | `./gradlew connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.notClass=com.example.vinilos.IngresoE2ETest"` | 49 | Dispositivo desbloqueado (ni backend ni Docker) |
+| Todas las instrumentadas (con E2E) | `./gradlew connectedDebugAndroidTest -PbaseUrl=http://localhost:3000/` | 53 | Dispositivo desbloqueado, backend con datos y `adb reverse` |
 | Todo | `./gradlew lint testDebugUnitTest connectedDebugAndroidTest -PbaseUrl=http://localhost:3000/` | | Lo de las dos filas anteriores |
 
 En Windows, los comandos de `gradlew` cambian como se explicó arriba (`.\gradlew.bat` en PowerShell). Las unitarias corren en pocos segundos con la compilación ya hecha (la primera vez, con Gradle descargando dependencias, tardan más). Las instrumentadas instalan la app y las pruebas en el dispositivo y tardan alrededor de un minuto.
@@ -163,7 +163,8 @@ En Windows, los comandos de `gradlew` cambian como se explicó arriba (`.\gradle
 | `src/androidTest` · `ui/` | Pantallas de Compose en cada estado: ingreso, selector de coleccionista y pantalla de inicio (textos literales de la HU00, callbacks, saludo según el perfil) |
 | `src/androidTest` · `navigation/` | El grafo completo con un repositorio falso: cada transición, "Atrás", cambio de perfil y sesión |
 | `src/androidTest` · `RotacionTest` | Recrea la `Activity` (girar la pantalla): se conservan lista, búsqueda y sesión sin repetir la consulta |
-| `src/androidTest` · `IngresoE2ETest` | **E2E contra BackVynils real**: Visitante, Coleccionista con la lista real, buscador, "Atrás" y cambio de perfil (más la de recuperación, ver abajo) |
+| `src/androidTest` · `RecuperacionTest` | **Recuperación ante fallos del backend, automática y sin backend**: con el servidor caído o con error 500 se ve "No pudimos cargar los coleccionistas" con "Reintentar" y la opción de Visitante; al volver el servidor, "Reintentar" muestra la lista; varios reintentos fallidos seguidos de uno exitoso. Usa `MockWebServer` en el dispositivo |
+| `src/androidTest` · `IngresoE2ETest` | **E2E contra BackVynils real**: Visitante, Coleccionista con la lista real, buscador, "Atrás" y cambio de perfil |
 
 ### Ejecutar solo una parte
 
@@ -178,21 +179,13 @@ En Windows, los comandos de `gradlew` cambian como se explicó arriba (`.\gradle
 ./gradlew testDebugUnitTest --tests "com.example.vinilos.viewmodel.CollectorsViewModelTest"
 ```
 
-### E2E de recuperación (con el backend caído)
+### Recuperación ante fallos del backend
 
-Comprueba que, con la API detenida, aparece "No pudimos cargar los coleccionistas" con la opción de ingresar como Visitante, y que **"Reintentar" recupera la lista al levantar la API**. Solo corre con `e2eRecuperacion=true` porque necesita que alguien levante el backend mientras corre:
+No requiere pasos manuales: `RecuperacionTest` levanta un servidor local dentro de la propia prueba (`MockWebServer`), lo hace caer o responder con error y luego "volver", y comprueba qué ve la persona en cada momento. La app usa su pila de red real (Retrofit y OkHttp); solo el servidor es de mentira, lo que hace la prueba determinista y deja las E2E contra el backend real para los flujos normales. Corre sola con el dispositivo, sin Docker ni `adb reverse`:
 
-1. Detén la API (en la carpeta de BackVynils): `docker compose stop web`.
-2. Lanza la prueba:
-
-   ```bash
-   ./gradlew connectedDebugAndroidTest -PbaseUrl=http://localhost:3000/ "-Pandroid.testInstrumentationRunnerArguments.e2eRecuperacion=true" "-Pandroid.testInstrumentationRunnerArguments.class=com.example.vinilos.IngresoE2ETest#conElBackendCaidoSeVeElErrorYReintentarRecuperaLaLista"
-   ```
-
-   Es una sola línea para que funcione igual en cualquier shell; recuerda cambiar `./gradlew` según la tabla del inicio.
-
-3. Cuando `adb logcat -s E2E:I` muestre `ERROR_VISIBLE`, levanta la API: `docker compose start web`.
-4. La prueba reintenta sola hasta ver la lista (hasta 2 minutos) y registra `RECUPERADO`.
+```bash
+./gradlew connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=com.example.vinilos.RecuperacionTest"
+```
 
 ### Antes de correr las instrumentadas
 

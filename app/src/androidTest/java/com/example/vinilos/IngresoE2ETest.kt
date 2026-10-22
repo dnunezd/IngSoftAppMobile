@@ -1,6 +1,5 @@
 package com.example.vinilos
 
-import android.util.Log
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
@@ -14,7 +13,6 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso
-import androidx.test.platform.app.InstrumentationRegistry
 import com.example.vinilos.ui.artistas.TagArtistas
 import com.example.vinilos.ui.catalogo.TagCatalogo
 import com.example.vinilos.ui.catalogo.TagRolActivo
@@ -22,15 +20,10 @@ import com.example.vinilos.ui.ingreso.TagAtras
 import com.example.vinilos.ui.ingreso.TagBuscador
 import com.example.vinilos.ui.ingreso.TagEntrarColeccionista
 import com.example.vinilos.ui.ingreso.TagEntrarVisitante
-import com.example.vinilos.ui.ingreso.TagMensajeError
-import com.example.vinilos.ui.ingreso.TagProgreso
-import com.example.vinilos.ui.ingreso.TagReintentar
-import com.example.vinilos.ui.ingreso.TagVisitanteError
 import com.example.vinilos.ui.ingreso.tagColeccionista
 import com.example.vinilos.ui.inicio.TagInicio
 import com.example.vinilos.ui.inicio.TagVerAlbumes
 import com.example.vinilos.ui.inicio.TagVerArtistas
-import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -39,8 +32,8 @@ import org.junit.Test
  * E2E de la HU00 contra el backend real BackVynils (datos de sql/data.sql: coleccionistas 100 y 101).
  *
  * Requiere el backend en el PC y el teléfono con `adb reverse tcp:3000 tcp:3000`, instalando la app con
- * `-PbaseUrl=http://localhost:3000/`. La prueba de recuperación necesita además que alguien levante el
- * backend mientras corre: solo se ejecuta con el argumento `e2eRecuperacion=true`.
+ * `-PbaseUrl=http://localhost:3000/`. La recuperación ante fallos del backend se prueba, de forma
+ * automática y sin backend, en [RecuperacionTest].
  */
 class IngresoE2ETest {
 
@@ -150,41 +143,6 @@ class IngresoE2ETest {
             rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
             verAlbumes()
             rule.onNodeWithTag(TagRolActivo).assertTextEquals("Visitante")
-        }
-    }
-
-    /**
-     * Backend detenido al empezar: se ve el error, el Visitante sigue disponible, y al levantar el
-     * backend "Reintentar" muestra la lista. Solo corre con `e2eRecuperacion=true`.
-     */
-    @Test
-    fun conElBackendCaidoSeVeElErrorYReintentarRecuperaLaLista() {
-        val args = InstrumentationRegistry.getArguments()
-        assumeTrue(args.getString("e2eRecuperacion") == "true")
-
-        ActivityScenario.launch(MainActivity::class.java).use {
-            entrarComoColeccionista()
-
-            esperarA(TagMensajeError)
-            rule.onNodeWithText("No pudimos cargar los coleccionistas").assertIsDisplayed()
-            rule.onNodeWithTag(TagVisitanteError).assertIsDisplayed()
-            Log.i("E2E", "ERROR_VISIBLE")
-
-            // Reintenta como lo haría una persona hasta que el backend responda.
-            val limite = System.currentTimeMillis() + 120_000
-            while (System.currentTimeMillis() < limite) {
-                if (rule.onAllNodesWithTag(tagColeccionista(100)).fetchSemanticsNodes().isNotEmpty()) break
-                if (rule.onAllNodesWithTag(TagReintentar).fetchSemanticsNodes().isNotEmpty()) {
-                    rule.onNodeWithTag(TagReintentar).performClick()
-                    rule.waitUntil(15_000) {
-                        rule.onAllNodesWithTag(TagProgreso).fetchSemanticsNodes().isEmpty()
-                    }
-                }
-                Thread.sleep(3_000)
-            }
-
-            rule.onNodeWithText("Manolo Bellon").assertIsDisplayed()
-            Log.i("E2E", "RECUPERADO")
         }
     }
 }
