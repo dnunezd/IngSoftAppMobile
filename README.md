@@ -1,5 +1,7 @@
 # IngSoftAppMobile · Vinilos
 
+[![CI](https://github.com/dnunezd/IngSoftAppMobile/actions/workflows/ci.yml/badge.svg)](https://github.com/dnunezd/IngSoftAppMobile/actions/workflows/ci.yml)
+
 Proyecto educativo del **equipo 9** del curso de Ingeniería de software para aplicaciones móviles.
 
 **Vinilos** es una app Android para consultar y administrar un catálogo de álbumes musicales: el visitante explora álbumes y artistas, y el coleccionista aporta información al catálogo. La app consume **BackVynils**, una API REST ya existente (NestJS + PostgreSQL).
@@ -147,6 +149,7 @@ gradlew.bat installDebug
 |---|---|---|---|
 | Unitarias | `./gradlew testDebugUnitTest` | 43 | Nada (corren en el computador) |
 | Lint | `./gradlew lint` | | Nada |
+| Cobertura de las unitarias | `./gradlew jacocoTestReport jacocoTestCoverageVerification` | | Nada (informe y compuerta de calidad, ver [Integración continua](#integración-continua)) |
 | Instrumentadas sin E2E | `./gradlew connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.notClass=com.example.vinilos.IngresoE2ETest"` | 49 | Dispositivo desbloqueado (ni backend ni Docker) |
 | Todas las instrumentadas (con E2E) | `./gradlew connectedDebugAndroidTest -PbaseUrl=http://localhost:3000/` | 53 | Dispositivo desbloqueado, backend con datos y `adb reverse` |
 | Todo | `./gradlew lint testDebugUnitTest connectedDebugAndroidTest -PbaseUrl=http://localhost:3000/` | | Lo de las dos filas anteriores |
@@ -199,8 +202,28 @@ No requiere pasos manuales: `RecuperacionTest` levanta un servidor local dentro 
 | Unitarias | `app/build/reports/tests/testDebugUnitTest/index.html` |
 | Instrumentadas | `app/build/reports/androidTests/connected/debug/index.html` |
 | Lint | `app/build/reports/lint-results-debug.html` |
+| Cobertura (JaCoCo) | `app/build/reports/jacoco/jacocoTestReport/html/index.html` |
 
 Referencia actual del lint: 0 errores y 47 avisos, todos de la plantilla de Android Studio (por ejemplo `targetSdk` y versiones de dependencias).
+
+### Integración continua
+
+El flujo [`.github/workflows/ci.yml`](.github/workflows/ci.yml) corre en GitHub Actions en cada Pull Request y en cada push a `develop` y `main` (también a mano desde la pestaña *Actions*). Ejecuta, con JDK 17 en Ubuntu, el mismo comando que puedes correr en tu computador:
+
+```bash
+./gradlew lint testDebugUnitTest jacocoTestReport jacocoTestCoverageVerification --continue
+```
+
+| Paso | Falla la ejecución si... |
+|---|---|
+| Validación del wrapper de Gradle | El `gradle-wrapper.jar` no es el oficial |
+| `lint` | Aparece un error de lint (los avisos de la plantilla no fallan) |
+| `testDebugUnitTest` | Falla alguna prueba unitaria |
+| `jacocoTestCoverageVerification` | La cobertura de las unitarias en `data` y `viewmodel` baja de **90 % de líneas** o **85 % de ramas** |
+
+Cada ejecución deja un resumen (pruebas, lint y cobertura) en su página y publica los informes HTML como artefacto `informes-calidad` (14 días). Los mínimos están en `app/build.gradle.kts`; súbelos a medida que crezca la lógica, no los bajes para que pase una ejecución.
+
+La compuerta mide la lógica (datos y ViewModels), no la UI de Compose: esa se valida con las pruebas instrumentadas, que **no corren en CI** porque necesitan un dispositivo y, las E2E, el backend. Se corren a mano antes de integrar, como se describe arriba.
 
 ### Problemas frecuentes
 
