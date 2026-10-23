@@ -14,81 +14,107 @@ class SessionViewModelTest {
 
     @Test
     fun alInicioNoHayPerfilNiAccionesDeColeccionista() {
+        // Given
         val vm = SessionViewModel()
 
-        assertEquals(Session.None, vm.session.value)
-        assertFalse(vm.session.value.collectorActionsEnabled)
+        // When
+        val sesion = vm.session.value
+
+        // Then
+        assertEquals(Session.None, sesion)
+        assertFalse(sesion.collectorActionsEnabled)
     }
 
     @Test
     fun ingresarComoVisitanteNoTieneColeccionistaNiAcciones() {
+        // Given
         val vm = SessionViewModel()
 
+        // When
         vm.enterAsVisitor()
 
+        // Then
         assertEquals(Session.Visitor, vm.session.value)
         assertFalse(vm.session.value.collectorActionsEnabled)
     }
 
     @Test
     fun ingresarComoColeccionistaGuardaSusDatosYHabilitaLasAcciones() {
+        // Given
         val vm = SessionViewModel()
 
+        // When
         vm.enterAsCollector(manolo)
 
+        // Then
         assertEquals(Session.Collector(manolo), vm.session.value)
         assertTrue(vm.session.value.collectorActionsEnabled)
     }
 
     @Test
     fun cambiarDeColeccionistaConservaSoloElNuevo() {
+        // Given
         val vm = SessionViewModel()
         vm.enterAsCollector(manolo)
 
+        // When
         vm.enterAsCollector(jaime)
 
+        // Then
         assertEquals(Session.Collector(jaime), vm.session.value)
     }
 
     @Test
     fun cambiarDeColeccionistaAVisitanteNoDejaRestosDelAnterior() {
+        // Given
         val vm = SessionViewModel()
         vm.enterAsCollector(manolo)
 
+        // When
         vm.enterAsVisitor()
 
+        // Then
         assertEquals(Session.Visitor, vm.session.value)
         assertFalse(vm.session.value.collectorActionsEnabled)
     }
 
     @Test
     fun cambiarDeVisitanteAColeccionistaHabilitaLasAcciones() {
+        // Given
         val vm = SessionViewModel()
         vm.enterAsVisitor()
 
+        // When
         vm.enterAsCollector(jaime)
 
+        // Then
         assertEquals(Session.Collector(jaime), vm.session.value)
         assertTrue(vm.session.value.collectorActionsEnabled)
     }
 
     @Test
     fun clearDejaLaSesionSinPerfil() {
+        // Given
         val vm = SessionViewModel()
         vm.enterAsCollector(manolo)
 
+        // When
         vm.clear()
 
+        // Then
         assertEquals(Session.None, vm.session.value)
         assertFalse(vm.session.value.collectorActionsEnabled)
     }
 
     @Test
     fun clearSinSesionNoCambiaNada() {
+        // Given
         val vm = SessionViewModel()
 
+        // When
         vm.clear()
 
+        // Then
         assertEquals(Session.None, vm.session.value)
     }
 }

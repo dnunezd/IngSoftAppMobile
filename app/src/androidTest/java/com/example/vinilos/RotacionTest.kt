@@ -36,27 +36,48 @@ class RotacionTest {
     }
 
     @Test
-    fun alGirarElSelectorConservaListaYBusquedaSinVolverAConsultar() {
-        val repositorio = RepositorioFalso(Result.success(listOf(manolo, jaime)))
-        conRepositorio(repositorio)
+    fun alGirarElSelectorConservaLaListaYLaBusqueda() {
+        // Given
+        conRepositorio(RepositorioFalso(Result.success(listOf(manolo, jaime))))
 
         ActivityScenario.launch(MainActivity::class.java).use { escenario ->
             rule.onNodeWithTag(TagEntrarColeccionista).performScrollTo().performClick()
             rule.onNodeWithTag(TagBuscador).performTextInput("bel")
             rule.waitForIdle()
 
+            // When
             escenario.recreate()
             rule.waitForIdle()
 
+            // Then
             rule.onNodeWithText("Manolo Bellon").assertIsDisplayed()
             rule.onNodeWithText("Jaime Monsalve").assertDoesNotExist()
             rule.onNodeWithTag(TagBuscador).assertTextEquals("bel")
+        }
+    }
+
+    @Test
+    fun alGirarElSelectorNoVuelveAConsultarLosColeccionistas() {
+        // Given
+        val repositorio = RepositorioFalso(Result.success(listOf(manolo, jaime)))
+        conRepositorio(repositorio)
+
+        ActivityScenario.launch(MainActivity::class.java).use { escenario ->
+            rule.onNodeWithTag(TagEntrarColeccionista).performScrollTo().performClick()
+            rule.waitForIdle()
+
+            // When
+            escenario.recreate()
+            rule.waitForIdle()
+
+            // Then
             assertEquals(1, repositorio.consultas)
         }
     }
 
     @Test
-    fun alGirarLaPantallaDeInicioSigueVisibleYConservaLaSesion() {
+    fun alGirarLaPantallaDeInicioSigueVisible() {
+        // Given
         conRepositorio(RepositorioFalso(Result.success(listOf(manolo, jaime))))
 
         ActivityScenario.launch(MainActivity::class.java).use { escenario ->
@@ -64,10 +85,30 @@ class RotacionTest {
             rule.onNodeWithTag(tagColeccionista(101)).performClick()
             rule.onNodeWithTag(TagInicio).assertIsDisplayed()
 
+            // When
             escenario.recreate()
             rule.waitForIdle()
 
+            // Then
             rule.onNodeWithTag(TagInicio).assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun alGirarLaPantallaDeInicioConservaLaSesion() {
+        // Given
+        conRepositorio(RepositorioFalso(Result.success(listOf(manolo, jaime))))
+
+        ActivityScenario.launch(MainActivity::class.java).use { escenario ->
+            rule.onNodeWithTag(TagEntrarColeccionista).performScrollTo().performClick()
+            rule.onNodeWithTag(tagColeccionista(101)).performClick()
+            rule.onNodeWithTag(TagInicio).assertIsDisplayed()
+
+            // When
+            escenario.recreate()
+            rule.waitForIdle()
+
+            // Then: al abrir el catálogo la sesión sigue siendo la del coleccionista
             rule.onNodeWithTag(TagVerAlbumes).performScrollTo().performClick()
             rule.onNodeWithTag(TagRolActivo).assertTextEquals("Coleccionista: Jaime Monsalve")
         }
@@ -75,17 +116,20 @@ class RotacionTest {
 
     @Test
     fun alGirarElCatalogoConservaLaSesionDelColeccionista() {
+        // Given
         conRepositorio(RepositorioFalso(Result.success(listOf(manolo, jaime))))
 
         ActivityScenario.launch(MainActivity::class.java).use { escenario ->
             rule.onNodeWithTag(TagEntrarColeccionista).performScrollTo().performClick()
             rule.onNodeWithTag(tagColeccionista(101)).performClick()
             rule.onNodeWithTag(TagVerAlbumes).performScrollTo().performClick()
-            rule.onNodeWithTag(TagRolActivo).assertTextEquals("Coleccionista: Jaime Monsalve")
+            rule.waitForIdle()
 
+            // When
             escenario.recreate()
             rule.waitForIdle()
 
+            // Then
             rule.onNodeWithTag(TagRolActivo).assertTextEquals("Coleccionista: Jaime Monsalve")
         }
     }

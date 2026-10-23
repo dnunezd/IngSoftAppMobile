@@ -37,25 +37,49 @@ class PantallaInicioTest {
 
     @Test
     fun elColeccionistaVeSuNombreEnElSaludoYNoMelomano() {
-        mostrar(Session.Collector(Collector(100, "Manolo Bellon", "manollo@caracol.com.co")))
+        // Given
+        val sesion = Session.Collector(Collector(100, "Manolo Bellon", "manollo@caracol.com.co"))
 
+        // When
+        mostrar(sesion)
+
+        // Then
         rule.onNodeWithText("¡Hola, Manolo Bellon!").assertIsDisplayed()
         rule.onNodeWithText("¡Hola, melómano!").assertDoesNotExist()
-        // El resto de la pantalla es igual que para el visitante.
+    }
+
+    @Test
+    fun elColeccionistaVeElMismoSubtituloQueElVisitante() {
+        // Given
+        val sesion = Session.Collector(Collector(100, "Manolo Bellon", "manollo@caracol.com.co"))
+
+        // When
+        mostrar(sesion)
+
+        // Then
         rule.onNodeWithText("Descubre música en su formato más puro").assertIsDisplayed()
     }
 
     @Test
     fun sinSesionElSaludoEsElDelVisitante() {
-        mostrar(Session.None)
+        // Given
+        val sesion = Session.None
 
+        // When
+        mostrar(sesion)
+
+        // Then
         rule.onNodeWithText("¡Hola, melómano!").assertIsDisplayed()
     }
 
     @Test
     fun muestraSaludoTitularYSubtitulo() {
+        // Given: un visitante en la pantalla de inicio
+
+        // When
         mostrar()
 
+        // Then
         rule.onNodeWithText("¡Hola, melómano!").assertIsDisplayed()
         rule.onNodeWithText("Descubre música en su formato más puro").assertIsDisplayed()
         rule.onNodeWithText("Elige qué deseas explorar hoy en tu colección y viaja por el sonido análogo.")
@@ -65,8 +89,12 @@ class PantallaInicioTest {
 
     @Test
     fun muestraLaTarjetaDelCatalogoDeAlbumes() {
+        // Given: un visitante en la pantalla de inicio
+
+        // When
         mostrar()
 
+        // Then
         rule.onNodeWithText("CATÁLOGO COMPLETO · LPS").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("Catálogo de Álbumes").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText(
@@ -77,8 +105,12 @@ class PantallaInicioTest {
 
     @Test
     fun muestraLaTarjetaDelListadoDeArtistas() {
+        // Given: un visitante en la pantalla de inicio
+
+        // When
         mostrar()
 
+        // Then
         rule.onNodeWithText("LEYENDAS & BANDAS").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("Listado de Artistas").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText(
@@ -89,28 +121,38 @@ class PantallaInicioTest {
 
     @Test
     fun verAlbumesAvisaSoloAlCatalogo() {
+        // Given
         mostrar()
 
+        // When
         rule.onNodeWithTag(TagVerAlbumes).performScrollTo().performClick()
 
+        // Then
         assertEquals(1, albumes)
         assertEquals(0, artistas)
     }
 
     @Test
     fun verArtistasAvisaSoloAlListadoDeArtistas() {
+        // Given
         mostrar()
 
+        // When
         rule.onNodeWithTag(TagVerArtistas).performScrollTo().performClick()
 
+        // Then
         assertEquals(0, albumes)
         assertEquals(1, artistas)
     }
 
     @Test
     fun elEncabezadoNoTieneFlechaDeAtrasNiBuscador() {
+        // Given: un visitante en la pantalla de inicio
+
+        // When
         mostrar()
 
+        // Then
         rule.onNodeWithTag(TagAtras).assertDoesNotExist()
         rule.onNodeWithTag(TagBuscador).assertDoesNotExist()
     }

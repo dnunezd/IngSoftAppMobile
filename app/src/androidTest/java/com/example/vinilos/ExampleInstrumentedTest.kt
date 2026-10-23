@@ -17,8 +17,13 @@ import org.junit.Assert.*
 class ExampleInstrumentedTest {
     @Test
     fun useAppContext() {
-        // Context of the app under test.
-        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
+        // Given
+        val instrumentacion = InstrumentationRegistry.getInstrumentation()
+
+        // When
+        val appContext = instrumentacion.targetContext
+
+        // Then
         assertEquals("com.example.vinilos", appContext.packageName)
     }
 }

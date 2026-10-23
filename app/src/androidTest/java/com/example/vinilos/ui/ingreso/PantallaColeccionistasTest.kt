@@ -44,40 +44,74 @@ class PantallaColeccionistasTest {
 
     @Test
     fun laFranjaAudioFeedSeMuestraEnTodosLosEstados() {
-        mostrar(CollectorsUiState.Exito(listOf(manolo, jaime)))
+        // Given
+        val estado = CollectorsUiState.Exito(listOf(manolo, jaime))
+
+        // When
+        mostrar(estado)
+
+        // Then
         rule.onNodeWithText("AUDIO FEED").assertIsDisplayed()
     }
 
     @Test
     fun laFranjaAudioFeedSeMuestraMientrasCarga() {
-        mostrar(CollectorsUiState.Cargando)
+        // Given
+        val estado = CollectorsUiState.Cargando
+
+        // When
+        mostrar(estado)
+
+        // Then
         rule.onNodeWithText("AUDIO FEED").assertIsDisplayed()
     }
 
     @Test
     fun laFranjaAudioFeedSeMuestraConError() {
-        mostrar(CollectorsUiState.Error)
+        // Given
+        val estado = CollectorsUiState.Error
+
+        // When
+        mostrar(estado)
+
+        // Then
         rule.onNodeWithText("AUDIO FEED").assertIsDisplayed()
     }
 
     @Test
     fun laFranjaAudioFeedSeMuestraSinColeccionistas() {
-        mostrar(CollectorsUiState.Vacio)
+        // Given
+        val estado = CollectorsUiState.Vacio
+
+        // When
+        mostrar(estado)
+
+        // Then
         rule.onNodeWithText("AUDIO FEED").assertIsDisplayed()
     }
 
     @Test
     fun cargandoMuestraElIndicadorDeProgresoYNoElBuscador() {
-        mostrar(CollectorsUiState.Cargando)
+        // Given
+        val estado = CollectorsUiState.Cargando
 
+        // When
+        mostrar(estado)
+
+        // Then
         rule.onNodeWithTag(TagProgreso).assertIsDisplayed()
         rule.onNodeWithTag(TagBuscador).assertDoesNotExist()
     }
 
     @Test
     fun conDatosMuestraAvatarNombreYCorreoDeCadaColeccionista() {
-        mostrar(CollectorsUiState.Exito(listOf(manolo, jaime)))
+        // Given
+        val estado = CollectorsUiState.Exito(listOf(manolo, jaime))
 
+        // When
+        mostrar(estado)
+
+        // Then
         rule.onNodeWithText("Manolo Bellon").assertIsDisplayed()
         rule.onNodeWithText("manollo@caracol.com.co").assertIsDisplayed()
         rule.onNodeWithText("MB").assertIsDisplayed()
@@ -89,26 +123,37 @@ class PantallaColeccionistasTest {
 
     @Test
     fun seleccionarUnColeccionistaAvisaConEseColeccionista() {
+        // Given
         mostrar(CollectorsUiState.Exito(listOf(manolo, jaime)))
 
+        // When
         rule.onNodeWithTag(tagColeccionista(101)).performClick()
 
+        // Then
         assertEquals(jaime, seleccionado)
     }
 
     @Test
     fun escribirEnElBuscadorAvisaConElTexto() {
+        // Given
         mostrar(CollectorsUiState.Exito(listOf(manolo, jaime)))
 
+        // When
         rule.onNodeWithTag(TagBuscador).performTextInput("bel")
 
+        // Then
         assertEquals("bel", buscado)
     }
 
     @Test
     fun sinCoincidenciasMuestraElMensajeYConservaElBuscador() {
-        mostrar(CollectorsUiState.Exito(listOf(manolo, jaime), consulta = "zzz"))
+        // Given
+        val estado = CollectorsUiState.Exito(listOf(manolo, jaime), consulta = "zzz")
 
+        // When
+        mostrar(estado)
+
+        // Then
         rule.onNodeWithText("No encontramos coleccionistas con esa búsqueda").assertIsDisplayed()
         rule.onNodeWithTag(TagBuscador).assertIsDisplayed()
         rule.onNodeWithTag(tagColeccionista(100)).assertDoesNotExist()
@@ -116,16 +161,26 @@ class PantallaColeccionistasTest {
 
     @Test
     fun conUnaConsultaSoloMuestraLosVisibles() {
-        mostrar(CollectorsUiState.Exito(listOf(manolo, jaime), consulta = "bel"))
+        // Given
+        val estado = CollectorsUiState.Exito(listOf(manolo, jaime), consulta = "bel")
 
+        // When
+        mostrar(estado)
+
+        // Then
         rule.onNodeWithText("Manolo Bellon").assertIsDisplayed()
         rule.onNodeWithText("Jaime Monsalve").assertDoesNotExist()
     }
 
     @Test
     fun errorMuestraElMensajeReintentarYLaOpcionVisitante() {
-        mostrar(CollectorsUiState.Error)
+        // Given
+        val estado = CollectorsUiState.Error
 
+        // When
+        mostrar(estado)
+
+        // Then
         rule.onNodeWithText("No pudimos cargar los coleccionistas").assertIsDisplayed()
         rule.onNodeWithText("Reintentar").assertIsDisplayed()
         rule.onNodeWithTag(TagVisitanteError).assertIsDisplayed()
@@ -133,33 +188,65 @@ class PantallaColeccionistasTest {
     }
 
     @Test
-    fun reintentarYVisitanteDelErrorAvisan() {
+    fun reintentarDelErrorAvisaSoloAReintentar() {
+        // Given
         mostrar(CollectorsUiState.Error)
 
+        // When
         rule.onNodeWithTag(TagReintentar).performClick()
+
+        // Then
+        assertEquals(1, reintentos)
+        assertEquals(0, visitante)
+    }
+
+    @Test
+    fun visitanteDelErrorAvisaSoloAlVisitante() {
+        // Given
+        mostrar(CollectorsUiState.Error)
+
+        // When
         rule.onNodeWithTag(TagVisitanteError).performClick()
 
-        assertEquals(1, reintentos)
+        // Then
+        assertEquals(0, reintentos)
         assertEquals(1, visitante)
     }
 
     @Test
-    fun vacioMuestraElMensajeYLaOpcionDeVolver() {
-        mostrar(CollectorsUiState.Vacio)
+    fun vacioMuestraElMensajeYNoElBuscador() {
+        // Given
+        val estado = CollectorsUiState.Vacio
 
+        // When
+        mostrar(estado)
+
+        // Then
         rule.onNodeWithText("Aún no hay coleccionistas registrados").assertIsDisplayed()
         rule.onNodeWithTag(TagBuscador).assertDoesNotExist()
+    }
 
+    @Test
+    fun volverDesdeVacioAvisa() {
+        // Given
+        mostrar(CollectorsUiState.Vacio)
+
+        // When
         rule.onNodeWithTag(TagVolver).performClick()
+
+        // Then
         assertEquals(1, atras)
     }
 
     @Test
     fun laFlechaDeAtrasAvisa() {
+        // Given
         mostrar(CollectorsUiState.Exito(listOf(manolo)))
 
+        // When
         rule.onNodeWithTag(TagAtras).performClick()
 
+        // Then
         assertEquals(1, atras)
     }
 }

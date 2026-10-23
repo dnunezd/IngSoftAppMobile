@@ -11,6 +11,7 @@ class CollectorDtoTest {
 
     @Test
     fun deserializaSoloIdNombreYCorreoIgnorandoElDetalle() {
+        // Given
         val json = """
             [{
               "id": 100,
@@ -23,17 +24,22 @@ class CollectorDtoTest {
             }]
         """.trimIndent()
 
+        // When
         val resultado = gson.fromJson(json, Array<CollectorDto>::class.java).toList()
 
+        // Then
         assertEquals(listOf(CollectorDto(100, "Manolo Bellon", "manollo@caracol.com.co")), resultado)
     }
 
     @Test
     fun uncampoAusenteLlegaComoNulo() {
+        // Given
         val json = """[{"id": 7, "name": "Sin correo"}]"""
 
+        // When
         val resultado = gson.fromJson(json, Array<CollectorDto>::class.java).single()
 
+        // Then
         assertEquals(7, resultado.id)
         assertNull(resultado.email)
     }

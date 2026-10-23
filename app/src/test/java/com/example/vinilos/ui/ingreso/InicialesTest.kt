@@ -7,27 +7,64 @@ class InicialesTest {
 
     @Test
     fun usaLaPrimeraLetraDeLasDosPrimerasPalabras() {
-        assertEquals("MB", iniciales("Manolo Bellon"))
-        assertEquals("JM", iniciales("Jaime Monsalve"))
+        // Given
+        val manolo = "Manolo Bellon"
+        val jaime = "Jaime Monsalve"
+
+        // When
+        val inicialesManolo = iniciales(manolo)
+        val inicialesJaime = iniciales(jaime)
+
+        // Then
+        assertEquals("MB", inicialesManolo)
+        assertEquals("JM", inicialesJaime)
     }
 
     @Test
     fun conUnaSolaPalabraUsaUnaInicial() {
-        assertEquals("M", iniciales("Manolo"))
+        // Given
+        val nombre = "Manolo"
+
+        // When
+        val resultado = iniciales(nombre)
+
+        // Then
+        assertEquals("M", resultado)
     }
 
     @Test
     fun ignoraPalabrasDeMasYEspaciosSobrantes() {
-        assertEquals("AB", iniciales("  ana   beatriz  de la Cruz "))
+        // Given
+        val nombre = "  ana   beatriz  de la Cruz "
+
+        // When
+        val resultado = iniciales(nombre)
+
+        // Then
+        assertEquals("AB", resultado)
     }
 
     @Test
     fun devuelveMayusculas() {
-        assertEquals("JP", iniciales("josé pérez"))
+        // Given
+        val nombre = "josé pérez"
+
+        // When
+        val resultado = iniciales(nombre)
+
+        // Then
+        assertEquals("JP", resultado)
     }
 
     @Test
     fun conNombreVacioDevuelveSignoDeInterrogacion() {
-        assertEquals("?", iniciales("   "))
+        // Given
+        val nombre = "   "
+
+        // When
+        val resultado = iniciales(nombre)
+
+        // Then
+        assertEquals("?", resultado)
     }
 }

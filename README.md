@@ -147,10 +147,10 @@ gradlew.bat installDebug
 
 | Tipo | Comando | Cantidad | Necesita |
 |---|---|---|---|
-| Unitarias | `./gradlew testDebugUnitTest` | 43 | Nada (corren en el computador) |
+| Unitarias | `./gradlew testDebugUnitTest` | 46 | Nada (corren en el computador) |
 | Lint | `./gradlew lint` | | Nada |
-| Instrumentadas sin E2E | `./gradlew connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.notClass=com.example.vinilos.IngresoE2ETest"` | 49 | Dispositivo desbloqueado (ni backend ni Docker) |
-| Todas las instrumentadas (con E2E) | `./gradlew connectedDebugAndroidTest -PbaseUrl=http://localhost:3000/` | 53 | Dispositivo desbloqueado, backend con datos y `adb reverse` |
+| Instrumentadas sin E2E | `./gradlew connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.notClass=com.example.vinilos.IngresoE2ETest"` | 62 | Dispositivo desbloqueado (ni backend ni Docker) |
+| Todas las instrumentadas (con E2E) | `./gradlew connectedDebugAndroidTest -PbaseUrl=http://localhost:3000/` | 74 | Dispositivo desbloqueado, backend con datos y `adb reverse` |
 | Todo | `./gradlew lint testDebugUnitTest connectedDebugAndroidTest -PbaseUrl=http://localhost:3000/` | | Lo de las dos filas anteriores |
 
 En Windows, los comandos de `gradlew` cambian como se explicó arriba (`.\gradlew.bat` en PowerShell). Las unitarias corren en pocos segundos con la compilación ya hecha (la primera vez, con Gradle descargando dependencias, tardan más). Las instrumentadas instalan la app y las pruebas en el dispositivo y tardan alrededor de un minuto.
@@ -167,6 +167,16 @@ En Windows, los comandos de `gradlew` cambian como se explicó arriba (`.\gradle
 | `src/androidTest` · `RotacionTest` | Recrea la `Activity` (girar la pantalla): se conservan lista, búsqueda y sesión sin repetir la consulta |
 | `src/androidTest` · `RecuperacionTest` | **Recuperación ante fallos del backend, automática y sin backend**: con el servidor caído o con error 500 se ve "No pudimos cargar los coleccionistas" con "Reintentar" y la opción de Visitante; al volver el servidor, "Reintentar" muestra la lista; varios reintentos fallidos seguidos de uno exitoso. Usa `MockWebServer` en el dispositivo |
 | `src/androidTest` · `IngresoE2ETest` | **E2E contra BackVynils real**: Visitante, Coleccionista con la lista real, buscador, "Atrás" y cambio de perfil |
+
+### Formato de las pruebas: Given / When / Then
+
+Todas las pruebas (unitarias e instrumentadas) siguen la estructura Given / When / Then, marcada con comentarios:
+
+- `// Given`: el contexto y los datos de partida (el estado inicial, el repositorio falso, la pantalla mostrada).
+- `// When`: la única acción que se prueba (llamar al método, pulsar un botón, recrear la `Activity`).
+- `// Then`: las comprobaciones sobre el resultado.
+
+Cada prueba verifica un solo comportamiento: si un flujo necesita comprobar dos cosas distintas, son dos pruebas. Los nombres siguen describiendo el comportamiento esperado, en español.
 
 ### Ejecutar solo una parte
 

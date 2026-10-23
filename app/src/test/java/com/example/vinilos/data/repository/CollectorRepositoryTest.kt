@@ -47,6 +47,7 @@ class CollectorRepositoryTest {
 
     @Test
     fun respuestaConDatosDevuelveLosColeccionistas() = runTest {
+        // Given
         servidor.enqueue(
             MockResponse().setBody(
                 """
@@ -59,8 +60,10 @@ class CollectorRepositoryTest {
             )
         )
 
+        // When
         val resultado = repositorio.obtenerColeccionistas()
 
+        // Then
         assertEquals(
             listOf(
                 Collector(100, "Manolo Bellon", "manollo@caracol.com.co"),
@@ -73,13 +76,19 @@ class CollectorRepositoryTest {
 
     @Test
     fun respuestaVaciaDevuelveListaVacia() = runTest {
+        // Given
         servidor.enqueue(MockResponse().setBody("[]"))
 
-        assertEquals(emptyList<Collector>(), repositorio.obtenerColeccionistas().getOrThrow())
+        // When
+        val resultado = repositorio.obtenerColeccionistas()
+
+        // Then
+        assertEquals(emptyList<Collector>(), resultado.getOrThrow())
     }
 
     @Test
     fun descartaLosElementosIncompletos() = runTest {
+        // Given
         servidor.enqueue(
             MockResponse().setBody(
                 """
@@ -93,55 +102,81 @@ class CollectorRepositoryTest {
             )
         )
 
-        assertEquals(
-            listOf(Collector(4, "Completo", "ok@a.com")),
-            repositorio.obtenerColeccionistas().getOrThrow()
-        )
+        // When
+        val resultado = repositorio.obtenerColeccionistas()
+
+        // Then
+        assertEquals(listOf(Collector(4, "Completo", "ok@a.com")), resultado.getOrThrow())
     }
 
     @Test
     fun errorDelServidorSeTraduceAErrorDeCarga() = runTest {
+        // Given
         servidor.enqueue(MockResponse().setResponseCode(500))
 
+        // When
         val resultado = repositorio.obtenerColeccionistas()
 
+        // Then
         assertTrue(resultado.exceptionOrNull() is ErrorDeCarga)
     }
 
     @Test
     fun errorDeCliente404SeTraduceAErrorDeCarga() = runTest {
+        // Given
         servidor.enqueue(MockResponse().setResponseCode(404))
 
-        assertTrue(repositorio.obtenerColeccionistas().exceptionOrNull() is ErrorDeCarga)
+        // When
+        val resultado = repositorio.obtenerColeccionistas()
+
+        // Then
+        assertTrue(resultado.exceptionOrNull() is ErrorDeCarga)
     }
 
     @Test
     fun sinConexionSeTraduceAErrorDeCarga() = runTest {
+        // Given
         servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
 
-        assertTrue(repositorio.obtenerColeccionistas().exceptionOrNull() is ErrorDeCarga)
+        // When
+        val resultado = repositorio.obtenerColeccionistas()
+
+        // Then
+        assertTrue(resultado.exceptionOrNull() is ErrorDeCarga)
     }
 
     @Test
     fun tiempoDeEsperaAgotadoSeTraduceAErrorDeCarga() = runTest {
+        // Given
         servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE))
 
-        assertTrue(repositorio.obtenerColeccionistas().exceptionOrNull() is ErrorDeCarga)
+        // When
+        val resultado = repositorio.obtenerColeccionistas()
+
+        // Then
+        assertTrue(resultado.exceptionOrNull() is ErrorDeCarga)
     }
 
     @Test
     fun jsonMalformadoSeTraduceAErrorDeCarga() = runTest {
+        // Given
         servidor.enqueue(MockResponse().setBody("esto no es json"))
 
-        assertTrue(repositorio.obtenerColeccionistas().exceptionOrNull() is ErrorDeCarga)
+        // When
+        val resultado = repositorio.obtenerColeccionistas()
+
+        // Then
+        assertTrue(resultado.exceptionOrNull() is ErrorDeCarga)
     }
 
     @Test
     fun laCancelacionSeRelanzaYNoSeConvierteEnError() = runTest {
+        // Given
         val api = object : CollectorApi {
             override suspend fun getCollectors(): List<CollectorDto> = throw CancellationException("cancelado")
         }
 
+        // When
         var relanzada = false
         try {
             CollectorRepository(api).obtenerColeccionistas()
@@ -149,6 +184,7 @@ class CollectorRepositoryTest {
             relanzada = true
         }
 
+        // Then
         assertTrue(relanzada)
     }
 }

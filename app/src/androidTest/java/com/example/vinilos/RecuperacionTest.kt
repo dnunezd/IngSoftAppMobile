@@ -79,22 +79,46 @@ class RecuperacionTest {
         rule.onNodeWithTag(TagReintentar).performClick()
     }
 
+    /** Pulsa Reintentar tantas veces como se pida, esperando cada respuesta (que debe seguir fallando). */
+    private fun reintentarSinExito(veces: Int) {
+        repeat(veces) { vez ->
+            reintentar()
+            esperarPeticiones(vez + 2)
+            esperarA(TagMensajeError)
+        }
+    }
+
     @Test
-    fun conElServidorCaidoSeVeElErrorYReintentarRecuperaLaLista() {
+    fun conElServidorCaidoSeVeElErrorConLaOpcionVisitante() {
+        // Given
+        servidorCaido()
+
+        ActivityScenario.launch(MainActivity::class.java).use {
+            // When
+            entrarComoColeccionista()
+            esperarA(TagMensajeError)
+
+            // Then
+            rule.onNodeWithText("No pudimos cargar los coleccionistas").assertIsDisplayed()
+            rule.onNodeWithTag(TagVisitanteError).assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun reintentarConElServidorDeVueltaRecuperaLaLista() {
+        // Given
         servidorCaido()
 
         ActivityScenario.launch(MainActivity::class.java).use {
             entrarComoColeccionista()
-
             esperarA(TagMensajeError)
-            rule.onNodeWithText("No pudimos cargar los coleccionistas").assertIsDisplayed()
-            rule.onNodeWithTag(TagVisitanteError).assertIsDisplayed()
 
-            // El servidor "vuelve" y la persona pulsa Reintentar.
+            // When: el servidor "vuelve" y la persona pulsa Reintentar
             servidorSano()
             reintentar()
-
             esperarA(tagColeccionista(100))
+
+            // Then
             rule.onNodeWithText("Manolo Bellon").assertIsDisplayed()
             rule.onNodeWithText("Jaime Monsalve").assertIsDisplayed()
             assertEquals(2, servidor.requestCount)
@@ -102,24 +126,64 @@ class RecuperacionTest {
     }
 
     @Test
+    fun unErrorDelServidorMuestraElMensajeDeError() {
+        // Given
+        servidorConErrorInterno()
+
+        ActivityScenario.launch(MainActivity::class.java).use {
+            // When
+            entrarComoColeccionista()
+            esperarA(TagMensajeError)
+
+            // Then
+            rule.onNodeWithText("No pudimos cargar los coleccionistas").assertIsDisplayed()
+        }
+    }
+
+    @Test
     fun unErrorDelServidorSeRecuperaConReintentar() {
+        // Given
         servidorConErrorInterno()
 
         ActivityScenario.launch(MainActivity::class.java).use {
             entrarComoColeccionista()
             esperarA(TagMensajeError)
-            rule.onNodeWithText("No pudimos cargar los coleccionistas").assertIsDisplayed()
 
+            // When
             servidorSano()
             reintentar()
-
             esperarA(tagColeccionista(101))
+
+            // Then
             rule.onNodeWithText("Jaime Monsalve").assertIsDisplayed()
         }
     }
 
     @Test
+    fun cadaReintentoFallidoVuelveAMostrarElErrorConReintentar() {
+        // Given
+        servidorCaido()
+        servidorConErrorInterno()
+        servidorCaido()
+
+        ActivityScenario.launch(MainActivity::class.java).use {
+            entrarComoColeccionista()
+            esperarPeticiones(1)
+            esperarA(TagMensajeError)
+
+            // When
+            reintentarSinExito(veces = 2)
+
+            // Then
+            rule.onNodeWithText("No pudimos cargar los coleccionistas").assertIsDisplayed()
+            rule.onNodeWithTag(TagReintentar).assertIsDisplayed()
+            assertEquals(3, servidor.requestCount)
+        }
+    }
+
+    @Test
     fun variosReintentosFallidosSeguidosDeUnoExitosoMuestranLaLista() {
+        // Given
         servidorCaido()
         servidorConErrorInterno()
         servidorCaido()
@@ -129,19 +193,13 @@ class RecuperacionTest {
             entrarComoColeccionista()
             esperarPeticiones(1)
             esperarA(TagMensajeError)
+            reintentarSinExito(veces = 2)
 
-            // Cada reintento fallido vuelve a mostrar el mensaje de error con "Reintentar".
-            repeat(2) { vez ->
-                reintentar()
-                esperarPeticiones(vez + 2)
-                esperarA(TagMensajeError)
-                rule.onNodeWithText("No pudimos cargar los coleccionistas").assertIsDisplayed()
-                rule.onNodeWithTag(TagReintentar).assertIsDisplayed()
-            }
-
+            // When
             reintentar()
-
             esperarA(tagColeccionista(100))
+
+            // Then
             rule.onNodeWithText("Manolo Bellon").assertIsDisplayed()
             assertEquals(4, servidor.requestCount)
         }
@@ -149,15 +207,18 @@ class RecuperacionTest {
 
     @Test
     fun ingresarComoVisitanteDesdeElErrorEntraAlInicio() {
+        // Given
         servidorCaido()
 
         ActivityScenario.launch(MainActivity::class.java).use {
             entrarComoColeccionista()
             esperarA(TagMensajeError)
 
+            // When
             rule.onNodeWithTag(TagVisitanteError).performClick()
-
             esperarA(TagInicio)
+
+            // Then
             rule.onNodeWithText("¡Hola, melómano!").assertIsDisplayed()
         }
     }

@@ -31,8 +31,12 @@ class PantallaIngresoTest {
 
     @Test
     fun muestraLasOpcionesVisitanteYColeccionistaConSuBotonEntrar() {
+        // Given: la pantalla de ingreso sin interacción previa
+
+        // When
         mostrar()
 
+        // Then
         rule.onNodeWithText("Visitante").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("Coleccionista").performScrollTo().assertIsDisplayed()
         rule.onAllNodesWithText("Entrar").assertCountEquals(2)
@@ -40,8 +44,12 @@ class PantallaIngresoTest {
 
     @Test
     fun muestraLaFranjaAudioWaveConSuBpmYNoLaInsigniaDeVersion() {
+        // Given: la pantalla de ingreso sin interacción previa
+
+        // When
         mostrar()
 
+        // Then
         rule.onNodeWithText("AUDIO WAVE").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("94 BPM").assertIsDisplayed()
         rule.onNodeWithText("v1.0.4").assertDoesNotExist()
@@ -49,20 +57,26 @@ class PantallaIngresoTest {
 
     @Test
     fun entrarComoVisitanteAvisaSoloAlVisitante() {
+        // Given
         mostrar()
 
+        // When
         rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
 
+        // Then
         assertEquals(1, visitante)
         assertEquals(0, coleccionista)
     }
 
     @Test
     fun entrarComoColeccionistaAvisaSoloAlColeccionista() {
+        // Given
         mostrar()
 
+        // When
         rule.onNodeWithTag(TagEntrarColeccionista).performScrollTo().performClick()
 
+        // Then
         assertEquals(0, visitante)
         assertEquals(1, coleccionista)
     }

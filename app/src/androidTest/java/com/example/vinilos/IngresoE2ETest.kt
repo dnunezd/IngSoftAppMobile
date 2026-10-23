@@ -52,6 +52,18 @@ class IngresoE2ETest {
         rule.onNodeWithTag(TagEntrarColeccionista).performScrollTo().performClick()
     }
 
+    private fun entrarComoVisitante() {
+        rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
+    }
+
+    /** Desde el ingreso, entra como el coleccionista de la lista real y espera la pantalla de inicio. */
+    private fun entrarComoColeccionista(id: Int) {
+        entrarComoColeccionista()
+        esperarA(tagColeccionista(id))
+        rule.onNodeWithTag(tagColeccionista(id)).performClick()
+        esperarA(TagInicio)
+    }
+
     /** Desde la pantalla de inicio, "Ver álbumes" lleva al catálogo. */
     private fun verAlbumes() {
         esperarA(TagInicio)
@@ -60,88 +72,190 @@ class IngresoE2ETest {
     }
 
     @Test
-    fun ingresarComoVisitanteLlevaAlInicioYDeAhiAlCatalogo() {
+    fun ingresarComoVisitanteLlevaAlInicio() {
+        // Given
         ActivityScenario.launch(MainActivity::class.java).use {
-            rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
-
+            // When
+            entrarComoVisitante()
             esperarA(TagInicio)
+
+            // Then
             rule.onNodeWithText("¡Hola, melómano!").assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun desdeElInicioElVisitanteLlegaAlCatalogoConSuRol() {
+        // Given
+        ActivityScenario.launch(MainActivity::class.java).use {
+            entrarComoVisitante()
+            esperarA(TagInicio)
+
+            // When
             verAlbumes()
+
+            // Then
             rule.onNodeWithTag(TagRolActivo).assertTextEquals("Visitante")
         }
     }
 
     @Test
-    fun ingresarComoColeccionistaMuestraLaListaRealYSeEligeUno() {
+    fun ingresarComoColeccionistaMuestraLaListaReal() {
+        // Given
         ActivityScenario.launch(MainActivity::class.java).use {
+            // When
             entrarComoColeccionista()
-
             esperarA(tagColeccionista(100))
+
+            // Then
             rule.onNodeWithText("Manolo Bellon").assertIsDisplayed()
             rule.onNodeWithText("manollo@caracol.com.co").assertIsDisplayed()
             rule.onNodeWithText("MB").assertIsDisplayed()
             rule.onNodeWithText("Jaime Monsalve").assertIsDisplayed()
             rule.onNodeWithText("jmonsalve@rtvc.com.co").assertIsDisplayed()
+        }
+    }
 
+    @Test
+    fun elegirUnColeccionistaDeLaListaRealLlevaAlInicioConSuNombre() {
+        // Given
+        ActivityScenario.launch(MainActivity::class.java).use {
+            entrarComoColeccionista()
+            esperarA(tagColeccionista(100))
+
+            // When
             rule.onNodeWithTag(tagColeccionista(100)).performClick()
-
             esperarA(TagInicio)
+
+            // Then
             rule.onNodeWithText("¡Hola, Manolo Bellon!").assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun elColeccionistaElegidoLlegaAlCatalogoConSuRol() {
+        // Given
+        ActivityScenario.launch(MainActivity::class.java).use {
+            entrarComoColeccionista(100)
+
+            // When
             verAlbumes()
+
+            // Then
             rule.onNodeWithTag(TagRolActivo).assertTextEquals("Coleccionista: Manolo Bellon")
         }
     }
 
     @Test
     fun elBuscadorFiltraLosColeccionistasReales() {
+        // Given
         ActivityScenario.launch(MainActivity::class.java).use {
             entrarComoColeccionista()
             esperarA(tagColeccionista(100))
 
+            // When
             rule.onNodeWithTag(TagBuscador).performTextInput("RTVC")
 
+            // Then
             rule.onNodeWithTag(tagColeccionista(101)).assertIsDisplayed()
             rule.onNodeWithTag(tagColeccionista(100)).assertDoesNotExist()
+        }
+    }
 
+    @Test
+    fun elegirUnResultadoFiltradoLlegaAlCatalogoConEseColeccionista() {
+        // Given
+        ActivityScenario.launch(MainActivity::class.java).use {
+            entrarComoColeccionista()
+            esperarA(tagColeccionista(100))
+            rule.onNodeWithTag(TagBuscador).performTextInput("RTVC")
+
+            // When
             rule.onNodeWithTag(tagColeccionista(101)).performClick()
             verAlbumes()
+
+            // Then
             rule.onNodeWithTag(TagRolActivo).assertTextEquals("Coleccionista: Jaime Monsalve")
         }
     }
 
     @Test
-    fun navegaEntreIngresoInicioCatalogoYArtistasConAtras() {
+    fun atrasDesdeElSelectorVuelveAlIngreso() {
+        // Given
         ActivityScenario.launch(MainActivity::class.java).use {
             entrarComoColeccionista()
             esperarA(tagColeccionista(100))
 
+            // When
             rule.onNodeWithTag(TagAtras).performClick()
             esperarA(TagEntrarVisitante)
 
-            // Entrar como coleccionista lleva al inicio, y "Atrás" del sistema al ingreso, no al selector.
-            entrarComoColeccionista()
-            esperarA(tagColeccionista(101))
-            rule.onNodeWithTag(tagColeccionista(101)).performClick()
-            esperarA(TagInicio)
+            // Then
+            rule.onNodeWithTag(TagEntrarVisitante).assertIsDisplayed()
+        }
+    }
 
-            // Del inicio al listado de artistas y de vuelta con la flecha, conservando la sesión.
+    @Test
+    fun atrasDelSistemaDesdeElInicioVuelveAlIngresoYNoAlSelector() {
+        // Given
+        ActivityScenario.launch(MainActivity::class.java).use {
+            entrarComoColeccionista(101)
+
+            // When
+            Espresso.pressBack()
+            esperarA(TagEntrarVisitante)
+
+            // Then
+            rule.onAllNodesWithTag(TagBuscador).assertCountEquals(0)
+        }
+    }
+
+    @Test
+    fun elListadoDeArtistasVuelveAlInicioConLaFlechaConservandoLaSesion() {
+        // Given
+        ActivityScenario.launch(MainActivity::class.java).use {
+            entrarComoColeccionista(101)
+
+            // When
             rule.onNodeWithTag(TagVerArtistas).performScrollTo().performClick()
             esperarA(TagArtistas)
             rule.onNodeWithTag(TagAtras).performClick()
-            esperarA(TagInicio)
             verAlbumes()
-            rule.onNodeWithTag(TagRolActivo).assertTextEquals("Coleccionista: Jaime Monsalve")
 
-            // Catálogo -> inicio -> ingreso.
+            // Then
+            rule.onNodeWithTag(TagRolActivo).assertTextEquals("Coleccionista: Jaime Monsalve")
+        }
+    }
+
+    @Test
+    fun elCatalogoVuelveAlInicioConLaFlecha() {
+        // Given
+        ActivityScenario.launch(MainActivity::class.java).use {
+            entrarComoColeccionista(101)
+            verAlbumes()
+
+            // When
             rule.onNodeWithTag(TagAtras).performClick()
             esperarA(TagInicio)
+
+            // Then
+            rule.onNodeWithTag(TagInicio).assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun cambiarDePerfilTrasVolverAlIngresoEntraComoVisitante() {
+        // Given
+        ActivityScenario.launch(MainActivity::class.java).use {
+            entrarComoColeccionista(101)
             Espresso.pressBack()
             esperarA(TagEntrarVisitante)
-            rule.onAllNodesWithTag(TagBuscador).assertCountEquals(0)
 
-            // Cambiar de perfil: ahora como visitante.
-            rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
+            // When
+            entrarComoVisitante()
             verAlbumes()
+
+            // Then
             rule.onNodeWithTag(TagRolActivo).assertTextEquals("Visitante")
         }
     }
