@@ -29,10 +29,10 @@ Flujo actual: `ingreso → (selector de coleccionistas) → inicio → catálogo
 | Sistema operativo | Windows 10 u 11, macOS o Linux |
 | JDK | 17. Android Studio incluye uno propio (JetBrains Runtime 17); para compilar por terminal define `JAVA_HOME` apuntando a un JDK 17 |
 | Android Studio | Una versión compatible con AGP 8.6.0 (Koala Feature Drop, 2024.1.2, o superior) |
-| Android SDK | Plataforma 34 (`minSdk` 26, `compileSdk` y `targetSdk` 34). Trae `adb` en `platform-tools` |
+| Android SDK | Plataforma 34 (`minSdk` 23, `compileSdk` y `targetSdk` 34). Trae `adb` en `platform-tools` |
 | Gradle | 8.7, ya incluido con el wrapper (`gradlew`) |
 | Docker | Docker Desktop (Windows y macOS) o Docker Engine con el plugin Compose (Linux), para levantar BackVynils |
-| Dispositivo Android | Físico o emulador (API 26 o superior). En Mac con chip Apple el emulador necesita una imagen ARM64 |
+| Dispositivo Android | Físico o emulador (API 23 o superior). En Mac con chip Apple el emulador necesita una imagen ARM64 |
 
 Stack: Kotlin 1.9.0, Jetpack Compose (BOM 2024.04.01) con Material 3, MVVM + Repository, Retrofit 2.9.0 + OkHttp 4.12.0, Navigation Compose 2.7.7 y corrutinas 1.8.0.
 
@@ -202,7 +202,7 @@ No requiere pasos manuales: `RecuperacionTest` levanta un servidor local dentro 
 | Instrumentadas | `app/build/reports/androidTests/connected/debug/index.html` |
 | Lint | `app/build/reports/lint-results-debug.html` |
 
-Referencia actual del lint: 0 errores y 47 avisos, todos de la plantilla de Android Studio (por ejemplo `targetSdk` y versiones de dependencias).
+Referencia actual del lint: 0 errores y 52 avisos, todos de la plantilla de Android Studio o esperados (por ejemplo `targetSdk`, versiones de dependencias y atributos del degradado del ícono que solo se usan desde API 24).
 
 ### Integración continua
 
