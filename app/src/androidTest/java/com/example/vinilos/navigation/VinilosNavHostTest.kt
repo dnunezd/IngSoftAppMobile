@@ -3,6 +3,7 @@ package com.example.vinilos.navigation
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -11,11 +12,19 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.testing.TestNavHostController
+import com.example.vinilos.RepositorioArtistasFalso
 import com.example.vinilos.RepositorioFalso
+import com.example.vinilos.data.model.Artist
+import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.Collector
 import com.example.vinilos.data.model.Session
 import com.example.vinilos.data.repository.ErrorDeCarga
 import com.example.vinilos.ui.artistas.TagArtistas
+import com.example.vinilos.ui.artistas.TagBuscadorArtistas
+import com.example.vinilos.ui.artistas.TagDetalleArtista
+import com.example.vinilos.ui.artistas.TagNombreDetalleArtista
+import com.example.vinilos.ui.artistas.TagTipoDetalleArtista
+import com.example.vinilos.ui.artistas.tagArtista
 import com.example.vinilos.ui.catalogo.TagCatalogo
 import com.example.vinilos.ui.ingreso.TagAtras
 import com.example.vinilos.ui.ingreso.TagBuscador
@@ -45,13 +54,17 @@ class VinilosNavHostTest {
     private lateinit var nav: TestNavHostController
     private val session = SessionViewModel()
 
+    private val queen = Artist(101, "Queen", null, ArtistType.BANDA)
+    private val ruben = Artist(100, "Rubén Blades Bellido de Luna", null, ArtistType.MUSICO)
+    private val artistas = RepositorioArtistasFalso(Result.success(listOf(queen, ruben)))
+
     private fun mostrar(repositorio: RepositorioFalso) {
         rule.setContent {
             val contexto = LocalContext.current
             nav = remember {
                 TestNavHostController(contexto).apply { navigatorProvider.addNavigator(ComposeNavigator()) }
             }
-            VinilosTheme { VinilosNavHost(nav, session, repositorio) }
+            VinilosTheme { VinilosNavHost(nav, session, repositorio, artistas) }
         }
         rule.waitForIdle()
     }
@@ -279,6 +292,46 @@ class VinilosNavHostTest {
         rule.waitForIdle()
         atrasDelSistema()
         assertEquals(Rutas.Inicio, ruta())
+        assertEquals(Session.Visitor, session.session.value)
+    }
+
+    @Test
+    fun seleccionarUnArtistaLlevaASuDetalleYAtrasVuelveAlListadoSinRepetirLaConsulta() {
+        mostrar(RepositorioFalso(Result.success(listOf(manolo))))
+        entrarComoVisitante()
+        rule.onNodeWithTag(TagVerArtistas).performScrollTo().performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag(TagBuscadorArtistas).performTextInput("que")
+        rule.waitForIdle()
+
+        rule.onNodeWithTag(tagArtista(queen)).performScrollTo().performClick()
+        rule.waitForIdle()
+        assertEquals(Rutas.DetalleArtista, ruta())
+        rule.onNodeWithTag(TagDetalleArtista).assertIsDisplayed()
+        rule.onNodeWithTag(TagNombreDetalleArtista).assertTextEquals("Queen")
+        rule.onNodeWithTag(TagTipoDetalleArtista).assertTextEquals("Banda")
+
+        rule.onNodeWithTag(TagAtras).performClick()
+        rule.waitForIdle()
+        assertEquals(Rutas.Artistas, ruta())
+        rule.onNodeWithTag(TagBuscadorArtistas).assertTextEquals("que")
+        assertEquals(1, artistas.consultas)
+    }
+
+    @Test
+    fun atrasDelSistemaDesdeElDetalleDelArtistaVuelveAlListado() {
+        mostrar(RepositorioFalso(Result.success(listOf(manolo))))
+        entrarComoVisitante()
+        rule.onNodeWithTag(TagVerArtistas).performScrollTo().performClick()
+        rule.waitForIdle()
+
+        rule.onNodeWithTag(tagArtista(ruben)).performScrollTo().performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag(TagNombreDetalleArtista).assertTextEquals("Rubén Blades Bellido de Luna")
+        rule.onNodeWithTag(TagTipoDetalleArtista).assertTextEquals("Músico")
+
+        atrasDelSistema()
+        assertEquals(Rutas.Artistas, ruta())
         assertEquals(Session.Visitor, session.session.value)
     }
 }

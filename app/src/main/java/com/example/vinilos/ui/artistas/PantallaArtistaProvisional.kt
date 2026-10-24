@@ -15,16 +15,18 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.vinilos.R
-import com.example.vinilos.data.model.Session
+import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.ui.ingreso.EncabezadoVinilo
 
-const val TagArtistas = "artistas"
-const val TagRolArtistas = "artistas_rol"
+const val TagDetalleArtista = "detalle_artista"
+const val TagNombreDetalleArtista = "detalle_artista_nombre"
+const val TagTipoDetalleArtista = "detalle_artista_tipo"
 
-/** Destino provisional del listado de artistas: HU03 lo reemplaza por el listado real. */
+/** Destino provisional del detalle del artista: HU04 lo reemplaza por el detalle real. */
 @Composable
-fun PantallaArtistasProvisional(
-    session: Session,
+fun PantallaArtistaProvisional(
+    nombre: String,
+    tipo: ArtistType,
     onAtras: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -33,25 +35,28 @@ fun PantallaArtistasProvisional(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.safeDrawing)
-            .testTag(TagArtistas)
+            .testTag(TagDetalleArtista)
     ) {
         EncabezadoVinilo(modifier = Modifier.padding(horizontal = 12.dp), onAtras = onAtras)
         Column(modifier = Modifier.padding(horizontal = 20.dp)) {
             Text(
-                text = stringResource(R.string.artistas_titulo),
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.onBackground
+                text = stringResource(R.string.artista_detalle_titulo),
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
             Text(
-                text = when (session) {
-                    Session.None -> stringResource(R.string.catalogo_rol_ninguno)
-                    Session.Visitor -> stringResource(R.string.catalogo_rol_visitante)
-                    is Session.Collector ->
-                        stringResource(R.string.catalogo_rol_coleccionista, session.collector.name)
-                },
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.testTag(TagRolArtistas)
+                text = nombre,
+                style = MaterialTheme.typography.headlineMedium,
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.testTag(TagNombreDetalleArtista)
+            )
+            Text(
+                text = stringResource(
+                    if (tipo == ArtistType.BANDA) R.string.artistas_tipo_banda else R.string.artistas_tipo_musico
+                ),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.secondary,
+                modifier = Modifier.testTag(TagTipoDetalleArtista)
             )
         }
     }
