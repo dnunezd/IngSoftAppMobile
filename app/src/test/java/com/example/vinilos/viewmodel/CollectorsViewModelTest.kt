@@ -2,9 +2,10 @@ package com.example.vinilos.viewmodel
 
 import com.example.vinilos.MainDispatcherRule
 import com.example.vinilos.data.model.Collector
-import com.example.vinilos.data.remote.ErrorDeCarga
-import com.example.vinilos.data.remote.ServiceAdapter
+import com.example.vinilos.data.remote.CollectorApi
+import com.example.vinilos.data.remote.CollectorDto
 import com.example.vinilos.data.repository.CollectorRepository
+import com.example.vinilos.data.repository.ErrorDeCarga
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -14,7 +15,11 @@ import org.junit.Rule
 import org.junit.Test
 
 /** Repositorio falso: cada llamada devuelve el resultado que se complete a mano. */
-private class RepositorioFalso : CollectorRepository(ServiceAdapter("http://localhost/")) {
+private class RepositorioFalso : CollectorRepository(
+    object : CollectorApi {
+        override suspend fun getCollectors(): List<CollectorDto> = error("no se usa")
+    }
+) {
     val llamadas = mutableListOf<CompletableDeferred<Result<List<Collector>>>>()
 
     override suspend fun obtenerColeccionistas(): Result<List<Collector>> {
