@@ -72,7 +72,9 @@
     <string name="artistas_vacio">No se encontraron artistas</string>
     <string name="artistas_error">No se pudo cargar el listado de artistas</string>
     <string name="artistas_reintentar">Reintentar</string>
-    <string name="artistas_cargando_descripcion">Cargando artistas</string>
+    <!-- Los tres puntos son el texto exacto del mockup. -->
+    <string name="artistas_cargando" tools:ignore="TypographyEllipsis">Cargando artistas...</string>
+    <string name="artistas_sin_coincidencias">Prueba con otro nombre.</string>
     <string name="artistas_imagen_descripcion">Imagen de %1$s</string>
     <string name="artistas_seleccionar_descripcion">Ver detalle de %1$s</string>
 
