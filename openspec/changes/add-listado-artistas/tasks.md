@@ -12,8 +12,8 @@
 
 ## 3. Pantalla y su lógica (T03-3)
 
-- [ ] 3.1 Escribir primero las pruebas (TDD) e implementar `ArtistsViewModel` con `ArtistsUiState` (`Cargando`, `Exito`, `Vacio`, `Error`): carga al crearse y `reintentar()` vuelve a `Cargando` y cancela la carga anterior. Verificar con pruebas unitarias y repositorio falso: `Cargando → Exito`, `Cargando → Vacio`, `Cargando → Error`, `Error → Cargando → Exito` y `Error → Cargando → Error`.
-- [ ] 3.2 Escribir primero las pruebas (TDD) y agregar `buscar(texto)` con la lista `visibles`: filtro por nombre en cualquier parte, sin distinguir mayúsculas ni tildes; texto vacío o de espacios devuelve todos. Verificar con pruebas unitarias: "que" → "Queen", "RUBEN" → "Rubén…", texto vacío, sin coincidencias, y que `buscar` no tiene efecto mientras carga o en error.
+- [x] 3.1 Escribir primero las pruebas (TDD) e implementar `ArtistsViewModel` con `ArtistsUiState` (`Cargando`, `Exito`, `Vacio`, `Error`): carga al crearse y `reintentar()` vuelve a `Cargando` y cancela la carga anterior. Verificar con pruebas unitarias y repositorio falso: `Cargando → Exito`, `Cargando → Vacio`, `Cargando → Error`, `Error → Cargando → Exito` y `Error → Cargando → Error`.
+- [x] 3.2 Escribir primero las pruebas (TDD) y agregar `buscar(texto)` con la lista `visibles`: filtro por nombre en cualquier parte, sin distinguir mayúsculas ni tildes; texto vacío o de espacios devuelve todos. Verificar con pruebas unitarias: "que" → "Queen", "RUBEN" → "Rubén…", texto vacío, sin coincidencias, y que `buscar` no tiene efecto mientras carga o en error.
 - [ ] 3.3 Implementar `PantallaArtistas` en `ui.artistas` según el mockup: encabezado con flecha de atrás, etiqueta, titular, subtítulo, barra de búsqueda, encabezado con contador y filas con imagen (Coil, con imagen por defecto), nombre, etiqueta "Músico"/"Banda" y flecha; indicador de carga, mensaje de vacío o sin coincidencias, y error con "Reintentar". Conservar el `testTag` `artistas` en la raíz. Verificar con pruebas de UI de Compose para cada estado y con vistas previas comparadas con el mockup.
 
 ## 4. Integración y navegación (T03-4)
