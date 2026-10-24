@@ -1,6 +1,8 @@
 package com.example.vinilos
 
+import com.example.vinilos.data.remote.ArtistApi
 import com.example.vinilos.data.remote.CollectorApi
+import com.example.vinilos.data.repository.ArtistRepository
 import com.example.vinilos.data.repository.CollectorRepository
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -13,7 +15,8 @@ import java.util.concurrent.TimeUnit
  */
 class AppContainer(
     baseUrl: String = BuildConfig.BASE_URL,
-    colectoresRepositorio: CollectorRepository? = null
+    colectoresRepositorio: CollectorRepository? = null,
+    artistasRepositorio: ArtistRepository? = null
 ) {
 
     private val okHttpClient: OkHttpClient = OkHttpClient.Builder()
@@ -30,6 +33,10 @@ class AppContainer(
     /** Se puede reemplazar con [colectoresRepositorio] en las pruebas instrumentadas. */
     val collectorRepository: CollectorRepository =
         colectoresRepositorio ?: CollectorRepository(retrofit.create(CollectorApi::class.java))
+
+    /** Se puede reemplazar con [artistasRepositorio] en las pruebas instrumentadas. */
+    val artistRepository: ArtistRepository =
+        artistasRepositorio ?: ArtistRepository(retrofit.create(ArtistApi::class.java))
 
     private companion object {
         const val TIMEOUT_SEGUNDOS = 10L
