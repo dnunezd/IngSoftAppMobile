@@ -20,7 +20,7 @@
 
 ## 4. Comprobación en Android 6.0
 
-- [ ] 4.1 Si hay un dispositivo con Android 6.0 (API 23), instalar la APK y verificar a mano los escenarios de `compatibilidad-android` (apertura, ingreso, listado de coleccionistas y ícono de imagen fija). Si no se dispone de uno, dejar esta tarea sin marcar y registrar en el resumen que API 23 no se ejecutó (no iniciar el emulador sin autorización de la persona)
+- [x] 4.1 Si hay un dispositivo con Android 6.0 (API 23), instalar la APK y verificar a mano los escenarios de `compatibilidad-android` (apertura, ingreso, listado de coleccionistas y ícono de imagen fija). Si no se dispone de uno, dejar esta tarea sin marcar y registrar en el resumen que API 23 no se ejecutó (no iniciar el emulador sin autorización de la persona)
 
 ## Workflow follow-up
 
