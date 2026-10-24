@@ -147,7 +147,7 @@ gradlew.bat installDebug
 
 | Tipo | Comando | Cantidad | Necesita |
 |---|---|---|---|
-| Unitarias | `./gradlew testDebugUnitTest` | 43 | Nada (corren en el computador) |
+| Unitarias | `./gradlew testDebugUnitTest` | 49 | Nada (corren en el computador) |
 | Lint | `./gradlew lint` | | Nada |
 | Instrumentadas sin E2E | `./gradlew connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.notClass=com.example.vinilos.IngresoE2ETest"` | 49 | Dispositivo desbloqueado (ni backend ni Docker) |
 | Todas las instrumentadas (con E2E) | `./gradlew connectedDebugAndroidTest -PbaseUrl=http://localhost:3000/` | 53 | Dispositivo desbloqueado, backend con datos y `adb reverse` |
@@ -159,7 +159,7 @@ En Windows, los comandos de `gradlew` cambian como se explicó arriba (`.\gradle
 
 | Ubicación | Qué verifica |
 |---|---|
-| `src/test` · `data/` | `CollectorRepository` con `MockWebServer`: datos, lista vacía, 404, 500, sin conexión, tiempo de espera, JSON inválido, elementos incompletos y cancelación; el DTO ignora los campos que no usa |
+| `src/test` · `data/` | `ServiceAdapter` con `MockWebServer`: éxito, lista vacía, 404, 500, sin conexión, tiempo de espera, JSON inválido, cancelación y reintento tras un fallo. `CollectorRepository`: mapeo de datos, campos desconocidos y elementos incompletos descartados, y propagación del error del adaptador; el DTO ignora los campos que no usa |
 | `src/test` · `viewmodel/` | `CollectorsViewModel` (estados cargando, éxito, vacío y error, reintento, búsqueda sin distinguir mayúsculas ni tildes) y `SessionViewModel` (rol, coleccionista activo, acciones de coleccionista) |
 | `src/test` · `ui/ingreso/` | Iniciales del avatar |
 | `src/androidTest` · `ui/` | Pantallas de Compose en cada estado: ingreso, selector de coleccionista y pantalla de inicio (textos literales de la HU00, callbacks, saludo según el perfil) |
@@ -239,7 +239,7 @@ Las pruebas instrumentadas **no corren en CI** porque necesitan un dispositivo y
 
 ```
 app/src/main/java/com/example/vinilos/
-  data/        model (Collector, Session), remote (Retrofit: CollectorApi, DTO), repository
+  data/        model (Collector, Session), remote (ServiceAdapter, ErrorDeCarga, CollectorApi, DTO), repository
   viewmodel/   SessionViewModel, CollectorsViewModel y sus estados
   ui/          ingreso, inicio, catalogo (provisional), artistas (provisional), theme
   navigation/  VinilosNavHost: grafo de navegación
@@ -248,7 +248,7 @@ app/src/test/ y app/src/androidTest/   pruebas unitarias e instrumentadas
 openspec/      especificaciones (specs/) y cambios archivados (changes/archive/)
 ```
 
-Arquitectura: **MVVM** con capa de datos por **Repository**. La vista dibuja el estado que expone el `ViewModel` y le envía los eventos; solo el repositorio habla con la API y traduce los errores de red y del servidor.
+Arquitectura: **MVVM** con capa de datos por **Repository**. La vista dibuja el estado que expone el `ViewModel` y le envía los eventos; los repositorios hablan con el backend solo a través del `ServiceAdapter` (`data/remote`), que construye el cliente de red una sola vez (Retrofit y OkHttp), entrega la interfaz de cada entidad y traduce los errores de red y del servidor a `ErrorDeCarga`; el repositorio se queda con convertir los DTO al modelo.
 
 ## Flujo de trabajo
 
