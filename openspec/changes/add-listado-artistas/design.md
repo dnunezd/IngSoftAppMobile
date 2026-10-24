@@ -53,7 +53,7 @@ El `ViewModel` está atado al destino de navegación, así que sobrevive a la ro
 
 ### D5. Imágenes con Coil
 
-Las imágenes de los artistas son URL externas (Wikimedia y otros). Se usa `AsyncImage` de Coil con un `placeholder` y un `error` que muestran una imagen por defecto (ícono de persona sobre fondo neutro), lo que cumple el criterio de imagen por defecto también cuando `image` es nula o vacía. Coil es la librería de imágenes recomendada para Compose y se integra con las corrutinas que ya usa la app.
+Las imágenes de los artistas son URL externas (Wikimedia y otros). Se usa `AsyncImage` de Coil con un `placeholder` y un `error` que muestran una imagen por defecto (ícono de persona sobre fondo neutro), lo que cumple el criterio de imagen por defecto también cuando `image` es nula o vacía. Coil es la librería de imágenes recomendada para Compose y se integra con las corrutinas que ya usa la app. La app define un cargador de imágenes propio (`VinilosApplication` como `ImageLoaderFactory`) que envía un agente de usuario de la app (`AgenteDeUsuarioInterceptor`): Wikimedia, de donde vienen varias imágenes del backend, rechaza con 403 el agente genérico de OkHttp. El mismo cargador sirve para las portadas de la HU01.
 
 *Alternativa descartada:* descargar las imágenes con OkHttp y decodificarlas a mano: más código, sin caché y sin manejo de ciclo de vida.
 
