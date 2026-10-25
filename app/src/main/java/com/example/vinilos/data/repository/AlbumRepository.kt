@@ -8,6 +8,7 @@ import com.example.vinilos.data.remote.AlbumApi
 import com.example.vinilos.data.remote.AlbumDto
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.google.gson.JsonParseException
+import retrofit2.HttpException
 
 class AlbumNoDisponible(causa: Throwable? = null) : Exception("El álbum ya no está disponible", causa)
 
@@ -15,8 +16,14 @@ open class AlbumRepository(private val adaptador: ServiceAdapter) {
 
     private val api = adaptador.api<AlbumApi>()
 
-    open suspend fun obtenerAlbum(id: Int): Result<Album> =
-        adaptador.llamar { api.obtenerAlbum(id) }.map { it.aModelo() }
+    open suspend fun obtenerAlbum(id: Int): Result<Album> {
+        val respuesta = adaptador.llamar { api.obtenerAlbum(id) }
+        val error = respuesta.exceptionOrNull()
+        if (error is HttpException && error.code() == 404) {
+            return Result.failure(AlbumNoDisponible(error))
+        }
+        return respuesta.map { it.aModelo() }
+    }
 
     private fun AlbumDto.aModelo() = Album(
         id = requerido(id, "id"),
