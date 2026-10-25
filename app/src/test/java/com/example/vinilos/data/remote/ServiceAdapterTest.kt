@@ -1,13 +1,16 @@
 package com.example.vinilos.data.remote
 
 import com.google.gson.JsonParseException
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.SocketPolicy
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import retrofit2.HttpException
@@ -130,5 +133,18 @@ class ServiceAdapterTest {
 
         assertTrue(resultado.isFailure)
         assertTrue(resultado.exceptionOrNull() is JsonParseException)
+    }
+
+    @Test
+    fun cancelacionSeRelanzaSinConvertirseEnFallo() = runTest {
+        val adaptador = ServiceAdapter(servidor.url("/").toString())
+        val cancelacion = CancellationException("Consulta cancelada")
+
+        try {
+            adaptador.llamar<DatosPrueba> { throw cancelacion }
+            fail("La cancelación debe propagarse")
+        } catch (error: CancellationException) {
+            assertSame(cancelacion, error)
+        }
     }
 }
