@@ -73,4 +73,5 @@
     <string name="detalle_imagen_provisional">Imagen provisional del álbum</string>
     <string name="detalle_artistas">Artistas</string>
     <string name="detalle_artista_provisional">Imagen provisional de %1$s</string>
+    <string name="detalle_cargando">Cargando álbum</string>
 </resources>
