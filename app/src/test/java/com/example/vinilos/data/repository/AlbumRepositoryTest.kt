@@ -8,6 +8,7 @@ import com.example.vinilos.data.remote.ServiceAdapter
 import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.SocketPolicy
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -15,6 +16,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import retrofit2.HttpException
+import java.io.IOException
 import java.lang.reflect.Modifier
 import java.util.concurrent.TimeUnit
 
@@ -102,5 +104,16 @@ class AlbumRepositoryTest {
         assertTrue("El fallo del servidor debe ser recuperable", error is ErrorDeCarga)
         assertTrue(error!!.cause is HttpException)
         assertEquals(500, (error.cause as HttpException).code())
+    }
+
+    @Test
+    fun desconexionSeTraduceAErrorDeCargaConSuCausa() = runTest {
+        servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST))
+
+        val error = repositorio.obtenerAlbum(101).exceptionOrNull()
+
+        assertTrue("La desconexión debe ser un error de carga, no un 404", error is ErrorDeCarga)
+        assertTrue(error!!.cause is IOException)
+        assertTrue(error.cause !is HttpException)
     }
 }
