@@ -7,7 +7,9 @@ import java.text.DecimalFormatSymbols
 import java.util.Locale
 
 fun promedioCalificaciones(comentarios: List<Comentario>): String? {
-    val promedio = comentarios.mapNotNull { it.calificacion }.average()
+    val calificaciones = comentarios.mapNotNull { it.calificacion }
+    if (calificaciones.isEmpty()) return null
+    val promedio = calificaciones.average()
     return DecimalFormat("0.0", DecimalFormatSymbols(Locale("es"))).apply {
         roundingMode = RoundingMode.HALF_UP
     }.format(promedio)
