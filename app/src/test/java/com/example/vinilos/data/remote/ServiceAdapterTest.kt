@@ -12,6 +12,7 @@ import org.junit.Test
 import retrofit2.HttpException
 import retrofit2.http.GET
 import java.io.IOException
+import java.net.SocketTimeoutException
 
 // Respuesta pequeña que Retrofit/Gson convertirá desde el JSON.
 data class DatosPrueba(val nombre: String)
@@ -104,5 +105,17 @@ class ServiceAdapterTest {
         assertTrue(resultado.isFailure)
         assertTrue(resultado.exceptionOrNull() is IOException)
         assertTrue(resultado.exceptionOrNull() !is HttpException)
+    }
+
+    @Test
+    fun timeoutDevuelveElErrorDeEspera() = runTest {
+        servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE))
+        val adaptador = ServiceAdapter(servidor.url("/").toString())
+        val api = adaptador.api<ApiDePrueba>()
+
+        val resultado = adaptador.llamar { api.obtenerPrueba() }
+
+        assertTrue(resultado.isFailure)
+        assertTrue(resultado.exceptionOrNull() is SocketTimeoutException)
     }
 }
