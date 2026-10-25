@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -45,6 +46,9 @@ fun ContenidoAlbum(
                     Text(presentacion.fechaLanzamiento, style = MaterialTheme.typography.bodyMedium)
                 }
             }
+        }
+        presentacion.mensajeCanciones?.let { mensaje ->
+            item { Text(stringResource(mensaje), style = MaterialTheme.typography.bodyLarge) }
         }
     }
 }
