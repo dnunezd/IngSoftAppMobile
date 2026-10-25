@@ -9,6 +9,8 @@ import com.example.vinilos.data.remote.AlbumDto
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.google.gson.JsonParseException
 
+class AlbumNoDisponible(causa: Throwable? = null) : Exception("El álbum ya no está disponible", causa)
+
 open class AlbumRepository(private val adaptador: ServiceAdapter) {
 
     private val api = adaptador.api<AlbumApi>()

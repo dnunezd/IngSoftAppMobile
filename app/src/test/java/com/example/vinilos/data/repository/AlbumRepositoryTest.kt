@@ -11,8 +11,10 @@ import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import retrofit2.HttpException
 import java.lang.reflect.Modifier
 import java.util.concurrent.TimeUnit
 
@@ -77,5 +79,17 @@ class AlbumRepositoryTest {
                 .filterNot { it.isSynthetic || Modifier.isStatic(it.modifiers) }
                 .map { it.name }.toSet()
         )
+    }
+
+    @Test
+    fun respuesta404SeTraduceAAlbumNoDisponible() = runTest {
+        servidor.enqueue(MockResponse().setResponseCode(404))
+
+        val error = repositorio.obtenerAlbum(999).exceptionOrNull()
+
+        assertTrue("El 404 debe indicar álbum no disponible, no error de red", error is AlbumNoDisponible)
+        assertTrue(error!!.cause is HttpException)
+        assertEquals(404, (error.cause as HttpException).code())
+        assertEquals("/albums/999", servidor.takeRequest(1, TimeUnit.SECONDS)?.path)
     }
 }
