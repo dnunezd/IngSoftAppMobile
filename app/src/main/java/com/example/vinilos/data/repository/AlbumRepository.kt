@@ -25,7 +25,7 @@ open class AlbumRepository(private val adaptador: ServiceAdapter) {
                 if (error.code() == 404) AlbumNoDisponible(error) else ErrorDeCarga(error)
             )
         }
-        if (error is IOException) {
+        if (error is IOException || error is JsonParseException) {
             return Result.failure(ErrorDeCarga(error))
         }
         return respuesta.map { it.aModelo() }
