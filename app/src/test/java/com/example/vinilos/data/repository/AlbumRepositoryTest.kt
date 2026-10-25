@@ -13,6 +13,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
+import java.lang.reflect.Modifier
 import java.util.concurrent.TimeUnit
 
 class AlbumRepositoryTest {
@@ -72,7 +73,9 @@ class AlbumRepositoryTest {
         assertEquals("/albums/101", peticion.path)
         assertEquals(
             setOf("descripcion", "calificacion"),
-            Comentario::class.java.declaredFields.filterNot { it.isSynthetic }.map { it.name }.toSet()
+            Comentario::class.java.declaredFields
+                .filterNot { it.isSynthetic || Modifier.isStatic(it.modifiers) }
+                .map { it.name }.toSet()
         )
     }
 }
