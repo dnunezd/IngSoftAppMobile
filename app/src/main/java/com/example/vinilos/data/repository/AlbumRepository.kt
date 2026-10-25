@@ -19,7 +19,11 @@ open class AlbumRepository(
 ) {
 
     open suspend fun obtenerAlbum(id: Int): Result<Album> {
-        val respuesta = adaptador.llamar { api.obtenerAlbum(id).aModelo() }
+        val respuesta = adaptador.llamar {
+            val respuestaHttp = api.obtenerAlbum(id)
+            if (!respuestaHttp.isSuccessful) throw HttpException(respuestaHttp)
+            requerido(respuestaHttp.body(), "album").aModelo()
+        }
         val error = respuesta.exceptionOrNull()
         if (error is HttpException) {
             return Result.failure(

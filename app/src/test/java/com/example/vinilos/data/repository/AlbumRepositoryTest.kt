@@ -26,6 +26,7 @@ import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import retrofit2.HttpException
+import retrofit2.Response
 import java.io.IOException
 import java.lang.reflect.Modifier
 import java.net.SocketTimeoutException
@@ -182,7 +183,7 @@ class AlbumRepositoryTest {
     fun errorInesperadoSePropagaSinDisfrazarloDeErrorDeCarga() = runTest {
         val esperado = IllegalStateException("Error de programación")
         val api = object : AlbumApi {
-            override suspend fun obtenerAlbum(id: Int): AlbumDto = throw esperado
+            override suspend fun obtenerAlbum(id: Int): Response<AlbumDto> = throw esperado
         }
         val repositorio = AlbumRepository(ServiceAdapter(servidor.url("/").toString()), api)
 
@@ -197,7 +198,7 @@ class AlbumRepositoryTest {
     @Test
     fun cancelarLaConsultaPropagaLaCancelacionSinErrorDeCarga() = runTest {
         val api = object : AlbumApi {
-            override suspend fun obtenerAlbum(id: Int): AlbumDto = awaitCancellation()
+            override suspend fun obtenerAlbum(id: Int): Response<AlbumDto> = awaitCancellation()
         }
         val repositorio = AlbumRepository(ServiceAdapter(servidor.url("/").toString()), api)
         var devolvioResultado = false
