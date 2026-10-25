@@ -67,4 +67,7 @@
     <string name="detalle_sin_comentarios">Aún no hay comentarios para este álbum</string>
     <string name="detalle_sin_calificaciones">Sin calificaciones</string>
     <string name="detalle_canciones">Canciones</string>
+    <string name="detalle_comentarios">Comentarios</string>
+    <string name="detalle_promedio">Promedio de calificaciones</string>
+    <string name="detalle_calificacion">%1$d / 5</string>
 </resources>

@@ -69,11 +69,35 @@ fun ContenidoAlbum(
                 Text(cancion.duracion, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
+        item {
+            Text(
+                stringResource(R.string.detalle_comentarios),
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
         presentacion.mensajeComentarios?.let { mensaje ->
             item { Text(stringResource(mensaje), style = MaterialTheme.typography.bodyLarge) }
         }
-        if (presentacion.promedio == null) {
-            item { Text(stringResource(R.string.detalle_sin_calificaciones)) }
+        items(presentacion.album.comentarios) { comentario ->
+            Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp)) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(comentario.descripcion)
+                    Text(
+                        comentario.calificacion?.let { stringResource(R.string.detalle_calificacion, it) }
+                            ?: stringResource(R.string.detalle_sin_calificaciones),
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        }
+        item {
+            Text(stringResource(R.string.detalle_promedio), style = MaterialTheme.typography.titleMedium)
+            Text(
+                presentacion.promedio ?: stringResource(R.string.detalle_sin_calificaciones),
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.primary
+            )
         }
     }
 }
