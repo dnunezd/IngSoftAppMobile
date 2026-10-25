@@ -92,4 +92,15 @@ class AlbumRepositoryTest {
         assertEquals(404, (error.cause as HttpException).code())
         assertEquals("/albums/999", servidor.takeRequest(1, TimeUnit.SECONDS)?.path)
     }
+
+    @Test
+    fun respuesta500SeTraduceAErrorDeCargaConSuCausa() = runTest {
+        servidor.enqueue(MockResponse().setResponseCode(500))
+
+        val error = repositorio.obtenerAlbum(101).exceptionOrNull()
+
+        assertTrue("El fallo del servidor debe ser recuperable", error is ErrorDeCarga)
+        assertTrue(error!!.cause is HttpException)
+        assertEquals(500, (error.cause as HttpException).code())
+    }
 }
