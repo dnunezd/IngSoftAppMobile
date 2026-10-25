@@ -1,11 +1,7 @@
 package com.example.vinilos
 
-import com.example.vinilos.data.remote.CollectorApi
+import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.CollectorRepository
-import okhttp3.OkHttpClient
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import java.util.concurrent.TimeUnit
 
 /**
  * Contenedor de dependencias manual: crea una sola vez el cliente de red y los repositorios
@@ -16,22 +12,9 @@ class AppContainer(
     colectoresRepositorio: CollectorRepository? = null
 ) {
 
-    private val okHttpClient: OkHttpClient = OkHttpClient.Builder()
-        .connectTimeout(TIMEOUT_SEGUNDOS, TimeUnit.SECONDS)
-        .readTimeout(TIMEOUT_SEGUNDOS, TimeUnit.SECONDS)
-        .build()
-
-    val retrofit: Retrofit = Retrofit.Builder()
-        .baseUrl(baseUrl)
-        .client(okHttpClient)
-        .addConverterFactory(GsonConverterFactory.create())
-        .build()
+    val serviceAdapter = ServiceAdapter(baseUrl)
 
     /** Se puede reemplazar con [colectoresRepositorio] en las pruebas instrumentadas. */
     val collectorRepository: CollectorRepository =
-        colectoresRepositorio ?: CollectorRepository(retrofit.create(CollectorApi::class.java))
-
-    private companion object {
-        const val TIMEOUT_SEGUNDOS = 10L
-    }
+        colectoresRepositorio ?: CollectorRepository(serviceAdapter)
 }

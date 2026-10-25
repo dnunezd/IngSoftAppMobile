@@ -3,9 +3,9 @@ package com.example.vinilos.data.repository
 import com.example.vinilos.data.model.Collector
 import com.example.vinilos.data.remote.CollectorApi
 import com.example.vinilos.data.remote.CollectorDto
+import com.example.vinilos.data.remote.ServiceAdapter
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
-import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.SocketPolicy
@@ -14,9 +14,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import java.util.concurrent.TimeUnit
 
 class CollectorRepositoryTest {
 
@@ -27,17 +24,7 @@ class CollectorRepositoryTest {
     fun preparar() {
         servidor = MockWebServer()
         servidor.start()
-        val cliente = OkHttpClient.Builder()
-            .readTimeout(300, TimeUnit.MILLISECONDS)
-            .connectTimeout(300, TimeUnit.MILLISECONDS)
-            .build()
-        val api = Retrofit.Builder()
-            .baseUrl(servidor.url("/"))
-            .client(cliente)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(CollectorApi::class.java)
-        repositorio = CollectorRepository(api)
+        repositorio = CollectorRepository(ServiceAdapter(servidor.url("/").toString()))
     }
 
     @After
@@ -144,7 +131,8 @@ class CollectorRepositoryTest {
 
         var relanzada = false
         try {
-            CollectorRepository(api).obtenerColeccionistas()
+            CollectorRepository(ServiceAdapter(servidor.url("/").toString()), api)
+                .obtenerColeccionistas()
         } catch (e: CancellationException) {
             relanzada = true
         }
