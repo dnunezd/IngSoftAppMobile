@@ -70,4 +70,5 @@
     <string name="detalle_comentarios">Comentarios</string>
     <string name="detalle_promedio">Promedio de calificaciones</string>
     <string name="detalle_calificacion">%1$d / 5</string>
+    <string name="detalle_imagen_provisional">Imagen provisional del álbum</string>
 </resources>

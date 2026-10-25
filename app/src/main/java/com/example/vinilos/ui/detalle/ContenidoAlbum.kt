@@ -1,5 +1,6 @@
 package com.example.vinilos.ui.detalle
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -19,6 +21,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.vinilos.R
@@ -36,6 +41,14 @@ fun ContenidoAlbum(
         contentPadding = PaddingValues(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        item {
+            Image(
+                painter = painterResource(R.drawable.inicio_albumes),
+                contentDescription = stringResource(R.string.detalle_imagen_provisional),
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.fillMaxWidth().height(220.dp).clip(RoundedCornerShape(24.dp))
+            )
+        }
         item {
             Card(modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(24.dp)) {
                 Column(
