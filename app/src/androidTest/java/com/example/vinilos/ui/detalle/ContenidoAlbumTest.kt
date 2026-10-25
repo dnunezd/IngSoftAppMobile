@@ -5,6 +5,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
 import com.example.vinilos.data.model.Album
+import com.example.vinilos.data.model.Cancion
 import com.example.vinilos.ui.theme.VinilosTheme
 import org.junit.Rule
 import org.junit.Test
@@ -55,5 +56,20 @@ class ContenidoAlbumTest {
         rule.onNodeWithText("Aún no hay comentarios para este álbum")
             .performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("Sin calificaciones").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun cancionesMuestraCadaNombreYDuracionSinMensajeDeVacio() {
+        val presentacion = presentarAlbum(album.copy(
+            canciones = listOf(Cancion("Decisiones", "5:02"), Cancion("Plástico", "6:40"))
+        ))
+        rule.setContent {
+            VinilosTheme { ContenidoAlbum(presentacion, onAtras = {}) }
+        }
+
+        listOf("Decisiones", "5:02", "Plástico", "6:40").forEach {
+            rule.onNodeWithText(it).performScrollTo().assertIsDisplayed()
+        }
+        rule.onNodeWithText("Este álbum aún no tiene canciones registradas").assertDoesNotExist()
     }
 }
