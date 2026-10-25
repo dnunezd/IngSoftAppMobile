@@ -33,4 +33,15 @@ class ContenidoAlbumTest {
         }
         rule.onNodeWithText("Escuchar ahora").assertDoesNotExist()
     }
+
+    @Test
+    fun sinCancionesMuestraElMensajeExacto() {
+        val presentacion = presentarAlbum(album)
+        rule.setContent {
+            VinilosTheme { ContenidoAlbum(presentacion, onAtras = {}) }
+        }
+
+        rule.onNodeWithText("Este álbum aún no tiene canciones registradas")
+            .performScrollTo().assertIsDisplayed()
+    }
 }
