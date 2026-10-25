@@ -4,6 +4,8 @@ import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.Artista
 import com.example.vinilos.data.model.Cancion
 import com.example.vinilos.data.model.Comentario
+import com.example.vinilos.data.remote.AlbumApi
+import com.example.vinilos.data.remote.AlbumDto
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.google.gson.JsonParseException
 import kotlinx.coroutines.test.runTest
@@ -13,7 +15,9 @@ import okhttp3.mockwebserver.SocketPolicy
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import retrofit2.HttpException
@@ -167,5 +171,21 @@ class AlbumRepositoryTest {
         assertEquals(emptyList<Comentario>(), album.comentarios)
         assertEquals(null, album.portada)
         assertEquals("/albums/102", servidor.takeRequest(1, TimeUnit.SECONDS)?.path)
+    }
+
+    @Test
+    fun errorInesperadoSePropagaSinDisfrazarloDeErrorDeCarga() = runTest {
+        val esperado = IllegalStateException("Error de programación")
+        val api = object : AlbumApi {
+            override suspend fun obtenerAlbum(id: Int): AlbumDto = throw esperado
+        }
+        val repositorio = AlbumRepository(ServiceAdapter(servidor.url("/").toString()), api)
+
+        try {
+            repositorio.obtenerAlbum(101)
+            fail("El error inesperado debe propagarse")
+        } catch (error: IllegalStateException) {
+            assertSame(esperado, error)
+        }
     }
 }

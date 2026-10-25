@@ -13,9 +13,10 @@ import java.io.IOException
 
 class AlbumNoDisponible(causa: Throwable? = null) : Exception("El álbum ya no está disponible", causa)
 
-open class AlbumRepository(private val adaptador: ServiceAdapter) {
-
-    private val api = adaptador.api<AlbumApi>()
+open class AlbumRepository(
+    private val adaptador: ServiceAdapter,
+    private val api: AlbumApi = adaptador.api()
+) {
 
     open suspend fun obtenerAlbum(id: Int): Result<Album> {
         val respuesta = adaptador.llamar { api.obtenerAlbum(id).aModelo() }
