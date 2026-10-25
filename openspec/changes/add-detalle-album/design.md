@@ -87,6 +87,10 @@ Se revisó la referencia `album.png` entregada por el usuario: portada destacada
 
 El botón "Escuchar ahora" que aparece en la imagen se excluye expresamente. Los iconos de favorito y compartir, la acción "Agregar comentario" y cualquier otra interacción dibujada que no esté descrita en los criterios también son solo elementos de referencia: no se implementan como funciones. Se mantienen los criterios aprobados como límite funcional, incluyendo mostrar datos de artistas, canciones y comentarios, así como los mensajes de estados vacíos.
 
+### D9. Promedio con un decimal en español
+
+El usuario confirmó presentar la media aritmética con un decimal y coma española, redondeando al valor más cercano y hacia arriba en los empates (`HALF_UP`): `4,666…` se muestra como `4,7` y `4,25` como `4,3`. Las calificaciones ausentes no entran en el divisor; si no queda ninguna, la presentación entrega ausencia de promedio para mostrar "Sin calificaciones". El cálculo y el formato se resuelven fuera de Compose.
+
 ## Risks / Trade-offs
 
 - **El adaptador compartido podría homogeneizar el 404 con otros errores** → Preservar el status HTTP en un tipo de error que el repositorio pueda interpretar y probarlo con MockWebServer.
@@ -95,12 +99,11 @@ El botón "Escuchar ahora" que aparece en la imagen se excluye expresamente. Los
 - **Compatibilidad de fecha en API 23** → Usar `SimpleDateFormat`, sin patrones exclusivos de APIs posteriores; verificar HU02 en dispositivo API 23 antes de afirmar ejecución allí.
 - **Sin librería no se descarga la portada** → Diseñar el fallback y el punto de integración, y dejar la carga real conectable cuando el equipo elija la librería.
 - **HU01 puede no estar integrado cuando HU02 empiece** → Mantener la navegación parametrizada y coordinar el callback/ruta con la implementación del catálogo; las pruebas pueden usar un destino de catálogo de prueba.
-- **El promedio no define redondeo ni precisión** → Calcular la media aritmética y solicitar decisión del equipo sobre formato/precisión antes de fijar pruebas de presentación para valores periódicos.
+- **Precisión del promedio** → Decisión confirmada: un decimal, coma española y `HALF_UP`, con pruebas de media periódica y empate de redondeo.
 - **La imagen de Stitch contiene controles que exceden los criterios** → Usarla como referencia de composición y documentar explícitamente que no se agregan esas interacciones; en particular, excluir "Escuchar ahora".
 
 ## Open Questions
 
-- ¿El promedio se presenta como entero, con un decimal o con más precisión? ¿Qué regla de redondeo se usa?
 - ¿Qué se muestra si una fecha ISO falta o está malformada?
 - ¿Qué fallback se espera para una imagen de artista que no carga? El criterio solo define fallback para la portada.
 - Sin agregar una librería de imágenes, ¿se acepta que la portada permanezca en fallback hasta la integración posterior, o el equipo tiene un mecanismo existente para cargarla?
