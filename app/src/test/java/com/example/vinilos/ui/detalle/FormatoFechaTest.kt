@@ -36,4 +36,9 @@ class FormatoFechaTest {
             Locale.setDefault(idiomaOriginal)
         }
     }
+
+    @Test
+    fun timestampConDesplazamientoSeInterpretaEnUtc() {
+        assertEquals("1 de agosto de 1984", formatearFechaLanzamiento("1984-07-31T19:00:00-05:00"))
+    }
 }
