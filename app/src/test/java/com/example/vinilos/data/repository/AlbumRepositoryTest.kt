@@ -18,6 +18,7 @@ import org.junit.Test
 import retrofit2.HttpException
 import java.io.IOException
 import java.lang.reflect.Modifier
+import java.net.SocketTimeoutException
 import java.util.concurrent.TimeUnit
 
 class AlbumRepositoryTest {
@@ -115,5 +116,15 @@ class AlbumRepositoryTest {
         assertTrue("La desconexión debe ser un error de carga, no un 404", error is ErrorDeCarga)
         assertTrue(error!!.cause is IOException)
         assertTrue(error.cause !is HttpException)
+    }
+
+    @Test
+    fun timeoutSeTraduceAErrorDeCargaConSuCausa() = runTest {
+        servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE))
+
+        val error = repositorio.obtenerAlbum(101).exceptionOrNull()
+
+        assertTrue("El timeout debe permitir reintentar, no indicar un 404", error is ErrorDeCarga)
+        assertTrue(error!!.cause is SocketTimeoutException)
     }
 }
