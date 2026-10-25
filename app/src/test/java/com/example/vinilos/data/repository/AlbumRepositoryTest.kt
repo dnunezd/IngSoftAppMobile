@@ -138,4 +138,14 @@ class AlbumRepositoryTest {
         assertTrue("El cuerpo ilegible debe permitir recuperar la carga", error is ErrorDeCarga)
         assertTrue(error!!.cause is JsonParseException)
     }
+
+    @Test
+    fun respuestaSinCamposObligatoriosSeTraduceAErrorDeCarga() = runTest {
+        servidor.enqueue(MockResponse().setBody("""{"id":101}"""))
+
+        val error = repositorio.obtenerAlbum(101).exceptionOrNull()
+
+        assertTrue("Un álbum incompleto debe ser un fallo de carga, no cerrar la app", error is ErrorDeCarga)
+        assertTrue(error!!.cause is JsonParseException)
+    }
 }
