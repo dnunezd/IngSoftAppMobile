@@ -44,4 +44,16 @@ class ContenidoAlbumTest {
         rule.onNodeWithText("Este álbum aún no tiene canciones registradas")
             .performScrollTo().assertIsDisplayed()
     }
+
+    @Test
+    fun sinComentariosMuestraElMensajeYLaAusenciaDeCalificaciones() {
+        val presentacion = presentarAlbum(album)
+        rule.setContent {
+            VinilosTheme { ContenidoAlbum(presentacion, onAtras = {}) }
+        }
+
+        rule.onNodeWithText("Aún no hay comentarios para este álbum")
+            .performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("Sin calificaciones").performScrollTo().assertIsDisplayed()
+    }
 }
