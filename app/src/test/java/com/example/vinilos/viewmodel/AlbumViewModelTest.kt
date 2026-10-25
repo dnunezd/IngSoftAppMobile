@@ -3,6 +3,7 @@ package com.example.vinilos.viewmodel
 import com.example.vinilos.MainDispatcherRule
 import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.remote.ServiceAdapter
+import com.example.vinilos.data.remote.ErrorDeCarga
 import com.example.vinilos.data.repository.AlbumRepository
 import com.example.vinilos.data.repository.AlbumNoDisponible
 import kotlinx.coroutines.CompletableDeferred
@@ -60,5 +61,18 @@ class AlbumViewModelTest {
         advanceUntilIdle()
 
         assertEquals(AlbumUiState.NoDisponible, viewModel.uiState.value)
+    }
+
+    @Test
+    fun cargandoPasaAErrorCuandoFallaLaConsulta() = runTest {
+        val repositorio = AlbumRepositoryFalso()
+        val viewModel = AlbumViewModel(101, repositorio)
+        assertEquals(AlbumUiState.Cargando, viewModel.uiState.value)
+        advanceUntilIdle()
+
+        repositorio.consultas.single().second.complete(Result.failure(ErrorDeCarga()))
+        advanceUntilIdle()
+
+        assertEquals(AlbumUiState.Error, viewModel.uiState.value)
     }
 }

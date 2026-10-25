@@ -6,4 +6,5 @@ sealed interface AlbumUiState {
     data object Cargando : AlbumUiState
     data class Exito(val album: Album) : AlbumUiState
     data object NoDisponible : AlbumUiState
+    data object Error : AlbumUiState
 }
