@@ -219,4 +219,14 @@ class AlbumRepositoryTest {
         assertTrue(consulta.isCancelled)
         assertFalse("La cancelación no debe convertirse en un Result", devolvioResultado)
     }
+
+    @Test
+    fun cuerpoNuloSeTraduceAErrorDeCargaSinConfundirloCon404() = runTest {
+        servidor.enqueue(MockResponse().setBody("null"))
+
+        val error = repositorio.obtenerAlbum(101).exceptionOrNull()
+
+        assertTrue("Una respuesta sin álbum debe ser un error de carga", error is ErrorDeCarga)
+        assertTrue(error!!.cause is JsonParseException)
+    }
 }
