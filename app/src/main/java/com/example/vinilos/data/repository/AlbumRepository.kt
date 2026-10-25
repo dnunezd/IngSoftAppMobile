@@ -9,6 +9,7 @@ import com.example.vinilos.data.remote.AlbumDto
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.google.gson.JsonParseException
 import retrofit2.HttpException
+import java.io.IOException
 
 class AlbumNoDisponible(causa: Throwable? = null) : Exception("El álbum ya no está disponible", causa)
 
@@ -23,6 +24,9 @@ open class AlbumRepository(private val adaptador: ServiceAdapter) {
             return Result.failure(
                 if (error.code() == 404) AlbumNoDisponible(error) else ErrorDeCarga(error)
             )
+        }
+        if (error is IOException) {
+            return Result.failure(ErrorDeCarga(error))
         }
         return respuesta.map { it.aModelo() }
     }
