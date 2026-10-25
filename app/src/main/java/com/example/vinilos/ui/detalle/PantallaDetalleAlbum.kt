@@ -43,18 +43,25 @@ fun PantallaDetalleAlbum(
                 CircularProgressIndicator(Modifier.semantics { contentDescription = descripcion })
             }
         }
-        if (estado == AlbumUiState.NoDisponible) {
+        if (estado == AlbumUiState.NoDisponible || estado == AlbumUiState.Error) {
             Column(
                 Modifier.fillMaxSize().padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically)
             ) {
                 Text(
-                    stringResource(R.string.detalle_no_disponible),
+                    stringResource(
+                        if (estado == AlbumUiState.NoDisponible) R.string.detalle_no_disponible
+                        else R.string.detalle_error
+                    ),
                     style = MaterialTheme.typography.titleLarge,
                     textAlign = TextAlign.Center
                 )
-                Button(onClick = onAtras) { Text(stringResource(R.string.detalle_volver_catalogo)) }
+                if (estado == AlbumUiState.NoDisponible) {
+                    Button(onClick = onAtras) { Text(stringResource(R.string.detalle_volver_catalogo)) }
+                } else {
+                    Button(onClick = onReintentar) { Text(stringResource(R.string.detalle_reintentar)) }
+                }
             }
         }
     }

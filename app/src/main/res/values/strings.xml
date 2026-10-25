@@ -76,4 +76,6 @@
     <string name="detalle_cargando">Cargando álbum</string>
     <string name="detalle_no_disponible">El álbum ya no está disponible</string>
     <string name="detalle_volver_catalogo">Volver al catálogo</string>
+    <string name="detalle_error">No pudimos cargar el álbum</string>
+    <string name="detalle_reintentar">Reintentar</string>
 </resources>
