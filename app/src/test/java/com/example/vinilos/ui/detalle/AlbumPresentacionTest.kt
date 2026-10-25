@@ -28,4 +28,9 @@ class AlbumPresentacionTest {
     fun sinCancionesSeleccionaElMensajeDeVacio() {
         assertEquals(R.string.detalle_sin_canciones, presentarAlbum(album).mensajeCanciones)
     }
+
+    @Test
+    fun sinComentariosSeleccionaElMensajeDeVacio() {
+        assertEquals(R.string.detalle_sin_comentarios, presentarAlbum(album).mensajeComentarios)
+    }
 }

@@ -64,4 +64,5 @@
     <string name="catalogo_rol_ninguno">Sin perfil</string>
 
     <string name="detalle_sin_canciones">Este álbum aún no tiene canciones registradas</string>
+    <string name="detalle_sin_comentarios">Aún no hay comentarios para este álbum</string>
 </resources>
