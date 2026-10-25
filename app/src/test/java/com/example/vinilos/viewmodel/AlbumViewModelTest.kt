@@ -4,6 +4,7 @@ import com.example.vinilos.MainDispatcherRule
 import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.AlbumRepository
+import com.example.vinilos.data.repository.AlbumNoDisponible
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -46,5 +47,18 @@ class AlbumViewModelTest {
         advanceUntilIdle()
 
         assertEquals(AlbumUiState.Exito(album), viewModel.uiState.value)
+    }
+
+    @Test
+    fun cargandoPasaANoDisponibleCuandoElAlbumNoExiste() = runTest {
+        val repositorio = AlbumRepositoryFalso()
+        val viewModel = AlbumViewModel(999, repositorio)
+        assertEquals(AlbumUiState.Cargando, viewModel.uiState.value)
+        advanceUntilIdle()
+
+        repositorio.consultas.single().second.complete(Result.failure(AlbumNoDisponible()))
+        advanceUntilIdle()
+
+        assertEquals(AlbumUiState.NoDisponible, viewModel.uiState.value)
     }
 }
