@@ -8,7 +8,8 @@ data class AlbumPresentacion(
     val album: Album,
     val fechaLanzamiento: String,
     @StringRes val mensajeCanciones: Int? = null,
-    @StringRes val mensajeComentarios: Int? = null
+    @StringRes val mensajeComentarios: Int? = null,
+    val promedio: String? = null
 )
 
 fun presentarAlbum(album: Album): AlbumPresentacion =

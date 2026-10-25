@@ -2,6 +2,7 @@ package com.example.vinilos.ui.detalle
 
 import com.example.vinilos.R
 import com.example.vinilos.data.model.Album
+import com.example.vinilos.data.model.Comentario
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
@@ -32,5 +33,14 @@ class AlbumPresentacionTest {
     @Test
     fun sinComentariosSeleccionaElMensajeDeVacio() {
         assertEquals(R.string.detalle_sin_comentarios, presentarAlbum(album).mensajeComentarios)
+    }
+
+    @Test
+    fun entregaElPromedioDeLasCalificacionesDisponibles() {
+        val conComentarios = album.copy(
+            comentarios = listOf(Comentario("Bueno", 5), Comentario("Sin nota", null), Comentario("Bien", 4))
+        )
+
+        assertEquals("4,5", presentarAlbum(conComentarios).promedio)
     }
 }
