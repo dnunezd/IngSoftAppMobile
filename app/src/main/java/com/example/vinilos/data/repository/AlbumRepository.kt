@@ -39,13 +39,13 @@ open class AlbumRepository(private val adaptador: ServiceAdapter) {
         genero = requerido(genre, "genre"),
         disquera = requerido(recordLabel, "recordLabel"),
         fechaLanzamiento = requerido(releaseDate, "releaseDate"),
-        canciones = requerido(tracks, "tracks").map {
+        canciones = tracks.orEmpty().map {
             Cancion(requerido(it.name, "track.name"), requerido(it.duration, "track.duration"))
         },
-        artistas = requerido(performers, "performers").map {
+        artistas = performers.orEmpty().map {
             Artista(requerido(it.name, "performer.name"), it.image)
         },
-        comentarios = requerido(comments, "comments").map {
+        comentarios = comments.orEmpty().map {
             Comentario(requerido(it.description, "comment.description"), it.rating)
         }
     )
