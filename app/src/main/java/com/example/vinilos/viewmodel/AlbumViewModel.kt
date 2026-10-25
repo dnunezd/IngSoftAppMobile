@@ -14,6 +14,8 @@ class AlbumViewModel(private val id: Int, private val repositorio: AlbumReposito
     private val _uiState = MutableStateFlow<AlbumUiState>(AlbumUiState.Cargando)
     val uiState = _uiState.asStateFlow()
 
+    fun reintentar() = Unit
+
     init {
         viewModelScope.launch {
             _uiState.value = repositorio.obtenerAlbum(id).fold(

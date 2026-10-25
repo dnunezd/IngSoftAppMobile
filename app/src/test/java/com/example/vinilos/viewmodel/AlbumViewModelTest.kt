@@ -75,4 +75,23 @@ class AlbumViewModelTest {
 
         assertEquals(AlbumUiState.Error, viewModel.uiState.value)
     }
+
+    @Test
+    fun reintentarPasaDeErrorACargandoYExitoConElMismoId() = runTest {
+        val repositorio = AlbumRepositoryFalso()
+        val viewModel = AlbumViewModel(101, repositorio)
+        advanceUntilIdle()
+        repositorio.consultas.single().second.complete(Result.failure(ErrorDeCarga()))
+        advanceUntilIdle()
+        assertEquals(AlbumUiState.Error, viewModel.uiState.value)
+
+        viewModel.reintentar()
+        assertEquals(AlbumUiState.Cargando, viewModel.uiState.value)
+        advanceUntilIdle()
+        assertEquals(listOf(101, 101), repositorio.consultas.map { it.first })
+        repositorio.consultas.last().second.complete(Result.success(album))
+        advanceUntilIdle()
+
+        assertEquals(AlbumUiState.Exito(album), viewModel.uiState.value)
+    }
 }
