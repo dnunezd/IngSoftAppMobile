@@ -6,7 +6,7 @@ La app es Android nativa con Kotlin, Jetpack Compose, MVVM y Repository. En la r
 
 El backend BackVynils expone `GET /albums/:albumId`. Su servicio carga las relaciones `tracks`, `performers` y `comments`, y genera un 404 si no encuentra el álbum. Los comentarios del modelo tienen descripción y calificación; aunque se relacionan con un coleccionista en el backend, HU02 no debe mostrar la identidad de quien escribió. Las fechas de muestra están almacenadas como `YYYY-MM-DD`; el contrato que consume Android se declara como texto ISO.
 
-El proyecto de esta rama declara `minSdk = 26`. El equipo está integrando por separado el objetivo `minSdk = 23`; HU02 debe poder probarse allí cuando ese cambio llegue a la rama. En API menor que 26, `java.time` necesita core library desugaring. Este cambio no altera archivos compartidos de Gradle ni agrega dependencias.
+La integración de `develop` incorporó `minSdk = 23` y el Service Adapter compartido. HU02 usa `SimpleDateFormat`, sin `java.time` ni desugaring, por decisión del usuario. Este cambio no altera archivos compartidos de Gradle ni agrega dependencias.
 
 ## Goals / Non-Goals
 
@@ -52,7 +52,7 @@ Un álbum es un único recurso, por lo que no se agrega un estado de lista vací
 
 La conversión queda encapsulada en una función pura de texto a texto (por ejemplo, `formatearFechaLanzamiento(fechaIso: String): String`) en la capa de dominio/presentación, no en el composable. Debe producir un texto español determinista como `1 de agosto de 1984`, interpretando el dato en UTC para que la zona del teléfono no altere el día.
 
-Para fechas ISO de solo día (`YYYY-MM-DD`), se interpreta la fecha calendario como ese día en UTC, no como medianoche local. Para un timestamp ISO con zona, se interpreta su instante y se toma su fecha UTC. La implementación puede usar `java.time` aislada detrás de esa función. La ejecución en API 23 requiere core library desugaring, que depende de la integración compartida pendiente; este cambio no edita Gradle ni incorpora esa dependencia por su cuenta.
+Para fechas ISO de solo día (`YYYY-MM-DD`), se interpreta la fecha calendario como ese día en UTC, no como medianoche local. Para un timestamp ISO con zona, se interpreta su instante y se toma su fecha UTC. El usuario confirmó conservar el día recibido y presentarlo en español. Se usa `SimpleDateFormat` con instancias locales por invocación y zona UTC explícita, sin `java.time` ni desugaring. La entrada admite fecha calendario y timestamps con o sin milisegundos; los desplazamientos se normalizan a RFC 822 para API 23. Este cambio no edita Gradle ni incorpora dependencias.
 
 El idioma/locale de salida debe ser español estable y no depender del idioma configurado en el teléfono. El comportamiento para una fecha ISO inválida queda señalado como punto para confirmar antes de cerrar la especificación.
 
@@ -83,6 +83,8 @@ Excepción autorizada durante T02-2: el Service Adapter ya existía y no se modi
 
 La imagen adjunta de Stitch orienta la jerarquía y el orden visual: portada en la parte superior, nombre y metadatos, descripción, artistas destacados, canciones, comentarios y calificación promedio. La composición puede adaptar esos bloques al tamaño de pantalla y a los datos reales que devuelve BackVynils.
 
+Se revisó la referencia `album.png` entregada por el usuario: portada destacada, ficha blanca redondeada y secciones sobre fondo claro, usando la paleta existente de HU00. La portada y los textos son los del álbum consultado, no los de Symphony No. 9 de la captura.
+
 El botón "Escuchar ahora" que aparece en la imagen se excluye expresamente. Los iconos de favorito y compartir, la acción "Agregar comentario" y cualquier otra interacción dibujada que no esté descrita en los criterios también son solo elementos de referencia: no se implementan como funciones. Se mantienen los criterios aprobados como límite funcional, incluyendo mostrar datos de artistas, canciones y comentarios, así como los mensajes de estados vacíos.
 
 ## Risks / Trade-offs
@@ -90,7 +92,7 @@ El botón "Escuchar ahora" que aparece en la imagen se excluye expresamente. Los
 - **El adaptador compartido podría homogeneizar el 404 con otros errores** → Preservar el status HTTP en un tipo de error que el repositorio pueda interpretar y probarlo con MockWebServer.
 - **El Service Adapter puede integrarse en paralelo** → Acordar su firma/errores con el equipo y reutilizarlo; no crear otra instancia o abstracción competidora.
 - **La fecha ISO puede ser fecha calendario o timestamp** → Cubrir ambas formas si las entrega el backend y confirmar el contrato real; la salida siempre se calcula en UTC.
-- **`java.time` no está disponible directamente en API 23** → Depender del cambio compartido de minSdk y desugaring antes de afirmar soporte; verificar HU02 en emulador API 23 tras ese merge.
+- **Compatibilidad de fecha en API 23** → Usar `SimpleDateFormat`, sin patrones exclusivos de APIs posteriores; verificar HU02 en dispositivo API 23 antes de afirmar ejecución allí.
 - **Sin librería no se descarga la portada** → Diseñar el fallback y el punto de integración, y dejar la carga real conectable cuando el equipo elija la librería.
 - **HU01 puede no estar integrado cuando HU02 empiece** → Mantener la navegación parametrizada y coordinar el callback/ruta con la implementación del catálogo; las pruebas pueden usar un destino de catálogo de prueba.
 - **El promedio no define redondeo ni precisión** → Calcular la media aritmética y solicitar decisión del equipo sobre formato/precisión antes de fijar pruebas de presentación para valores periódicos.

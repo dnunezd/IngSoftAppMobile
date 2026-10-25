@@ -11,9 +11,9 @@
 
 ## 2. Estado, lógica y pantalla de detalle (T02-3)
 
-- [ ] 2.0 Usar la pantalla adjunta de Stitch como referencia visual para ordenar portada, metadatos y secciones de contenido; omitir "Escuchar ahora" y no implementar interacciones de la imagen que no estén en los criterios de HU02.
-- [ ] 2.1 Escribir pruebas unitarias para la función pura de fecha de texto a texto: `1984-08-01` produce `1 de agosto de 1984`; incluir timestamp ISO UTC y verificar resultado idéntico en distintas zonas horarias. Confirmar que fallan antes de implementar.
-- [ ] 2.2 Implementar el formateo aislado en UTC, con idioma español determinista. No formatear fechas en Compose. La ejecución en API 23 depende de la integración externa de minSdk/desugaring; no editar Gradle en esta tarea.
+- [x] 2.0 Usar la pantalla adjunta de Stitch como referencia visual para ordenar portada, metadatos y secciones de contenido; omitir "Escuchar ahora" y no implementar interacciones de la imagen que no estén en los criterios de HU02. Referencia `album.png` revisada y confirmada por el usuario: la portada y los datos corresponden al álbum consultado; no se replica el contenido fijo de la captura.
+- [x] 2.1 Escribir pruebas unitarias para la función pura de fecha de texto a texto: `1984-08-01` produce `1 de agosto de 1984`; incluir timestamp ISO UTC y verificar resultado idéntico en distintas zonas horarias. ROJO/VERDE verificados para fecha calendario y timestamps; independencia de zona/idioma verificada como regresión autorizada.
+- [x] 2.2 Implementar el formateo aislado en UTC, con idioma español determinista. No formatear fechas en Compose. Usar `SimpleDateFormat`, sin `java.time` ni desugaring; API 23 ya está integrada. Las unitarias pasan; la ejecución en dispositivo API 23 se verifica en 4.2, sin afirmar que ya se realizó.
 - [ ] 2.3 Escribir pruebas del ViewModel antes de implementarlo: `Cargando → Exito`, `Cargando → NoDisponible`, `Cargando → Error`, reintento `Error → Cargando → Exito` y que un resultado tardío no reemplace la consulta vigente.
 - [ ] 2.4 Implementar ViewModel y estado de UI para el álbum por ID, con reintento solo desde el error de conexión/servidor.
 - [ ] 2.5 Escribir pruebas unitarias de presentación antes de implementar los cálculos: canciones vacías, comentarios vacíos, promedio aritmético, ausencia de datos de autor y salida de fecha formateada.
