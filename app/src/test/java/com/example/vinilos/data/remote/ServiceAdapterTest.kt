@@ -3,6 +3,7 @@ package com.example.vinilos.data.remote
 import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.SocketPolicy
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -10,6 +11,7 @@ import org.junit.Before
 import org.junit.Test
 import retrofit2.HttpException
 import retrofit2.http.GET
+import java.io.IOException
 
 // Respuesta pequeña que Retrofit/Gson convertirá desde el JSON.
 data class DatosPrueba(val nombre: String)
@@ -89,5 +91,18 @@ class ServiceAdapterTest {
         val error = resultado.exceptionOrNull()
         assertTrue(error is HttpException)
         assertEquals(500, (error as HttpException).code())
+    }
+
+    @Test
+    fun desconexionDevuelveElErrorDeTransporte() = runTest {
+        servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST))
+        val adaptador = ServiceAdapter(servidor.url("/").toString())
+        val api = adaptador.api<ApiDePrueba>()
+
+        val resultado = adaptador.llamar { api.obtenerPrueba() }
+
+        assertTrue(resultado.isFailure)
+        assertTrue(resultado.exceptionOrNull() is IOException)
+        assertTrue(resultado.exceptionOrNull() !is HttpException)
     }
 }
