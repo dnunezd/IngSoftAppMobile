@@ -19,8 +19,10 @@ open class AlbumRepository(private val adaptador: ServiceAdapter) {
     open suspend fun obtenerAlbum(id: Int): Result<Album> {
         val respuesta = adaptador.llamar { api.obtenerAlbum(id) }
         val error = respuesta.exceptionOrNull()
-        if (error is HttpException && error.code() == 404) {
-            return Result.failure(AlbumNoDisponible(error))
+        if (error is HttpException) {
+            return Result.failure(
+                if (error.code() == 404) AlbumNoDisponible(error) else ErrorDeCarga(error)
+            )
         }
         return respuesta.map { it.aModelo() }
     }
