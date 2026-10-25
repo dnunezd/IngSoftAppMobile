@@ -20,4 +20,9 @@ class PromedioCalificacionesTest {
     fun sinComentariosNoExistePromedio() {
         assertNull(promedioCalificaciones(emptyList()))
     }
+
+    @Test
+    fun comentariosSinCalificacionNoTienenPromedio() {
+        assertNull(promedioCalificaciones(listOf(Comentario("Sin nota", null))))
+    }
 }
