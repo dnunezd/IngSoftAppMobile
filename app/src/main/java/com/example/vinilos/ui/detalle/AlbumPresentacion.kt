@@ -15,5 +15,6 @@ fun presentarAlbum(album: Album): AlbumPresentacion =
     AlbumPresentacion(
         album = album,
         fechaLanzamiento = formatearFechaLanzamiento(album.fechaLanzamiento),
-        mensajeCanciones = R.string.detalle_sin_canciones.takeIf { album.canciones.isEmpty() }
+        mensajeCanciones = R.string.detalle_sin_canciones.takeIf { album.canciones.isEmpty() },
+        mensajeComentarios = R.string.detalle_sin_comentarios.takeIf { album.comentarios.isEmpty() }
     )
