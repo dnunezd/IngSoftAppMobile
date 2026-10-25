@@ -1,5 +1,6 @@
 package com.example.vinilos.data.remote
 
+import com.google.gson.JsonParseException
 import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -117,5 +118,17 @@ class ServiceAdapterTest {
 
         assertTrue(resultado.isFailure)
         assertTrue(resultado.exceptionOrNull() is SocketTimeoutException)
+    }
+
+    @Test
+    fun jsonIlegibleDevuelveElErrorDeLectura() = runTest {
+        servidor.enqueue(MockResponse().setBody("""{"nombre":[]}"""))
+        val adaptador = ServiceAdapter(servidor.url("/").toString())
+        val api = adaptador.api<ApiDePrueba>()
+
+        val resultado = adaptador.llamar { api.obtenerPrueba() }
+
+        assertTrue(resultado.isFailure)
+        assertTrue(resultado.exceptionOrNull() is JsonParseException)
     }
 }
