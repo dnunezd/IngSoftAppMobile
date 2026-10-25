@@ -8,7 +8,8 @@ import java.util.TimeZone
 
 fun formatearFechaLanzamiento(fechaIso: String): String {
     val utc = TimeZone.getTimeZone("UTC")
-    val entrada = SimpleDateFormat("yyyy-MM-dd", Locale.ROOT).apply {
+    val patron = if (fechaIso.contains('T')) "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'" else "yyyy-MM-dd"
+    val entrada = SimpleDateFormat(patron, Locale.ROOT).apply {
         timeZone = utc
         isLenient = false
     }
