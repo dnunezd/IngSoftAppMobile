@@ -2,8 +2,11 @@ package com.example.vinilos.ui.detalle
 
 import com.example.vinilos.R
 import com.example.vinilos.data.model.Album
+import com.example.vinilos.data.model.Artista
+import com.example.vinilos.data.model.Cancion
 import com.example.vinilos.data.model.Comentario
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 import java.lang.reflect.Modifier
 
@@ -55,5 +58,21 @@ class AlbumPresentacionTest {
 
         assertEquals(setOf("descripcion", "calificacion"), campos)
         assertEquals(listOf(comentario), presentado.album.comentarios)
+    }
+
+    @Test
+    fun albumCompletoConservaSusDatosSinMensajesDeVacio() {
+        val completo = album.copy(
+            portada = "https://example.test/album.jpg",
+            canciones = listOf(Cancion("Decisiones", "5:02")),
+            artistas = listOf(Artista("Rubén Blades", "https://example.test/artista.jpg")),
+            comentarios = listOf(Comentario("Gran disco", 5))
+        )
+
+        val presentado = presentarAlbum(completo)
+
+        assertEquals(completo, presentado.album)
+        assertNull(presentado.mensajeCanciones)
+        assertNull(presentado.mensajeComentarios)
     }
 }
