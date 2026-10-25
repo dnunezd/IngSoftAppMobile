@@ -3,8 +3,8 @@
 ## 1. Consumo del detalle y acceso compartido al backend (T02-2)
 
 - [x] 1.1 Escribir primero pruebas unitarias del Service Adapter con `MockWebServer`: respuesta exitosa, 404 con status preservado, 500, desconexión, timeout, JSON ilegible y cancelación relanzada. Excepción autorizada: el adaptador ya estaba implementado; estos casos se verificaron como caracterización, sin afirmar un ROJO retroactivo. La cancelación se comprueba directamente en la operación suspendida.
-- [ ] 1.2 Crear/reutilizar el Service Adapter como único constructor de Retrofit y punto común para ejecutar llamadas; garantizar que los errores HTTP retienen el código de estado necesario para los repositorios.
-- [ ] 1.3 Migrar `CollectorRepository` para usar el Service Adapter compartido sin cambiar el comportamiento observable de HU00; actualizar sus pruebas y los repositorios falsos existentes. No modificar archivos compartidos de Gradle ni agregar dependencias.
+- [x] 1.2 Crear/reutilizar el Service Adapter como único constructor de Retrofit y punto común para ejecutar llamadas; garantizar que los errores HTTP retienen el código de estado necesario para los repositorios.
+- [x] 1.3 Migrar `CollectorRepository` para usar el Service Adapter compartido sin cambiar el comportamiento observable de HU00; actualizar sus pruebas y los repositorios falsos existentes. No modificar archivos compartidos de Gradle ni agregar dependencias.
 - [ ] 1.4 Escribir primero pruebas de `AlbumApi`/repositorio que comprueben `GET /albums/{id}`, el ID enviado, el mapeo de datos relacionados, el 404 y los fallos de red/servidor.
 - [ ] 1.5 Implementar API, DTOs y modelos de dominio para álbum, tracks, artistas y comentarios con solo los datos que HU02 necesita. No exponer ni mostrar identidad de autor.
 - [ ] 1.6 Implementar `AlbumRepository`: ejecutar la consulta por el Service Adapter, convertir DTO a modelo, traducir 404 a `AlbumNoDisponible` y dejar los demás fallos como error recuperable de carga. Verificar éxito, 404, 500, desconexión, timeout, respuesta ilegible y cancelación.
