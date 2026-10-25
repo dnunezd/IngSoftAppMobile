@@ -8,6 +8,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import retrofit2.HttpException
 import retrofit2.http.GET
 
 // Respuesta pequeña que Retrofit/Gson convertirá desde el JSON.
@@ -60,5 +61,19 @@ class ServiceAdapterTest {
         val peticion = servidor.takeRequest()
         assertEquals("GET", peticion.method)
         assertEquals("/prueba", peticion.path)
+    }
+
+    @Test
+    fun respuesta404ConservaElCodigoHttp() = runTest {
+        servidor.enqueue(MockResponse().setResponseCode(404))
+        val adaptador = ServiceAdapter(servidor.url("/").toString())
+        val api = adaptador.api<ApiDePrueba>()
+
+        val resultado = adaptador.llamar { api.obtenerPrueba() }
+
+        assertTrue(resultado.isFailure)
+        val error = resultado.exceptionOrNull()
+        assertTrue(error is HttpException)
+        assertEquals(404, (error as HttpException).code())
     }
 }
