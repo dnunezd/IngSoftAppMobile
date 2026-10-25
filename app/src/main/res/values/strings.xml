@@ -71,4 +71,6 @@
     <string name="detalle_promedio">Promedio de calificaciones</string>
     <string name="detalle_calificacion">%1$d / 5</string>
     <string name="detalle_imagen_provisional">Imagen provisional del álbum</string>
+    <string name="detalle_artistas">Artistas</string>
+    <string name="detalle_artista_provisional">Imagen provisional de %1$s</string>
 </resources>

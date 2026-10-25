@@ -12,14 +12,17 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -60,6 +63,30 @@ fun ContenidoAlbum(
                     Text(presentacion.album.genero, style = MaterialTheme.typography.labelLarge)
                     Text(presentacion.album.disquera, style = MaterialTheme.typography.bodyMedium)
                     Text(presentacion.fechaLanzamiento, style = MaterialTheme.typography.bodyMedium)
+                }
+            }
+        }
+        if (presentacion.album.artistas.isNotEmpty()) {
+            item {
+                Text(
+                    stringResource(R.string.detalle_artistas),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            }
+            items(presentacion.album.artistas) { artista ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Image(
+                        painter = painterResource(R.drawable.inicio_artistas),
+                        contentDescription = stringResource(R.string.detalle_artista_provisional, artista.nombre),
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.size(64.dp).clip(CircleShape)
+                    )
+                    Text(artista.nombre, style = MaterialTheme.typography.titleMedium)
                 }
             }
         }
