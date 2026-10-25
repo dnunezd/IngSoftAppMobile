@@ -1,6 +1,7 @@
 package com.example.vinilos
 
 import com.example.vinilos.data.remote.ServiceAdapter
+import com.example.vinilos.data.repository.AlbumRepository
 import com.example.vinilos.data.repository.CollectorRepository
 
 /**
@@ -17,4 +18,7 @@ class AppContainer(
     /** Se puede reemplazar con [colectoresRepositorio] en las pruebas instrumentadas. */
     val collectorRepository: CollectorRepository =
         colectoresRepositorio ?: CollectorRepository(serviceAdapter)
+
+    val albumRepository: AlbumRepository
+        get() = error("Integración del repositorio de álbum pendiente")
 }
