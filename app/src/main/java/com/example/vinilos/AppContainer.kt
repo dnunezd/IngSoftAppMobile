@@ -19,6 +19,5 @@ class AppContainer(
     val collectorRepository: CollectorRepository =
         colectoresRepositorio ?: CollectorRepository(serviceAdapter)
 
-    val albumRepository: AlbumRepository
-        get() = error("Integración del repositorio de álbum pendiente")
+    val albumRepository = AlbumRepository(serviceAdapter)
 }
