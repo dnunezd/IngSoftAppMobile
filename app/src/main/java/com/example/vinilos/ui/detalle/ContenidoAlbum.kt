@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,6 +12,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
@@ -48,8 +50,24 @@ fun ContenidoAlbum(
                 }
             }
         }
+        item {
+            Text(
+                stringResource(R.string.detalle_canciones),
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
         presentacion.mensajeCanciones?.let { mensaje ->
             item { Text(stringResource(mensaje), style = MaterialTheme.typography.bodyLarge) }
+        }
+        items(presentacion.album.canciones) { cancion ->
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                Text(cancion.nombre, modifier = Modifier.weight(1f))
+                Text(cancion.duracion, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
         }
         presentacion.mensajeComentarios?.let { mensaje ->
             item { Text(stringResource(mensaje), style = MaterialTheme.typography.bodyLarge) }
