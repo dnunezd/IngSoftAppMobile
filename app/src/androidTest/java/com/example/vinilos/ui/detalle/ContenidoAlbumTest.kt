@@ -2,6 +2,7 @@ package com.example.vinilos.ui.detalle
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
 import com.example.vinilos.data.model.Album
@@ -19,6 +20,19 @@ class ContenidoAlbumTest {
         100, "Buscando América", null, "El sexto álbum de Rubén Blades",
         "Salsa", "Elektra", "1984-08-01", emptyList(), emptyList(), emptyList()
     )
+
+    @Test
+    fun muestraUnaIlustracionLocalProvisionalAntesDeLosMetadatos() {
+        val presentacion = presentarAlbum(album)
+        rule.setContent {
+            VinilosTheme { ContenidoAlbum(presentacion, onAtras = {}) }
+        }
+
+        val imagen = rule.onNodeWithContentDescription("Imagen provisional del álbum")
+            .assertIsDisplayed().fetchSemanticsNode()
+        val nombre = rule.onNodeWithText("Buscando América").fetchSemanticsNode()
+        org.junit.Assert.assertTrue(imagen.boundsInRoot.bottom <= nombre.boundsInRoot.top)
+    }
 
     @Test
     fun muestraLosMetadatosDelAlbumConsultado() {
