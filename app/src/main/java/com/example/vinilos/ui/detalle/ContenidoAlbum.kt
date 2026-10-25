@@ -30,6 +30,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.example.vinilos.R
+import com.example.vinilos.ui.ingreso.EncabezadoVinilo
 
 @Composable
 fun ContenidoAlbum(
@@ -44,6 +45,7 @@ fun ContenidoAlbum(
         contentPadding = PaddingValues(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        item { EncabezadoVinilo(onAtras = onAtras) }
         item {
             Image(
                 painter = painterResource(R.drawable.inicio_albumes),
