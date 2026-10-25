@@ -62,6 +62,8 @@ La pantalla coloca un componente de portada arriba y siempre puede dibujar el re
 
 No se agrega dependencia para descargar imágenes en este cambio. Hasta integrar la librería elegida, el detalle debe seguir siendo funcional y mostrar el fallback; el equipo debe decidir cómo verificará una carga remota real sin añadir la dependencia ahora.
 
+El usuario autorizó usar temporalmente la ilustración local `R.drawable.inicio_albumes` de HU00 para probar la composición del detalle mientras se espera la integración del cargador Coil de HU03. Se identifica como "Imagen provisional del álbum"; no es la portada real ni acredita carga remota, estados de error de imagen o imágenes de artistas. Las subtareas 2.6 y 2.7 permanecen pendientes hasta cubrir sus criterios completos. No se modifican recursos de HU00 ni Gradle para esta muestra.
+
 ### D6. Navegación enlazada con HU01
 
 La ruta de detalle recibe el ID del álbum que seleccionó el usuario. La acción de volver desde el detalle o desde `NoDisponible` regresa a la ruta/lista del catálogo, sin crear una pantalla nueva de catálogo dentro de HU02. La integración debe coordinarse con HU01, cuyo catálogo sustituirá el destino provisional actual.
