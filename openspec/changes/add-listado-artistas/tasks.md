@@ -8,7 +8,7 @@
 ## 2. Consumo de músicos y bandas (T03-2)
 
 - [x] 2.1 Crear el modelo `Artist` y `ArtistType` (`MUSICO`, `BANDA`), los DTO `MusicianDto` y `BandDto` con solo `id`, `name` e `image`, y `ArtistApi` con `GET musicians` y `GET bands`. Verificar con una prueba que un JSON con campos extra (`albums`, `performerPrizes`, `musicians`) se deserializa ignorándolos.
-- [x] 2.2 Escribir primero las pruebas (TDD) e implementar `ArtistRepository.obtenerArtistas()` devolviendo `Result<List<Artist>>`: consulta en paralelo, une y ordena por nombre con `Collator` en español, descarta elementos sin `id` o sin nombre, devuelve error si cualquiera de las dos consultas falla y relanza `CancellationException`. Verificar con pruebas unitarias con `MockWebServer`: ambas con datos, ambas vacías, solo músicos, `id` repetido entre músico y banda, orden con tildes y mayúsculas, error 500 en una de las dos, desconexión y JSON inválido.
+- [x] 2.2 Escribir primero las pruebas (TDD) e implementar `ArtistRepository.obtenerArtistas()` devolviendo `Result<List<Artist>>`: consulta en paralelo, une y ordena por nombre con `Collator` en español, descarta elementos sin `id` o sin nombre y devuelve error si cualquiera de las dos consultas falla, usando el `ServiceAdapter` compartido (que traduce los errores y relanza la cancelación). Verificar con pruebas unitarias con `MockWebServer`: ambas con datos, ambas vacías, solo músicos, `id` repetido entre músico y banda, orden con tildes y mayúsculas, error 500 en una de las dos, desconexión y JSON inválido.
 
 ## 3. Pantalla y su lógica (T03-3)
 

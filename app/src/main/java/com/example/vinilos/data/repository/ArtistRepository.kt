@@ -3,33 +3,30 @@ package com.example.vinilos.data.repository
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.remote.ArtistApi
-import kotlinx.coroutines.CancellationException
+import com.example.vinilos.data.remote.ServiceAdapter
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import java.text.Collator
 import java.util.Locale
 
-open class ArtistRepository(private val api: ArtistApi) {
+open class ArtistRepository(private val adaptador: ServiceAdapter) {
+
+    private val api: ArtistApi = adaptador.api()
 
     /**
-     * Músicos y bandas en un solo listado ordenado por nombre. Si cualquiera de las dos consultas
-     * falla devuelve [ErrorDeCarga]: un listado parcial no cumpliría con mostrar ambos.
+     * Músicos y bandas en un solo listado ordenado por nombre. Las dos consultas van en paralelo
+     * dentro de una sola llamada al adaptador: si cualquiera falla, el resultado es el error de carga,
+     * porque un listado parcial no cumpliría con mostrar ambos.
      */
     open suspend fun obtenerArtistas(): Result<List<Artist>> =
-        try {
-            val artistas = coroutineScope {
+        adaptador.llamar {
+            coroutineScope {
                 val musicos = async { api.getMusicians() }
                 val bandas = async { api.getBands() }
                 musicos.await().mapNotNull { artista(it.id, it.name, it.image, ArtistType.MUSICO) } +
                     bandas.await().mapNotNull { artista(it.id, it.name, it.image, ArtistType.BANDA) }
             }
-            Result.success(artistas.sortedWith(compareBy(ordenAlfabetico) { it.name }))
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            // Red, HTTP, JSON ilegible o cualquier otro fallo: nunca debe cerrar la app.
-            Result.failure(ErrorDeCarga(e))
-        }
+        }.map { artistas -> artistas.sortedWith(compareBy(ordenAlfabetico) { it.name }) }
 
     private fun artista(id: Int?, nombre: String?, imagen: String?, tipo: ArtistType): Artist? {
         id ?: return null

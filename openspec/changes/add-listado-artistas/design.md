@@ -33,13 +33,13 @@ La arquitectura del Sprint 1 está documentada en la wiki (página Sprint 1, sec
 
 *Alternativa descartada:* dos listas separadas en la UI. Los criterios piden un solo listado ordenado.
 
-### D2. `ArtistApi` como Service Adapter
+### D2. `ArtistApi` sobre el `ServiceAdapter`
 
-`ArtistApi` (Retrofit) declara `GET musicians` y `GET bands` con DTO que solo traen `id`, `name` e `image`; Gson ignora el resto de campos. Es el adaptador de servicio: la única pieza que conoce las rutas y el formato del backend. El `Repository` depende de esta interfaz y no de Retrofit directamente.
+`ArtistApi` (Retrofit) declara `GET musicians` y `GET bands` con DTO que solo traen `id`, `name` e `image`; Gson ignora el resto de campos. Siguiendo la spec `acceso-backend`, el repositorio no crea su propio cliente de red: obtiene `ArtistApi` del `ServiceAdapter` compartido (`adaptador.api()`), que es el único punto de acceso al backend y el adaptador de servicio que pide la rúbrica.
 
 ### D3. `ArtistRepository` une las dos consultas en paralelo
 
-`obtenerArtistas(): Result<List<Artist>>` lanza las dos consultas en paralelo con `coroutineScope` y `async`, convierte los DTO a `Artist`, descarta los elementos sin `id` o sin nombre y ordena el resultado por nombre. Si **cualquiera** de las dos consultas falla, devuelve un error de carga: un listado parcial (solo músicos o solo bandas) incumpliría el criterio de mostrar ambos y confundiría al usuario. Captura cualquier excepción de red, HTTP o de formato y relanza `CancellationException`, como `CollectorRepository`; a diferencia de este, usa un `catch` general para que ningún error inesperado cierre la app.
+`obtenerArtistas(): Result<List<Artist>>` lanza las dos consultas en paralelo con `coroutineScope` y `async` **dentro de una sola llamada** a `adaptador.llamar { ... }`, convierte los DTO a `Artist`, descarta los elementos sin `id` o sin nombre y ordena el resultado por nombre. Si **cualquiera** de las dos consultas falla, el adaptador devuelve el error de carga (`ErrorDeCarga`) y la otra consulta se cancela: un listado parcial (solo músicos o solo bandas) incumpliría el criterio de mostrar ambos y confundiría al usuario. La traducción de errores y el relanzamiento de la cancelación son del `ServiceAdapter`, igual que para los coleccionistas.
 
 **Orden alfabético:** con `java.text.Collator` en español y fuerza primaria, para que "Álvaro" quede junto a "Alberto" y no se distingan mayúsculas.
 
@@ -63,7 +63,7 @@ Se agrega el destino `artista/{tipo}/{id}` con una pantalla provisional que mues
 
 ### D7. Inyección e integración
 
-`AppContainer` crea `ArtistRepository` con el mismo `Retrofit` y acepta uno falso para las pruebas instrumentadas, como ya hace con `CollectorRepository`. `VinilosNavHost` recibe el repositorio y crea `ArtistsViewModel` con `viewModelFactory`. La pantalla conserva el `testTag` `artistas` del destino provisional para que las pruebas de navegación existentes sigan llegando a ella.
+`AppContainer` crea `ArtistRepository` con el mismo `ServiceAdapter` y acepta uno falso para las pruebas instrumentadas, como ya hace con `CollectorRepository`. `VinilosNavHost` recibe el repositorio y crea `ArtistsViewModel` con `viewModelFactory`. La pantalla conserva el `testTag` `artistas` del destino provisional para que las pruebas de navegación existentes sigan llegando a ella.
 
 ## Risks / Trade-offs
 

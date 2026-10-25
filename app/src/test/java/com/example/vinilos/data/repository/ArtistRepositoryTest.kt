@@ -2,7 +2,8 @@ package com.example.vinilos.data.repository
 
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
-import com.example.vinilos.data.remote.ArtistApi
+import com.example.vinilos.data.remote.ErrorDeCarga
+import com.example.vinilos.data.remote.ServiceAdapter
 import kotlinx.coroutines.test.runTest
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.Dispatcher
@@ -15,8 +16,6 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
 
 class ArtistRepositoryTest {
@@ -43,13 +42,7 @@ class ArtistRepositoryTest {
             .readTimeout(300, TimeUnit.MILLISECONDS)
             .connectTimeout(300, TimeUnit.MILLISECONDS)
             .build()
-        val api = Retrofit.Builder()
-            .baseUrl(servidor.url("/"))
-            .client(cliente)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(ArtistApi::class.java)
-        repositorio = ArtistRepository(api)
+        repositorio = ArtistRepository(ServiceAdapter(servidor.url("/").toString(), cliente))
     }
 
     @After

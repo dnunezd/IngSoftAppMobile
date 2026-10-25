@@ -3,11 +3,9 @@ package com.example.vinilos.viewmodel
 import com.example.vinilos.MainDispatcherRule
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
-import com.example.vinilos.data.remote.ArtistApi
-import com.example.vinilos.data.remote.BandDto
-import com.example.vinilos.data.remote.MusicianDto
+import com.example.vinilos.data.remote.ErrorDeCarga
+import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.ArtistRepository
-import com.example.vinilos.data.repository.ErrorDeCarga
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -17,12 +15,7 @@ import org.junit.Rule
 import org.junit.Test
 
 /** Repositorio falso: cada llamada devuelve el resultado que se complete a mano. */
-private class RepositorioArtistasFalso : ArtistRepository(
-    object : ArtistApi {
-        override suspend fun getMusicians(): List<MusicianDto> = error("no se usa")
-        override suspend fun getBands(): List<BandDto> = error("no se usa")
-    }
-) {
+private class RepositorioArtistasFalso : ArtistRepository(ServiceAdapter("http://localhost/")) {
     val llamadas = mutableListOf<CompletableDeferred<Result<List<Artist>>>>()
 
     override suspend fun obtenerArtistas(): Result<List<Artist>> {

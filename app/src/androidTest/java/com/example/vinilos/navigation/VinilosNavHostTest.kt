@@ -18,7 +18,7 @@ import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.Collector
 import com.example.vinilos.data.model.Session
-import com.example.vinilos.data.repository.ErrorDeCarga
+import com.example.vinilos.data.remote.ErrorDeCarga
 import com.example.vinilos.ui.artistas.TagArtistas
 import com.example.vinilos.ui.artistas.TagBuscadorArtistas
 import com.example.vinilos.ui.artistas.TagDetalleArtista
