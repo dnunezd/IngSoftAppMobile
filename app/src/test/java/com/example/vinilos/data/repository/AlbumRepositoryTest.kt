@@ -5,6 +5,7 @@ import com.example.vinilos.data.model.Artista
 import com.example.vinilos.data.model.Cancion
 import com.example.vinilos.data.model.Comentario
 import com.example.vinilos.data.remote.ServiceAdapter
+import com.google.gson.JsonParseException
 import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -126,5 +127,15 @@ class AlbumRepositoryTest {
 
         assertTrue("El timeout debe permitir reintentar, no indicar un 404", error is ErrorDeCarga)
         assertTrue(error!!.cause is SocketTimeoutException)
+    }
+
+    @Test
+    fun jsonIlegibleSeTraduceAErrorDeCargaConSuCausa() = runTest {
+        servidor.enqueue(MockResponse().setBody("""{"id":[]}"""))
+
+        val error = repositorio.obtenerAlbum(101).exceptionOrNull()
+
+        assertTrue("El cuerpo ilegible debe permitir recuperar la carga", error is ErrorDeCarga)
+        assertTrue(error!!.cause is JsonParseException)
     }
 }
