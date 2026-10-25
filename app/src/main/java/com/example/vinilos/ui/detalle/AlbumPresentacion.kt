@@ -17,5 +17,6 @@ fun presentarAlbum(album: Album): AlbumPresentacion =
         album = album,
         fechaLanzamiento = formatearFechaLanzamiento(album.fechaLanzamiento),
         mensajeCanciones = R.string.detalle_sin_canciones.takeIf { album.canciones.isEmpty() },
-        mensajeComentarios = R.string.detalle_sin_comentarios.takeIf { album.comentarios.isEmpty() }
+        mensajeComentarios = R.string.detalle_sin_comentarios.takeIf { album.comentarios.isEmpty() },
+        promedio = promedioCalificaciones(album.comentarios)
     )
