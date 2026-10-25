@@ -124,4 +124,19 @@ class AlbumViewModelTest {
             advanceUntilIdle()
         }
     }
+
+    @Test
+    fun noDisponibleNoPermiteReintentar() = runTest {
+        val repositorio = AlbumRepositoryFalso()
+        val viewModel = AlbumViewModel(999, repositorio)
+        advanceUntilIdle()
+        repositorio.consultas.single().second.complete(Result.failure(AlbumNoDisponible()))
+        advanceUntilIdle()
+
+        viewModel.reintentar()
+        advanceUntilIdle()
+
+        assertEquals(AlbumUiState.NoDisponible, viewModel.uiState.value)
+        assertEquals(1, repositorio.consultas.size)
+    }
 }
