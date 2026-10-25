@@ -1,6 +1,7 @@
 package com.example.vinilos.ui.detalle
 
 import androidx.annotation.StringRes
+import com.example.vinilos.R
 import com.example.vinilos.data.model.Album
 
 data class AlbumPresentacion(
@@ -10,4 +11,8 @@ data class AlbumPresentacion(
 )
 
 fun presentarAlbum(album: Album): AlbumPresentacion =
-    AlbumPresentacion(album, formatearFechaLanzamiento(album.fechaLanzamiento))
+    AlbumPresentacion(
+        album = album,
+        fechaLanzamiento = formatearFechaLanzamiento(album.fechaLanzamiento),
+        mensajeCanciones = R.string.detalle_sin_canciones.takeIf { album.canciones.isEmpty() }
+    )
