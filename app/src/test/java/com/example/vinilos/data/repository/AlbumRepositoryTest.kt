@@ -148,4 +148,24 @@ class AlbumRepositoryTest {
         assertTrue("Un álbum incompleto debe ser un fallo de carga, no cerrar la app", error is ErrorDeCarga)
         assertTrue(error!!.cause is JsonParseException)
     }
+
+    @Test
+    fun albumSinRelacionesDevuelveListasVacias() = runTest {
+        servidor.enqueue(
+            MockResponse().setBody(
+                """
+                {"id":102,"name":"Sin relaciones","description":"Album sin contenido relacionado",
+                 "genre":"Rock","recordLabel":"Independiente","releaseDate":"2000-01-01"}
+                """.trimIndent()
+            )
+        )
+
+        val album = repositorio.obtenerAlbum(102).getOrThrow()
+
+        assertEquals(emptyList<Cancion>(), album.canciones)
+        assertEquals(emptyList<Artista>(), album.artistas)
+        assertEquals(emptyList<Comentario>(), album.comentarios)
+        assertEquals(null, album.portada)
+        assertEquals("/albums/102", servidor.takeRequest(1, TimeUnit.SECONDS)?.path)
+    }
 }
