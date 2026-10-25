@@ -6,6 +6,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
 import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.Cancion
+import com.example.vinilos.data.model.Comentario
 import com.example.vinilos.ui.theme.VinilosTheme
 import org.junit.Rule
 import org.junit.Test
@@ -71,5 +72,22 @@ class ContenidoAlbumTest {
             rule.onNodeWithText(it).performScrollTo().assertIsDisplayed()
         }
         rule.onNodeWithText("Este álbum aún no tiene canciones registradas").assertDoesNotExist()
+    }
+
+    @Test
+    fun comentariosMuestraTextoNotaYPromedioSinDatosDeAutor() {
+        val presentacion = presentarAlbum(album.copy(
+            comentarios = listOf(Comentario("Gran disco", 5), Comentario("Buen sonido", 4))
+        ))
+        rule.setContent {
+            VinilosTheme { ContenidoAlbum(presentacion, onAtras = {}) }
+        }
+
+        listOf("Gran disco", "5 / 5", "Buen sonido", "4 / 5", "4,5").forEach {
+            rule.onNodeWithText(it).performScrollTo().assertIsDisplayed()
+        }
+        rule.onNodeWithText("Aún no hay comentarios para este álbum").assertDoesNotExist()
+        rule.onNodeWithText("Sin calificaciones").assertDoesNotExist()
+        rule.onNodeWithText("Autor", substring = true).assertDoesNotExist()
     }
 }
