@@ -14,6 +14,8 @@ class AlbumViewModel(private val id: Int, private val repositorio: AlbumReposito
     private val _uiState = MutableStateFlow<AlbumUiState>(AlbumUiState.Cargando)
     val uiState = _uiState.asStateFlow()
 
+    fun cargarAlbum(id: Int) = Unit
+
     fun reintentar() {
         if (_uiState.value == AlbumUiState.Error) cargar()
     }
