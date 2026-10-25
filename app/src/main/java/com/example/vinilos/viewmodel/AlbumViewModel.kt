@@ -3,6 +3,7 @@ package com.example.vinilos.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.vinilos.data.repository.AlbumRepository
+import com.example.vinilos.data.repository.AlbumNoDisponible
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
@@ -14,7 +15,12 @@ class AlbumViewModel(private val id: Int, private val repositorio: AlbumReposito
 
     init {
         viewModelScope.launch {
-            _uiState.value = AlbumUiState.Exito(repositorio.obtenerAlbum(id).getOrThrow())
+            _uiState.value = repositorio.obtenerAlbum(id).fold(
+                onSuccess = { AlbumUiState.Exito(it) },
+                onFailure = {
+                    if (it is AlbumNoDisponible) AlbumUiState.NoDisponible else throw it
+                }
+            )
         }
     }
 }
