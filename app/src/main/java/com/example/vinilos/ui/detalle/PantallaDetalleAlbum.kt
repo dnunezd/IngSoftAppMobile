@@ -14,6 +14,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -32,6 +33,11 @@ fun PantallaDetalleAlbum(
     onReintentar: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    if (estado is AlbumUiState.Exito) {
+        val presentacion = remember(estado.album) { presentarAlbum(estado.album) }
+        ContenidoAlbum(presentacion, onAtras, modifier)
+        return
+    }
     Column(
         modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.safeDrawing)
