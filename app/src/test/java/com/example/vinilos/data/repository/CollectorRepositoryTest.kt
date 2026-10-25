@@ -3,9 +3,11 @@ package com.example.vinilos.data.repository
 import com.example.vinilos.data.model.Collector
 import com.example.vinilos.data.remote.CollectorApi
 import com.example.vinilos.data.remote.CollectorDto
+import com.example.vinilos.data.remote.ErrorDeCarga
 import com.example.vinilos.data.remote.ServiceAdapter
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
+import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.SocketPolicy
@@ -14,7 +16,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import java.util.concurrent.TimeUnit
 
+/** Mapeo de DTO a modelo; la traducción de errores de red se prueba en `ServiceAdapterTest`. */
 class CollectorRepositoryTest {
 
     private lateinit var servidor: MockWebServer
@@ -24,7 +28,11 @@ class CollectorRepositoryTest {
     fun preparar() {
         servidor = MockWebServer()
         servidor.start()
-        repositorio = CollectorRepository(ServiceAdapter(servidor.url("/").toString()))
+        val cliente = OkHttpClient.Builder()
+            .readTimeout(300, TimeUnit.MILLISECONDS)
+            .connectTimeout(300, TimeUnit.MILLISECONDS)
+            .build()
+        repositorio = CollectorRepository(ServiceAdapter(servidor.url("/").toString(), cliente))
     }
 
     @After
@@ -66,6 +74,20 @@ class CollectorRepositoryTest {
     }
 
     @Test
+    fun ignoraLosCamposDesconocidos() = runTest {
+        servidor.enqueue(
+            MockResponse().setBody(
+                """[{"id": 7, "name": "Con extras", "email": "x@a.com", "campoNuevo": {"a": 1}, "otro": [1, 2]}]"""
+            )
+        )
+
+        assertEquals(
+            listOf(Collector(7, "Con extras", "x@a.com")),
+            repositorio.obtenerColeccionistas().getOrThrow()
+        )
+    }
+
+    @Test
     fun descartaLosElementosIncompletos() = runTest {
         servidor.enqueue(
             MockResponse().setBody(
@@ -87,17 +109,8 @@ class CollectorRepositoryTest {
     }
 
     @Test
-    fun errorDelServidorSeTraduceAErrorDeCarga() = runTest {
+    fun elErrorDelAdaptadorSePropagaComoErrorDeCarga() = runTest {
         servidor.enqueue(MockResponse().setResponseCode(500))
-
-        val resultado = repositorio.obtenerColeccionistas()
-
-        assertTrue(resultado.exceptionOrNull() is ErrorDeCarga)
-    }
-
-    @Test
-    fun errorDeCliente404SeTraduceAErrorDeCarga() = runTest {
-        servidor.enqueue(MockResponse().setResponseCode(404))
 
         assertTrue(repositorio.obtenerColeccionistas().exceptionOrNull() is ErrorDeCarga)
     }

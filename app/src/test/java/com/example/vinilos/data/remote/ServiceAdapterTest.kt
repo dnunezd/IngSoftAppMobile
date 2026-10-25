@@ -3,6 +3,7 @@ package com.example.vinilos.data.remote
 import com.google.gson.JsonParseException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
+import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.SocketPolicy
@@ -17,6 +18,7 @@ import retrofit2.HttpException
 import retrofit2.http.GET
 import java.io.IOException
 import java.net.SocketTimeoutException
+import java.util.concurrent.TimeUnit
 
 // Respuesta pequeña que Retrofit/Gson convertirá desde el JSON.
 data class DatosPrueba(val nombre: String)
@@ -26,16 +28,22 @@ interface ApiDePrueba {
     @GET("prueba")
     suspend fun obtenerPrueba(): DatosPrueba
 }
-
 class ServiceAdapterTest {
 
     private lateinit var servidor: MockWebServer
+    private lateinit var adaptador: ServiceAdapter
+    private lateinit var api: CollectorApi
 
     @Before
     fun preparar() {
-        // Inicia un servidor local falso para no depender de Internet ni de BackVynils.
         servidor = MockWebServer()
         servidor.start()
+        val cliente = OkHttpClient.Builder()
+            .readTimeout(300, TimeUnit.MILLISECONDS)
+            .connectTimeout(300, TimeUnit.MILLISECONDS)
+            .build()
+        adaptador = ServiceAdapter(servidor.url("/").toString(), cliente)
+        api = adaptador.api()
     }
 
     @After
@@ -80,8 +88,9 @@ class ServiceAdapterTest {
 
         assertTrue(resultado.isFailure)
         val error = resultado.exceptionOrNull()
-        assertTrue(error is HttpException)
-        assertEquals(404, (error as HttpException).code())
+        assertTrue(error is ErrorDeCarga)
+        assertTrue(error!!.cause is HttpException)
+        assertEquals(404, (error.cause as HttpException).code())
     }
 
     @Test
@@ -94,8 +103,9 @@ class ServiceAdapterTest {
 
         assertTrue(resultado.isFailure)
         val error = resultado.exceptionOrNull()
-        assertTrue(error is HttpException)
-        assertEquals(500, (error as HttpException).code())
+        assertTrue(error is ErrorDeCarga)
+        assertTrue(error!!.cause is HttpException)
+        assertEquals(500, (error.cause as HttpException).code())
     }
 
     @Test
@@ -107,8 +117,10 @@ class ServiceAdapterTest {
         val resultado = adaptador.llamar { api.obtenerPrueba() }
 
         assertTrue(resultado.isFailure)
-        assertTrue(resultado.exceptionOrNull() is IOException)
-        assertTrue(resultado.exceptionOrNull() !is HttpException)
+        val error = resultado.exceptionOrNull()
+        assertTrue(error is ErrorDeCarga)
+        assertTrue(error!!.cause is IOException)
+        assertTrue(error.cause !is HttpException)
     }
 
     @Test
@@ -120,7 +132,9 @@ class ServiceAdapterTest {
         val resultado = adaptador.llamar { api.obtenerPrueba() }
 
         assertTrue(resultado.isFailure)
-        assertTrue(resultado.exceptionOrNull() is SocketTimeoutException)
+        val error = resultado.exceptionOrNull()
+        assertTrue(error is ErrorDeCarga)
+        assertTrue(error!!.cause is SocketTimeoutException)
     }
 
     @Test
@@ -132,7 +146,9 @@ class ServiceAdapterTest {
         val resultado = adaptador.llamar { api.obtenerPrueba() }
 
         assertTrue(resultado.isFailure)
-        assertTrue(resultado.exceptionOrNull() is JsonParseException)
+        val error = resultado.exceptionOrNull()
+        assertTrue(error is ErrorDeCarga)
+        assertTrue(error!!.cause is JsonParseException)
     }
 
     @Test
@@ -146,5 +162,100 @@ class ServiceAdapterTest {
         } catch (error: CancellationException) {
             assertSame(cancelacion, error)
         }
+    }
+
+    @Test
+    fun respuestaExitosaSeEntregaTalCual() = runTest {
+        servidor.enqueue(
+            MockResponse().setBody(
+                """[{"id": 100, "name": "Manolo Bellon", "email": "manollo@caracol.com.co"}]"""
+            )
+        )
+
+        val resultado = adaptador.llamar { api.getCollectors() }
+
+        val lista = resultado.getOrThrow()
+        assertEquals(1, lista.size)
+        assertEquals(100, lista[0].id)
+        assertEquals("Manolo Bellon", lista[0].name)
+        assertEquals("/collectors", servidor.takeRequest().path)
+    }
+
+    @Test
+    fun respuestaVaciaEsUnExitoConListaVacia() = runTest {
+        servidor.enqueue(MockResponse().setBody("[]"))
+
+        assertEquals(emptyList<CollectorDto>(), adaptador.llamar { api.getCollectors() }.getOrThrow())
+    }
+
+    @Test
+    fun errorDelServidorSeTraduceAErrorDeCarga() = runTest {
+        servidor.enqueue(MockResponse().setResponseCode(500))
+
+        assertTrue(adaptador.llamar { api.getCollectors() }.exceptionOrNull() is ErrorDeCarga)
+    }
+
+    @Test
+    fun errorDeCliente404SeTraduceAErrorDeCarga() = runTest {
+        servidor.enqueue(MockResponse().setResponseCode(404))
+
+        assertTrue(adaptador.llamar { api.getCollectors() }.exceptionOrNull() is ErrorDeCarga)
+    }
+
+    @Test
+    fun sinConexionSeTraduceAErrorDeCarga() = runTest {
+        servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
+
+        assertTrue(adaptador.llamar { api.getCollectors() }.exceptionOrNull() is ErrorDeCarga)
+    }
+
+    @Test
+    fun tiempoDeEsperaAgotadoSeTraduceAErrorDeCarga() = runTest {
+        servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE))
+
+        assertTrue(adaptador.llamar { api.getCollectors() }.exceptionOrNull() is ErrorDeCarga)
+    }
+
+    @Test
+    fun jsonMalformadoSeTraduceAErrorDeCarga() = runTest {
+        servidor.enqueue(MockResponse().setBody("esto no es json"))
+
+        assertTrue(adaptador.llamar { api.getCollectors() }.exceptionOrNull() is ErrorDeCarga)
+    }
+
+    @Test
+    fun laCancelacionSeRelanzaYNoSeConvierteEnError() = runTest {
+        var relanzada = false
+        try {
+            adaptador.llamar<List<CollectorDto>> { throw CancellationException("cancelado") }
+        } catch (e: CancellationException) {
+            relanzada = true
+        }
+
+        assertTrue(relanzada)
+    }
+
+    @Test
+    fun otrosFallosNoSeConfundenConErrorDeCarga() = runTest {
+        var lanzada: Throwable? = null
+        try {
+            adaptador.llamar<List<CollectorDto>> { error("error de programación") }
+        } catch (e: IllegalStateException) {
+            lanzada = e
+        }
+
+        assertEquals("error de programación", lanzada?.message)
+    }
+
+    @Test
+    fun repetirLaConsultaTrasUnFalloDevuelveLosDatos() = runTest {
+        servidor.enqueue(MockResponse().setResponseCode(500))
+        servidor.enqueue(MockResponse().setBody("""[{"id": 1, "name": "A", "email": "a@a.com"}]"""))
+
+        val primero = adaptador.llamar { api.getCollectors() }
+        val segundo = adaptador.llamar { api.getCollectors() }
+
+        assertTrue(primero.exceptionOrNull() is ErrorDeCarga)
+        assertEquals(1, segundo.getOrThrow().size)
     }
 }

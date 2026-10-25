@@ -6,10 +6,10 @@ import com.example.vinilos.data.model.Cancion
 import com.example.vinilos.data.model.Comentario
 import com.example.vinilos.data.remote.AlbumApi
 import com.example.vinilos.data.remote.AlbumDto
+import com.example.vinilos.data.remote.ErrorDeCarga
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.google.gson.JsonParseException
 import retrofit2.HttpException
-import java.io.IOException
 
 class AlbumNoDisponible(causa: Throwable? = null) : Exception("El álbum ya no está disponible", causa)
 
@@ -25,13 +25,12 @@ open class AlbumRepository(
             requerido(respuestaHttp.body(), "album").aModelo()
         }
         val error = respuesta.exceptionOrNull()
-        if (error is HttpException) {
-            return Result.failure(
-                if (error.code() == 404) AlbumNoDisponible(error) else ErrorDeCarga(error)
-            )
-        }
-        if (error is IOException || error is JsonParseException) {
-            return Result.failure(ErrorDeCarga(error))
+        if (error is ErrorDeCarga) {
+            val causa = error.cause
+            if (causa is HttpException && causa.code() == 404) {
+                return Result.failure(AlbumNoDisponible(causa))
+            }
+            return respuesta
         }
         if (error != null) throw error
         return respuesta

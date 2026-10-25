@@ -5,7 +5,7 @@ import com.example.vinilos.data.repository.AlbumRepository
 import com.example.vinilos.data.repository.CollectorRepository
 
 /**
- * Contenedor de dependencias manual: crea una sola vez el cliente de red y los repositorios
+ * Contenedor de dependencias manual: crea una sola vez el [ServiceAdapter] y los repositorios
  * que usan los ViewModel.
  */
 class AppContainer(
@@ -13,7 +13,7 @@ class AppContainer(
     colectoresRepositorio: CollectorRepository? = null
 ) {
 
-    val serviceAdapter = ServiceAdapter(baseUrl)
+    val serviceAdapter: ServiceAdapter = ServiceAdapter(baseUrl)
 
     /** Se puede reemplazar con [colectoresRepositorio] en las pruebas instrumentadas. */
     val collectorRepository: CollectorRepository =

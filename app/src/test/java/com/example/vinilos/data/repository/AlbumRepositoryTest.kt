@@ -6,6 +6,7 @@ import com.example.vinilos.data.model.Cancion
 import com.example.vinilos.data.model.Comentario
 import com.example.vinilos.data.remote.AlbumApi
 import com.example.vinilos.data.remote.AlbumDto
+import com.example.vinilos.data.remote.ErrorDeCarga
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.google.gson.JsonParseException
 import kotlinx.coroutines.CancellationException
