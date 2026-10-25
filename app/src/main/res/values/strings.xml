@@ -62,4 +62,6 @@
     <string name="catalogo_rol_visitante">Visitante</string>
     <string name="catalogo_rol_coleccionista">Coleccionista: %1$s</string>
     <string name="catalogo_rol_ninguno">Sin perfil</string>
+
+    <string name="detalle_sin_canciones">Este álbum aún no tiene canciones registradas</string>
 </resources>

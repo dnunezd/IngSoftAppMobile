@@ -1,5 +1,6 @@
 package com.example.vinilos.ui.detalle
 
+import com.example.vinilos.R
 import com.example.vinilos.data.model.Album
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -21,5 +22,10 @@ class AlbumPresentacionTest {
     @Test
     fun entregaLaFechaFormateadaFueraDeCompose() {
         assertEquals("1 de agosto de 1984", presentarAlbum(album).fechaLanzamiento)
+    }
+
+    @Test
+    fun sinCancionesSeleccionaElMensajeDeVacio() {
+        assertEquals(R.string.detalle_sin_canciones, presentarAlbum(album).mensajeCanciones)
     }
 }
