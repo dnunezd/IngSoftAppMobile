@@ -30,6 +30,8 @@ El proyecto de esta rama declara `minSdk = 26`. El equipo está integrando por s
 
 `AlbumApi` declara `GET albums/{id}` y DTOs que reflejan los campos usados por HU02: datos principales, canciones (`name`, `duration`), artistas (`name`, `image`) y comentarios (texto y calificación). `AlbumRepository` obtiene la API a través del Service Adapter, valida/mappea la respuesta a modelos de dominio y expone una operación en español, por ejemplo `obtenerAlbum(id)`.
 
+La API devuelve `Response<AlbumDto>` para validar explícitamente el cuerpo ausente con Retrofit 2.9, que no resuelve este caso declarando solamente un DTO nullable. Dentro de la operación ejecutada por el adaptador, el repositorio conserva los errores HTTP como `HttpException` y valida los campos principales antes del mapeo. Un cuerpo nulo o incompleto se traduce a `ErrorDeCarga`, no a 404; las relaciones ausentes se representan como listas vacías.
+
 La pantalla y el ViewModel no conocen Retrofit ni los DTOs. Los datos no solicitados por HU02, especialmente la identidad del autor del comentario, no se exponen en la interfaz.
 
 ### D2. El Service Adapter centraliza transporte y conserva el status HTTP
@@ -74,6 +76,8 @@ La ruta de detalle recibe el ID del álbum que seleccionó el usuario. La acció
 - E2E: backend real con un álbum con canciones/comentarios y otro sin ellos.
 
 Cada prueba de una tarea se escribe y se comprueba fallida antes de implementar el comportamiento correspondiente.
+
+Excepción autorizada durante T02-2: el Service Adapter ya existía y no se modifica, por lo que sus casos se verifican como caracterización. También se autorizó registrar como regresiones los casos nuevos que ya pasan por una solución general o por el adaptador, como el timeout y la cancelación del repositorio. Estos casos no constituyen evidencia de un ROJO previo ni requieren romper código o crear un commit de producción vacío.
 
 ### D8. Stitch como referencia visual, no como ampliación de alcance
 
