@@ -74,4 +74,6 @@
     <string name="detalle_artistas">Artistas</string>
     <string name="detalle_artista_provisional">Imagen provisional de %1$s</string>
     <string name="detalle_cargando">Cargando álbum</string>
+    <string name="detalle_no_disponible">El álbum ya no está disponible</string>
+    <string name="detalle_volver_catalogo">Volver al catálogo</string>
 </resources>
