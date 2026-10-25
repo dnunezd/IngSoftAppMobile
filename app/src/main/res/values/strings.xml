@@ -65,4 +65,5 @@
 
     <string name="detalle_sin_canciones">Este álbum aún no tiene canciones registradas</string>
     <string name="detalle_sin_comentarios">Aún no hay comentarios para este álbum</string>
+    <string name="detalle_sin_calificaciones">Sin calificaciones</string>
 </resources>

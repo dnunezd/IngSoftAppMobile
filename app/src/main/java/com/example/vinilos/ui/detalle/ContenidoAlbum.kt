@@ -19,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.example.vinilos.R
 
 @Composable
 fun ContenidoAlbum(
@@ -49,6 +50,12 @@ fun ContenidoAlbum(
         }
         presentacion.mensajeCanciones?.let { mensaje ->
             item { Text(stringResource(mensaje), style = MaterialTheme.typography.bodyLarge) }
+        }
+        presentacion.mensajeComentarios?.let { mensaje ->
+            item { Text(stringResource(mensaje), style = MaterialTheme.typography.bodyLarge) }
+        }
+        if (presentacion.promedio == null) {
+            item { Text(stringResource(R.string.detalle_sin_calificaciones)) }
         }
     }
 }
