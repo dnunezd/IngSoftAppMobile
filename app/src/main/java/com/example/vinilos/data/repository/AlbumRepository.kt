@@ -18,7 +18,7 @@ open class AlbumRepository(private val adaptador: ServiceAdapter) {
     private val api = adaptador.api<AlbumApi>()
 
     open suspend fun obtenerAlbum(id: Int): Result<Album> {
-        val respuesta = adaptador.llamar { api.obtenerAlbum(id) }
+        val respuesta = adaptador.llamar { api.obtenerAlbum(id).aModelo() }
         val error = respuesta.exceptionOrNull()
         if (error is HttpException) {
             return Result.failure(
@@ -28,7 +28,7 @@ open class AlbumRepository(private val adaptador: ServiceAdapter) {
         if (error is IOException || error is JsonParseException) {
             return Result.failure(ErrorDeCarga(error))
         }
-        return respuesta.map { it.aModelo() }
+        return respuesta
     }
 
     private fun AlbumDto.aModelo() = Album(
