@@ -9,4 +9,9 @@ class FormatoFechaTest {
     fun fechaCalendarioSePresentaEnEspanolSinCambiarElDia() {
         assertEquals("1 de agosto de 1984", formatearFechaLanzamiento("1984-08-01"))
     }
+
+    @Test
+    fun timestampUtcSePresentaConSuFechaDeLanzamiento() {
+        assertEquals("1 de agosto de 1984", formatearFechaLanzamiento("1984-08-01T00:00:00.000Z"))
+    }
 }
