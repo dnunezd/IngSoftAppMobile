@@ -76,4 +76,18 @@ class ServiceAdapterTest {
         assertTrue(error is HttpException)
         assertEquals(404, (error as HttpException).code())
     }
+
+    @Test
+    fun respuesta500ConservaElCodigoHttp() = runTest {
+        servidor.enqueue(MockResponse().setResponseCode(500))
+        val adaptador = ServiceAdapter(servidor.url("/").toString())
+        val api = adaptador.api<ApiDePrueba>()
+
+        val resultado = adaptador.llamar { api.obtenerPrueba() }
+
+        assertTrue(resultado.isFailure)
+        val error = resultado.exceptionOrNull()
+        assertTrue(error is HttpException)
+        assertEquals(500, (error as HttpException).code())
+    }
 }
