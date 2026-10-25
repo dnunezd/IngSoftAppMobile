@@ -5,6 +5,7 @@ import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.Comentario
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import java.lang.reflect.Modifier
 
 class AlbumPresentacionTest {
     private val album = Album(
@@ -42,5 +43,17 @@ class AlbumPresentacionTest {
         )
 
         assertEquals("4,5", presentarAlbum(conComentarios).promedio)
+    }
+
+    @Test
+    fun losComentariosPresentadosNoExponenIdentidadDeAutor() {
+        val comentario = Comentario("Gran disco", 5)
+        val presentado = presentarAlbum(album.copy(comentarios = listOf(comentario)))
+        val campos = presentado.album.comentarios.single().javaClass.declaredFields
+            .filterNot { it.isSynthetic || Modifier.isStatic(it.modifiers) }
+            .map { it.name }.toSet()
+
+        assertEquals(setOf("descripcion", "calificacion"), campos)
+        assertEquals(listOf(comentario), presentado.album.comentarios)
     }
 }
