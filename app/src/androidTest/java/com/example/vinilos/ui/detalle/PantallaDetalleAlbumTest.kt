@@ -42,4 +42,20 @@ class PantallaDetalleAlbumTest {
         rule.onNodeWithText("Volver al catálogo").performClick()
         org.junit.Assert.assertEquals(1, regresos)
     }
+
+    @Test
+    fun errorDeCargaMuestraElMensajeYNotificaElReintento() {
+        var reintentos = 0
+        rule.setContent {
+            VinilosTheme {
+                PantallaDetalleAlbum(AlbumUiState.Error, onAtras = {}, onReintentar = { reintentos++ })
+            }
+        }
+
+        rule.onNodeWithText("No pudimos cargar el álbum").assertIsDisplayed()
+        rule.onNodeWithText("El álbum ya no está disponible").assertDoesNotExist()
+        rule.onNodeWithContentDescription("Cargando álbum").assertDoesNotExist()
+        rule.onNodeWithText("Reintentar").performClick()
+        org.junit.Assert.assertEquals(1, reintentos)
+    }
 }
