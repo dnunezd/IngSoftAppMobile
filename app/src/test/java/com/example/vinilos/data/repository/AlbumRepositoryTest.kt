@@ -8,12 +8,17 @@ import com.example.vinilos.data.remote.AlbumApi
 import com.example.vinilos.data.remote.AlbumDto
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.google.gson.JsonParseException
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.SocketPolicy
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
@@ -187,5 +192,31 @@ class AlbumRepositoryTest {
         } catch (error: IllegalStateException) {
             assertSame(esperado, error)
         }
+    }
+
+    @Test
+    fun cancelarLaConsultaPropagaLaCancelacionSinErrorDeCarga() = runTest {
+        val api = object : AlbumApi {
+            override suspend fun obtenerAlbum(id: Int): AlbumDto = awaitCancellation()
+        }
+        val repositorio = AlbumRepository(ServiceAdapter(servidor.url("/").toString()), api)
+        var devolvioResultado = false
+        val consulta = async(start = CoroutineStart.UNDISPATCHED) {
+            val resultado = repositorio.obtenerAlbum(101)
+            devolvioResultado = true
+            resultado
+        }
+        val cancelacion = CancellationException("El usuario salió del detalle")
+
+        consulta.cancel(cancelacion)
+
+        try {
+            consulta.await()
+            fail("La consulta cancelada no debe devolver un Result de carga")
+        } catch (error: CancellationException) {
+            assertEquals(cancelacion.message, error.message)
+        }
+        assertTrue(consulta.isCancelled)
+        assertFalse("La cancelación no debe convertirse en un Result", devolvioResultado)
     }
 }
