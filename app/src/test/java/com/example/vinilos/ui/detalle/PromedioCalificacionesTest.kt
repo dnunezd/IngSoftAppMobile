@@ -2,6 +2,7 @@ package com.example.vinilos.ui.detalle
 
 import com.example.vinilos.data.model.Comentario
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Test
 
 class PromedioCalificacionesTest {
@@ -13,5 +14,10 @@ class PromedioCalificacionesTest {
         )
 
         assertEquals("4,7", promedioCalificaciones(comentarios))
+    }
+
+    @Test
+    fun sinComentariosNoExistePromedio() {
+        assertNull(promedioCalificaciones(emptyList()))
     }
 }
