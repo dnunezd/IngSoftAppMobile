@@ -7,4 +7,5 @@ data class AlbumPresentacion(
     val fechaLanzamiento: String
 )
 
-fun presentarAlbum(album: Album): AlbumPresentacion = AlbumPresentacion(album, album.fechaLanzamiento)
+fun presentarAlbum(album: Album): AlbumPresentacion =
+    AlbumPresentacion(album, formatearFechaLanzamiento(album.fechaLanzamiento))
