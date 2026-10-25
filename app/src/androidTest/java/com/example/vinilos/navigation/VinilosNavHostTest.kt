@@ -14,7 +14,7 @@ import androidx.navigation.testing.TestNavHostController
 import com.example.vinilos.RepositorioFalso
 import com.example.vinilos.data.model.Collector
 import com.example.vinilos.data.model.Session
-import com.example.vinilos.data.repository.ErrorDeCarga
+import com.example.vinilos.data.remote.ErrorDeCarga
 import com.example.vinilos.ui.artistas.TagArtistas
 import com.example.vinilos.ui.catalogo.TagCatalogo
 import com.example.vinilos.ui.ingreso.TagAtras
