@@ -25,4 +25,11 @@ class PromedioCalificacionesTest {
     fun comentariosSinCalificacionNoTienenPromedio() {
         assertNull(promedioCalificaciones(listOf(Comentario("Sin nota", null))))
     }
+
+    @Test
+    fun unEmpateEnElRedondeoSubeAlDecimalSiguiente() {
+        val comentarios = listOf(4, 4, 4, 5).map { Comentario("Reseña", it) }
+
+        assertEquals("4,3", promedioCalificaciones(comentarios))
+    }
 }
