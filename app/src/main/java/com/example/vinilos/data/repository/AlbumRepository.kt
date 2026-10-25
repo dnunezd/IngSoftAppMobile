@@ -29,6 +29,7 @@ open class AlbumRepository(
         if (error is IOException || error is JsonParseException) {
             return Result.failure(ErrorDeCarga(error))
         }
+        if (error != null) throw error
         return respuesta
     }
 
