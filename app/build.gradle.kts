@@ -8,11 +8,13 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.vinilos"
-        minSdk = 23
+        applicationId = "com.misw.vinilos"
+        // Android 5.0 Lollipop, como exige el enunciado del curso.
+        minSdk = 21
         targetSdk = 34
+        // versionCode es un entero que se sube en cada release; versionName coincide con el tag (v1.0.0).
         versionCode = 1
-        versionName = "1.0"
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
