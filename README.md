@@ -22,17 +22,35 @@ Daniel Alejandro Nuñez Donado · Jeffrey Alexander Díaz Pérez · Michael Andr
 
 Flujo actual: `ingreso → (selector de coleccionistas) → inicio → catálogo | artistas`.
 
+## Versión y APK
+
+| Dato | Valor |
+|---|---|
+| Versión | `1.0.0` (`versionCode` 1), publicada como el release [`v1.0.0`](https://github.com/dnunezd/IngSoftAppMobile/releases/tag/v1.0.0) sobre `main` |
+| Identificador de la app | `com.misw.vinilos` |
+| Android soportado | 5.0 Lollipop (API 21) o superior |
+
+Para instalar la app sin compilarla, descarga el APK adjunto al [release](https://github.com/dnunezd/IngSoftAppMobile/releases) en el teléfono y ábrelo (Android pide permitir la instalación desde esa fuente). El APK del release está compilado para un dispositivo físico (`-PbaseUrl=http://localhost:3000/`): necesita BackVynils corriendo en el computador ([paso 2](#2-levantar-el-backend-backvynils)) y el teléfono conectado por USB con `adb reverse tcp:3000 tcp:3000` ([paso 3](#3-conectar-la-app-con-el-backend)). Si tenías instalada una versión anterior con el identificador `com.example.vinilos`, desinstálala: Android la trata como otra app.
+
+En cada release se sube `versionCode` en 1 y `versionName` sigue el tag (`1.0.0` para `v1.0.0`), ambos en `app/build.gradle.kts`. El APK que se adjunta se genera con:
+
+```bash
+./gradlew assembleDebug -PbaseUrl=http://localhost:3000/   # app/build/outputs/apk/debug/app-debug.apk
+```
+
+y se renombra como `vinilos-v<versión>.apk` (por ejemplo `vinilos-v1.0.0.apk`). Se usa la variante de depuración porque la de release no está firmada y Android no la instala.
+
 ## Requisitos
 
 | Herramienta | Versión |
 |---|---|
 | Sistema operativo | Windows 10 u 11, macOS o Linux |
-| JDK | 17. Android Studio incluye uno propio (JetBrains Runtime 17); para compilar por terminal define `JAVA_HOME` apuntando a un JDK 17 |
+| JDK | 17. Para compilar por terminal define `JAVA_HOME` apuntando a un JDK 17: el que trae Android Studio puede ser más nuevo y Gradle 8.7 no lo soporta |
 | Android Studio | Una versión compatible con AGP 8.6.0 (Koala Feature Drop, 2024.1.2, o superior) |
-| Android SDK | Plataforma 34 (`minSdk` 23, `compileSdk` y `targetSdk` 34). Trae `adb` en `platform-tools` |
+| Android SDK | Plataforma 34 (`minSdk` 21, `compileSdk` y `targetSdk` 34). Trae `adb` en `platform-tools` |
 | Gradle | 8.7, ya incluido con el wrapper (`gradlew`) |
 | Docker | Docker Desktop (Windows y macOS) o Docker Engine con el plugin Compose (Linux), para levantar BackVynils |
-| Dispositivo Android | Físico o emulador (API 23 o superior). En Mac con chip Apple el emulador necesita una imagen ARM64 |
+| Dispositivo Android | Físico o emulador con Android 5.0 Lollipop (API 21) o superior. En Mac con chip Apple el emulador necesita una imagen ARM64 |
 
 Stack: Kotlin 1.9.0, Jetpack Compose (BOM 2024.04.01) con Material 3, MVVM + Repository, Retrofit 2.9.0 + OkHttp 4.12.0, Navigation Compose 2.7.7 y corrutinas 1.8.0.
 
@@ -202,7 +220,7 @@ No requiere pasos manuales: `RecuperacionTest` levanta un servidor local dentro 
 | Instrumentadas | `app/build/reports/androidTests/connected/debug/index.html` |
 | Lint | `app/build/reports/lint-results-debug.html` |
 
-Referencia actual del lint: 0 errores y 52 avisos, todos de la plantilla de Android Studio o esperados (por ejemplo `targetSdk`, versiones de dependencias y atributos del degradado del ícono que solo se usan desde API 24).
+Referencia actual del lint: 0 errores y 48 avisos, todos de la plantilla de Android Studio o esperados (por ejemplo `targetSdk`, versiones de dependencias y atributos del degradado del ícono que solo se usan desde API 24).
 
 ### Integración continua
 
@@ -234,6 +252,8 @@ Las pruebas instrumentadas **no corren en CI** porque necesitan un dispositivo y
 | `SDK location not found` | Falta `local.properties` o `ANDROID_HOME`. |
 | `Permission denied` al ejecutar `./gradlew` (macOS y Linux) | `chmod +x gradlew` (en el repositorio ya va con permiso de ejecución). |
 | `Cleartext HTTP traffic not permitted` | El host del backend no está en `network_security_config.xml`. |
+| `Your project path contains non-ASCII characters` (Windows) | La ruta del repositorio tiene tildes u otros caracteres no ASCII. Clónalo en una ruta sin ellos (por ejemplo `C:\dev\IngSoftAppMobile`); forzar la compilación con `android.overridePathCheck=true` no basta, porque las pruebas unitarias fallan con `ClassNotFoundException`. |
+| Gradle falla al arrancar y solo muestra una versión de Java (por ejemplo `25.0.3`) | Gradle 8.7 no soporta ese JDK. Define `JAVA_HOME` apuntando a un JDK 17 (las versiones recientes de Android Studio traen un JDK más nuevo). |
 
 ## Estructura
 
