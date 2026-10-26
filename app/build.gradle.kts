@@ -9,8 +9,8 @@ android {
 
     defaultConfig {
         applicationId = "com.misw.vinilos"
-        // Android 5.0 Lollipop, como exige el enunciado del curso.
-        minSdk = 21
+        // Android 6.0 Marshmallow.
+        minSdk = 23
         targetSdk = 34
         // versionCode es un entero que se sube en cada release; versionName coincide con el tag (v1.0.0).
         versionCode = 1

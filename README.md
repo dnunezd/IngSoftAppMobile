@@ -17,7 +17,7 @@ La documentación del proyecto (historias de usuario, sprints con su arquitectur
 
 ## Versión y APK
 
-La versión actual es `1.0.0` (`versionCode` 1), publicada como el release [`v1.0.0`](https://github.com/dnunezd/IngSoftAppMobile/releases/tag/v1.0.0) sobre `main`. El identificador de la app es `com.misw.vinilos` y funciona en Android 5.0 Lollipop (API 21) o superior.
+La versión actual es `1.0.0` (`versionCode` 1), publicada como el release [`v1.0.0`](https://github.com/dnunezd/IngSoftAppMobile/releases/tag/v1.0.0) sobre `main`. El identificador de la app es `com.misw.vinilos` y funciona en Android 6.0 Marshmallow (API 23) o superior.
 
 Para instalarla sin compilar, descarga en el teléfono el APK adjunto al [release](https://github.com/dnunezd/IngSoftAppMobile/releases) y ábrelo. Ese APK está compilado para un dispositivo físico: necesita BackVynils corriendo en el computador ([paso 2](#2-levantar-el-backend)) y el teléfono conectado por USB con `adb reverse tcp:3000 tcp:3000`. Si tenías instalada una versión con el identificador anterior (`com.example.vinilos`), desinstálala.
 
@@ -29,9 +29,9 @@ En cada release se sube `versionCode` en 1 y `versionName` sigue el tag (`1.0.0`
 |---|---|
 | JDK | 17. Para compilar por terminal define `JAVA_HOME` con un JDK 17: el que trae Android Studio puede ser más nuevo y Gradle 8.7 no lo soporta |
 | Android Studio | Compatible con AGP 8.6.0 (Koala Feature Drop, 2024.1.2, o superior) |
-| Android SDK | Plataforma 34 (`minSdk` 21, `compileSdk` y `targetSdk` 34), con `adb` en `platform-tools` |
+| Android SDK | Plataforma 34 (`minSdk` 23, `compileSdk` y `targetSdk` 34), con `adb` en `platform-tools` |
 | Docker | Docker Desktop o Docker Engine con Compose, para levantar BackVynils |
-| Dispositivo | Físico o emulador con Android 5.0 (API 21) o superior |
+| Dispositivo | Físico o emulador con Android 6.0 (API 23) o superior |
 
 Gradle 8.7 viene con el wrapper. Stack: Kotlin 1.9, Jetpack Compose con Material 3, MVVM + Repository, Retrofit + OkHttp, Navigation Compose y corrutinas.
 
