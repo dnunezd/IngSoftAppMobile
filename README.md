@@ -17,9 +17,9 @@ La documentación del proyecto (historias de usuario, sprints con su arquitectur
 
 ## Versión y APK
 
-La versión actual es `1.0.0` (`versionCode` 1), publicada como el release [`v1.0.0`](https://github.com/dnunezd/IngSoftAppMobile/releases/tag/v1.0.0) sobre `main`. El identificador de la app es `com.misw.vinilos` y funciona en Android 6.0 Marshmallow (API 23) o superior.
+La versión actual es `1.0.0` (`versionCode` 1), publicada como el release [`v1.0.0`](https://github.com/dnunezd/IngSoftAppMobile/releases/tag/v1.0.0) sobre `main`. El identificador de la app es `com.example.vinilos` y funciona en Android 6.0 Marshmallow (API 23) o superior.
 
-Para instalarla sin compilar, descarga en el teléfono el APK adjunto al [release](https://github.com/dnunezd/IngSoftAppMobile/releases) y ábrelo. Ese APK está compilado para un dispositivo físico: necesita BackVynils corriendo en el computador ([paso 2](#2-levantar-el-backend)) y el teléfono conectado por USB con `adb reverse tcp:3000 tcp:3000`. Si tenías instalada una versión con el identificador anterior (`com.example.vinilos`), desinstálala.
+Para instalarla sin compilar, descarga en el teléfono el APK adjunto al [release](https://github.com/dnunezd/IngSoftAppMobile/releases) y ábrelo. Ese APK está compilado para un dispositivo físico: necesita BackVynils corriendo en el computador ([paso 2](#2-levantar-el-backend)) y el teléfono conectado por USB con `adb reverse tcp:3000 tcp:3000`.
 
 En cada release se sube `versionCode` en 1 y `versionName` sigue el tag (`1.0.0` para `v1.0.0`), ambos en `app/build.gradle.kts`. El APK del release se genera con `./gradlew assembleDebug -PbaseUrl=http://localhost:3000/` y se adjunta renombrado como `vinilos-v<versión>.apk` (la variante de release no está firmada y Android no la instala).
 

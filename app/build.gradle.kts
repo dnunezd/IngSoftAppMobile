@@ -8,11 +8,9 @@ android {
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.misw.vinilos"
-        // Android 6.0 Marshmallow.
+        applicationId = "com.example.vinilos"
         minSdk = 23
         targetSdk = 34
-        // versionCode es un entero que se sube en cada release; versionName coincide con el tag (v1.0.0).
         versionCode = 1
         versionName = "1.0.0"
 
