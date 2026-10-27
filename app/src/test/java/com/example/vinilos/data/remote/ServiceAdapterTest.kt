@@ -224,6 +224,14 @@ class ServiceAdapterTest {
     }
 
     @Test
+    fun jsonConEstructuraInesperadaSeTraduceAErrorDeCarga() = runTest {
+        // Gson lanza IllegalStateException si llega un objeto donde se espera una lista.
+        servidor.enqueue(MockResponse().setBody("""{"mensaje": "no es una lista"}"""))
+
+        assertTrue(adaptador.llamar { api.getCollectors() }.exceptionOrNull() is ErrorDeCarga)
+    }
+
+    @Test
     fun laCancelacionSeRelanzaYNoSeConvierteEnError() = runTest {
         var relanzada = false
         try {

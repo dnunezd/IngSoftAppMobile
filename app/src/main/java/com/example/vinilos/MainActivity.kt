@@ -31,7 +31,8 @@ class MainActivity : ComponentActivity() {
                 VinilosNavHost(
                     navController = rememberNavController(),
                     sessionViewModel = sessionViewModel,
-                    collectorRepository = container.collectorRepository
+                    collectorRepository = container.collectorRepository,
+                    artistRepository = container.artistRepository
                 )
             }
         }

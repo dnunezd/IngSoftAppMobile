@@ -54,8 +54,32 @@
     <string name="inicio_artistas_descripcion">Conoce las trayectorias, bandas, discografías y reconocimientos de tus músicos favoritos.</string>
     <string name="inicio_artistas_boton">Ver artistas</string>
 
-    <!-- Destino provisional de artistas (lo reemplaza HU03) -->
-    <string name="artistas_titulo">Listado de artistas</string>
+    <!-- Listado de artistas (HU03) -->
+    <string name="artistas_titulo">Artistas</string>
+    <string name="artistas_chip">Leyendas &amp; Bandas</string>
+    <string name="artistas_titular_1">Explora</string>
+    <string name="artistas_titular_2">artistas</string>
+    <string name="artistas_subtitulo">Músicos y bandas del catálogo, en orden alfabético.</string>
+    <!-- Los tres puntos son el texto exacto del mockup. -->
+    <string name="artistas_buscar" tools:ignore="TypographyEllipsis">Buscar artista por nombre...</string>
+    <string name="artistas_lista">Artistas</string>
+    <plurals name="artistas_contador">
+        <item quantity="one">%d artista</item>
+        <item quantity="other">%d artistas</item>
+    </plurals>
+    <string name="artistas_tipo_musico">Músico</string>
+    <string name="artistas_tipo_banda">Banda</string>
+    <string name="artistas_vacio">No se encontraron artistas</string>
+    <string name="artistas_error">No se pudo cargar el listado de artistas</string>
+    <string name="artistas_reintentar">Reintentar</string>
+    <!-- Los tres puntos son el texto exacto del mockup. -->
+    <string name="artistas_cargando" tools:ignore="TypographyEllipsis">Cargando artistas...</string>
+    <string name="artistas_sin_coincidencias">Prueba con otro nombre.</string>
+    <string name="artistas_imagen_descripcion">Imagen de %1$s</string>
+    <string name="artistas_seleccionar_descripcion">Ver detalle de %1$s</string>
+
+    <!-- Destino provisional del detalle del artista (lo reemplaza HU04) -->
+    <string name="artista_detalle_titulo">Detalle del artista</string>
 
     <!-- Destino provisional del catálogo (lo reemplaza HU01) -->
     <string name="catalogo_titulo">Catálogo de álbumes</string>
