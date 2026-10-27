@@ -18,9 +18,36 @@ Daniel Alejandro Nuñez Donado · Jeffrey Alexander Díaz Pérez · Michael Andr
 | Historia | Estado |
 |---|---|
 | HU00 · Ingreso a la plataforma | Implementada: ingreso (Visitante o Coleccionista), selector de coleccionista, sesión por rol y pantalla de inicio |
-| HU01 a HU03 | Pendientes. El catálogo de álbumes y el listado de artistas son **destinos provisionales** a los que se llega desde las tarjetas de la pantalla de inicio |
+| HU01 y HU03 | Pendientes. El catálogo de álbumes y el listado de artistas son **destinos provisionales** a los que se llega desde las tarjetas de la pantalla de inicio |
+| HU02 · Detalle de álbum | En progreso (T02-3): consulta, presentación y estados de pantalla implementados; navegación desde el catálogo e imágenes remotas pendientes |
 
 Flujo actual: `ingreso → (selector de coleccionistas) → inicio → catálogo | artistas`.
+
+### HU02: portada provisional y comprobación del detalle
+
+`ContenidoAlbum` usa una única `PortadaAlbum`, conservando el estilo de HU00. Hasta integrar Coil desde HU03 se muestra explícitamente el estado `Provisional`, con `inicio_albumes`, incluso cuando el álbum tiene URL. Los artistas conservan `inicio_artistas`. Son ilustraciones locales, **no carga remota verificada**.
+
+`PortadaAlbum` solo representa estados recibidos: sin URL (también en blanco) o con `Error` muestra la ilustración provisional; con URL y `Cargando`, un indicador accesible; con URL y `Disponible`, el `Painter` recibido. El componente no descarga imágenes. No se simulan errores ni cargas permanentes para suplir Coil.
+
+Comprobación de este cambio: **92 unitarias sin fallos** y compilación de las pruebas instrumentadas correcta. Las nuevas pruebas Compose se escribieron antes de implementar cada caso, pero **no se ejecutaron en dispositivo**: no hay confirmación de ROJO/VERDE funcional de UI. Pasar unitarias o compilar `androidTest` no sustituye esa comprobación.
+
+Para repetir las comprobaciones sin dispositivo, desde PowerShell:
+
+```powershell
+$env:JAVA_HOME='C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot'
+.\gradlew.bat testDebugUnitTest :app:assembleDebugAndroidTest
+```
+
+Para ejecutar las pruebas de UI pendientes, conecta y desbloquea un teléfono o usa un emulador ya disponible; comprueba el dispositivo con `adb devices` y, si hay varios, define `$env:ANDROID_SERIAL='<serial>'`:
+
+```powershell
+$env:JAVA_HOME='C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot'
+.\gradlew.bat connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.package=com.example.vinilos.ui.detalle"
+```
+
+Este filtro ejecuta `PortadaAlbumTest`, `ContenidoAlbumTest` y `PantallaDetalleAlbumTest` con datos controlados, **sin Docker ni backend**. Comprueba imagen provisional sin URL, prioridad de URL ausente sobre carga, URL en blanco, indicador de carga, alternativa de error y dibujo del `Painter`; también portada única con URL, posición antes de los metadatos, artistas, canciones, comentarios, promedio, vacíos, regreso, reintento y 404.
+
+**T02-3 continúa abierta** hasta verificar la UI y resolver sus pendientes de imágenes reales. El catálogo sigue provisional y no permite abrir el detalle: no hay accesos de prueba en producción ni integración de navegación. No se avanzó a T02-4 ni se ejecutó E2E; T02-5 requiere backend y dispositivo disponibles.
 
 ## Requisitos
 

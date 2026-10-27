@@ -47,10 +47,9 @@ fun ContenidoAlbum(
     ) {
         item { EncabezadoVinilo(onAtras = onAtras) }
         item {
-            Image(
-                painter = painterResource(R.drawable.inicio_albumes),
-                contentDescription = stringResource(R.string.detalle_imagen_provisional),
-                contentScale = ContentScale.Fit,
+            PortadaAlbum(
+                url = presentacion.album.portada,
+                estado = EstadoPortada.Provisional,
                 modifier = Modifier.fillMaxWidth().height(220.dp).clip(RoundedCornerShape(24.dp))
             )
         }

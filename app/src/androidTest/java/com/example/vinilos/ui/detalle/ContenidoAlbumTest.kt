@@ -1,7 +1,9 @@
 package com.example.vinilos.ui.detalle
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollTo
@@ -62,6 +64,19 @@ class ContenidoAlbumTest {
             .assertIsDisplayed().fetchSemanticsNode()
         val nombre = rule.onNodeWithText("Buscando América").fetchSemanticsNode()
         org.junit.Assert.assertTrue(imagen.boundsInRoot.bottom <= nombre.boundsInRoot.top)
+    }
+
+    @Test
+    fun conUrlMantieneUnaUnicaPortadaProvisionalMientrasFaltaElCargadorRemoto() {
+        val presentacion = presentarAlbum(album.copy(portada = "https://example.com/portada.jpg"))
+        rule.setContent {
+            VinilosTheme { ContenidoAlbum(presentacion, onAtras = {}) }
+        }
+
+        rule.onAllNodesWithContentDescription("Imagen provisional del álbum").assertCountEquals(1)
+        rule.onNodeWithContentDescription("Imagen provisional del álbum").assertIsDisplayed()
+        rule.onNodeWithContentDescription("Cargando portada del álbum").assertDoesNotExist()
+        rule.onNodeWithContentDescription("Portada del álbum").assertDoesNotExist()
     }
 
     @Test
