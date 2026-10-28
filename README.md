@@ -14,7 +14,7 @@ La documentación del proyecto (historias de usuario, sprints con su arquitectur
 |---|---|
 | HU00 · Ingreso a la plataforma | Implementada: ingreso como Visitante o Coleccionista, selector de coleccionista, sesión por rol y pantalla de inicio |
 | HU01 · Catálogo de álbumes | Pendiente. El catálogo es un destino provisional al que se llega desde la pantalla de inicio |
-| HU02 · Detalle de álbum | En progreso (T02-3): consulta, presentación, estados de pantalla y portada real con Coil implementados; falta verificar en dispositivo y navegación desde el catálogo |
+| HU02 · Detalle de álbum | T02-3 completa y verificada en dispositivo: consulta, presentación, estados de pantalla y portada real con Coil. Falta integrar la navegación desde el catálogo (T02-4) y correr E2E (T02-5) |
 | HU03 · Listado de artistas | Integrado desde `develop`: listado de músicos y bandas y cargador compartido de imágenes Coil; verificación de UI de esta integración pendiente |
 
 ## Versión y APK
@@ -29,7 +29,7 @@ En cada release se sube `versionCode` en 1 y `versionName` sigue el tag (`1.0.0`
 
 `ContenidoAlbum` usa una única `PortadaAlbum`, conservando el estilo de HU00. El componente se alineó al patrón ya establecido por HU03: un `AsyncImage` de Coil que reutiliza el cargador compartido de la app (`VinilosApplication`), con `inicio_albumes` como `placeholder`, `error` y `fallback` genérico. Sin URL (o en blanco) muestra directamente esa ilustración local; con URL, Coil intenta la descarga real y cae al mismo recurso si falla. Los artistas conservan `inicio_artistas` como imagen provisional: quedan fuera de este cambio por decisión explícita del usuario.
 
-Comprobación de este cambio: **119 unitarias sin fallos**, compilación de las pruebas instrumentadas correcta y lint sin errores. Las pruebas de `PortadaAlbum` y `ContenidoAlbum` verifican que el componente se muestra con y sin URL, sin forzar un estado de carga/error específico: Coil los gestiona internamente y no son determinísticos de probar sin mockear red. **No se ejecutaron en dispositivo** en esta ronda; falta esa confirmación funcional.
+Comprobación de este cambio: **119 unitarias sin fallos**, compilación de las pruebas instrumentadas correcta y lint sin errores. Las pruebas de `PortadaAlbum` y `ContenidoAlbum` verifican que el componente se muestra con y sin URL, sin forzar un estado de carga/error específico: Coil los gestiona internamente y no son determinísticos de probar sin mockear red. **Ejecutadas y verificadas en dispositivo físico**, sin fallos.
 
 Para repetir las comprobaciones sin dispositivo, desde PowerShell:
 
@@ -47,7 +47,7 @@ $env:JAVA_HOME='C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot'
 
 Este filtro ejecuta `PortadaAlbumTest`, `ContenidoAlbumTest` y `PantallaDetalleAlbumTest` con datos controlados, **sin Docker ni backend**. Comprueba portada con y sin URL, posición antes de los metadatos, artistas, canciones, comentarios, promedio, vacíos, regreso, reintento y 404.
 
-**T02-3 continúa abierta** hasta verificar en dispositivo esta integración de portada. El catálogo sigue provisional y no permite abrir el detalle: no hay accesos de prueba en producción ni integración de navegación. No se avanzó a T02-4 ni se ejecutó E2E; T02-5 requiere backend y dispositivo disponibles.
+**T02-3 está completa y verificada en dispositivo** (consulta, presentación, estados de pantalla y portada real con Coil). El catálogo sigue provisional y no permite abrir el detalle: no hay accesos de prueba en producción ni integración de navegación. No se avanzó a T02-4 ni se ejecutó E2E; T02-5 requiere backend y dispositivo disponibles.
 
 ## Requisitos
 
