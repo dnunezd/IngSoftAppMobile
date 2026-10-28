@@ -14,7 +14,7 @@ La documentación del proyecto (historias de usuario, sprints con su arquitectur
 |---|---|
 | HU00 · Ingreso a la plataforma | Implementada: ingreso como Visitante o Coleccionista, selector de coleccionista, sesión por rol y pantalla de inicio |
 | HU01 · Catálogo de álbumes | Pendiente. El catálogo es un destino provisional al que se llega desde la pantalla de inicio |
-| HU02 · Detalle de álbum | T02-3 completa y verificada en dispositivo: consulta, presentación, estados de pantalla y portada real con Coil. T02-4 (navegación) implementada con un enlace provisional en el catálogo, pendiente de confirmar en dispositivo. Falta correr E2E (T02-5) |
+| HU02 · Detalle de álbum | T02-3 y T02-4 completas y verificadas en dispositivo: consulta, presentación, estados de pantalla, portada real con Coil y navegación desde un enlace provisional del catálogo. Falta correr E2E (T02-5) |
 | HU03 · Listado de artistas | Integrado desde `develop`: listado de músicos y bandas y cargador compartido de imágenes Coil; verificación de UI de esta integración pendiente |
 
 ## Versión y APK
