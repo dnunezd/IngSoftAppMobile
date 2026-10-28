@@ -27,7 +27,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -39,10 +38,6 @@ import coil.compose.AsyncImage
 import com.example.vinilos.R
 import com.example.vinilos.ui.ingreso.EncabezadoVinilo
 
-/** Fondo cálido solo para el detalle del álbum, sin tocar el tema compartido de la app. */
-private val FondoDetalleAlbum = Color(0xFFF5EFE2)
-private val BlancoTarjeta = Color(0xFFFFFFFF)
-
 @Composable
 fun ContenidoAlbum(
     presentacion: AlbumPresentacion,
@@ -51,7 +46,7 @@ fun ContenidoAlbum(
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize()
-            .background(FondoDetalleAlbum)
+            .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.safeDrawing),
         contentPadding = PaddingValues(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -104,7 +99,7 @@ private fun TarjetaMetadatos(presentacion: AlbumPresentacion) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = BlancoTarjeta)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
@@ -198,19 +193,25 @@ private fun FilaArtista(artista: com.example.vinilos.data.model.Artista) {
 
 @Composable
 private fun FilaCancion(numero: Int, cancion: com.example.vinilos.data.model.Cancion) {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        Text(
-            "%02d".format(numero),
-            style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.width(28.dp)
-        )
-        Text(cancion.nombre, modifier = Modifier.weight(1f), fontWeight = FontWeight.Medium)
-        Text(cancion.duracion, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            Text(
+                "%02d".format(numero),
+                style = MaterialTheme.typography.labelLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.width(28.dp)
+            )
+            Text(cancion.nombre, modifier = Modifier.weight(1f), fontWeight = FontWeight.Medium)
+            Text(cancion.duracion, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 }
 
@@ -219,7 +220,7 @@ private fun TarjetaComentario(comentario: com.example.vinilos.data.model.Comenta
     Card(
         modifier = Modifier.fillMaxWidth(),
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = BlancoTarjeta)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(comentario.descripcion)
