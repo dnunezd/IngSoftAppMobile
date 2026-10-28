@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,12 +21,17 @@ import com.example.vinilos.ui.ingreso.EncabezadoVinilo
 
 const val TagCatalogo = "catalogo"
 const val TagRolActivo = "catalogo_rol"
+const val TagCatalogoAlbumProvisional = "catalogo_album_provisional"
+
+/** Álbum usado por el enlace provisional mientras HU01 no tiene lista real. */
+const val AlbumIdProvisional = 1
 
 /** Destino provisional del ingreso: HU01 lo reemplaza por el catálogo real. */
 @Composable
 fun PantallaCatalogoProvisional(
     session: Session,
     onAtras: () -> Unit,
+    onSeleccionarAlbum: (Int) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -53,6 +59,18 @@ fun PantallaCatalogoProvisional(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.testTag(TagRolActivo)
             )
+            Text(
+                text = stringResource(R.string.catalogo_album_provisional_nota),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 16.dp)
+            )
+            Button(
+                onClick = { onSeleccionarAlbum(AlbumIdProvisional) },
+                modifier = Modifier.padding(top = 8.dp).testTag(TagCatalogoAlbumProvisional)
+            ) {
+                Text(stringResource(R.string.catalogo_album_provisional_boton))
+            }
         }
     }
 }

@@ -14,7 +14,7 @@ La documentación del proyecto (historias de usuario, sprints con su arquitectur
 |---|---|
 | HU00 · Ingreso a la plataforma | Implementada: ingreso como Visitante o Coleccionista, selector de coleccionista, sesión por rol y pantalla de inicio |
 | HU01 · Catálogo de álbumes | Pendiente. El catálogo es un destino provisional al que se llega desde la pantalla de inicio |
-| HU02 · Detalle de álbum | T02-3 completa y verificada en dispositivo: consulta, presentación, estados de pantalla y portada real con Coil. Falta integrar la navegación desde el catálogo (T02-4) y correr E2E (T02-5) |
+| HU02 · Detalle de álbum | T02-3 completa y verificada en dispositivo: consulta, presentación, estados de pantalla y portada real con Coil. T02-4 (navegación) implementada con un enlace provisional en el catálogo, pendiente de confirmar en dispositivo. Falta correr E2E (T02-5) |
 | HU03 · Listado de artistas | Integrado desde `develop`: listado de músicos y bandas y cargador compartido de imágenes Coil; verificación de UI de esta integración pendiente |
 
 ## Versión y APK
@@ -47,7 +47,22 @@ $env:JAVA_HOME='C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot'
 
 Este filtro ejecuta `PortadaAlbumTest`, `ContenidoAlbumTest` y `PantallaDetalleAlbumTest` con datos controlados, **sin Docker ni backend**. Comprueba portada con y sin URL, posición antes de los metadatos, artistas, canciones, comentarios, promedio, vacíos, regreso, reintento y 404.
 
-**T02-3 está completa y verificada en dispositivo** (consulta, presentación, estados de pantalla y portada real con Coil). El catálogo sigue provisional y no permite abrir el detalle: no hay accesos de prueba en producción ni integración de navegación. No se avanzó a T02-4 ni se ejecutó E2E; T02-5 requiere backend y dispositivo disponibles.
+**T02-3 está completa y verificada en dispositivo** (consulta, presentación, estados de pantalla y portada real con Coil).
+
+### HU02: navegación provisional desde el catálogo (T02-4)
+
+Mientras HU01 no tenga un catálogo real con lista de álbumes, `PantallaCatalogoProvisional` incluye un enlace de prueba claramente etiquetado como provisional que navega a un álbum fijo (`AlbumIdProvisional = 1`, valor supuesto sin confirmar contra el backend real). La ruta `album/{id}`, el `AlbumViewModel` y el uso del `AlbumRepository` compartido (sin crear un segundo `ServiceAdapter`) no son provisionales: son la integración real que usará la selección definitiva cuando exista HU01. Volver desde el detalle (éxito o 404) regresa al catálogo.
+
+Comprobación de este cambio: **119 unitarias sin fallos**, `:app:assembleDebugAndroidTest` compila sin errores y lint sin errores. Las pruebas de navegación (`VinilosNavHostTest`) y del enlace provisional (`PantallaCatalogoProvisionalTest`) se escribieron primero (ROJO por compilación) y luego se implementó lo mínimo para que compilen; **la ejecución instrumentada en dispositivo físico queda pendiente de confirmación del usuario**, igual que si `AlbumIdProvisional = 1` corresponde a un álbum real.
+
+Para ejecutar estas pruebas de navegación, conecta y desbloquea un teléfono o usa un emulador ya disponible:
+
+```powershell
+$env:JAVA_HOME='C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot'
+.\gradlew.bat connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.package=com.example.vinilos.navigation"
+```
+
+No se ejecutó E2E (T02-5): requiere backend y dispositivo disponibles.
 
 ## Requisitos
 

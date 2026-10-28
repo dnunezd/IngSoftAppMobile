@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -14,15 +15,19 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.example.vinilos.VinilosApplication
 import com.example.vinilos.data.model.ArtistType
+import com.example.vinilos.data.repository.AlbumRepository
 import com.example.vinilos.data.repository.ArtistRepository
 import com.example.vinilos.data.repository.CollectorRepository
 import com.example.vinilos.ui.artistas.PantallaArtistaProvisional
 import com.example.vinilos.ui.artistas.PantallaArtistas
 import com.example.vinilos.ui.catalogo.PantallaCatalogoProvisional
+import com.example.vinilos.ui.detalle.PantallaDetalleAlbum
 import com.example.vinilos.ui.ingreso.PantallaColeccionistas
 import com.example.vinilos.ui.ingreso.PantallaIngreso
 import com.example.vinilos.ui.inicio.PantallaInicio
+import com.example.vinilos.viewmodel.AlbumViewModel
 import com.example.vinilos.viewmodel.ArtistsViewModel
 import com.example.vinilos.viewmodel.CollectorsViewModel
 import com.example.vinilos.viewmodel.SessionViewModel
@@ -37,8 +42,13 @@ object Rutas {
     /** Detalle del artista (HU04). El nombre viaja para el destino provisional; HU04 lo consulta por id. */
     const val DetalleArtista = "artista/{tipo}/{id}?nombre={nombre}"
 
+    /** Detalle del álbum (HU02). */
+    const val DetalleAlbum = "album/{id}"
+
     fun detalleArtista(tipo: ArtistType, id: Int, nombre: String) =
         "artista/${tipo.name}/$id?nombre=${Uri.encode(nombre)}"
+
+    fun detalleAlbum(id: Int) = "album/$id"
 }
 
 /**
@@ -52,6 +62,8 @@ fun VinilosNavHost(
     sessionViewModel: SessionViewModel,
     collectorRepository: CollectorRepository,
     artistRepository: ArtistRepository,
+    albumRepository: AlbumRepository =
+        (LocalContext.current.applicationContext as VinilosApplication).container.albumRepository,
     modifier: Modifier = Modifier
 ) {
     fun irAlInicio() {
@@ -110,7 +122,10 @@ fun VinilosNavHost(
             val session by sessionViewModel.session.collectAsStateWithLifecycle()
             PantallaCatalogoProvisional(
                 session = session,
-                onAtras = { navController.popBackStack() }
+                onAtras = { navController.popBackStack() },
+                onSeleccionarAlbum = { id ->
+                    navController.navigate(Rutas.detalleAlbum(id)) { launchSingleTop = true }
+                }
             )
         }
         composable(Rutas.Artistas) {
@@ -145,6 +160,23 @@ fun VinilosNavHost(
                 nombre = argumentos.getString("nombre").orEmpty(),
                 tipo = ArtistType.valueOf(requireNotNull(argumentos.getString("tipo"))),
                 onAtras = { navController.popBackStack() }
+            )
+        }
+        composable(
+            Rutas.DetalleAlbum,
+            arguments = listOf(navArgument("id") { type = NavType.IntType })
+        ) { entrada ->
+            val id = requireNotNull(entrada.arguments).getInt("id")
+            val viewModel: AlbumViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer { AlbumViewModel(id, albumRepository) }
+                }
+            )
+            val estado by viewModel.uiState.collectAsStateWithLifecycle()
+            PantallaDetalleAlbum(
+                estado = estado,
+                onAtras = { navController.popBackStack() },
+                onReintentar = viewModel::reintentar
             )
         }
     }

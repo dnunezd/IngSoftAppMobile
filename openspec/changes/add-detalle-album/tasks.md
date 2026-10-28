@@ -23,9 +23,9 @@
 
 ## 3. Navegación desde y hacia el catálogo (T02-4)
 
-- [ ] 3.1 Escribir primero pruebas de navegación para que seleccionar un álbum pase su ID al detalle y para que volver desde éxito o 404 regrese al catálogo; confirmar que fallen antes del cambio.
-- [ ] 3.2 Agregar la ruta parametrizada del detalle e integrarla con la acción de selección del catálogo HU01. Mantener el catálogo existente como destino y no duplicar su implementación.
-- [ ] 3.3 Ejecutar pruebas de navegación/UI para varios IDs, estado 404 y regreso; coordinar la integración con HU01 para evitar conflictos sobre el destino provisional.
+- [x] 3.1 Escribir primero pruebas de navegación para que seleccionar un álbum pase su ID al detalle y para que volver desde éxito o 404 regrese al catálogo; confirmar que fallen antes del cambio. Pruebas agregadas en `VinilosNavHostTest` (`seleccionarElAlbumProvisionalDelCatalogoMuestraSuDetalleYAtrasVuelveAlCatalogo`, `elAlbumNoDisponibleMuestraElMensaje404YVolverLlevaAlCatalogo`) y `PantallaCatalogoProvisionalTest`; el ROJO se confirmó por falla de compilación (referencias inexistentes) antes de implementar.
+- [x] 3.2 Agregar la ruta parametrizada del detalle e integrarla con la acción de selección del catálogo HU01. Mantener el catálogo existente como destino y no duplicar su implementación. Como HU01 todavía no tiene un catálogo real con lista de álbumes, se agregó en `PantallaCatalogoProvisional` un enlace de prueba explícito y etiquetado como provisional (`AlbumIdProvisional`, decisión confirmada por el usuario) hasta que exista la selección real; la ruta `album/{id}` y el resto de la integración (ViewModel, repositorio compartido) no son provisionales.
+- [x] 3.3 Ejecutar pruebas de navegación/UI para varios IDs, estado 404 y regreso; coordinar la integración con HU01 para evitar conflictos sobre el destino provisional. Verificado: `:app:assembleDebugAndroidTest` compila sin errores y `testDebugUnitTest`/`lint` pasan (119 unitarias, 0 fallos) tras el cambio. La ejecución instrumentada en dispositivo físico de estas pruebas de navegación queda pendiente de confirmación del usuario (no se ejecutó en emulador/dispositivo en esta sesión). `AlbumIdProvisional = 1` es un valor supuesto sin confirmar contra el backend real; ajustar si no corresponde a un álbum existente.
 
 ## 4. Pruebas E2E (T02-5)
 

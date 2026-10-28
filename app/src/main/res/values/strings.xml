@@ -86,6 +86,8 @@
     <string name="catalogo_rol_visitante">Visitante</string>
     <string name="catalogo_rol_coleccionista">Coleccionista: %1$s</string>
     <string name="catalogo_rol_ninguno">Sin perfil</string>
+    <string name="catalogo_album_provisional_nota">Enlace provisional para probar el detalle de álbum mientras HU01 agrega la lista real</string>
+    <string name="catalogo_album_provisional_boton">Ver álbum de prueba</string>
 
     <string name="detalle_sin_canciones">Este álbum aún no tiene canciones registradas</string>
     <string name="detalle_sin_comentarios">Aún no hay comentarios para este álbum</string>
