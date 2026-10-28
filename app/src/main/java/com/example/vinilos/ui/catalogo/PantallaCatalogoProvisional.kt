@@ -23,8 +23,12 @@ const val TagCatalogo = "catalogo"
 const val TagRolActivo = "catalogo_rol"
 const val TagCatalogoAlbumProvisional = "catalogo_album_provisional"
 
-/** Álbum usado por el enlace provisional mientras HU01 no tiene lista real. */
-const val AlbumIdProvisional = 1
+/**
+ * Álbum usado por el enlace provisional mientras HU01 no tiene lista real.
+ * Corresponde a "Buscando América" en los datos de ejemplo de BackVynils
+ * (ids de álbum empiezan en 100, igual que collectors/artistas).
+ */
+const val AlbumIdProvisional = 100
 
 /** Destino provisional del ingreso: HU01 lo reemplaza por el catálogo real. */
 @Composable
