@@ -29,8 +29,8 @@
 
 ## 4. Pruebas E2E (T02-5)
 
-- [ ] 4.1 Preparar pruebas instrumentadas contra BackVynils real para un álbum con canciones y comentarios y otro sin canciones ni comentarios.
-- [ ] 4.2 Verificar los datos presentados, la lista de artistas, la portada/fallback, el promedio, el texto de vacíos y el retorno al catálogo; comprobar la fecha en dispositivo API 23 una vez integrado el cambio de minSdk/desugaring.
+- [x] 4.1 Preparar pruebas instrumentadas contra BackVynils real para un álbum con canciones y comentarios y otro sin canciones ni comentarios. Implementado: `AlbumDetalleE2ETest` (entra como visitante, va al catálogo, usa el enlace provisional y revisa el detalle completo del álbum real 100, "Buscando América": canciones, artista, comentario sin autor) y `AlbumDetalleBackendRealTest` (mismo `VinilosNavHost` con el `AlbumRepository` real de `AppContainer`, navegando directo a la ruta por id para alcanzar el álbum 101 "Poeta del pueblo", sin canciones ni comentarios, y un id inexistente para el 404 real, ninguno de los dos alcanzable aún desde la interfaz porque el catálogo real de HU01 no existe). Compilación verificada (`:app:assembleDebugAndroidTest`); **pendiente de ejecución real en dispositivo con backend levantado**, la correrá el usuario.
+- [ ] 4.2 Verificar los datos presentados, la lista de artistas, la portada/fallback, el promedio, el texto de vacíos y el retorno al catálogo; comprobar la fecha en dispositivo API 23 una vez integrado el cambio de minSdk/desugaring. Las aserciones de datos/vacíos/retorno ya están escritas en las pruebas de 4.1; falta la verificación en dispositivo API 23 y la confirmación de que pasaron con backend real.
 - [ ] 4.3 Ejecutar unitarias y pruebas instrumentadas pertinentes con backend disponible; documentar cualquier prueba bloqueada por backend, dispositivo o integración de HU01 sin marcarla como verificada.
 
 ## 5. Documentación y mockups (T02-6)
