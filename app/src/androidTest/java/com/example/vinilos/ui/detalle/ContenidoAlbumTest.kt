@@ -2,6 +2,7 @@ package com.example.vinilos.ui.detalle
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -121,8 +122,10 @@ class ContenidoAlbumTest {
 
     @Test
     fun conCalificacionesMuestraLaFechaDeEstrenoYLasEstrellasDelPromedio() {
+        // Promedio de (3+5)/2 = 4,0 -> 4 estrellas, distinto de las de cada comentario
+        // individual (3 y 5), para no confundir el texto del encabezado con el de un comentario.
         val presentacion = presentarAlbum(album.copy(
-            comentarios = listOf(Comentario("Gran disco", 5), Comentario("Buen sonido", 4))
+            comentarios = listOf(Comentario("Gran disco", 3), Comentario("Buen sonido", 5))
         ))
         rule.setContent {
             VinilosTheme { ContenidoAlbum(presentacion, onAtras = {}) }
@@ -130,7 +133,7 @@ class ContenidoAlbumTest {
 
         rule.onNodeWithText("Estreno").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("1 de agosto de 1984").performScrollTo().assertIsDisplayed()
-        rule.onNodeWithText("★★★★★").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("★★★★☆").performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -157,11 +160,19 @@ class ContenidoAlbumTest {
             VinilosTheme { ContenidoAlbum(presentacion, onAtras = {}) }
         }
 
-        rule.onNodeWithText("Gran disco").performScrollTo().assertIsDisplayed()
-        rule.onNodeWithContentDescription("5 / 5").performScrollTo().assertIsDisplayed()
-        rule.onNodeWithText("Buen sonido").performScrollTo().assertIsDisplayed()
-        rule.onNodeWithContentDescription("4 / 5").performScrollTo().assertIsDisplayed()
-        rule.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("4,5"))
+        // performScrollToNode se usa en vez de onNodeWithText(...).performScrollTo() porque este
+        // último exige que el nodo ya esté compuesto; en una lista larga en un dispositivo real,
+        // los elementos finales (como el segundo comentario) pueden no haberse compuesto aún.
+        val lista = rule.onNode(hasScrollToNodeAction())
+        lista.performScrollToNode(hasText("Gran disco"))
+        rule.onNodeWithText("Gran disco").assertIsDisplayed()
+        lista.performScrollToNode(hasContentDescription("5 / 5"))
+        rule.onNodeWithContentDescription("5 / 5").assertIsDisplayed()
+        lista.performScrollToNode(hasText("Buen sonido"))
+        rule.onNodeWithText("Buen sonido").assertIsDisplayed()
+        lista.performScrollToNode(hasContentDescription("4 / 5"))
+        rule.onNodeWithContentDescription("4 / 5").assertIsDisplayed()
+        lista.performScrollToNode(hasText("4,5"))
         rule.onNodeWithText("4,5").assertIsDisplayed()
         rule.onNodeWithText("Aún no hay comentarios para este álbum").assertDoesNotExist()
         rule.onNodeWithText("Sin calificaciones").assertDoesNotExist()
