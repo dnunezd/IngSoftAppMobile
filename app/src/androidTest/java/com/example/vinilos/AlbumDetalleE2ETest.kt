@@ -11,6 +11,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.hasScrollToNodeAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
@@ -99,6 +100,9 @@ class AlbumDetalleE2ETest {
             rule.onNodeWithText("Autor").assertDoesNotExist()
             EvidenciaE2E.capturar(rule, carpetaEvidencia, "05_detalle_comentario")
 
+            // La flecha de regreso (encabezado) puede haber salido de la zona compuesta por el
+            // scroll anterior; se vuelve a buscar antes de pulsarla.
+            rule.onNode(hasScrollToNodeAction()).performScrollToNode(hasTestTag(TagAtras))
             rule.onNodeWithTag(TagAtras).performClick()
             esperarA(TagCatalogo)
             EvidenciaE2E.capturar(rule, carpetaEvidencia, "06_regreso_catalogo")

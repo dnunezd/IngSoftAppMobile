@@ -3,9 +3,12 @@ package com.example.vinilos.navigation
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.hasScrollToNodeAction
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.performScrollToNode
 import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.testing.TestNavHostController
 import com.example.vinilos.AppContainer
@@ -74,11 +77,19 @@ class AlbumDetalleBackendRealTest {
             rule.onAllNodesWithText("Poeta del pueblo").fetchSemanticsNodes().isNotEmpty()
         }
 
+        // performScrollToNode se usa porque en una lista larga en un dispositivo real los
+        // elementos mas abajo (artista, mensajes de vacio) pueden no estar compuestos aun.
+        val lista = rule.onNode(hasScrollToNodeAction())
         rule.onNodeWithText("Poeta del pueblo").assertIsDisplayed()
+        lista.performScrollToNode(hasText("Salsa"))
         rule.onNodeWithText("Salsa").assertIsDisplayed()
+        lista.performScrollToNode(hasText("Rubén Blades Bellido de Luna"))
         rule.onNodeWithText("Rubén Blades Bellido de Luna").assertIsDisplayed()
+        lista.performScrollToNode(hasText("Este álbum aún no tiene canciones registradas"))
         rule.onNodeWithText("Este álbum aún no tiene canciones registradas").assertIsDisplayed()
+        lista.performScrollToNode(hasText("Aún no hay comentarios para este álbum"))
         rule.onNodeWithText("Aún no hay comentarios para este álbum").assertIsDisplayed()
+        lista.performScrollToNode(hasText("Sin calificaciones"))
         rule.onNodeWithText("Sin calificaciones").assertIsDisplayed()
         EvidenciaE2E.capturar(rule, carpetaEvidencia, "07_album_sin_contenido")
     }

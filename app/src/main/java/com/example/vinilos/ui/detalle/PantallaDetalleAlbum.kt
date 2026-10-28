@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Button
@@ -46,7 +47,12 @@ fun PantallaDetalleAlbum(
         if (estado == AlbumUiState.Cargando) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 val descripcion = stringResource(R.string.detalle_cargando)
-                CircularProgressIndicator(Modifier.semantics { contentDescription = descripcion })
+                CircularProgressIndicator(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .semantics { contentDescription = descripcion },
+                    strokeWidth = 5.dp
+                )
             }
         }
         if (estado == AlbumUiState.NoDisponible || estado == AlbumUiState.Error) {
