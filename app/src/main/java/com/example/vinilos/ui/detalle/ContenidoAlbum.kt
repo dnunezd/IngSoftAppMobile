@@ -49,7 +49,6 @@ fun ContenidoAlbum(
         item {
             PortadaAlbum(
                 url = presentacion.album.portada,
-                estado = EstadoPortada.Provisional,
                 modifier = Modifier.fillMaxWidth().height(220.dp).clip(RoundedCornerShape(24.dp))
             )
         }

@@ -14,7 +14,7 @@ La documentación del proyecto (historias de usuario, sprints con su arquitectur
 |---|---|
 | HU00 · Ingreso a la plataforma | Implementada: ingreso como Visitante o Coleccionista, selector de coleccionista, sesión por rol y pantalla de inicio |
 | HU01 · Catálogo de álbumes | Pendiente. El catálogo es un destino provisional al que se llega desde la pantalla de inicio |
-| HU02 · Detalle de álbum | En progreso (T02-3): consulta, presentación y estados de pantalla implementados; navegación desde el catálogo e imágenes remotas pendientes |
+| HU02 · Detalle de álbum | En progreso (T02-3): consulta, presentación, estados de pantalla y portada real con Coil implementados; falta verificar en dispositivo y navegación desde el catálogo |
 | HU03 · Listado de artistas | Integrado desde `develop`: listado de músicos y bandas y cargador compartido de imágenes Coil; verificación de UI de esta integración pendiente |
 
 ## Versión y APK
@@ -25,13 +25,11 @@ Para instalarla sin compilar, descarga en el teléfono el APK adjunto al [releas
 
 En cada release se sube `versionCode` en 1 y `versionName` sigue el tag (`1.0.0` para `v1.0.0`), ambos en `app/build.gradle.kts`. El APK del release se genera con `./gradlew assembleDebug -PbaseUrl=http://localhost:3000/` y se adjunta renombrado como `vinilos-v<versión>.apk` (la variante de release no está firmada y Android no la instala).
 
-### HU02: portada provisional y comprobación del detalle
+### HU02: portada real con Coil y comprobación del detalle
 
-`ContenidoAlbum` usa una única `PortadaAlbum`, conservando el estilo de HU00. Hasta integrar Coil desde HU03 se muestra explícitamente el estado `Provisional`, con `inicio_albumes`, incluso cuando el álbum tiene URL. Los artistas conservan `inicio_artistas`. Son ilustraciones locales, **no carga remota verificada**.
+`ContenidoAlbum` usa una única `PortadaAlbum`, conservando el estilo de HU00. El componente se alineó al patrón ya establecido por HU03: un `AsyncImage` de Coil que reutiliza el cargador compartido de la app (`VinilosApplication`), con `inicio_albumes` como `placeholder`, `error` y `fallback` genérico. Sin URL (o en blanco) muestra directamente esa ilustración local; con URL, Coil intenta la descarga real y cae al mismo recurso si falla. Los artistas conservan `inicio_artistas` como imagen provisional: quedan fuera de este cambio por decisión explícita del usuario.
 
-`PortadaAlbum` solo representa estados recibidos: sin URL (también en blanco) o con `Error` muestra la ilustración provisional; con URL y `Cargando`, un indicador accesible; con URL y `Disponible`, el `Painter` recibido. El componente no descarga imágenes. No se simulan errores ni cargas permanentes para suplir Coil.
-
-Comprobación de este cambio: **92 unitarias sin fallos** y compilación de las pruebas instrumentadas correcta. Las nuevas pruebas Compose se escribieron antes de implementar cada caso, pero **no se ejecutaron en dispositivo**: no hay confirmación de ROJO/VERDE funcional de UI. Pasar unitarias o compilar `androidTest` no sustituye esa comprobación.
+Comprobación de este cambio: **119 unitarias sin fallos**, compilación de las pruebas instrumentadas correcta y lint sin errores. Las pruebas de `PortadaAlbum` y `ContenidoAlbum` verifican que el componente se muestra con y sin URL, sin forzar un estado de carga/error específico: Coil los gestiona internamente y no son determinísticos de probar sin mockear red. **No se ejecutaron en dispositivo** en esta ronda; falta esa confirmación funcional.
 
 Para repetir las comprobaciones sin dispositivo, desde PowerShell:
 
@@ -47,9 +45,9 @@ $env:JAVA_HOME='C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot'
 .\gradlew.bat connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.package=com.example.vinilos.ui.detalle"
 ```
 
-Este filtro ejecuta `PortadaAlbumTest`, `ContenidoAlbumTest` y `PantallaDetalleAlbumTest` con datos controlados, **sin Docker ni backend**. Comprueba imagen provisional sin URL, prioridad de URL ausente sobre carga, URL en blanco, indicador de carga, alternativa de error y dibujo del `Painter`; también portada única con URL, posición antes de los metadatos, artistas, canciones, comentarios, promedio, vacíos, regreso, reintento y 404.
+Este filtro ejecuta `PortadaAlbumTest`, `ContenidoAlbumTest` y `PantallaDetalleAlbumTest` con datos controlados, **sin Docker ni backend**. Comprueba portada con y sin URL, posición antes de los metadatos, artistas, canciones, comentarios, promedio, vacíos, regreso, reintento y 404.
 
-**T02-3 continúa abierta** hasta verificar la UI y resolver sus pendientes de imágenes reales. El catálogo sigue provisional y no permite abrir el detalle: no hay accesos de prueba en producción ni integración de navegación. No se avanzó a T02-4 ni se ejecutó E2E; T02-5 requiere backend y dispositivo disponibles.
+**T02-3 continúa abierta** hasta verificar en dispositivo esta integración de portada. El catálogo sigue provisional y no permite abrir el detalle: no hay accesos de prueba en producción ni integración de navegación. No se avanzó a T02-4 ni se ejecutó E2E; T02-5 requiere backend y dispositivo disponibles.
 
 ## Requisitos
 
