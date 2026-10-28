@@ -14,7 +14,7 @@ La documentación del proyecto (historias de usuario, sprints con su arquitectur
 |---|---|
 | HU00 · Ingreso a la plataforma | Implementada: ingreso como Visitante o Coleccionista, selector de coleccionista, sesión por rol y pantalla de inicio |
 | HU01 · Catálogo de álbumes | Pendiente. El catálogo es un destino provisional al que se llega desde la pantalla de inicio |
-| HU02 · Detalle de álbum | T02-3 y T02-4 completas y verificadas en dispositivo: consulta, presentación, estados de pantalla, portada real con Coil y navegación desde un enlace provisional del catálogo. Rediseño visual (fondo crema, estrellas, imagen real de artistas) implementado, pendiente de verificar en dispositivo. Falta correr E2E (T02-5) |
+| HU02 · Detalle de álbum | T02-3, T02-4 y T02-5 completas y verificadas en dispositivo físico contra el backend real: consulta, presentación, estados de pantalla, portada real con Coil, navegación desde un enlace provisional del catálogo y pruebas E2E (90/90 instrumentadas sin fallos). Pendiente: documentación en wiki/mockups (T02-6, borradores sin publicar) y verificación de fecha en un dispositivo API 23 real |
 | HU03 · Listado de artistas | Integrado desde `develop`: listado de músicos y bandas y cargador compartido de imágenes Coil; verificación de UI de esta integración pendiente |
 
 ## Versión y APK
@@ -31,7 +31,7 @@ En cada release se sube `versionCode` en 1 y `versionName` sigue el tag (`1.0.0`
 
 Rediseño visual (sobre referencia `album.png` del usuario): fondo crema y tarjetas blancas locales a esta pantalla, promedio mostrado con estrellas (`★`/`☆`) en vez de un número junto a "X avg", fecha de estreno destacada junto al promedio, canciones numeradas y comentarios con estrellas en vez del texto "X / 5". El botón "+ Agregar comentario" (solo coleccionista) que pidió el usuario **no** se implementó: es funcionalidad nueva de escritura fuera del alcance de HU02 (que es solo de consulta); queda pendiente de decidir como tarea o historia aparte.
 
-Comprobación de este cambio: **120 unitarias sin fallos**, compilación de las pruebas instrumentadas correcta y lint sin errores nuevos. Las pruebas de `PortadaAlbum` y `ContenidoAlbum` verifican que el componente se muestra con y sin URL, sin forzar un estado de carga/error específico: Coil los gestiona internamente y no son determinísticos de probar sin mockear red. **Pendiente de verificar en dispositivo físico** (el usuario ejecutará las pruebas de UI).
+Comprobación de este cambio: **120 unitarias sin fallos**, compilación de las pruebas instrumentadas correcta y lint sin errores nuevos. Las pruebas de `PortadaAlbum` y `ContenidoAlbum` verifican que el componente se muestra con y sin URL, sin forzar un estado de carga/error específico: Coil los gestiona internamente y no son determinísticos de probar sin mockear red. **Verificado en dispositivo físico**: las 90 pruebas instrumentadas del módulo (incluyendo esta sección) pasaron contra el backend real.
 
 Para repetir las comprobaciones sin dispositivo, desde PowerShell:
 
@@ -64,7 +64,7 @@ $env:JAVA_HOME='C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot'
 .\gradlew.bat connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.package=com.example.vinilos.navigation"
 ```
 
-No se ejecutó E2E (T02-5): requiere backend y dispositivo disponibles.
+E2E (T02-5) ejecutadas y verificadas contra backend real en dispositivo físico: `AlbumDetalleE2ETest` (flujo completo del visitante con el álbum 100) y `AlbumDetalleBackendRealTest` (álbum 101 sin canciones/comentarios y un id inexistente para el 404 real). Suite completa del módulo: 90/90 pruebas instrumentadas sin fallos.
 
 ## Requisitos
 
