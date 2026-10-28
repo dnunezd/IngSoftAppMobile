@@ -14,7 +14,7 @@ La documentación del proyecto (historias de usuario, sprints con su arquitectur
 |---|---|
 | HU00 · Ingreso a la plataforma | Implementada: ingreso como Visitante o Coleccionista, selector de coleccionista, sesión por rol y pantalla de inicio |
 | HU01 · Catálogo de álbumes | Pendiente. El catálogo es un destino provisional al que se llega desde la pantalla de inicio |
-| HU02 · Detalle de álbum | T02-3 y T02-4 completas y verificadas en dispositivo: consulta, presentación, estados de pantalla, portada real con Coil y navegación desde un enlace provisional del catálogo. Falta correr E2E (T02-5) |
+| HU02 · Detalle de álbum | T02-3 y T02-4 completas y verificadas en dispositivo: consulta, presentación, estados de pantalla, portada real con Coil y navegación desde un enlace provisional del catálogo. Rediseño visual (fondo crema, estrellas, imagen real de artistas) implementado, pendiente de verificar en dispositivo. Falta correr E2E (T02-5) |
 | HU03 · Listado de artistas | Integrado desde `develop`: listado de músicos y bandas y cargador compartido de imágenes Coil; verificación de UI de esta integración pendiente |
 
 ## Versión y APK
@@ -27,9 +27,11 @@ En cada release se sube `versionCode` en 1 y `versionName` sigue el tag (`1.0.0`
 
 ### HU02: portada real con Coil y comprobación del detalle
 
-`ContenidoAlbum` usa una única `PortadaAlbum`, conservando el estilo de HU00. El componente se alineó al patrón ya establecido por HU03: un `AsyncImage` de Coil que reutiliza el cargador compartido de la app (`VinilosApplication`), con `inicio_albumes` como `placeholder`, `error` y `fallback` genérico. Sin URL (o en blanco) muestra directamente esa ilustración local; con URL, Coil intenta la descarga real y cae al mismo recurso si falla. Los artistas conservan `inicio_artistas` como imagen provisional: quedan fuera de este cambio por decisión explícita del usuario.
+`ContenidoAlbum` usa una única `PortadaAlbum`, conservando el estilo de HU00. El componente se alineó al patrón ya establecido por HU03: un `AsyncImage` de Coil que reutiliza el cargador compartido de la app (`VinilosApplication`), con `inicio_albumes` como `placeholder`, `error` y `fallback` genérico. Sin URL (o en blanco) muestra directamente esa ilustración local; con URL, Coil intenta la descarga real y cae al mismo recurso si falla. Los artistas ahora también usan Coil con `artista.imagen` (mismo patrón, `inicio_artistas` como `placeholder`/`error`/`fallback`): deja de ser una imagen provisional fija.
 
-Comprobación de este cambio: **119 unitarias sin fallos**, compilación de las pruebas instrumentadas correcta y lint sin errores. Las pruebas de `PortadaAlbum` y `ContenidoAlbum` verifican que el componente se muestra con y sin URL, sin forzar un estado de carga/error específico: Coil los gestiona internamente y no son determinísticos de probar sin mockear red. **Ejecutadas y verificadas en dispositivo físico**, sin fallos.
+Rediseño visual (sobre referencia `album.png` del usuario): fondo crema y tarjetas blancas locales a esta pantalla, promedio mostrado con estrellas (`★`/`☆`) en vez de un número junto a "X avg", fecha de estreno destacada junto al promedio, canciones numeradas y comentarios con estrellas en vez del texto "X / 5". El botón "+ Agregar comentario" (solo coleccionista) que pidió el usuario **no** se implementó: es funcionalidad nueva de escritura fuera del alcance de HU02 (que es solo de consulta); queda pendiente de decidir como tarea o historia aparte.
+
+Comprobación de este cambio: **120 unitarias sin fallos**, compilación de las pruebas instrumentadas correcta y lint sin errores nuevos. Las pruebas de `PortadaAlbum` y `ContenidoAlbum` verifican que el componente se muestra con y sin URL, sin forzar un estado de carga/error específico: Coil los gestiona internamente y no son determinísticos de probar sin mockear red. **Pendiente de verificar en dispositivo físico** (el usuario ejecutará las pruebas de UI).
 
 Para repetir las comprobaciones sin dispositivo, desde PowerShell:
 

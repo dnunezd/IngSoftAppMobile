@@ -14,3 +14,10 @@ fun promedioCalificaciones(comentarios: List<Comentario>): String? {
         roundingMode = RoundingMode.HALF_UP
     }.format(promedio)
 }
+
+/** Redondea el promedio ya formateado (coma española) a un número entero de estrellas para dibujarlas. */
+fun estrellasLlenas(promedio: String?): Int {
+    if (promedio == null) return 0
+    val valor = promedio.replace(',', '.').toDouble()
+    return Math.round(valor).toInt().coerceIn(0, 5)
+}

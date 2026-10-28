@@ -32,4 +32,11 @@ class PromedioCalificacionesTest {
 
         assertEquals("4,3", promedioCalificaciones(comentarios))
     }
+
+    @Test
+    fun elPromedioSeRedondeaAEstrellasEnterasParaDibujarlas() {
+        assertEquals(5, estrellasLlenas("4,7"))
+        assertEquals(4, estrellasLlenas("4,3"))
+        assertEquals(0, estrellasLlenas(null))
+    }
 }

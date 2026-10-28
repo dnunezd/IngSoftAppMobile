@@ -52,7 +52,7 @@ class ContenidoAlbumTest {
 
         listOf("Rubén Blades", "Seis del Solar").forEach { nombre ->
             rule.onNodeWithText(nombre).performScrollTo().assertIsDisplayed()
-            rule.onNodeWithContentDescription("Imagen provisional de $nombre").assertIsDisplayed()
+            rule.onNodeWithContentDescription("Imagen de $nombre").assertIsDisplayed()
         }
     }
 
@@ -120,6 +120,20 @@ class ContenidoAlbumTest {
     }
 
     @Test
+    fun conCalificacionesMuestraLaFechaDeEstrenoYLasEstrellasDelPromedio() {
+        val presentacion = presentarAlbum(album.copy(
+            comentarios = listOf(Comentario("Gran disco", 5), Comentario("Buen sonido", 4))
+        ))
+        rule.setContent {
+            VinilosTheme { ContenidoAlbum(presentacion, onAtras = {}) }
+        }
+
+        rule.onNodeWithText("Estreno").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("1 de agosto de 1984").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("★★★★★").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
     fun cancionesMuestraCadaNombreYDuracionSinMensajeDeVacio() {
         val presentacion = presentarAlbum(album.copy(
             canciones = listOf(Cancion("Decisiones", "5:02"), Cancion("Plástico", "6:40"))
@@ -144,9 +158,9 @@ class ContenidoAlbumTest {
         }
 
         rule.onNodeWithText("Gran disco").performScrollTo().assertIsDisplayed()
-        rule.onNodeWithText("5 / 5").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithContentDescription("5 / 5").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("Buen sonido").performScrollTo().assertIsDisplayed()
-        rule.onNodeWithText("4 / 5").performScrollTo().assertIsDisplayed()
+        rule.onNodeWithContentDescription("4 / 5").performScrollTo().assertIsDisplayed()
         rule.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("4,5"))
         rule.onNodeWithText("4,5").assertIsDisplayed()
         rule.onNodeWithText("Aún no hay comentarios para este álbum").assertDoesNotExist()
