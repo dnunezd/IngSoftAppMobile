@@ -35,7 +35,7 @@
 
 ## 5. Documentación y mockups (T02-6)
 
-- [ ] 5.1 Actualizar la wiki de HU02 con los criterios implementados, estados de carga/error/404, fecha UTC, privacidad del autor y promedio.
-- [ ] 5.2 Actualizar los mockups para incluir detalle, progreso, error recuperable, álbum no disponible, listas sin elementos y portada genérica.
-- [ ] 5.3 Confirmar con el equipo la precisión/redondeo del promedio, el tratamiento de fechas ISO inválidas, el fallback de imágenes de artistas y el flujo de carga de portada sin dependencia nueva; reflejar las decisiones en la wiki y cerrar las preguntas abiertas.
-- [ ] 5.4 Después de integrar el cambio transversal de compatibilidad, actualizar en README el mínimo API 23 y la configuración de desarrollo pertinente. No cambiar Gradle desde HU02.
+- [ ] 5.1 Actualizar la wiki de HU02 con los criterios implementados, estados de carga/error/404, fecha UTC, privacidad del autor y promedio. Borrador redactado (local, sin publicar en la wiki de GitHub): `T02-6-borrador-wiki.md`. Falta que el equipo lo revise y alguien con acceso lo copie a la página del sprint correspondiente.
+- [ ] 5.2 Actualizar los mockups para incluir detalle, progreso, error recuperable, álbum no disponible, listas sin elementos y portada genérica. Guía de cambios redactada (local, sin acceso a Figma): `T02-6-notas-mockups.md`. Falta que alguien con acceso a Figma aplique los cambios.
+- [ ] 5.3 Confirmar con el equipo la precisión/redondeo del promedio, el tratamiento de fechas ISO inválidas, el fallback de imágenes de artistas y el flujo de carga de portada sin dependencia nueva; reflejar las decisiones en la wiki y cerrar las preguntas abiertas. Preguntas redactadas (local, sin publicar): `T02-6-preguntas-equipo.md`. Bloqueada hasta que el equipo responda; no se puede cerrar por código.
+- [x] 5.4 Después de integrar el cambio transversal de compatibilidad, actualizar en README el mínimo API 23 y la configuración de desarrollo pertinente. No cambiar Gradle desde HU02. El cambio de compatibilidad (`minSdk = 23`) ya está integrado en `app/build.gradle.kts` y el README ya documenta el mínimo API 23 (tabla de Requisitos, sección de HU02 y notas de `SimpleDateFormat` sin `java.time` ni desugaring); no hizo falta tocar Gradle desde HU02.
