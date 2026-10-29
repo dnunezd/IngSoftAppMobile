@@ -67,7 +67,7 @@ class IngresoE2ETest {
             esperarA(TagInicio)
             rule.onNodeWithText("¡Hola, melómano!").assertIsDisplayed()
             verAlbumes()
-            rule.onNodeWithTag(TagRolActivo).assertTextEquals("Visitante")
+            rule.onNodeWithTag(TagRolActivo).assertTextEquals("VISITANTE")
         }
     }
 
@@ -88,7 +88,7 @@ class IngresoE2ETest {
             esperarA(TagInicio)
             rule.onNodeWithText("¡Hola, Manolo Bellon!").assertIsDisplayed()
             verAlbumes()
-            rule.onNodeWithTag(TagRolActivo).assertTextEquals("Coleccionista: Manolo Bellon")
+            rule.onNodeWithTag(TagRolActivo).assertTextEquals("COLECCIONISTA")
         }
     }
 
@@ -104,8 +104,10 @@ class IngresoE2ETest {
             rule.onNodeWithTag(tagColeccionista(100)).assertDoesNotExist()
 
             rule.onNodeWithTag(tagColeccionista(101)).performClick()
+            esperarA(TagInicio)
+            rule.onNodeWithText("¡Hola, Jaime Monsalve!").performScrollTo().assertIsDisplayed()
             verAlbumes()
-            rule.onNodeWithTag(TagRolActivo).assertTextEquals("Coleccionista: Jaime Monsalve")
+            rule.onNodeWithTag(TagRolActivo).assertTextEquals("COLECCIONISTA")
         }
     }
 
@@ -129,8 +131,9 @@ class IngresoE2ETest {
             esperarA(TagArtistas)
             rule.onNodeWithTag(TagAtras).performClick()
             esperarA(TagInicio)
+            rule.onNodeWithText("¡Hola, Jaime Monsalve!").performScrollTo().assertIsDisplayed()
             verAlbumes()
-            rule.onNodeWithTag(TagRolActivo).assertTextEquals("Coleccionista: Jaime Monsalve")
+            rule.onNodeWithTag(TagRolActivo).assertTextEquals("COLECCIONISTA")
 
             // Catálogo -> inicio -> ingreso.
             rule.onNodeWithTag(TagAtras).performClick()
@@ -142,7 +145,7 @@ class IngresoE2ETest {
             // Cambiar de perfil: ahora como visitante.
             rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
             verAlbumes()
-            rule.onNodeWithTag(TagRolActivo).assertTextEquals("Visitante")
+            rule.onNodeWithTag(TagRolActivo).assertTextEquals("VISITANTE")
         }
     }
 }

@@ -4,6 +4,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
@@ -27,9 +29,11 @@ import com.example.vinilos.ui.artistas.TagDetalleArtista
 import com.example.vinilos.ui.artistas.TagNombreDetalleArtista
 import com.example.vinilos.ui.artistas.TagTipoDetalleArtista
 import com.example.vinilos.ui.artistas.tagArtista
-import com.example.vinilos.ui.catalogo.AlbumIdProvisional
 import com.example.vinilos.ui.catalogo.TagCatalogo
-import com.example.vinilos.ui.catalogo.TagCatalogoAlbumProvisional
+import com.example.vinilos.ui.catalogo.TagCuadriculaCatalogo
+import com.example.vinilos.ui.catalogo.TagRolActivo
+import com.example.vinilos.ui.catalogo.tagAlbum
+import com.example.vinilos.data.model.AlbumResumen
 import com.example.vinilos.ui.ingreso.TagAtras
 import com.example.vinilos.ui.ingreso.TagBuscador
 import com.example.vinilos.ui.ingreso.TagEntrarColeccionista
@@ -63,10 +67,18 @@ class VinilosNavHostTest {
     private val artistas = RepositorioArtistasFalso(Result.success(listOf(queen, ruben)))
 
     private val albumDePrueba = Album(
-        AlbumIdProvisional, "Bailando con lobos", null, "Descripción de prueba",
+        100, "Bailando con lobos", null, "Descripción de prueba",
         "Rock", "Disquera", "2020-01-01", emptyList(), emptyList(), emptyList()
     )
-    private var albumes = RepositorioAlbumesFalso(mapOf(AlbumIdProvisional to Result.success(albumDePrueba)))
+    /** En el catálogo hay un álbum con detalle (100) y otro que ya no existe en el backend (999). */
+    private val catalogoDePrueba = listOf(
+        AlbumResumen(100, "Bailando con lobos", null, "Rock", "", "2020"),
+        AlbumResumen(999, "Zafiro perdido", null, "Folk", "", null)
+    )
+    private var albumes = RepositorioAlbumesFalso(
+        mapOf(100 to Result.success(albumDePrueba)),
+        catalogo = listOf(Result.success(catalogoDePrueba))
+    )
 
     private fun mostrar(repositorio: RepositorioFalso, albumesRepositorio: RepositorioAlbumesFalso = albumes) {
         albumes = albumesRepositorio
@@ -266,6 +278,8 @@ class VinilosNavHostTest {
         rule.waitForIdle()
         assertEquals(Rutas.Catalogo, ruta())
         rule.onNodeWithTag(TagCatalogo).assertIsDisplayed()
+        rule.onNodeWithTag(TagRolActivo).assertTextEquals("COLECCIONISTA")
+        rule.onNodeWithTag(tagAlbum(100)).assertIsDisplayed()
 
         rule.onNodeWithTag(TagAtras).performClick()
         rule.waitForIdle()
@@ -292,10 +306,8 @@ class VinilosNavHostTest {
     @Test
     fun atrasDelSistemaDesdeElCatalogoYLosArtistasVuelveAlInicio() {
         mostrar(RepositorioFalso(Result.success(listOf(manolo))))
-        entrarComoVisitante()
+        irAlCatalogoComoVisitante()
 
-        rule.onNodeWithTag(TagVerAlbumes).performScrollTo().performClick()
-        rule.waitForIdle()
         atrasDelSistema()
         assertEquals(Rutas.Inicio, ruta())
 
@@ -346,40 +358,73 @@ class VinilosNavHostTest {
         assertEquals(Session.Visitor, session.session.value)
     }
 
-    @Test
-    fun seleccionarElAlbumProvisionalDelCatalogoMuestraSuDetalleYAtrasVuelveAlCatalogo() {
-        mostrar(RepositorioFalso(Result.success(listOf(manolo))))
+    private fun irAlCatalogoComoVisitante() {
         entrarComoVisitante()
         rule.onNodeWithTag(TagVerAlbumes).performScrollTo().performClick()
         rule.waitForIdle()
+    }
 
-        rule.onNodeWithTag(TagCatalogoAlbumProvisional).performClick()
+    private fun tocarAlbum(id: Int) {
+        rule.onNodeWithTag(TagCuadriculaCatalogo).performScrollToNode(hasTestTag(tagAlbum(id)))
+        rule.onNodeWithTag(tagAlbum(id)).performClick()
         rule.waitForIdle()
+    }
+
+    @Test
+    fun elVisitanteVeElCatalogoConSusAlbumesYSuEtiqueta() {
+        mostrar(RepositorioFalso(Result.success(listOf(manolo))))
+        irAlCatalogoComoVisitante()
+
+        assertEquals(Rutas.Catalogo, ruta())
+        rule.onNodeWithTag(TagRolActivo).assertTextEquals("VISITANTE")
+        rule.onNodeWithTag(tagAlbum(100)).assertIsDisplayed()
+        rule.onNodeWithTag(tagAlbum(999)).assertIsDisplayed()
+        assertEquals(1, albumes.consultasCatalogo)
+    }
+
+    @Test
+    fun tocarUnAlbumAbreSuDetalleYLaFlechaVuelveAlCatalogoSinRepetirLaConsulta() {
+        mostrar(RepositorioFalso(Result.success(listOf(manolo))))
+        irAlCatalogoComoVisitante()
+
+        tocarAlbum(100)
 
         assertEquals(Rutas.DetalleAlbum, ruta())
+        assertEquals(100, albumes.ultimoId)
         rule.onNodeWithText("Bailando con lobos").assertIsDisplayed()
 
         rule.onNodeWithTag(TagAtras).performClick()
         rule.waitForIdle()
         assertEquals(Rutas.Catalogo, ruta())
+        rule.onNodeWithTag(tagAlbum(100)).assertIsDisplayed()
+        assertEquals(1, albumes.consultasCatalogo)
+    }
+
+    @Test
+    fun atrasDelSistemaDesdeElDetalleVuelveAlCatalogoSinRepetirLaConsulta() {
+        mostrar(RepositorioFalso(Result.success(listOf(manolo))))
+        irAlCatalogoComoVisitante()
+        tocarAlbum(100)
+
+        atrasDelSistema()
+
+        assertEquals(Rutas.Catalogo, ruta())
+        assertEquals(1, albumes.consultasCatalogo)
+        assertEquals(Session.Visitor, session.session.value)
     }
 
     @Test
     fun elAlbumNoDisponibleMuestraElMensaje404YVolverLlevaAlCatalogo() {
-        mostrar(
-            RepositorioFalso(Result.success(listOf(manolo))),
-            albumesRepositorio = RepositorioAlbumesFalso(emptyMap())
-        )
-        entrarComoVisitante()
-        rule.onNodeWithTag(TagVerAlbumes).performScrollTo().performClick()
-        rule.waitForIdle()
+        mostrar(RepositorioFalso(Result.success(listOf(manolo))))
+        irAlCatalogoComoVisitante()
 
-        rule.onNodeWithTag(TagCatalogoAlbumProvisional).performClick()
-        rule.waitForIdle()
+        tocarAlbum(999)
 
+        assertEquals(999, albumes.ultimoId)
         rule.onNodeWithText("El álbum ya no está disponible").assertIsDisplayed()
         rule.onNodeWithText("Volver al catálogo").performClick()
         rule.waitForIdle()
         assertEquals(Rutas.Catalogo, ruta())
+        assertEquals(1, albumes.consultasCatalogo)
     }
 }

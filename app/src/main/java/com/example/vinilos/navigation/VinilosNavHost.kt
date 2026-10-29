@@ -20,12 +20,13 @@ import com.example.vinilos.data.repository.ArtistRepository
 import com.example.vinilos.data.repository.CollectorRepository
 import com.example.vinilos.ui.artistas.PantallaArtistaProvisional
 import com.example.vinilos.ui.artistas.PantallaArtistas
-import com.example.vinilos.ui.catalogo.PantallaCatalogoProvisional
+import com.example.vinilos.ui.catalogo.PantallaCatalogo
 import com.example.vinilos.ui.detalle.PantallaDetalleAlbum
 import com.example.vinilos.ui.ingreso.PantallaColeccionistas
 import com.example.vinilos.ui.ingreso.PantallaIngreso
 import com.example.vinilos.ui.inicio.PantallaInicio
 import com.example.vinilos.viewmodel.AlbumViewModel
+import com.example.vinilos.viewmodel.AlbumsViewModel
 import com.example.vinilos.viewmodel.ArtistsViewModel
 import com.example.vinilos.viewmodel.CollectorsViewModel
 import com.example.vinilos.viewmodel.SessionViewModel
@@ -50,8 +51,8 @@ object Rutas {
 }
 
 /**
- * Grafo de navegación: ingreso -> (coleccionistas) -> inicio -> catálogo | artistas -> detalle del
- * artista. Al entrar al
+ * Grafo de navegación: ingreso -> (coleccionistas) -> inicio -> catálogo -> detalle del álbum |
+ * artistas -> detalle del artista. Al entrar al
  * inicio el ingreso queda en la pila (para poder cambiar de perfil) y el selector sale de ella.
  */
 @Composable
@@ -117,12 +118,22 @@ fun VinilosNavHost(
         }
         composable(Rutas.Catalogo) {
             val session by sessionViewModel.session.collectAsStateWithLifecycle()
-            PantallaCatalogoProvisional(
-                session = session,
-                onAtras = { navController.popBackStack() },
-                onSeleccionarAlbum = { id ->
-                    navController.navigate(Rutas.detalleAlbum(id)) { launchSingleTop = true }
+            val viewModel: AlbumsViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer { AlbumsViewModel(albumRepository) }
                 }
+            )
+            val estado by viewModel.uiState.collectAsStateWithLifecycle()
+            PantallaCatalogo(
+                estado = estado,
+                session = session,
+                onActualizar = viewModel::actualizar,
+                onReintentar = viewModel::reintentar,
+                onAvisoMostrado = viewModel::avisoMostrado,
+                onSeleccionar = { id ->
+                    navController.navigate(Rutas.detalleAlbum(id)) { launchSingleTop = true }
+                },
+                onAtras = { navController.popBackStack() }
             )
         }
         composable(Rutas.Artistas) {

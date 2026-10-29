@@ -17,7 +17,8 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import com.example.vinilos.e2e.EvidenciaE2E
 import com.example.vinilos.ui.catalogo.TagCatalogo
-import com.example.vinilos.ui.catalogo.TagCatalogoAlbumProvisional
+import com.example.vinilos.ui.catalogo.TagCuadriculaCatalogo
+import com.example.vinilos.ui.catalogo.tagAlbum
 import com.example.vinilos.ui.ingreso.TagAtras
 import com.example.vinilos.ui.ingreso.TagEntrarVisitante
 import com.example.vinilos.ui.inicio.TagInicio
@@ -28,13 +29,12 @@ import org.junit.Test
 
 /**
  * E2E de la HU02 (detalle del álbum) contra el backend real BackVynils: entra como visitante,
- * abre el catálogo, selecciona el álbum provisional (id 100, "Buscando América" en
+ * abre el catálogo, toca el álbum 100 ("Buscando América" en
  * `sql/data.sql`, con canciones, un artista y un comentario) y revisa su detalle completo.
  *
  * Requiere el backend en el PC y el teléfono con `adb reverse tcp:3000 tcp:3000`, instalando la
  * app con `-PbaseUrl=http://localhost:3000/`. El álbum sin canciones ni comentarios y el 404 se
- * verifican aparte en `AlbumDetalleBackendRealTest` (navegación directa por id, sin depender del
- * enlace provisional de HU01).
+ * verifican aparte en `AlbumDetalleBackendRealTest` (navegación directa por id).
  *
  * Cada paso guarda un pantallazo y una fila en el informe de
  * `.../files/e2e-evidencia/detalle de album/informe.md` (solo en el dispositivo, no en el repo).
@@ -65,7 +65,10 @@ class AlbumDetalleE2ETest {
             esperarA(TagCatalogo)
             EvidenciaE2E.capturar(rule, carpetaEvidencia, "02_catalogo")
 
-            rule.onNodeWithTag(TagCatalogoAlbumProvisional).performClick()
+            // Se toca el álbum en el catálogo real (HU01).
+            esperarA(tagAlbum(100))
+            rule.onNodeWithTag(TagCuadriculaCatalogo).performScrollToNode(hasTestTag(tagAlbum(100)))
+            rule.onNodeWithTag(tagAlbum(100)).performClick()
             // Espera la consulta real al backend (y no solo el cambio de pantalla).
             rule.waitUntil(15_000) {
                 rule.onAllNodesWithText("Buscando América").fetchSemanticsNodes().isNotEmpty()

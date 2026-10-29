@@ -1,6 +1,7 @@
 package com.example.vinilos
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
@@ -9,12 +10,17 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
+import com.example.vinilos.ui.catalogo.TagErrorCatalogo
+import com.example.vinilos.ui.catalogo.TagReintentarCatalogo
+import com.example.vinilos.ui.catalogo.tagAlbum
 import com.example.vinilos.ui.ingreso.TagEntrarColeccionista
+import com.example.vinilos.ui.ingreso.TagEntrarVisitante
 import com.example.vinilos.ui.ingreso.TagMensajeError
 import com.example.vinilos.ui.ingreso.TagReintentar
 import com.example.vinilos.ui.ingreso.TagVisitanteError
 import com.example.vinilos.ui.ingreso.tagColeccionista
 import com.example.vinilos.ui.inicio.TagInicio
+import com.example.vinilos.ui.inicio.TagVerAlbumes
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.SocketPolicy
@@ -159,6 +165,32 @@ class RecuperacionTest {
 
             esperarA(TagInicio)
             rule.onNodeWithText("¡Hola, melómano!").assertIsDisplayed()
+        }
+    }
+
+    private val albumes = """
+        [
+          {"id": 100, "name": "Buscando América", "genre": "Salsa", "releaseDate": "1984-08-01T00:00:00.000Z",
+           "performers": [{"id": 1, "name": "Rubén Blades Bellido de Luna"}]}
+        ]
+    """.trimIndent()
+
+    @Test
+    fun elCatalogoConElBackendCaidoMuestraElErrorYReintentarLoRecupera() {
+        ActivityScenario.launch(MainActivity::class.java).use {
+            rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
+            esperarA(TagInicio)
+            servidorCaido()
+
+            rule.onNodeWithTag(TagVerAlbumes).performScrollTo().performClick()
+            esperarA(TagErrorCatalogo)
+            rule.onNodeWithTag(TagErrorCatalogo).assertTextEquals("No pudimos cargar el catálogo")
+
+            servidor.enqueue(MockResponse().setBody(albumes))
+            rule.onNodeWithTag(TagReintentarCatalogo).performClick()
+
+            esperarA(tagAlbum(100))
+            rule.onNodeWithText("Buscando América").assertIsDisplayed()
         }
     }
 }
