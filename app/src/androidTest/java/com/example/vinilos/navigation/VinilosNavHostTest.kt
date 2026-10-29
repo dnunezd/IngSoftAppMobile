@@ -12,8 +12,10 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.navigation.compose.ComposeNavigator
 import androidx.navigation.testing.TestNavHostController
+import com.example.vinilos.RepositorioAlbumesFalso
 import com.example.vinilos.RepositorioArtistasFalso
 import com.example.vinilos.RepositorioFalso
+import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.Collector
@@ -25,7 +27,9 @@ import com.example.vinilos.ui.artistas.TagDetalleArtista
 import com.example.vinilos.ui.artistas.TagNombreDetalleArtista
 import com.example.vinilos.ui.artistas.TagTipoDetalleArtista
 import com.example.vinilos.ui.artistas.tagArtista
+import com.example.vinilos.ui.catalogo.AlbumIdProvisional
 import com.example.vinilos.ui.catalogo.TagCatalogo
+import com.example.vinilos.ui.catalogo.TagCatalogoAlbumProvisional
 import com.example.vinilos.ui.ingreso.TagAtras
 import com.example.vinilos.ui.ingreso.TagBuscador
 import com.example.vinilos.ui.ingreso.TagEntrarColeccionista
@@ -58,13 +62,20 @@ class VinilosNavHostTest {
     private val ruben = Artist(100, "Rubén Blades Bellido de Luna", null, ArtistType.MUSICO)
     private val artistas = RepositorioArtistasFalso(Result.success(listOf(queen, ruben)))
 
-    private fun mostrar(repositorio: RepositorioFalso) {
+    private val albumDePrueba = Album(
+        AlbumIdProvisional, "Bailando con lobos", null, "Descripción de prueba",
+        "Rock", "Disquera", "2020-01-01", emptyList(), emptyList(), emptyList()
+    )
+    private var albumes = RepositorioAlbumesFalso(mapOf(AlbumIdProvisional to Result.success(albumDePrueba)))
+
+    private fun mostrar(repositorio: RepositorioFalso, albumesRepositorio: RepositorioAlbumesFalso = albumes) {
+        albumes = albumesRepositorio
         rule.setContent {
             val contexto = LocalContext.current
             nav = remember {
                 TestNavHostController(contexto).apply { navigatorProvider.addNavigator(ComposeNavigator()) }
             }
-            VinilosTheme { VinilosNavHost(nav, session, repositorio, artistas) }
+            VinilosTheme { VinilosNavHost(nav, session, repositorio, artistas, albumesRepositorio) }
         }
         rule.waitForIdle()
     }
@@ -333,5 +344,42 @@ class VinilosNavHostTest {
         atrasDelSistema()
         assertEquals(Rutas.Artistas, ruta())
         assertEquals(Session.Visitor, session.session.value)
+    }
+
+    @Test
+    fun seleccionarElAlbumProvisionalDelCatalogoMuestraSuDetalleYAtrasVuelveAlCatalogo() {
+        mostrar(RepositorioFalso(Result.success(listOf(manolo))))
+        entrarComoVisitante()
+        rule.onNodeWithTag(TagVerAlbumes).performScrollTo().performClick()
+        rule.waitForIdle()
+
+        rule.onNodeWithTag(TagCatalogoAlbumProvisional).performClick()
+        rule.waitForIdle()
+
+        assertEquals(Rutas.DetalleAlbum, ruta())
+        rule.onNodeWithText("Bailando con lobos").assertIsDisplayed()
+
+        rule.onNodeWithTag(TagAtras).performClick()
+        rule.waitForIdle()
+        assertEquals(Rutas.Catalogo, ruta())
+    }
+
+    @Test
+    fun elAlbumNoDisponibleMuestraElMensaje404YVolverLlevaAlCatalogo() {
+        mostrar(
+            RepositorioFalso(Result.success(listOf(manolo))),
+            albumesRepositorio = RepositorioAlbumesFalso(emptyMap())
+        )
+        entrarComoVisitante()
+        rule.onNodeWithTag(TagVerAlbumes).performScrollTo().performClick()
+        rule.waitForIdle()
+
+        rule.onNodeWithTag(TagCatalogoAlbumProvisional).performClick()
+        rule.waitForIdle()
+
+        rule.onNodeWithText("El álbum ya no está disponible").assertIsDisplayed()
+        rule.onNodeWithText("Volver al catálogo").performClick()
+        rule.waitForIdle()
+        assertEquals(Rutas.Catalogo, ruta())
     }
 }

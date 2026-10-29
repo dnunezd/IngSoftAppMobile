@@ -5,9 +5,10 @@ import com.example.vinilos.data.remote.CollectorApi
 import com.example.vinilos.data.remote.CollectorDto
 import com.example.vinilos.data.remote.ServiceAdapter
 
-open class CollectorRepository(private val adaptador: ServiceAdapter) {
-
+open class CollectorRepository(
+    private val adaptador: ServiceAdapter,
     private val api: CollectorApi = adaptador.api()
+) {
 
     open suspend fun obtenerColeccionistas(): Result<List<Collector>> =
         adaptador.llamar { api.getCollectors() }.map { lista -> lista.mapNotNull { it.aModelo() } }

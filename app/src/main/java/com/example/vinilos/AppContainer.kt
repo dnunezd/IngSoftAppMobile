@@ -1,6 +1,7 @@
 package com.example.vinilos
 
 import com.example.vinilos.data.remote.ServiceAdapter
+import com.example.vinilos.data.repository.AlbumRepository
 import com.example.vinilos.data.repository.ArtistRepository
 import com.example.vinilos.data.repository.CollectorRepository
 
@@ -11,7 +12,8 @@ import com.example.vinilos.data.repository.CollectorRepository
 class AppContainer(
     baseUrl: String = BuildConfig.BASE_URL,
     colectoresRepositorio: CollectorRepository? = null,
-    artistasRepositorio: ArtistRepository? = null
+    artistasRepositorio: ArtistRepository? = null,
+    albumesRepositorio: AlbumRepository? = null
 ) {
 
     val serviceAdapter: ServiceAdapter = ServiceAdapter(baseUrl)
@@ -19,6 +21,10 @@ class AppContainer(
     /** Se puede reemplazar con [colectoresRepositorio] en las pruebas instrumentadas. */
     val collectorRepository: CollectorRepository =
         colectoresRepositorio ?: CollectorRepository(serviceAdapter)
+
+    /** Se puede reemplazar con [albumesRepositorio] en las pruebas instrumentadas. */
+    val albumRepository: AlbumRepository =
+        albumesRepositorio ?: AlbumRepository(serviceAdapter)
 
     /** Se puede reemplazar con [artistasRepositorio] en las pruebas instrumentadas. */
     val artistRepository: ArtistRepository =

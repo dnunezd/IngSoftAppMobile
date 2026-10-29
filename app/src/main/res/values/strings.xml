@@ -86,4 +86,23 @@
     <string name="catalogo_rol_visitante">Visitante</string>
     <string name="catalogo_rol_coleccionista">Coleccionista: %1$s</string>
     <string name="catalogo_rol_ninguno">Sin perfil</string>
+    <string name="catalogo_album_provisional_nota">Enlace provisional para probar el detalle de álbum mientras HU01 agrega la lista real</string>
+    <string name="catalogo_album_provisional_boton">Ver álbum de prueba</string>
+
+    <string name="detalle_sin_canciones">Este álbum aún no tiene canciones registradas</string>
+    <string name="detalle_sin_comentarios">Aún no hay comentarios para este álbum</string>
+    <string name="detalle_sin_calificaciones">Sin calificaciones</string>
+    <string name="detalle_canciones">Canciones</string>
+    <string name="detalle_comentarios">Comentarios</string>
+    <string name="detalle_promedio">Promedio de calificaciones</string>
+    <string name="detalle_calificacion">%1$d / 5</string>
+    <string name="detalle_portada">Portada del álbum</string>
+    <string name="detalle_artistas">Artistas</string>
+    <string name="detalle_artista_imagen">Imagen de %1$s</string>
+    <string name="detalle_estreno">Estreno</string>
+    <string name="detalle_cargando">Cargando álbum</string>
+    <string name="detalle_no_disponible">El álbum ya no está disponible</string>
+    <string name="detalle_volver_catalogo">Volver al catálogo</string>
+    <string name="detalle_error">No pudimos cargar el álbum</string>
+    <string name="detalle_reintentar">Reintentar</string>
 </resources>

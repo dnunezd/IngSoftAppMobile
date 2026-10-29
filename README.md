@@ -13,7 +13,9 @@ La documentación del proyecto (historias de usuario, sprints con su arquitectur
 | Historia | Estado |
 |---|---|
 | HU00 · Ingreso a la plataforma | Implementada: ingreso como Visitante o Coleccionista, selector de coleccionista, sesión por rol y pantalla de inicio |
-| HU01 a HU03 | Pendientes. El catálogo de álbumes y el listado de artistas son destinos provisionales a los que se llega desde la pantalla de inicio |
+| HU01 · Catálogo de álbumes | Pendiente. El catálogo es un destino provisional al que se llega desde la pantalla de inicio |
+| HU02 · Detalle de álbum | T02-3, T02-4 y T02-5 completas y verificadas en dispositivo físico (Samsung SM-A356E, Android 16) y en emulador API 23 contra el backend real: consulta, presentación, estados de pantalla, portada real con Coil, navegación desde un enlace provisional del catálogo, pruebas E2E y fecha en API 23 (91/91 instrumentadas sin fallos en ambos dispositivos). Pendiente: documentación en wiki/mockups (T02-6, borradores sin publicar) |
+| HU03 · Listado de artistas | Integrado desde `develop`: listado de músicos y bandas y cargador compartido de imágenes Coil; verificación de UI de esta integración pendiente |
 
 ## Versión y APK
 
@@ -22,6 +24,47 @@ La versión actual es `1.0.0` (`versionCode` 1), publicada como el release [`v1.
 Para instalarla sin compilar, descarga en el teléfono el APK adjunto al [release](https://github.com/dnunezd/IngSoftAppMobile/releases) y ábrelo. Ese APK está compilado para un dispositivo físico: necesita BackVynils corriendo en el computador ([paso 2](#2-levantar-el-backend)) y el teléfono conectado por USB con `adb reverse tcp:3000 tcp:3000`.
 
 En cada release se sube `versionCode` en 1 y `versionName` sigue el tag (`1.0.0` para `v1.0.0`), ambos en `app/build.gradle.kts`. El APK del release se genera con `./gradlew assembleDebug -PbaseUrl=http://localhost:3000/` y se adjunta renombrado como `vinilos-v<versión>.apk` (la variante de release no está firmada y Android no la instala).
+
+### HU02: portada real con Coil y comprobación del detalle
+
+`ContenidoAlbum` usa una única `PortadaAlbum`, conservando el estilo de HU00. El componente se alineó al patrón ya establecido por HU03: un `AsyncImage` de Coil que reutiliza el cargador compartido de la app (`VinilosApplication`), con `inicio_albumes` como `placeholder`, `error` y `fallback` genérico. Sin URL (o en blanco) muestra directamente esa ilustración local; con URL, Coil intenta la descarga real y cae al mismo recurso si falla. Los artistas ahora también usan Coil con `artista.imagen` (mismo patrón, `inicio_artistas` como `placeholder`/`error`/`fallback`): deja de ser una imagen provisional fija.
+
+Rediseño visual (sobre referencia `album.png` del usuario): fondo crema y tarjetas blancas locales a esta pantalla, promedio mostrado con estrellas (`★`/`☆`) en vez de un número junto a "X avg", fecha de estreno destacada junto al promedio, canciones numeradas y comentarios con estrellas en vez del texto "X / 5". El botón "+ Agregar comentario" (solo coleccionista) que pidió el usuario **no** se implementó: es funcionalidad nueva de escritura fuera del alcance de HU02 (que es solo de consulta); queda pendiente de decidir como tarea o historia aparte.
+
+Comprobación de este cambio: **120 unitarias sin fallos**, compilación de las pruebas instrumentadas correcta y lint sin errores nuevos. Las pruebas de `PortadaAlbum` y `ContenidoAlbum` verifican que el componente se muestra con y sin URL, sin forzar un estado de carga/error específico: Coil los gestiona internamente y no son determinísticos de probar sin mockear red. **Verificado en dispositivo físico**: las 90 pruebas instrumentadas del módulo (incluyendo esta sección) pasaron contra el backend real.
+
+Para repetir las comprobaciones sin dispositivo, desde PowerShell:
+
+```powershell
+$env:JAVA_HOME='C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot'
+.\gradlew.bat testDebugUnitTest :app:assembleDebugAndroidTest
+```
+
+Para ejecutar las pruebas de UI pendientes, conecta y desbloquea un teléfono o usa un emulador ya disponible; comprueba el dispositivo con `adb devices` y, si hay varios, define `$env:ANDROID_SERIAL='<serial>'`:
+
+```powershell
+$env:JAVA_HOME='C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot'
+.\gradlew.bat connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.package=com.example.vinilos.ui.detalle"
+```
+
+Este filtro ejecuta `PortadaAlbumTest`, `ContenidoAlbumTest` y `PantallaDetalleAlbumTest` con datos controlados, **sin Docker ni backend**. Comprueba portada con y sin URL, posición antes de los metadatos, artistas, canciones, comentarios, promedio, vacíos, regreso, reintento y 404.
+
+**T02-3 está completa y verificada en dispositivo** (consulta, presentación, estados de pantalla y portada real con Coil).
+
+### HU02: navegación provisional desde el catálogo (T02-4)
+
+Mientras HU01 no tenga un catálogo real con lista de álbumes, `PantallaCatalogoProvisional` incluye un enlace de prueba claramente etiquetado como provisional que navega a un álbum fijo (`AlbumIdProvisional = 100`, corresponde a "Buscando América" en los datos de ejemplo de BackVynils). La ruta `album/{id}`, el `AlbumViewModel` y el uso del `AlbumRepository` compartido (sin crear un segundo `ServiceAdapter`) no son provisionales: son la integración real que usará la selección definitiva cuando exista HU01. Volver desde el detalle (éxito o 404) regresa al catálogo.
+
+Comprobación de este cambio: **119 unitarias sin fallos**, `:app:assembleDebugAndroidTest` compila sin errores y lint sin errores. Las pruebas de navegación (`VinilosNavHostTest`) y del enlace provisional (`PantallaCatalogoProvisionalTest`) se escribieron primero (ROJO por compilación) y luego se implementó lo mínimo para que compilen. **Verificado en dispositivo físico por el usuario**: se detectó que el id inicial (`1`) no correspondía a un álbum real (los ids de álbum de BackVynils empiezan en 100, igual que collectors/artistas) y se corrigió a `100`.
+
+Para ejecutar estas pruebas de navegación, conecta y desbloquea un teléfono o usa un emulador ya disponible:
+
+```powershell
+$env:JAVA_HOME='C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot'
+.\gradlew.bat connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.package=com.example.vinilos.navigation"
+```
+
+E2E (T02-5) ejecutadas y verificadas contra backend real en dispositivo físico: `AlbumDetalleE2ETest` (flujo completo del visitante con el álbum 100) y `AlbumDetalleBackendRealTest` (álbum 101 sin canciones/comentarios y un id inexistente para el 404 real). Suite completa del módulo: 90/90 pruebas instrumentadas sin fallos.
 
 ## Requisitos
 
