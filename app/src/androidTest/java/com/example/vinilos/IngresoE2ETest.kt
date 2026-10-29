@@ -114,20 +114,28 @@ class IngresoE2ETest {
     fun elBuscadorFiltraLosColeccionistasReales() {
         val evidencia = "FN00_ESC03"
         ActivityScenario.launch(MainActivity::class.java).use {
+            esperarA(TagEntrarColeccionista)
+            EvidenciaE2E.capturar(rule, evidencia, "01_ingreso")
             entrarComoColeccionista()
             esperarA(tagColeccionista(100))
-            EvidenciaE2E.capturar(rule, evidencia, "01_listado_coleccionistas")
+            EvidenciaE2E.capturar(rule, evidencia, "02_listado_coleccionistas")
 
             rule.onNodeWithTag(TagBuscador).performTextInput("RTVC")
 
             rule.onNodeWithTag(tagColeccionista(101)).assertIsDisplayed()
             rule.onNodeWithTag(tagColeccionista(100)).assertDoesNotExist()
-            EvidenciaE2E.capturar(rule, evidencia, "02_busqueda_filtrada")
+            EvidenciaE2E.capturar(rule, evidencia, "03_busqueda_filtrada")
 
+            // Sin cerrar el teclado, la captura del inicio sale cortada mientras la ventana recupera su alto.
+            Espresso.closeSoftKeyboard()
             rule.onNodeWithTag(tagColeccionista(101)).performClick()
+
+            esperarA(TagInicio)
+            rule.onNodeWithText("¡Hola, Jaime Monsalve!").assertIsDisplayed()
+            EvidenciaE2E.capturar(rule, evidencia, "04_inicio_coleccionista")
             verAlbumes()
             rule.onNodeWithTag(TagRolActivo).assertTextEquals("Coleccionista: Jaime Monsalve")
-            EvidenciaE2E.capturar(rule, evidencia, "03_catalogo_coleccionista")
+            EvidenciaE2E.capturar(rule, evidencia, "05_catalogo_coleccionista")
         }
     }
 
