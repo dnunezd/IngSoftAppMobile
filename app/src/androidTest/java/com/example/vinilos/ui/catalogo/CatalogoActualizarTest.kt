@@ -71,7 +71,7 @@ class CatalogoActualizarTest {
         deslizarHaciaAbajo()
 
         rule.waitUntil(timeoutMillis = 5_000) { repositorio.consultasCatalogo == 2 }
-        rule.onNodeWithText("No pudimos cargar el catálogo").assertIsDisplayed()
+        rule.onNodeWithText("No pudimos actualizar el catálogo").assertIsDisplayed()
         rule.onNodeWithTag(tagAlbum(races.id)).assertIsDisplayed()
         rule.onNodeWithTag(TagContadorCatalogo).assertTextEquals("2 lanzamientos")
     }

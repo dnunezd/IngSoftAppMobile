@@ -98,6 +98,7 @@
     <string name="catalogo_cargando" tools:ignore="TypographyEllipsis">Cargando catálogo de vinilos...</string>
     <string name="catalogo_actualizando">Actualizando catálogo</string>
     <string name="catalogo_error">No pudimos cargar el catálogo</string>
+    <string name="catalogo_error_actualizar">No pudimos actualizar el catálogo</string>
     <string name="catalogo_reintentar">Reintentar</string>
     <string name="catalogo_vacio">Aún no hay álbumes en el catálogo</string>
     <string name="catalogo_genero_anio">%1$s · %2$s</string>

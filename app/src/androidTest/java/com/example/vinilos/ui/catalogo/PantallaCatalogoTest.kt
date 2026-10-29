@@ -165,7 +165,7 @@ class PantallaCatalogoTest {
     fun siFallaLaActualizacionAvisaYConservaLaLista() {
         mostrar(AlbumsUiState.Exito(ejemplo, errorAlActualizar = true))
 
-        rule.onNodeWithText("No pudimos cargar el catálogo").assertIsDisplayed()
+        rule.onNodeWithText("No pudimos actualizar el catálogo").assertIsDisplayed()
         rule.onNodeWithText(races.nombre).assertIsDisplayed()
         rule.waitUntil(timeoutMillis = 10_000) { avisosMostrados == 1 }
     }
