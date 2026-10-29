@@ -105,8 +105,11 @@ class ContenidoAlbumTest {
             VinilosTheme { ContenidoAlbum(presentacion, onAtras = {}) }
         }
 
-        rule.onNodeWithText("Este álbum aún no tiene canciones registradas")
-            .performScrollTo().assertIsDisplayed()
+        // performScrollToNode en vez de performScrollTo: en pantallas más pequeñas (p.ej. API 23)
+        // el mensaje puede quedar fuera de los nodos ya compuestos de la LazyColumn.
+        rule.onNode(hasScrollToNodeAction())
+            .performScrollToNode(hasText("Este álbum aún no tiene canciones registradas"))
+        rule.onNodeWithText("Este álbum aún no tiene canciones registradas").assertIsDisplayed()
     }
 
     @Test
@@ -116,9 +119,11 @@ class ContenidoAlbumTest {
             VinilosTheme { ContenidoAlbum(presentacion, onAtras = {}) }
         }
 
-        rule.onNodeWithText("Aún no hay comentarios para este álbum")
-            .performScrollTo().assertIsDisplayed()
-        rule.onNodeWithText("Sin calificaciones").performScrollTo().assertIsDisplayed()
+        val lista = rule.onNode(hasScrollToNodeAction())
+        lista.performScrollToNode(hasText("Aún no hay comentarios para este álbum"))
+        rule.onNodeWithText("Aún no hay comentarios para este álbum").assertIsDisplayed()
+        lista.performScrollToNode(hasText("Sin calificaciones"))
+        rule.onNodeWithText("Sin calificaciones").assertIsDisplayed()
     }
 
     @Test
@@ -161,8 +166,10 @@ class ContenidoAlbumTest {
             VinilosTheme { ContenidoAlbum(presentacion, onAtras = {}) }
         }
 
+        val lista = rule.onNode(hasScrollToNodeAction())
         listOf("Decisiones", "5:02", "Plástico", "6:40").forEach {
-            rule.onNodeWithText(it).performScrollTo().assertIsDisplayed()
+            lista.performScrollToNode(hasText(it))
+            rule.onNodeWithText(it).assertIsDisplayed()
         }
         rule.onNodeWithText("Este álbum aún no tiene canciones registradas").assertDoesNotExist()
     }
