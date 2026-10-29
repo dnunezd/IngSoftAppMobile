@@ -148,8 +148,8 @@ class ContenidoAlbumTest {
             VinilosTheme { ContenidoAlbum(presentacion, onAtras = {}) }
         }
 
-        rule.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("★★★★★"))
-        rule.onNodeWithText("★★★★★").assertIsDisplayed()
+        rule.onNode(hasScrollToNodeAction()).performScrollToNode(hasContentDescription("6 / 5"))
+        rule.onNodeWithContentDescription("6 / 5").assertIsDisplayed()
     }
 
     @Test
