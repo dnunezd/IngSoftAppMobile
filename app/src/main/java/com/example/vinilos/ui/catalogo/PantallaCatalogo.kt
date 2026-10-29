@@ -113,13 +113,18 @@ fun PantallaCatalogo(
     }
 
     val avisos = remember { SnackbarHostState() }
-    val mensajeError = stringResource(R.string.catalogo_error_actualizar)
+    val mensajeAviso = stringResource(R.string.catalogo_error_actualizar)
     val conAviso = (estado as? AlbumsUiState.Exito)?.errorAlActualizar == true ||
         (estado as? AlbumsUiState.Vacio)?.errorAlActualizar == true
     LaunchedEffect(conAviso) {
         if (conAviso) {
-            avisos.showSnackbar(mensajeError)
-            onAvisoMostrado()
+            // finally: si la pantalla sale antes de que termine (tocar un álbum, girar), el aviso
+            // queda como mostrado y no se repite al volver.
+            try {
+                avisos.showSnackbar(mensajeAviso)
+            } finally {
+                onAvisoMostrado()
+            }
         }
     }
 

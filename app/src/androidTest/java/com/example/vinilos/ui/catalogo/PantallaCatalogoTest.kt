@@ -43,20 +43,23 @@ class PantallaCatalogoTest {
     private var avisosMostrados = 0
     private var seleccionado: Int? = null
     private var atras = 0
+    private var enPantalla by mutableStateOf(true)
 
     private fun mostrar(inicial: AlbumsUiState, session: Session = Session.Visitor) {
         estado = inicial
         rule.setContent {
             VinilosTheme {
-                PantallaCatalogo(
-                    estado = estado,
-                    session = session,
-                    onActualizar = { actualizaciones++ },
-                    onReintentar = { reintentos++ },
-                    onAvisoMostrado = { avisosMostrados++ },
-                    onSeleccionar = { seleccionado = it },
-                    onAtras = { atras++ }
-                )
+                if (enPantalla) {
+                    PantallaCatalogo(
+                        estado = estado,
+                        session = session,
+                        onActualizar = { actualizaciones++ },
+                        onReintentar = { reintentos++ },
+                        onAvisoMostrado = { avisosMostrados++ },
+                        onSeleccionar = { seleccionado = it },
+                        onAtras = { atras++ }
+                    )
+                }
             }
         }
     }
@@ -168,6 +171,20 @@ class PantallaCatalogoTest {
         rule.onNodeWithText("No pudimos actualizar el catálogo").assertIsDisplayed()
         rule.onNodeWithText(races.nombre).assertIsDisplayed()
         rule.waitUntil(timeoutMillis = 10_000) { avisosMostrados == 1 }
+    }
+
+    @Test
+    fun siLaPantallaSaleMientrasSeVeElAvisoQuedaComoMostrado() {
+        // Al tocar un álbum o girar, el catálogo sale de la composición antes de que el aviso
+        // termine; si no quedara marcado, volvería a aparecer al regresar.
+        mostrar(AlbumsUiState.Exito(ejemplo, errorAlActualizar = true))
+        rule.onNodeWithText("No pudimos actualizar el catálogo").assertIsDisplayed()
+        assertEquals(0, avisosMostrados)
+
+        enPantalla = false
+        rule.waitForIdle()
+
+        assertEquals(1, avisosMostrados)
     }
 
     @Test

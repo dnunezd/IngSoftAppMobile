@@ -114,7 +114,7 @@ El usuario SHALL poder actualizar el catálogo deslizando la lista hacia abajo, 
 #### Scenario: Falla la actualización
 - **WHEN** la actualización falla mientras se ven los álbumes
 - **THEN** los álbumes que ya se veían siguen en pantalla
-- **AND** se informa brevemente "No pudimos cargar el catálogo"
+- **AND** se informa brevemente "No pudimos actualizar el catálogo", una sola vez, aunque el usuario abra un álbum o gire la pantalla mientras se ve el aviso
 - **AND** la app no se cierra
 
 ### Requirement: Abrir el detalle de un álbum

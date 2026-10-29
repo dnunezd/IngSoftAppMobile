@@ -34,7 +34,7 @@ Cobertura: 10/10 criterios con al menos una prueba unitaria o de integración.
 | Vacío | `PantallaCatalogoTest.sinAlbumesMuestraElMensajeDeCatalogoVacio` |
 | Error con "Reintentar" | `PantallaCatalogoTest.enErrorMuestraElMensajeYReintentarLlamaAlCallback` |
 | Actualizando | `PantallaCatalogoTest.mientrasActualizaMuestraElIndicadorSinQuitarLaLista` |
-| Aviso al fallar la actualización | `PantallaCatalogoTest.siFallaLaActualizacionAvisaYConservaLaLista` |
+| Aviso al fallar la actualización ("No pudimos actualizar el catálogo", una sola vez) | `PantallaCatalogoTest.siFallaLaActualizacionAvisaYConservaLaLista`, `…siLaPantallaSaleMientrasSeVeElAvisoQuedaComoMostrado` |
 | Etiqueta VISITANTE / COLECCIONISTA | `PantallaCatalogoTest.laEtiquetaDeRolIndicaVisitante`, `…laEtiquetaDeRolIndicaColeccionista` |
 
 ### Rutas que entran o salen del catálogo (8/8)
