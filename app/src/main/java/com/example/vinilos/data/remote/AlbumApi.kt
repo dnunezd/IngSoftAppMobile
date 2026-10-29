@@ -5,6 +5,9 @@ import retrofit2.http.GET
 import retrofit2.http.Path
 
 interface AlbumApi {
+    @GET("albums")
+    suspend fun obtenerAlbumes(): List<AlbumDto>
+
     @GET("albums/{id}")
     suspend fun obtenerAlbum(@Path("id") id: Int): Response<AlbumDto>
 }

@@ -1,11 +1,13 @@
 package com.example.vinilos.data.repository
 
 import com.example.vinilos.data.model.Album
+import com.example.vinilos.data.model.AlbumResumen
 import com.example.vinilos.data.model.Artista
 import com.example.vinilos.data.model.Cancion
 import com.example.vinilos.data.model.Comentario
 import com.example.vinilos.data.remote.AlbumApi
 import com.example.vinilos.data.remote.AlbumDto
+import com.example.vinilos.data.remote.ArtistaDto
 import com.example.vinilos.data.remote.ErrorDeCarga
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.ui.detalle.formatearFechaLanzamiento
@@ -35,6 +37,34 @@ open class AlbumRepository(
         }
         return respuesta
     }
+
+    /**
+     * Catálogo (HU01) ordenado por nombre. A diferencia del detalle, la conversión es tolerante:
+     * un álbum sin id, nombre o género se descarta sin afectar a los demás.
+     */
+    open suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> =
+        adaptador.llamar {
+            api.obtenerAlbumes().mapNotNull { it.aResumen() }.sortedWith(ordenCatalogo)
+        }
+
+    private fun AlbumDto.aResumen(): AlbumResumen? {
+        return AlbumResumen(
+            id = id ?: return null,
+            nombre = name ?: return null,
+            portada = cover,
+            genero = genre ?: return null,
+            artista = nombresDeArtistas(performers),
+            anio = anioDe(releaseDate)
+        )
+    }
+
+    /** Nombres no vacíos unidos con ", "; sin ninguno, cadena vacía (nunca null). */
+    private fun nombresDeArtistas(artistas: List<ArtistaDto>?): String =
+        artistas.orEmpty().mapNotNull { it.name?.takeIf(String::isNotBlank) }.joinToString(", ")
+
+    /** Año de una fecha ISO; la parte de fecha ya es el día UTC, así que no depende de la zona. */
+    private fun anioDe(fechaIso: String?): String? =
+        fechaIso?.take(4)?.takeIf { it.length == 4 && it.all(Char::isDigit) }
 
     private fun AlbumDto.aModelo() = Album(
         id = requerido(id, "id"),
