@@ -145,18 +145,6 @@ Si hay más de un dispositivo conectado, elige uno con la variable de entorno `A
 - Para una sola clase: `"-Pandroid.testInstrumentationRunnerArguments.class=com.example.vinilos.RecuperacionTest"` (instrumentadas) o `--tests "com.example.vinilos.viewmodel.CollectorsViewModelTest"` (unitarias).
 - Los reportes quedan en `app/build/reports/` (`tests/`, `androidTests/` y `lint-results-debug.html`). Referencia del lint: 0 errores y 48 avisos esperados.
 
-### Evidencia de las E2E (capturas)
-
-`AlbumDetalleE2ETest` y los escenarios FN00-ESC01 a FN00-ESC03 de `IngresoE2ETest` guardan un pantallazo por paso y un `informe.md` en el dispositivo (`/sdcard/Android/data/com.example.vinilos/files/e2e-evidencia/<escenario>/`). `connectedDebugAndroidTest` desinstala la app al terminar y borra esa carpeta, así que para conservar la evidencia instala las APK y corre las pruebas con `am instrument`:
-
-```bash
-./gradlew installDebug installDebugAndroidTest -PbaseUrl=http://localhost:3000/
-adb shell am instrument -w -e class com.example.vinilos.IngresoE2ETest com.example.vinilos.test/androidx.test.runner.AndroidJUnitRunner
-adb pull /sdcard/Android/data/com.example.vinilos/files/e2e-evidencia/FN00_ESC01 e2e-evidencia/
-```
-
-En Git Bash antepón `MSYS_NO_PATHCONV=1` a los comandos `adb` para que no reescriba las rutas `/sdcard/...`. La carpeta `e2e-evidencia/` está ignorada por git.
-
 La [integración continua](.github/workflows/ci.yml) corre lint y pruebas unitarias con JDK 17 en cada Pull Request y en cada push a `develop` y `main`, y falla si hay un error de lint o una prueba fallida. Las instrumentadas no corren en CI porque necesitan un dispositivo; se corren a mano antes de integrar. Qué cubre cada nivel de prueba está en la estrategia de pruebas de cada sprint en la [wiki](https://github.com/dnunezd/IngSoftAppMobile/wiki).
 
 ## Problemas frecuentes
