@@ -5,7 +5,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -15,7 +14,6 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
-import com.example.vinilos.VinilosApplication
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.repository.AlbumRepository
 import com.example.vinilos.data.repository.ArtistRepository
@@ -62,8 +60,7 @@ fun VinilosNavHost(
     sessionViewModel: SessionViewModel,
     collectorRepository: CollectorRepository,
     artistRepository: ArtistRepository,
-    albumRepository: AlbumRepository =
-        (LocalContext.current.applicationContext as VinilosApplication).container.albumRepository,
+    albumRepository: AlbumRepository,
     modifier: Modifier = Modifier
 ) {
     fun irAlInicio() {

@@ -1,6 +1,7 @@
 package com.example.vinilos.e2e
 
 import android.graphics.Bitmap
+import android.os.Build
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.ComposeTestRule
@@ -36,15 +37,29 @@ object EvidenciaE2E {
         val directorio = directorio(carpeta)
         try {
             val archivo = File(directorio, "$paso.png")
-            val bitmap: Bitmap = rule.onRoot().captureToImage().asAndroidBitmap()
+            val bitmap: Bitmap = capturarBitmap(rule)
             FileOutputStream(archivo).use { salida -> bitmap.compress(Bitmap.CompressFormat.PNG, 100, salida) }
             registrar(directorio, paso, archivo.name, "Ok")
-        } catch (e: Exception) {
-            // Si no hay árbol Compose visible (p.ej. tras cerrar la actividad) se omite la captura
-            // sin fallar la prueba: la evidencia es un complemento, no una aserción.
+        } catch (e: Throwable) {
+            // Si no hay árbol Compose visible (p.ej. tras cerrar la actividad) o la API no soporta
+            // la captura (ver más abajo) se omite sin fallar la prueba: la evidencia es un
+            // complemento, no una aserción.
             registrar(directorio, paso, "(sin captura)", "Sin captura: ${e.message}")
         }
     }
+
+    /**
+     * `captureToImage()` usa `PixelCopy`, disponible solo desde API 26. En API 23-25 se captura la
+     * pantalla completa con `UiAutomation` (disponible desde API 18, sin dependencias nuevas); esa
+     * captura incluye la barra de estado y los botones de navegación, a diferencia de la de
+     * `captureToImage()`.
+     */
+    private fun capturarBitmap(rule: ComposeTestRule): Bitmap =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            rule.onRoot().captureToImage().asAndroidBitmap()
+        } else {
+            InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+        }
 
     private fun registrar(directorio: File, paso: String, archivo: String, estado: String) {
         val informe = File(directorio, "informe.md")

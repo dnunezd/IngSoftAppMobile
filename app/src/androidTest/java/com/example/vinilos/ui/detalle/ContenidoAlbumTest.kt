@@ -52,7 +52,8 @@ class ContenidoAlbumTest {
         }
 
         listOf("Rubén Blades", "Seis del Solar").forEach { nombre ->
-            rule.onNodeWithText(nombre).performScrollTo().assertIsDisplayed()
+            rule.onNode(hasScrollToNodeAction()).performScrollToNode(hasText(nombre))
+            rule.onNodeWithText(nombre).assertIsDisplayed()
             rule.onNodeWithContentDescription("Imagen de $nombre").assertIsDisplayed()
         }
     }
@@ -134,6 +135,21 @@ class ContenidoAlbumTest {
         rule.onNodeWithText("Estreno").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("1 de agosto de 1984").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("★★★★☆").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun calificacionFueraDeRangoNoCierraLaAppYMuestraLasEstrellasLimitadas() {
+        // El backend valida 0..5, pero una calificación corrupta o fuera de rango no debe
+        // lanzar una excepción al dibujar las estrellas: se limita a 5 llenas como máximo.
+        val presentacion = presentarAlbum(album.copy(
+            comentarios = listOf(Comentario("Comentario con dato corrupto", 6))
+        ))
+        rule.setContent {
+            VinilosTheme { ContenidoAlbum(presentacion, onAtras = {}) }
+        }
+
+        rule.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("★★★★★"))
+        rule.onNodeWithText("★★★★★").assertIsDisplayed()
     }
 
     @Test

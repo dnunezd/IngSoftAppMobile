@@ -227,7 +227,7 @@ private fun TarjetaComentario(comentario: com.example.vinilos.data.model.Comenta
             comentario.calificacion?.let { calificacion ->
                 val descripcionCalificacion = stringResource(R.string.detalle_calificacion, calificacion)
                 TextoEstrellas(
-                    llenas = calificacion,
+                    llenas = calificacion.coerceIn(0, 5),
                     modifier = Modifier.semantics { contentDescription = descripcionCalificacion }
                 )
             } ?: Text(

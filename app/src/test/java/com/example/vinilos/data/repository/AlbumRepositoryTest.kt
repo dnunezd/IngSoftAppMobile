@@ -161,6 +161,26 @@ class AlbumRepositoryTest {
     }
 
     @Test
+    fun fechaDeLanzamientoConFormatoInvalidoSeTraduceAErrorDeCarga() = runTest {
+        servidor.enqueue(
+            MockResponse().setBody(
+                """
+                {"id":103,"name":"Fecha invalida","description":"Descripcion",
+                 "genre":"Rock","recordLabel":"Sello","releaseDate":"31/12/2020"}
+                """.trimIndent()
+            )
+        )
+
+        val error = repositorio.obtenerAlbum(103).exceptionOrNull()
+
+        assertTrue(
+            "Una fecha con formato inesperado debe ser un fallo de carga, no cerrar la app",
+            error is ErrorDeCarga
+        )
+        assertTrue(error!!.cause is JsonParseException)
+    }
+
+    @Test
     fun albumSinRelacionesDevuelveListasVacias() = runTest {
         servidor.enqueue(
             MockResponse().setBody(

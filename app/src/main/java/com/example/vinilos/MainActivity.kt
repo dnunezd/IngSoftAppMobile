@@ -32,7 +32,8 @@ class MainActivity : ComponentActivity() {
                     navController = rememberNavController(),
                     sessionViewModel = sessionViewModel,
                     collectorRepository = container.collectorRepository,
-                    artistRepository = container.artistRepository
+                    artistRepository = container.artistRepository,
+                    albumRepository = container.albumRepository
                 )
             }
         }

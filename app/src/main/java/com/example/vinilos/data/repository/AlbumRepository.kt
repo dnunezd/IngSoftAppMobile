@@ -8,8 +8,10 @@ import com.example.vinilos.data.remote.AlbumApi
 import com.example.vinilos.data.remote.AlbumDto
 import com.example.vinilos.data.remote.ErrorDeCarga
 import com.example.vinilos.data.remote.ServiceAdapter
+import com.example.vinilos.ui.detalle.formatearFechaLanzamiento
 import com.google.gson.JsonParseException
 import retrofit2.HttpException
+import java.text.ParseException
 
 class AlbumNoDisponible(causa: Throwable? = null) : Exception("El álbum ya no está disponible", causa)
 
@@ -30,9 +32,7 @@ open class AlbumRepository(
             if (causa is HttpException && causa.code() == 404) {
                 return Result.failure(AlbumNoDisponible(causa))
             }
-            return respuesta
         }
-        if (error != null) throw error
         return respuesta
     }
 
@@ -43,7 +43,7 @@ open class AlbumRepository(
         descripcion = requerido(description, "description"),
         genero = requerido(genre, "genre"),
         disquera = requerido(recordLabel, "recordLabel"),
-        fechaLanzamiento = requerido(releaseDate, "releaseDate"),
+        fechaLanzamiento = validarFecha(requerido(releaseDate, "releaseDate")),
         canciones = tracks.orEmpty().map {
             Cancion(requerido(it.name, "track.name"), requerido(it.duration, "track.duration"))
         },
@@ -57,4 +57,14 @@ open class AlbumRepository(
 
     private fun <T : Any> requerido(valor: T?, campo: String): T =
         valor ?: throw JsonParseException("Falta el campo $campo del álbum")
+
+    /** Confirma que la fecha tenga un formato reconocible antes de guardarla sin formatear. */
+    private fun validarFecha(fechaIso: String): String {
+        try {
+            formatearFechaLanzamiento(fechaIso)
+        } catch (error: ParseException) {
+            throw JsonParseException("Fecha de lanzamiento con formato inesperado: $fechaIso", error)
+        }
+        return fechaIso
+    }
 }
