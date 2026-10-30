@@ -17,6 +17,7 @@ import com.example.vinilos.e2e.EvidenciaE2E
 import com.example.vinilos.ui.artistas.TagArtistas
 import com.example.vinilos.ui.catalogo.TagCatalogo
 import com.example.vinilos.ui.catalogo.TagRolActivo
+import com.example.vinilos.ui.catalogo.tagAlbum
 import com.example.vinilos.ui.ingreso.TagAtras
 import com.example.vinilos.ui.ingreso.TagBuscador
 import com.example.vinilos.ui.ingreso.TagEntrarColeccionista
@@ -61,6 +62,9 @@ class IngresoE2ETest {
         esperarA(TagInicio)
         rule.onNodeWithTag(TagVerAlbumes).performScrollTo().performClick()
         esperarA(TagCatalogo)
+        // El catálogo real carga desde BackVynils: se espera al primer álbum para que la
+        // evidencia muestre la lista y no el estado "Cargando".
+        esperarA(tagAlbum(103))
     }
 
     /** FN00-ESC01: ingresar a la plataforma como visitante. */
