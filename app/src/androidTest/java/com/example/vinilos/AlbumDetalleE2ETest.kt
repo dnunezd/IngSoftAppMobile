@@ -66,7 +66,9 @@ class AlbumDetalleE2ETest {
             EvidenciaE2E.capturar(rule, carpetaEvidencia, "02_catalogo")
 
             // Se toca el álbum en el catálogo real (HU01).
-            esperarA(tagAlbum(100))
+            // Se espera al primer álbum: en pantallas pequeñas el 100 aún no está compuesto
+            // hasta desplazarse.
+            esperarA(tagAlbum(103))
             rule.onNodeWithTag(TagCuadriculaCatalogo).performScrollToNode(hasTestTag(tagAlbum(100)))
             rule.onNodeWithTag(tagAlbum(100)).performClick()
             // Espera la consulta real al backend (y no solo el cambio de pantalla).
@@ -74,11 +76,12 @@ class AlbumDetalleE2ETest {
                 rule.onAllNodesWithText("Buscando América").fetchSemanticsNodes().isNotEmpty()
             }
 
-            // Metadatos del álbum real (sql/data.sql, id 100).
-            rule.onNodeWithText("Buscando América").assertIsDisplayed()
-            rule.onNodeWithText("Salsa").assertIsDisplayed()
-            rule.onNodeWithText("Elektra").assertIsDisplayed()
-            rule.onNodeWithText("1 de agosto de 1984").assertIsDisplayed()
+            // Metadatos del álbum real (sql/data.sql, id 100). En pantallas bajas se desplaza
+            // hasta cada uno antes de verificarlo.
+            listOf("Buscando América", "Salsa", "Elektra", "1 de agosto de 1984").forEach { dato ->
+                rule.onNode(hasScrollToNodeAction()).performScrollToNode(hasText(dato))
+                rule.onNodeWithText(dato).assertIsDisplayed()
+            }
             EvidenciaE2E.capturar(rule, carpetaEvidencia, "03_detalle_metadatos")
 
             // Artista real, con su imagen (o el reemplazo si la URL de ejemplo falla).

@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
@@ -31,7 +32,7 @@ import com.example.vinilos.ui.catalogo.TagProgresoCatalogo
 import com.example.vinilos.ui.catalogo.TagReintentarCatalogo
 import com.example.vinilos.ui.catalogo.TagRolActivo
 import com.example.vinilos.ui.catalogo.tagAlbum
-import com.example.vinilos.ui.catalogo.tagsDeAlbumesEnPantalla
+import com.example.vinilos.ui.catalogo.tagsDeAlbumesRecorriendo
 import com.example.vinilos.ui.ingreso.TagAtras
 import com.example.vinilos.ui.ingreso.TagEntrarColeccionista
 import com.example.vinilos.ui.ingreso.TagEntrarVisitante
@@ -113,8 +114,8 @@ class CatalogoE2ETest {
             rule.onNode(hasTestTag(tagAlbum(id)) and hasText(nombre) and hasContentDescription("Portada de $nombre"))
                 .assertIsDisplayed()
         }
-        verAlbum(enOrden.first().first)
-        assertEquals(enOrden.map { tagAlbum(it.first) }, rule.tagsDeAlbumesEnPantalla().filter { it in enOrden.map { e -> tagAlbum(e.first) } })
+        val esperados = enOrden.map { tagAlbum(it.first) }
+        assertEquals(esperados, rule.tagsDeAlbumesRecorriendo(esperados).filter { it in esperados })
     }
 
     /** E2E-01-01: Visitante y Coleccionista ven los mismos 4 álbumes, en orden, con portada, nombre y género. */
@@ -154,7 +155,8 @@ class CatalogoE2ETest {
             rule.onNodeWithTag(tagAlbum(101)).assertIsDisplayed()
             capturar("02_01_final_del_catalogo")
 
-            verAlbum(103)
+            // Al principio de la lista, para que el gesto actualice en vez de solo desplazar.
+            rule.onNodeWithTag(TagCuadriculaCatalogo).performScrollToIndex(0)
             rule.onNodeWithTag(TagCuadriculaCatalogo).performTouchInput {
                 swipeDown(startY = top + 10f, endY = bottom, durationMillis = 600)
             }
@@ -183,7 +185,7 @@ class CatalogoE2ETest {
                 rule.onNodeWithTag(TagVerAlbumes).performScrollTo().performClick()
                 esperarA(TagErrorCatalogo)
                 rule.onNodeWithTag(TagErrorCatalogo).assertTextEquals("No pudimos cargar el catálogo")
-                rule.onNodeWithText("Reintentar").assertIsDisplayed()
+                rule.onNodeWithText("Reintentar").performScrollTo().assertIsDisplayed()
                 capturar("03_01_backend_caido")
 
                 servidor.enqueue(
@@ -193,7 +195,7 @@ class CatalogoE2ETest {
                             "performers": [{"id": 1, "name": "Rubén Blades Bellido de Luna"}]}]"""
                     )
                 )
-                rule.onNodeWithTag(TagReintentarCatalogo).performClick()
+                rule.onNodeWithTag(TagReintentarCatalogo).performScrollTo().performClick()
                 esperarA(tagAlbum(100))
                 rule.onNodeWithText("Buscando América").assertIsDisplayed()
                 capturar("03_02_recuperado")

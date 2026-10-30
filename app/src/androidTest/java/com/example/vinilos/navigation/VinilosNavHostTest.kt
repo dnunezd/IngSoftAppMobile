@@ -26,6 +26,7 @@ import com.example.vinilos.data.remote.ErrorDeCarga
 import com.example.vinilos.ui.artistas.TagArtistas
 import com.example.vinilos.ui.artistas.TagBuscadorArtistas
 import com.example.vinilos.ui.artistas.TagDetalleArtista
+import com.example.vinilos.ui.artistas.TagListaArtistas
 import com.example.vinilos.ui.artistas.TagNombreDetalleArtista
 import com.example.vinilos.ui.artistas.TagTipoDetalleArtista
 import com.example.vinilos.ui.artistas.tagArtista
@@ -348,7 +349,8 @@ class VinilosNavHostTest {
         rule.onNodeWithTag(TagVerArtistas).performScrollTo().performClick()
         rule.waitForIdle()
 
-        rule.onNodeWithTag(tagArtista(ruben)).performScrollTo().performClick()
+        rule.onNodeWithTag(TagListaArtistas).performScrollToNode(hasTestTag(tagArtista(ruben)))
+        rule.onNodeWithTag(tagArtista(ruben)).performClick()
         rule.waitForIdle()
         rule.onNodeWithTag(TagNombreDetalleArtista).assertTextEquals("Rubén Blades Bellido de Luna")
         rule.onNodeWithTag(TagTipoDetalleArtista).assertTextEquals("Músico")
@@ -378,6 +380,7 @@ class VinilosNavHostTest {
         assertEquals(Rutas.Catalogo, ruta())
         rule.onNodeWithTag(TagRolActivo).assertTextEquals("VISITANTE")
         rule.onNodeWithTag(tagAlbum(100)).assertIsDisplayed()
+        rule.onNodeWithTag(TagCuadriculaCatalogo).performScrollToNode(hasTestTag(tagAlbum(999)))
         rule.onNodeWithTag(tagAlbum(999)).assertIsDisplayed()
         assertEquals(1, albumes.consultasCatalogo)
     }

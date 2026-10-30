@@ -6,6 +6,7 @@ import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
 import com.example.vinilos.RepositorioAlbumesFalso
@@ -44,7 +45,8 @@ class CatalogoActualizarTest {
 
         rule.waitUntil(timeoutMillis = 5_000) { repositorio.consultasCatalogo == 2 }
         rule.onNodeWithTag(TagContadorCatalogo).assertTextEquals("3 lanzamientos")
-        assertEquals(listOf(races, buscando, poeta).map { tagAlbum(it.id) }, rule.tagsDeAlbumesEnPantalla().take(3))
+        val esperados = listOf(races, buscando, poeta).map { tagAlbum(it.id) }
+        assertEquals(esperados, rule.tagsDeAlbumesRecorriendo(esperados))
     }
 
     @Test
@@ -87,7 +89,8 @@ class CatalogoActualizarTest {
         deslizarHaciaAbajo()
         assertEquals(1, repositorio.consultasCatalogo)
 
-        rule.onNodeWithTag(TagReintentarCatalogo).performClick()
+        // En pantallas bajas el botón queda debajo del borde y hay que desplazarse para tocarlo.
+        rule.onNodeWithTag(TagReintentarCatalogo).performScrollTo().performClick()
         rule.waitUntil(timeoutMillis = 5_000) { repositorio.consultasCatalogo == 2 }
         rule.onNodeWithTag(tagAlbum(races.id)).assertIsDisplayed()
     }

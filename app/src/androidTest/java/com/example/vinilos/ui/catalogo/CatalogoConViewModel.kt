@@ -5,7 +5,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.ComposeTestRule
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performScrollToNode
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -46,3 +50,20 @@ fun ComposeTestRule.tagsDeAlbumesEnPantalla(): List<String> =
     onAllNodes(SemanticsMatcher("es un álbum") {
         it.config.getOrNull(SemanticsProperties.TestTag)?.startsWith("album_") == true
     }).fetchSemanticsNodes().map { it.config[SemanticsProperties.TestTag] }
+
+/**
+ * Tags de las tarjetas de álbum en el orden de la cuadrícula, recorriéndola desde el principio
+ * hasta cada uno de los [esperados]. En pantallas pequeñas la cuadrícula solo compone lo que se
+ * ve, así que [tagsDeAlbumesEnPantalla] no alcanza a leer los últimos álbumes.
+ */
+fun ComposeTestRule.tagsDeAlbumesRecorriendo(esperados: List<String>): List<String> {
+    val cuadricula = onNodeWithTag(TagCuadriculaCatalogo)
+    cuadricula.performScrollToIndex(0)
+    val vistos = LinkedHashSet(tagsDeAlbumesEnPantalla())
+    esperados.forEach { tag ->
+        cuadricula.performScrollToNode(hasTestTag(tag))
+        vistos += tagsDeAlbumesEnPantalla()
+    }
+    cuadricula.performScrollToIndex(0)
+    return vistos.toList()
+}

@@ -187,7 +187,7 @@ class RecuperacionTest {
             rule.onNodeWithTag(TagErrorCatalogo).assertTextEquals("No pudimos cargar el catálogo")
 
             servidor.enqueue(MockResponse().setBody(albumes))
-            rule.onNodeWithTag(TagReintentarCatalogo).performClick()
+            rule.onNodeWithTag(TagReintentarCatalogo).performScrollTo().performClick()
 
             esperarA(tagAlbum(100))
             rule.onNodeWithText("Buscando América").assertIsDisplayed()

@@ -12,6 +12,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
@@ -150,7 +151,8 @@ class PantallaCatalogoTest {
         mostrar(AlbumsUiState.Error)
 
         rule.onNodeWithTag(TagErrorCatalogo).assertTextEquals("No pudimos cargar el catálogo")
-        rule.onNodeWithText("Reintentar").assertIsDisplayed()
+        // En pantallas bajas el botón queda debajo del borde y hay que desplazarse para verlo.
+        rule.onNodeWithText("Reintentar").performScrollTo().assertIsDisplayed()
         rule.onNodeWithTag(TagReintentarCatalogo).performClick()
 
         assertEquals(1, reintentos)
