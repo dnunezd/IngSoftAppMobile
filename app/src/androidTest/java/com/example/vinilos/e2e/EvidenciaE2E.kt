@@ -2,6 +2,7 @@ package com.example.vinilos.e2e
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
@@ -12,6 +13,8 @@ import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onRoot
 import androidx.test.platform.app.InstrumentationRegistry
+import org.junit.rules.TestWatcher
+import org.junit.runner.Description
 import java.io.File
 import java.io.FileOutputStream
 import java.text.SimpleDateFormat
@@ -23,9 +26,15 @@ import java.util.Locale
  * resumen y las capturas, usando solo las APIs de Jetpack Compose Testing ya incluidas en el
  * proyecto (`captureToImage`) y `PdfDocument` de Android, sin dependencias nuevas.
  *
- * Se guarda únicamente en el almacenamiento propio de la app en el dispositivo
- * (`.../files/e2e-evidencia/<carpeta>/`), fuera del repositorio: no es rastreable por git. Si se
- * trae al PC con `adb pull`, queda bajo una carpeta `e2e-evidencia/` ignorada (ver `.gitignore`).
+ * Con `connectedAndroidTest` (Gradle o Android Studio) se guarda en `additionalTestOutputDir`, que
+ * AGP copia al PC, bajo `app/build/outputs/connected_android_test_additional_output/`, antes de
+ * desinstalar la app. Con `am instrument`, que no pasa ese argumento, queda en el almacenamiento
+ * propio de la app en el dispositivo (`.../files/e2e-evidencia/<carpeta>/`); si se trae al PC con
+ * `adb pull`, queda bajo una carpeta `e2e-evidencia/` ignorada (ver `.gitignore`). En ningún caso
+ * es rastreable por git.
+ *
+ * Cada carpeta muestra solo la ejecución actual: la primera captura de la carpeta en la ejecución
+ * borra lo que dejaron las anteriores.
  */
 object EvidenciaE2E {
 
@@ -34,20 +43,34 @@ object EvidenciaE2E {
 
     private class Paso(val nombre: String, val estado: String, val captura: File?, val hora: String)
 
-    /** Pasos registrados en esta ejecución, por carpeta: el PDF muestra solo la corrida actual. */
+    /** Pasos registrados en esta ejecución, por carpeta. */
     private val pasos = mutableMapOf<String, MutableList<Paso>>()
 
+    /** Carpetas con pasos nuevos desde la última vez que se generó su PDF. */
+    private val pdfPendientes = mutableSetOf<String>()
+
+    /**
+     * Usa `additionalTestOutputDir` si AGP lo pasa y se puede escribir ahí; si no, el almacenamiento
+     * propio de la app.
+     */
     private fun directorio(carpeta: String): File {
+        val deAgp = InstrumentationRegistry.getArguments().getString("additionalTestOutputDir")
+            ?.let { File(it, "$CARPETA_BASE/$carpeta") }
+        if (deAgp != null && (deAgp.isDirectory || deAgp.mkdirs())) return deAgp
         val contexto = InstrumentationRegistry.getInstrumentation().targetContext
         return File(contexto.getExternalFilesDir(null), "$CARPETA_BASE/$carpeta").apply { mkdirs() }
     }
 
     /**
-     * Captura el árbol Compose visible, agrega una fila al informe de [carpeta] para [paso] y
-     * regenera `<carpeta>.pdf` con todos los pasos registrados hasta ahora.
+     * Captura el árbol Compose visible y agrega una fila al informe de [carpeta] para [paso]. El PDF
+     * lo genera [ReglaPdf] al terminar la prueba, así que la clase de prueba debe declararla.
      */
     fun capturar(rule: ComposeTestRule, carpeta: String, paso: String) {
         val directorio = directorio(carpeta)
+        if (carpeta !in pasos) {
+            directorio.listFiles()?.forEach { it.deleteRecursively() }
+            pasos[carpeta] = mutableListOf()
+        }
         try {
             val archivo = File(directorio, "$paso.png")
             val bitmap: Bitmap = capturarBitmap(rule)
@@ -56,9 +79,18 @@ object EvidenciaE2E {
         } catch (e: Throwable) {
             // Si no hay árbol Compose visible (p.ej. tras cerrar la actividad) o la API no soporta
             // la captura (ver más abajo) se omite sin fallar la prueba: la evidencia es un
-            // complemento, no una aserción.
-            registrar(directorio, carpeta, paso, null, "Sin captura: ${e.message}")
+            // complemento, no una aserción. El mensaje queda en una sola línea para no romper la
+            // tabla del informe.
+            registrar(directorio, carpeta, paso, null, "Sin captura: ${e.message}".replace(Regex("\\s+"), " "))
         }
+    }
+
+    /**
+     * Regla JUnit que genera, al terminar cada prueba (pase o falle), el PDF de las carpetas en las
+     * que capturó. Así el PDF se arma una vez por prueba y no en cada captura.
+     */
+    class ReglaPdf : TestWatcher() {
+        override fun finished(description: Description) = generarPdfsPendientes()
     }
 
     /**
@@ -82,21 +114,35 @@ object EvidenciaE2E {
         }
         informe.appendText("| $paso | $estado | ${captura?.name ?: "(sin captura)"} | $hora |\n")
 
-        val lista = pasos.getOrPut(carpeta) { mutableListOf() }
-        lista.add(Paso(paso, estado, captura, hora))
-        try {
-            generarPdf(File(directorio, "$carpeta.pdf"), carpeta, lista)
-        } catch (e: Throwable) {
-            // Igual que la captura: un PDF fallido no debe hacer fallar la prueba.
+        pasos.getValue(carpeta).add(Paso(paso, estado, captura, hora))
+        pdfPendientes += carpeta
+    }
+
+    private fun generarPdfsPendientes() {
+        pdfPendientes.forEach { carpeta ->
+            try {
+                generarPdf(File(directorio(carpeta), "$carpeta.pdf"), carpeta, pasos.getValue(carpeta))
+            } catch (e: Throwable) {
+                // Igual que la captura: un PDF fallido no debe hacer fallar la prueba.
+            }
         }
+        pdfPendientes.clear()
     }
 
     // Página A4 en puntos (1/72 de pulgada).
     private const val ANCHO = 595
     private const val ALTO = 842
     private const val MARGEN = 40f
+    private const val INTERLINEA = 14f
 
-    /** Portada con el dispositivo y la tabla de pasos, y luego una página por paso con su captura. */
+    // Columnas de la tabla de la portada; el estado va al final para tener más espacio.
+    private const val COLUMNA_HORA = 260f
+    private const val COLUMNA_ESTADO = 385f
+
+    /**
+     * Portada con el dispositivo y la tabla de pasos (sigue en otra página si no cabe), y luego una
+     * página por paso con su captura. El estado se muestra completo, en varias líneas si hace falta.
+     */
     private fun generarPdf(destino: File, carpeta: String, lista: List<Paso>) {
         val titulo = Paint(Paint.ANTI_ALIAS_FLAG).apply { textSize = 18f; isFakeBoldText = true }
         val subtitulo = Paint(Paint.ANTI_ALIAS_FLAG).apply { textSize = 14f; isFakeBoldText = true }
@@ -106,9 +152,16 @@ object EvidenciaE2E {
         val pdf = PdfDocument()
         try {
             var numero = 1
-            val portada = pdf.startPage(PdfDocument.PageInfo.Builder(ANCHO, ALTO, numero++).create())
+            fun nuevaPagina() = pdf.startPage(PdfDocument.PageInfo.Builder(ANCHO, ALTO, numero++).create())
+            fun encabezadoTabla(canvas: Canvas, y: Float) {
+                canvas.drawText("Paso", MARGEN, y, subtitulo)
+                canvas.drawText("Hora", COLUMNA_HORA, y, subtitulo)
+                canvas.drawText("Estado", COLUMNA_ESTADO, y, subtitulo)
+            }
+
+            var portada = nuevaPagina()
+            var y = MARGEN + 18f
             with(portada.canvas) {
-                var y = MARGEN + 18f
                 drawText("Evidencia E2E: $carpeta", MARGEN, y, titulo)
                 y += 24f
                 drawText(
@@ -119,26 +172,37 @@ object EvidenciaE2E {
                 y += 16f
                 drawText("Generado: ${lista.last().hora}", MARGEN, y, texto)
                 y += 32f
-                drawText("Paso", MARGEN, y, subtitulo)
-                drawText("Estado", 300f, y, subtitulo)
-                drawText("Hora", 430f, y, subtitulo)
-                lista.forEach { paso ->
-                    y += 18f
-                    drawText(paso.nombre, MARGEN, y, texto)
-                    drawText(paso.estado.take(22), 300f, y, texto)
-                    drawText(paso.hora, 430f, y, texto)
+                encabezadoTabla(this, y)
+            }
+            lista.forEach { paso ->
+                val estado = lineas(paso.estado, texto, ANCHO - MARGEN - COLUMNA_ESTADO)
+                if (y + 18f + (estado.size - 1) * INTERLINEA > ALTO - MARGEN) {
+                    pdf.finishPage(portada)
+                    portada = nuevaPagina()
+                    y = MARGEN + 14f
+                    encabezadoTabla(portada.canvas, y)
                 }
+                y += 18f
+                with(portada.canvas) {
+                    drawText(paso.nombre, MARGEN, y, texto)
+                    drawText(paso.hora, COLUMNA_HORA, y, texto)
+                    estado.forEachIndexed { i, linea -> drawText(linea, COLUMNA_ESTADO, y + i * INTERLINEA, texto) }
+                }
+                y += (estado.size - 1) * INTERLINEA
             }
             pdf.finishPage(portada)
 
             lista.forEach { paso ->
-                val pagina = pdf.startPage(PdfDocument.PageInfo.Builder(ANCHO, ALTO, numero++).create())
+                val pagina = nuevaPagina()
                 with(pagina.canvas) {
-                    var y = MARGEN + 14f
+                    y = MARGEN + 14f
                     drawText(paso.nombre, MARGEN, y, subtitulo)
-                    y += 18f
-                    drawText("${paso.estado} · ${paso.hora}", MARGEN, y, texto)
-                    y += 14f
+                    y += 4f
+                    lineas("${paso.estado} · ${paso.hora}", texto, ANCHO - 2 * MARGEN).forEach { linea ->
+                        y += INTERLINEA
+                        drawText(linea, MARGEN, y, texto)
+                    }
+                    y += INTERLINEA
                     // Media resolución basta para leer la captura y mantiene el PDF liviano.
                     val opciones = BitmapFactory.Options().apply { inSampleSize = 2 }
                     paso.captura?.let { BitmapFactory.decodeFile(it.path, opciones) }?.let { bitmap ->
@@ -159,5 +223,21 @@ object EvidenciaE2E {
         } finally {
             pdf.close()
         }
+    }
+
+    /** Parte [texto] en líneas de hasta [ancho] puntos con [paint], cortando en espacios cuando se puede. */
+    private fun lineas(texto: String, paint: Paint, ancho: Float): List<String> {
+        val resultado = mutableListOf<String>()
+        var resto = texto
+        while (resto.isNotEmpty()) {
+            var corte = paint.breakText(resto, true, ancho, null).coerceAtLeast(1)
+            if (corte < resto.length) {
+                val espacio = resto.lastIndexOf(' ', corte)
+                if (espacio > 0) corte = espacio
+            }
+            resultado += resto.substring(0, corte).trimEnd()
+            resto = resto.substring(corte).trimStart()
+        }
+        return resultado.ifEmpty { listOf("") }
     }
 }

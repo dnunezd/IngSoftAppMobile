@@ -36,13 +36,16 @@ import org.junit.Test
  * `-PbaseUrl=http://localhost:3000/`. La recuperación ante fallos del backend se prueba, de forma
  * automática y sin backend, en [RecuperacionTest].
  *
- * Los escenarios FN00-ESC01 a FN00-ESC03 guardan un pantallazo por paso y una fila en el informe de
- * `.../files/e2e-evidencia/FN00_ESCxx/informe.md` (solo en el dispositivo, no en el repo).
+ * Los escenarios FN00-ESC01 a FN00-ESC03 guardan un pantallazo por paso, una fila en el informe y un
+ * PDF en `e2e-evidencia/FN00_ESCxx/` (ver [EvidenciaE2E] para dónde queda; no se versiona).
  */
 class IngresoE2ETest {
 
     @get:Rule
     val rule = createEmptyComposeRule()
+
+    @get:Rule
+    val pdfEvidencia = EvidenciaE2E.ReglaPdf()
 
     @Before
     fun usarElBackendReal() {

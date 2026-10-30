@@ -36,8 +36,8 @@ import org.junit.Test
  * verifican aparte en `AlbumDetalleBackendRealTest` (navegación directa por id, sin depender del
  * enlace provisional de HU01).
  *
- * Cada paso guarda un pantallazo y una fila en el informe de
- * `.../files/e2e-evidencia/detalle de album/informe.md` (solo en el dispositivo, no en el repo).
+ * Cada paso guarda un pantallazo, una fila en el informe y el PDF de `e2e-evidencia/detalle de album/`
+ * (ver [EvidenciaE2E] para dónde queda; no se versiona).
  */
 class AlbumDetalleE2ETest {
 
@@ -45,6 +45,9 @@ class AlbumDetalleE2ETest {
 
     @get:Rule
     val rule = createEmptyComposeRule()
+
+    @get:Rule
+    val pdfEvidencia = EvidenciaE2E.ReglaPdf()
 
     @Before
     fun usarElBackendReal() {

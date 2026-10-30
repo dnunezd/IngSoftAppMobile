@@ -35,8 +35,9 @@ replay_pid*
 *.dex
 *.class
 
-### Evidencia de pruebas E2E (pantallazos + informe) ###
-# Se genera solo en el dispositivo (.../files/e2e-evidencia/); si se trae al PC con "adb pull",
+### Evidencia de pruebas E2E (pantallazos + informe + PDF) ###
+# Con connectedAndroidTest, AGP la copia a app/build/outputs/ (ya ignorado por build/). Con
+# "am instrument" queda en el dispositivo (.../files/e2e-evidencia/); si se trae al PC con "adb pull",
 # no debe rastrearse: son artefactos locales de una ejecución, no código ni documentación.
 e2e-evidencia/
 **/e2e-evidencia/

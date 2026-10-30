@@ -36,8 +36,8 @@ import org.junit.Test
  * Requiere el backend en el PC y el teléfono con `adb reverse tcp:3000 tcp:3000`, instalando la
  * app con `-PbaseUrl=http://localhost:3000/`.
  *
- * Cada paso guarda un pantallazo y una fila en el informe de
- * `.../files/e2e-evidencia/detalle de album/informe.md` (solo en el dispositivo, no en el repo).
+ * Cada paso guarda un pantallazo, una fila en el informe y el PDF de `e2e-evidencia/detalle de album/`
+ * (ver [EvidenciaE2E] para dónde queda; no se versiona).
  */
 class AlbumDetalleBackendRealTest {
 
@@ -45,6 +45,9 @@ class AlbumDetalleBackendRealTest {
 
     @get:Rule
     val rule = createComposeRule()
+
+    @get:Rule
+    val pdfEvidencia = EvidenciaE2E.ReglaPdf()
 
     private lateinit var nav: TestNavHostController
 
