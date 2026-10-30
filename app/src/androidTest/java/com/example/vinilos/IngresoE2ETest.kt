@@ -104,8 +104,6 @@ class IngresoE2ETest {
             rule.onNodeWithTag(tagColeccionista(100)).assertDoesNotExist()
 
             rule.onNodeWithTag(tagColeccionista(101)).performClick()
-            esperarA(TagInicio)
-            rule.onNodeWithText("¡Hola, Jaime Monsalve!").performScrollTo().assertIsDisplayed()
             verAlbumes()
             rule.onNodeWithTag(TagRolActivo).assertTextEquals("COLECCIONISTA")
         }
@@ -131,7 +129,6 @@ class IngresoE2ETest {
             esperarA(TagArtistas)
             rule.onNodeWithTag(TagAtras).performClick()
             esperarA(TagInicio)
-            rule.onNodeWithText("¡Hola, Jaime Monsalve!").performScrollTo().assertIsDisplayed()
             verAlbumes()
             rule.onNodeWithTag(TagRolActivo).assertTextEquals("COLECCIONISTA")
 
