@@ -8,7 +8,7 @@
 
 | Entorno | Tipo | Android | Unitarias | Instrumentadas | E2E catálogo (`am instrument`) | Cierres | Fecha |
 |---|---|---|---|---|---|---|---|
-| Nexus 5X API 23 | Emulador | 6.0 (API 23, mínima) | 149/149 | 121/121 | 5/5, 10 capturas | 0 | 2026-10-29 |
+| Nexus 5X API 23 | Emulador | 6.0 (API 23, mínima) | 152/152 | 121/121 | 5/5, 10 capturas | 0 | 2026-10-29 |
 | Pixel 8 API 34 | Emulador | 14 (API 34) | — | 121/121 | 5/5, 10 capturas | 0 | 2026-10-29 |
 | Motorola Edge 30 | Físico | 14 (API 34) | — | 119/119 | 5/5, 10 capturas ([`e2e/informe.md`](e2e/informe.md)) | 0 | 2026-10-28 |
 
