@@ -76,7 +76,7 @@ class IngresoE2ETest {
             rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
 
             esperarA(TagInicio)
-            rule.onNodeWithText("¡Hola, melómano!").assertIsDisplayed()
+            rule.onNodeWithText("¡Hola, melómano!").performScrollTo().assertIsDisplayed()
             EvidenciaE2E.capturar(rule, evidencia, "02_inicio_visitante")
             verAlbumes()
             rule.onNodeWithTag(TagRolActivo).assertTextEquals("Visitante")
@@ -104,7 +104,7 @@ class IngresoE2ETest {
             rule.onNodeWithTag(tagColeccionista(100)).performClick()
 
             esperarA(TagInicio)
-            rule.onNodeWithText("¡Hola, Manolo Bellon!").assertIsDisplayed()
+            rule.onNodeWithText("¡Hola, Manolo Bellon!").performScrollTo().assertIsDisplayed()
             EvidenciaE2E.capturar(rule, evidencia, "03_inicio_coleccionista")
             verAlbumes()
             rule.onNodeWithTag(TagRolActivo).assertTextEquals("Coleccionista: Manolo Bellon")
@@ -134,7 +134,7 @@ class IngresoE2ETest {
             rule.onNodeWithTag(tagColeccionista(101)).performClick()
 
             esperarA(TagInicio)
-            rule.onNodeWithText("¡Hola, Jaime Monsalve!").assertIsDisplayed()
+            rule.onNodeWithText("¡Hola, Jaime Monsalve!").performScrollTo().assertIsDisplayed()
             EvidenciaE2E.capturar(rule, evidencia, "04_inicio_coleccionista")
             verAlbumes()
             rule.onNodeWithTag(TagRolActivo).assertTextEquals("Coleccionista: Jaime Monsalve")
