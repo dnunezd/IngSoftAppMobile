@@ -71,7 +71,12 @@ object EvidenciaE2E {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             rule.onRoot().captureToImage().asAndroidBitmap()
         } else {
-            InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+            // La pantalla del dispositivo puede ir un cuadro por detrás del árbol Compose (tras
+            // navegar, cerrar el teclado o recibir datos): se espera a que quede quieta.
+            rule.waitForIdle()
+            val uiAutomation = InstrumentationRegistry.getInstrumentation().uiAutomation
+            runCatching { uiAutomation.waitForIdle(500, 5_000) }
+            uiAutomation.takeScreenshot()
         }
 
     private fun registrar(directorio: File, carpeta: String, paso: String, captura: File?, estado: String) {

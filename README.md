@@ -13,7 +13,7 @@ La documentación del proyecto (historias de usuario, sprints con su arquitectur
 | Historia | Estado |
 |---|---|
 | HU00 · Ingreso a la plataforma | Implementada: ingreso como Visitante o Coleccionista, selector de coleccionista, sesión por rol y pantalla de inicio |
-| HU01 · Catálogo de álbumes | Pendiente. El catálogo es un destino provisional al que se llega desde la pantalla de inicio |
+| HU01 · Catálogo de álbumes | Implementada: cuadrícula de álbumes con portada, nombre y género en orden alfabético, estados de carga, vacío y error con "Reintentar", deslizar para actualizar, posición conservada al girar y paso al detalle. Pruebas y evidencia en [`docs/pruebas/sprint-1/HU01/`](docs/pruebas/sprint-1/HU01/) |
 | HU02 · Detalle de álbum | T02-3, T02-4 y T02-5 completas y verificadas en dispositivo físico (Samsung SM-A356E, Android 16) y en emulador API 23 contra el backend real: consulta, presentación, estados de pantalla, portada real con Coil, navegación desde un enlace provisional del catálogo, pruebas E2E y fecha en API 23 (91/91 instrumentadas sin fallos en ambos dispositivos). Pendiente: documentación en wiki/mockups (T02-6, borradores sin publicar) |
 | HU03 · Listado de artistas | Integrado desde `develop`: listado de músicos y bandas y cargador compartido de imágenes Coil; verificación de UI de esta integración pendiente |
 
@@ -51,11 +51,11 @@ Este filtro ejecuta `PortadaAlbumTest`, `ContenidoAlbumTest` y `PantallaDetalleA
 
 **T02-3 está completa y verificada en dispositivo** (consulta, presentación, estados de pantalla y portada real con Coil).
 
-### HU02: navegación provisional desde el catálogo (T02-4)
+### HU02: navegación desde el catálogo (T02-4)
 
-Mientras HU01 no tenga un catálogo real con lista de álbumes, `PantallaCatalogoProvisional` incluye un enlace de prueba claramente etiquetado como provisional que navega a un álbum fijo (`AlbumIdProvisional = 100`, corresponde a "Buscando América" en los datos de ejemplo de BackVynils). La ruta `album/{id}`, el `AlbumViewModel` y el uso del `AlbumRepository` compartido (sin crear un segundo `ServiceAdapter`) no son provisionales: son la integración real que usará la selección definitiva cuando exista HU01. Volver desde el detalle (éxito o 404) regresa al catálogo.
+Al tocar un álbum del catálogo (HU01) se navega a la ruta `album/{id}` con su id; volver desde el detalle (éxito o 404) regresa al catálogo sin repetir su consulta. El enlace provisional que se usó mientras HU01 no existía (`PantallaCatalogoProvisional`, `AlbumIdProvisional = 100`) ya se eliminó.
 
-Comprobación de este cambio: **119 unitarias sin fallos**, `:app:assembleDebugAndroidTest` compila sin errores y lint sin errores. Las pruebas de navegación (`VinilosNavHostTest`) y del enlace provisional (`PantallaCatalogoProvisionalTest`) se escribieron primero (ROJO por compilación) y luego se implementó lo mínimo para que compilen. **Verificado en dispositivo físico por el usuario**: se detectó que el id inicial (`1`) no correspondía a un álbum real (los ids de álbum de BackVynils empiezan en 100, igual que collectors/artistas) y se corrigió a `100`.
+Comprobación de este cambio: **119 unitarias sin fallos**, `:app:assembleDebugAndroidTest` compila sin errores y lint sin errores. Las pruebas de navegación (`VinilosNavHostTest`) y del enlace provisional (ya eliminado) se escribieron primero (ROJO por compilación) y luego se implementó lo mínimo para que compilen. **Verificado en dispositivo físico por el usuario**: se detectó que el id inicial (`1`) no correspondía a un álbum real (los ids de álbum de BackVynils empiezan en 100, igual que collectors/artistas) y se corrigió a `100`.
 
 Para ejecutar estas pruebas de navegación, conecta y desbloquea un teléfono o usa un emulador ya disponible:
 

@@ -50,6 +50,10 @@ class ServiceAdapter(
             Result.failure(ErrorDeCarga(e))
         } catch (e: JsonParseException) {
             Result.failure(ErrorDeCarga(e))
+        } catch (e: KotlinNullPointerException) {
+            // Retrofit la lanza cuando la respuesta llega sin cuerpo o con "null" y la función declara
+            // un tipo no nulo. Los NullPointerException del código propio no se atrapan.
+            Result.failure(ErrorDeCarga(e))
         }
 
     /**
