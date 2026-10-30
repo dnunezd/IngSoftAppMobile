@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso
+import com.example.vinilos.e2e.EvidenciaE2E
 import com.example.vinilos.ui.artistas.TagArtistas
 import com.example.vinilos.ui.catalogo.TagCatalogo
 import com.example.vinilos.ui.catalogo.TagRolActivo
@@ -34,6 +35,9 @@ import org.junit.Test
  * Requiere el backend en el PC y el teléfono con `adb reverse tcp:3000 tcp:3000`, instalando la app con
  * `-PbaseUrl=http://localhost:3000/`. La recuperación ante fallos del backend se prueba, de forma
  * automática y sin backend, en [RecuperacionTest].
+ *
+ * Los escenarios FN00-ESC01 a FN00-ESC03 guardan un pantallazo por paso y una fila en el informe de
+ * `.../files/e2e-evidencia/FN00_ESCxx/informe.md` (solo en el dispositivo, no en el repo).
  */
 class IngresoE2ETest {
 
@@ -59,21 +63,31 @@ class IngresoE2ETest {
         esperarA(TagCatalogo)
     }
 
+    /** FN00-ESC01: ingresar a la plataforma como visitante. */
     @Test
     fun ingresarComoVisitanteLlevaAlInicioYDeAhiAlCatalogo() {
+        val evidencia = "FN00_ESC01"
         ActivityScenario.launch(MainActivity::class.java).use {
+            esperarA(TagEntrarVisitante)
+            EvidenciaE2E.capturar(rule, evidencia, "01_ingreso")
             rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
 
             esperarA(TagInicio)
             rule.onNodeWithText("¡Hola, melómano!").assertIsDisplayed()
+            EvidenciaE2E.capturar(rule, evidencia, "02_inicio_visitante")
             verAlbumes()
             rule.onNodeWithTag(TagRolActivo).assertTextEquals("VISITANTE")
+            EvidenciaE2E.capturar(rule, evidencia, "03_catalogo_visitante")
         }
     }
 
+    /** FN00-ESC02: ingresar a la plataforma como coleccionista. */
     @Test
     fun ingresarComoColeccionistaMuestraLaListaRealYSeEligeUno() {
+        val evidencia = "FN00_ESC02"
         ActivityScenario.launch(MainActivity::class.java).use {
+            esperarA(TagEntrarColeccionista)
+            EvidenciaE2E.capturar(rule, evidencia, "01_ingreso")
             entrarComoColeccionista()
 
             esperarA(tagColeccionista(100))
@@ -82,30 +96,46 @@ class IngresoE2ETest {
             rule.onNodeWithText("MB").assertIsDisplayed()
             rule.onNodeWithText("Jaime Monsalve").assertIsDisplayed()
             rule.onNodeWithText("jmonsalve@rtvc.com.co").assertIsDisplayed()
+            EvidenciaE2E.capturar(rule, evidencia, "02_listado_coleccionistas")
 
             rule.onNodeWithTag(tagColeccionista(100)).performClick()
 
             esperarA(TagInicio)
             rule.onNodeWithText("¡Hola, Manolo Bellon!").assertIsDisplayed()
+            EvidenciaE2E.capturar(rule, evidencia, "03_inicio_coleccionista")
             verAlbumes()
             rule.onNodeWithTag(TagRolActivo).assertTextEquals("COLECCIONISTA")
+            EvidenciaE2E.capturar(rule, evidencia, "04_catalogo_coleccionista")
         }
     }
 
+    /** FN00-ESC03: ingresar como coleccionista usando la búsqueda. */
     @Test
     fun elBuscadorFiltraLosColeccionistasReales() {
+        val evidencia = "FN00_ESC03"
         ActivityScenario.launch(MainActivity::class.java).use {
+            esperarA(TagEntrarColeccionista)
+            EvidenciaE2E.capturar(rule, evidencia, "01_ingreso")
             entrarComoColeccionista()
             esperarA(tagColeccionista(100))
+            EvidenciaE2E.capturar(rule, evidencia, "02_listado_coleccionistas")
 
             rule.onNodeWithTag(TagBuscador).performTextInput("RTVC")
 
             rule.onNodeWithTag(tagColeccionista(101)).assertIsDisplayed()
             rule.onNodeWithTag(tagColeccionista(100)).assertDoesNotExist()
+            EvidenciaE2E.capturar(rule, evidencia, "03_busqueda_filtrada")
 
+            // Sin cerrar el teclado, la captura del inicio sale cortada mientras la ventana recupera su alto.
+            Espresso.closeSoftKeyboard()
             rule.onNodeWithTag(tagColeccionista(101)).performClick()
+
+            esperarA(TagInicio)
+            rule.onNodeWithText("¡Hola, Jaime Monsalve!").assertIsDisplayed()
+            EvidenciaE2E.capturar(rule, evidencia, "04_inicio_coleccionista")
             verAlbumes()
             rule.onNodeWithTag(TagRolActivo).assertTextEquals("COLECCIONISTA")
+            EvidenciaE2E.capturar(rule, evidencia, "05_catalogo_coleccionista")
         }
     }
 
