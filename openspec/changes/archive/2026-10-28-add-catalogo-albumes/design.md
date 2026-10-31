@@ -154,17 +154,19 @@ Detalle 404 → Catálogo                                      "Volver al catál
 **OBJ03, E2E (`CatalogoE2ETest`, BackVynils real).** Superan el mínimo de 2 escenarios y se ejecutan en el Motorola Edge 30:
 
 ```
-Id         Escenario                                                     Backend
----------  ------------------------------------------------------------  ---------------
-E2E-01-01  Visitante y Coleccionista ven los 4 álbumes en orden con       Real
-           portada, nombre y género
-E2E-01-02  Recorrer hasta el final y deslizar para actualizar sin cierre  Real
-E2E-01-04  Rotar conserva la posición sin recargar                        Real
-E2E-01-05  Tocar "Buscando América" abre su detalle y "Atrás" vuelve      Real
-E2E-01-03  Backend caído → error → "Reintentar" → lista                   MockWebServer
+Id          Escenario                                                     Backend
+----------  ------------------------------------------------------------  ---------------
+FN01-ESC01  Visitante y Coleccionista ven los 4 álbumes en orden con       Real
+            portada, nombre y género
+FN01-ESC02  Recorrer hasta el final y deslizar para actualizar sin cierre  Real
+FN01-ESC04  Rotar conserva la posición sin recargar                        Real
+FN01-ESC05  Tocar "Buscando América" abre su detalle y "Atrás" vuelve      Real
+FN01-ESC03  Backend caído → error → "Reintentar" → lista                   MockWebServer
 ```
 
-E2E-01-03 se mantiene en la misma clase, como prevé la wiki, pero no cuenta para OBJ03 porque no usa el backend real; el backend caído real se verifica en la prueba manual M-01-07. Las capturas usan `EvidenciaE2E` con la corrección para API < 26 y esperan a que la portada termine de cargar.
+Los IDs `FN01-ESCxx` son los mismos que usan las E2E de la HU00, la HU02 y la HU03 y equivalen a `E2E-01-xx` del inventario de la wiki (FN01-ESC01 = E2E-01-01, y así sucesivamente). Cada escenario guarda su evidencia en su propia carpeta `e2e-evidencia/FN01_ESCxx/`, con sus capturas (la primera en el inicio), su `informe.md` y su PDF (tarea 6.4).
+
+FN01-ESC03 se mantiene en la misma clase, como prevé la wiki, pero no cuenta para OBJ03 porque no usa el backend real; el backend caído real se verifica en la prueba manual M-01-07. Las capturas usan `EvidenciaE2E` con la corrección para API < 26 y esperan a que la portada termine de cargar.
 
 ### D9. Compatibilidad y publicación de resultados (OBJ03 y OBJ04)
 **Entornos (OBJ04).** La suite instrumentada completa y la verificación manual del flujo (casos M-01) se ejecutan en:
