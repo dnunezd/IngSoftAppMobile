@@ -40,6 +40,8 @@ replay_pid*
 # no debe rastrearse: son artefactos locales de una ejecución, no código ni documentación.
 e2e-evidencia/
 **/e2e-evidencia/
+e2e-evidencia-*/
+**/e2e-evidencia-*/
 
 ### Firmas y servicios (secretos) ###
 *.jks
