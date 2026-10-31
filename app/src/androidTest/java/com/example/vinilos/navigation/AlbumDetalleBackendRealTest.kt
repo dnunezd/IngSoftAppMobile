@@ -36,11 +36,10 @@ import org.junit.Test
  * app con `-PbaseUrl=http://localhost:3000/`.
  *
  * Cada paso guarda un pantallazo y una fila en el informe de
- * `.../files/e2e-evidencia/detalle de album/informe.md` (solo en el dispositivo, no en el repo).
+ * `.../files/e2e-evidencia/<carpeta>/informe.md` (solo en el dispositivo, no en el repo). Cada
+ * escenario usa su propia carpeta (FN02_ESC02 y FN02_ESC03) para obtener un PDF por escenario.
  */
 class AlbumDetalleBackendRealTest {
-
-    private val carpetaEvidencia = "detalle de album"
 
     @get:Rule
     val rule = createComposeRule()
@@ -90,7 +89,7 @@ class AlbumDetalleBackendRealTest {
         rule.onNodeWithText("Aún no hay comentarios para este álbum").assertIsDisplayed()
         lista.performScrollToNode(hasText("Sin calificaciones"))
         rule.onNodeWithText("Sin calificaciones").assertIsDisplayed()
-        EvidenciaE2E.capturar(rule, carpetaEvidencia, "07_album_sin_contenido")
+        EvidenciaE2E.capturar(rule, "FN02_ESC02", "07_album_sin_contenido")
     }
 
     @Test
@@ -103,6 +102,6 @@ class AlbumDetalleBackendRealTest {
 
         rule.onNodeWithText("El álbum ya no está disponible").assertIsDisplayed()
         rule.onNodeWithText("Volver al catálogo").assertIsDisplayed()
-        EvidenciaE2E.capturar(rule, carpetaEvidencia, "08_album_404_real")
+        EvidenciaE2E.capturar(rule, "FN02_ESC03", "08_album_404_real")
     }
 }

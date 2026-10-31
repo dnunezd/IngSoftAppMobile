@@ -37,11 +37,12 @@ import org.junit.Test
  * verifican aparte en `AlbumDetalleBackendRealTest` (navegación directa por id).
  *
  * Cada paso guarda un pantallazo y una fila en el informe de
- * `.../files/e2e-evidencia/detalle de album/informe.md` (solo en el dispositivo, no en el repo).
+ * `.../files/e2e-evidencia/FN02_ESC01/informe.md` (solo en el dispositivo, no en el repo). El PDF
+ * resultante es la evidencia del escenario FN02_ESC01 (flujo completo exitoso de la HU02).
  */
 class AlbumDetalleE2ETest {
 
-    private val carpetaEvidencia = "detalle de album"
+    private val carpetaEvidencia = "FN02_ESC01"
 
     @get:Rule
     val rule = createEmptyComposeRule()
