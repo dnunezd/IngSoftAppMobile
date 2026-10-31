@@ -2,16 +2,24 @@ package com.example.vinilos
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import com.example.vinilos.data.model.Collector
+import com.example.vinilos.ui.catalogo.TagCuadriculaCatalogo
+import com.example.vinilos.ui.catalogo.TagProgresoCatalogo
 import com.example.vinilos.ui.catalogo.TagRolActivo
+import com.example.vinilos.ui.catalogo.albumesDePrueba
+import com.example.vinilos.ui.catalogo.tagAlbum
+import com.example.vinilos.ui.ingreso.TagAtras
+import com.example.vinilos.ui.ingreso.TagEntrarVisitante
 import com.example.vinilos.ui.ingreso.TagBuscador
 import com.example.vinilos.ui.ingreso.TagEntrarColeccionista
 import com.example.vinilos.ui.ingreso.tagColeccionista
@@ -30,9 +38,12 @@ class RotacionTest {
     private val manolo = Collector(100, "Manolo Bellon", "manollo@caracol.com.co")
     private val jaime = Collector(101, "Jaime Monsalve", "jmonsalve@rtvc.com.co")
 
-    private fun conRepositorio(repositorio: RepositorioFalso) {
+    private fun conRepositorio(
+        repositorio: RepositorioFalso,
+        albumes: RepositorioAlbumesFalso = RepositorioAlbumesFalso()
+    ) {
         ApplicationProvider.getApplicationContext<VinilosApplication>().container =
-            AppContainer(colectoresRepositorio = repositorio)
+            AppContainer(colectoresRepositorio = repositorio, albumesRepositorio = albumes)
     }
 
     @Test
@@ -68,8 +79,9 @@ class RotacionTest {
             rule.waitForIdle()
 
             rule.onNodeWithTag(TagInicio).assertIsDisplayed()
+            rule.onNodeWithText("¡Hola, Jaime Monsalve!").performScrollTo().assertIsDisplayed()
             rule.onNodeWithTag(TagVerAlbumes).performScrollTo().performClick()
-            rule.onNodeWithTag(TagRolActivo).assertTextEquals("Coleccionista: Jaime Monsalve")
+            rule.onNodeWithTag(TagRolActivo).assertTextEquals("COLECCIONISTA")
         }
     }
 
@@ -81,12 +93,34 @@ class RotacionTest {
             rule.onNodeWithTag(TagEntrarColeccionista).performScrollTo().performClick()
             rule.onNodeWithTag(tagColeccionista(101)).performClick()
             rule.onNodeWithTag(TagVerAlbumes).performScrollTo().performClick()
-            rule.onNodeWithTag(TagRolActivo).assertTextEquals("Coleccionista: Jaime Monsalve")
+            rule.onNodeWithTag(TagRolActivo).assertTextEquals("COLECCIONISTA")
 
             escenario.recreate()
             rule.waitForIdle()
 
-            rule.onNodeWithTag(TagRolActivo).assertTextEquals("Coleccionista: Jaime Monsalve")
+            rule.onNodeWithTag(TagRolActivo).assertTextEquals("COLECCIONISTA")
+            rule.onNodeWithTag(TagAtras).performClick()
+            rule.onNodeWithText("¡Hola, Jaime Monsalve!").performScrollTo().assertIsDisplayed()
+        }
+    }
+
+    @Test
+    fun alGirarElCatalogoConservaSuPosicionSinVolverAConsultar() {
+        val albumes = RepositorioAlbumesFalso(catalogo = listOf(Result.success(albumesDePrueba(50))))
+        conRepositorio(RepositorioFalso(Result.success(listOf(manolo))), albumes)
+
+        ActivityScenario.launch(MainActivity::class.java).use { escenario ->
+            rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
+            rule.onNodeWithTag(TagVerAlbumes).performScrollTo().performClick()
+            rule.onNodeWithTag(TagCuadriculaCatalogo).performScrollToNode(hasTestTag(tagAlbum(30)))
+            rule.onNodeWithTag(tagAlbum(30)).assertIsDisplayed()
+
+            escenario.recreate()
+            rule.waitForIdle()
+
+            rule.onNodeWithTag(tagAlbum(30)).assertIsDisplayed()
+            rule.onNodeWithTag(TagProgresoCatalogo).assertDoesNotExist()
+            assertEquals(1, albumes.consultasCatalogo)
         }
     }
 }

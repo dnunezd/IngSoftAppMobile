@@ -8,13 +8,16 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
@@ -59,6 +62,10 @@ class PantallaArtistasTest {
         }
     }
 
+    /** En pantallas bajas la lista solo compone lo que se ve: hay que desplazarla hasta el nodo. */
+    private fun verEnLista(nodo: SemanticsMatcher) =
+        rule.onNodeWithTag(TagListaArtistas).performScrollToNode(nodo)
+
     @Test
     fun muestraElEncabezadoYElTitularDelMockup() {
         mostrar(ArtistsUiState.Exito(todos))
@@ -74,9 +81,11 @@ class PantallaArtistasTest {
     fun cadaFilaMuestraNombreYEtiquetaSegunElTipo() {
         mostrar(ArtistsUiState.Exito(todos))
 
+        verEnLista(hasTestTag(tagArtista(queen)))
         rule.onNodeWithTag(tagArtista(queen)).assertIsDisplayed()
         rule.onNodeWithText("Queen").assertIsDisplayed()
         rule.onNodeWithText("Banda").assertIsDisplayed()
+        verEnLista(hasTestTag(tagArtista(ruben)))
         rule.onNodeWithText("Rubén Blades Bellido de Luna").assertIsDisplayed()
         rule.onNodeWithText("Músico").assertIsDisplayed()
     }
@@ -84,6 +93,8 @@ class PantallaArtistasTest {
     @Test
     fun lasFilasRespetanElOrdenDelEstado() {
         mostrar(ArtistsUiState.Exito(todos))
+        // Con la primera fila arriba, la segunda también queda compuesta.
+        verEnLista(hasTestTag(tagArtista(queen)))
 
         // onAllNodes devuelve los nodos en el orden del árbol, que es el orden en pantalla.
         val filas = rule.onAllNodes(hasTestTag(tagArtista(queen)) or hasTestTag(tagArtista(ruben)))
@@ -118,6 +129,7 @@ class PantallaArtistasTest {
         rule.waitForIdle()
 
         rule.onNodeWithTag(TagVacioArtistas).assertTextEquals("No se encontraron artistas")
+        verEnLista(hasText("Prueba con otro nombre."))
         rule.onNodeWithText("Prueba con otro nombre.").assertIsDisplayed()
         rule.onNodeWithTag(TagBuscadorArtistas).assertTextEquals("zzz")
     }
@@ -163,7 +175,8 @@ class PantallaArtistasTest {
     fun tocarUnaFilaSeleccionaEseArtista() {
         mostrar(ArtistsUiState.Exito(todos))
 
-        rule.onNodeWithTag(tagArtista(ruben)).performScrollTo().performClick()
+        verEnLista(hasTestTag(tagArtista(ruben)))
+        rule.onNodeWithTag(tagArtista(ruben)).performClick()
 
         assertEquals(ruben, seleccionado)
     }

@@ -17,6 +17,7 @@ import com.example.vinilos.e2e.EvidenciaE2E
 import com.example.vinilos.ui.artistas.TagArtistas
 import com.example.vinilos.ui.catalogo.TagCatalogo
 import com.example.vinilos.ui.catalogo.TagRolActivo
+import com.example.vinilos.ui.catalogo.tagAlbum
 import com.example.vinilos.ui.ingreso.TagAtras
 import com.example.vinilos.ui.ingreso.TagBuscador
 import com.example.vinilos.ui.ingreso.TagEntrarColeccionista
@@ -61,6 +62,9 @@ class IngresoE2ETest {
         esperarA(TagInicio)
         rule.onNodeWithTag(TagVerAlbumes).performScrollTo().performClick()
         esperarA(TagCatalogo)
+        // El catálogo real carga desde BackVynils: se espera al primer álbum para que la
+        // evidencia muestre la lista y no el estado "Cargando".
+        esperarA(tagAlbum(103))
     }
 
     /** FN00-ESC01: ingresar a la plataforma como visitante. */
@@ -76,7 +80,7 @@ class IngresoE2ETest {
             rule.onNodeWithText("¡Hola, melómano!").assertIsDisplayed()
             EvidenciaE2E.capturar(rule, evidencia, "02_inicio_visitante")
             verAlbumes()
-            rule.onNodeWithTag(TagRolActivo).assertTextEquals("Visitante")
+            rule.onNodeWithTag(TagRolActivo).assertTextEquals("VISITANTE")
             EvidenciaE2E.capturar(rule, evidencia, "03_catalogo_visitante")
         }
     }
@@ -104,7 +108,7 @@ class IngresoE2ETest {
             rule.onNodeWithText("¡Hola, Manolo Bellon!").assertIsDisplayed()
             EvidenciaE2E.capturar(rule, evidencia, "03_inicio_coleccionista")
             verAlbumes()
-            rule.onNodeWithTag(TagRolActivo).assertTextEquals("Coleccionista: Manolo Bellon")
+            rule.onNodeWithTag(TagRolActivo).assertTextEquals("COLECCIONISTA")
             EvidenciaE2E.capturar(rule, evidencia, "04_catalogo_coleccionista")
         }
     }
@@ -134,7 +138,7 @@ class IngresoE2ETest {
             rule.onNodeWithText("¡Hola, Jaime Monsalve!").assertIsDisplayed()
             EvidenciaE2E.capturar(rule, evidencia, "04_inicio_coleccionista")
             verAlbumes()
-            rule.onNodeWithTag(TagRolActivo).assertTextEquals("Coleccionista: Jaime Monsalve")
+            rule.onNodeWithTag(TagRolActivo).assertTextEquals("COLECCIONISTA")
             EvidenciaE2E.capturar(rule, evidencia, "05_catalogo_coleccionista")
         }
     }
@@ -160,7 +164,7 @@ class IngresoE2ETest {
             rule.onNodeWithTag(TagAtras).performClick()
             esperarA(TagInicio)
             verAlbumes()
-            rule.onNodeWithTag(TagRolActivo).assertTextEquals("Coleccionista: Jaime Monsalve")
+            rule.onNodeWithTag(TagRolActivo).assertTextEquals("COLECCIONISTA")
 
             // Catálogo -> inicio -> ingreso.
             rule.onNodeWithTag(TagAtras).performClick()
@@ -172,7 +176,7 @@ class IngresoE2ETest {
             // Cambiar de perfil: ahora como visitante.
             rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
             verAlbumes()
-            rule.onNodeWithTag(TagRolActivo).assertTextEquals("Visitante")
+            rule.onNodeWithTag(TagRolActivo).assertTextEquals("VISITANTE")
         }
     }
 }

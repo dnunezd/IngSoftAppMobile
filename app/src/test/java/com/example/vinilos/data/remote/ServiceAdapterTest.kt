@@ -152,6 +152,38 @@ class ServiceAdapterTest {
     }
 
     @Test
+    fun cuerpoNullDevuelveElErrorDeLectura() = runTest {
+        // 200 con cuerpo "null" en una función que declara un tipo no nulo: no debe cerrar la app.
+        servidor.enqueue(MockResponse().setBody("null"))
+        val api = adaptador.api<ApiDePrueba>()
+
+        val resultado = adaptador.llamar { api.obtenerPrueba() }
+
+        assertTrue(resultado.exceptionOrNull() is ErrorDeCarga)
+    }
+
+    @Test
+    fun respuestaSinContenidoDevuelveElErrorDeLectura() = runTest {
+        servidor.enqueue(MockResponse().setResponseCode(204))
+        val api = adaptador.api<ApiDePrueba>()
+
+        val resultado = adaptador.llamar { api.obtenerPrueba() }
+
+        assertTrue(resultado.exceptionOrNull() is ErrorDeCarga)
+    }
+
+    @Test
+    fun unNullPointerExceptionDelCodigoNoSeOculta() = runTest {
+        // Solo el cuerpo vacío de Retrofit es un fallo de carga; un NPE propio es un error de programación.
+        try {
+            adaptador.llamar<DatosPrueba> { throw NullPointerException("Error de programación") }
+            fail("El NullPointerException debe propagarse")
+        } catch (error: NullPointerException) {
+            assertEquals("Error de programación", error.message)
+        }
+    }
+
+    @Test
     fun cancelacionSeRelanzaSinConvertirseEnFallo() = runTest {
         val adaptador = ServiceAdapter(servidor.url("/").toString())
         val cancelacion = CancellationException("Consulta cancelada")

@@ -13,15 +13,20 @@ import com.example.vinilos.R
  * como respaldo mientras no hay URL, carga o falla la descarga.
  */
 @Composable
-fun PortadaAlbum(url: String?, modifier: Modifier = Modifier) {
+fun PortadaAlbum(
+    url: String?,
+    modifier: Modifier = Modifier,
+    contentDescription: String = stringResource(R.string.detalle_portada),
+    contentScale: ContentScale = ContentScale.Fit
+) {
     val porDefecto = painterResource(R.drawable.inicio_albumes)
     AsyncImage(
         model = url?.takeIf { it.isNotBlank() },
-        contentDescription = stringResource(R.string.detalle_portada),
+        contentDescription = contentDescription,
         placeholder = porDefecto,
         error = porDefecto,
         fallback = porDefecto,
-        contentScale = ContentScale.Fit,
+        contentScale = contentScale,
         modifier = modifier
     )
 }

@@ -1,6 +1,7 @@
 package com.example.vinilos.data.repository
 
 import com.example.vinilos.data.model.Album
+import com.example.vinilos.data.model.AlbumResumen
 import com.example.vinilos.data.model.Artista
 import com.example.vinilos.data.model.Cancion
 import com.example.vinilos.data.model.Comentario
@@ -205,6 +206,7 @@ class AlbumRepositoryTest {
         val esperado = IllegalStateException("Error de programación")
         val api = object : AlbumApi {
             override suspend fun obtenerAlbum(id: Int): Response<AlbumDto> = throw esperado
+            override suspend fun obtenerAlbumes(): List<AlbumDto> = throw esperado
         }
         val repositorio = AlbumRepository(ServiceAdapter(servidor.url("/").toString()), api)
 
@@ -220,6 +222,7 @@ class AlbumRepositoryTest {
     fun cancelarLaConsultaPropagaLaCancelacionSinErrorDeCarga() = runTest {
         val api = object : AlbumApi {
             override suspend fun obtenerAlbum(id: Int): Response<AlbumDto> = awaitCancellation()
+            override suspend fun obtenerAlbumes(): List<AlbumDto> = awaitCancellation()
         }
         val repositorio = AlbumRepository(ServiceAdapter(servidor.url("/").toString()), api)
         var devolvioResultado = false
@@ -250,5 +253,180 @@ class AlbumRepositoryTest {
 
         assertTrue("Una respuesta sin álbum debe ser un error de carga", error is ErrorDeCarga)
         assertTrue(error!!.cause is JsonParseException)
+    }
+
+    // ---- Catálogo (HU01): GET /albums ----
+
+    @Test
+    fun catalogoConsultaGetAlbumsYConvierteCadaAlbum() = runTest {
+        servidor.enqueue(
+            MockResponse().setBody(
+                """
+                [
+                  {"id": 100, "name": "Buscando América", "cover": "https://example.com/100.jpg",
+                   "description": "Salsa urbana", "genre": "Salsa", "recordLabel": "Elektra",
+                   "releaseDate": "1984-08-01T00:00:00.000Z",
+                   "tracks": [], "performers": [{"id": 1, "name": "Rubén Blades Bellido de Luna"}],
+                   "comments": []},
+                  {"id": 102, "name": "A Night at the Opera", "cover": "https://example.com/102.jpg",
+                   "genre": "Rock", "releaseDate": "1975-11-21T00:00:00.000Z",
+                   "performers": [{"id": 2, "name": "Queen"}, {"id": 3, "name": "Freddie Mercury"}]}
+                ]
+                """.trimIndent()
+            )
+        )
+
+        val albumes = repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals("/albums", servidor.takeRequest(1, TimeUnit.SECONDS)?.path)
+        assertEquals(
+            listOf(
+                AlbumResumen(
+                    id = 102, nombre = "A Night at the Opera", portada = "https://example.com/102.jpg",
+                    genero = "Rock", artista = "Queen, Freddie Mercury", anio = "1975"
+                ),
+                AlbumResumen(
+                    id = 100, nombre = "Buscando América", portada = "https://example.com/100.jpg",
+                    genero = "Salsa", artista = "Rubén Blades Bellido de Luna", anio = "1984"
+                )
+            ),
+            albumes
+        )
+    }
+
+    @Test
+    fun catalogoDescartaLosAlbumesIncompletosSinAfectarALosDemas() = runTest {
+        servidor.enqueue(
+            MockResponse().setBody(
+                """
+                [
+                  {"name": "Sin id", "genre": "Rock"},
+                  {"id": 2, "genre": "Rock"},
+                  {"id": 3, "name": "Sin género"},
+                  {"id": 4, "name": "Completo", "genre": "Folk"}
+                ]
+                """.trimIndent()
+            )
+        )
+
+        val albumes = repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals(listOf(4), albumes.map { it.id })
+    }
+
+    @Test
+    fun elArtistaEsCadenaVaciaSiNoHayArtistasConNombre() = runTest {
+        servidor.enqueue(
+            MockResponse().setBody(
+                """
+                [
+                  {"id": 1, "name": "A sin performers", "genre": "Rock"},
+                  {"id": 2, "name": "B con lista vacía", "genre": "Rock", "performers": []},
+                  {"id": 3, "name": "C sin nombre", "genre": "Rock", "performers": [{"id": 9}]},
+                  {"id": 4, "name": "D mixto", "genre": "Rock",
+                   "performers": [{"id": 9, "name": ""}, {"id": 10, "name": "Queen"}, {"id": 11, "name": "  "}]}
+                ]
+                """.trimIndent()
+            )
+        )
+
+        val albumes = repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals(listOf("", "", "", "Queen"), albumes.map { it.artista })
+    }
+
+    @Test
+    fun elAnioEsNuloSinFechaOConFechaInvalida() = runTest {
+        servidor.enqueue(
+            MockResponse().setBody(
+                """
+                [
+                  {"id": 1, "name": "A sin fecha", "genre": "Rock"},
+                  {"id": 2, "name": "B fecha inválida", "genre": "Rock", "releaseDate": "pronto"},
+                  {"id": 3, "name": "C solo día", "genre": "Rock", "releaseDate": "1976-12-10"}
+                ]
+                """.trimIndent()
+            )
+        )
+
+        val albumes = repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals(listOf(null, null, "1976"), albumes.map { it.anio })
+    }
+
+    @Test
+    fun catalogoSinAlbumesEsUnExitoConListaVacia() = runTest {
+        servidor.enqueue(MockResponse().setBody("[]"))
+
+        assertEquals(emptyList<AlbumResumen>(), repositorio.obtenerAlbumes().getOrThrow())
+    }
+
+    @Test
+    fun catalogoOrdenaLosAlbumesPorNombre() = runTest {
+        servidor.enqueue(
+            MockResponse().setBody(
+                """
+                [
+                  {"id": 100, "name": "Buscando América", "genre": "Salsa"},
+                  {"id": 101, "name": "Poeta del pueblo", "genre": "Salsa"},
+                  {"id": 102, "name": "A Night at the Opera", "genre": "Rock"},
+                  {"id": 103, "name": "A Day at the Races", "genre": "Rock"}
+                ]
+                """.trimIndent()
+            )
+        )
+
+        val nombres = repositorio.obtenerAlbumes().getOrThrow().map { it.nombre }
+
+        assertEquals(
+            listOf("A Day at the Races", "A Night at the Opera", "Buscando América", "Poeta del pueblo"),
+            nombres
+        )
+    }
+
+    @Test
+    fun catalogoConError500EsErrorDeCarga() = runTest {
+        servidor.enqueue(MockResponse().setResponseCode(500))
+
+        val error = repositorio.obtenerAlbumes().exceptionOrNull()
+
+        assertTrue(error is ErrorDeCarga)
+        assertEquals(500, (error!!.cause as HttpException).code())
+    }
+
+    @Test
+    fun catalogoConDesconexionEsErrorDeCarga() = runTest {
+        servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST))
+
+        val error = repositorio.obtenerAlbumes().exceptionOrNull()
+
+        assertTrue(error is ErrorDeCarga)
+        assertTrue(error!!.cause is IOException)
+    }
+
+    @Test
+    fun catalogoConJsonIlegibleEsErrorDeCarga() = runTest {
+        servidor.enqueue(MockResponse().setBody("{no es una lista"))
+
+        assertTrue(repositorio.obtenerAlbumes().exceptionOrNull() is ErrorDeCarga)
+    }
+
+    @Test
+    fun cancelarElCatalogoPropagaLaCancelacion() = runTest {
+        val api = object : AlbumApi {
+            override suspend fun obtenerAlbum(id: Int): Response<AlbumDto> = awaitCancellation()
+            override suspend fun obtenerAlbumes(): List<AlbumDto> = awaitCancellation()
+        }
+        val repositorio = AlbumRepository(ServiceAdapter(servidor.url("/").toString()), api)
+        val consulta = async(start = CoroutineStart.UNDISPATCHED) { repositorio.obtenerAlbumes() }
+
+        consulta.cancel(CancellationException("El usuario salió del catálogo"))
+
+        try {
+            consulta.await()
+            fail("La consulta cancelada no debe devolver un Result")
+        } catch (error: CancellationException) {
+            assertTrue(consulta.isCancelled)
+        }
     }
 }

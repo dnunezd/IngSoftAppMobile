@@ -22,9 +22,8 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * E2E de la HU02 (detalle del álbum) contra el backend real BackVynils, para los dos casos que el
- * enlace provisional del catálogo (fijo al álbum 100, ver `AlbumIdProvisional`) no permite
- * alcanzar desde la interfaz mientras HU01 no tenga un catálogo real:
+ * E2E de la HU02 (detalle del álbum) contra el backend real BackVynils, para dos casos que se
+ * prueban mejor navegando directo a la ruta por id (un id inexistente no aparece en el catálogo):
  *  - un álbum sin canciones ni comentarios (id 101, "Poeta del pueblo" en `sql/data.sql`), y
  *  - un álbum inexistente (404 real del backend).
  *

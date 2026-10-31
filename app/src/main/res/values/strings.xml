@@ -81,13 +81,29 @@
     <!-- Destino provisional del detalle del artista (lo reemplaza HU04) -->
     <string name="artista_detalle_titulo">Detalle del artista</string>
 
-    <!-- Destino provisional del catálogo (lo reemplaza HU01) -->
-    <string name="catalogo_titulo">Catálogo de álbumes</string>
-    <string name="catalogo_rol_visitante">Visitante</string>
-    <string name="catalogo_rol_coleccionista">Coleccionista: %1$s</string>
-    <string name="catalogo_rol_ninguno">Sin perfil</string>
-    <string name="catalogo_album_provisional_nota">Enlace provisional para probar el detalle de álbum mientras HU01 agrega la lista real</string>
-    <string name="catalogo_album_provisional_boton">Ver álbum de prueba</string>
+    <!-- Catálogo de álbumes (HU01): los mensajes de estado son los de la HU; el resto, del mockup. -->
+    <string name="catalogo_encabezado">Álbumes</string>
+    <string name="catalogo_etiqueta_visitante">Visitante</string>
+    <string name="catalogo_etiqueta_coleccionista">Coleccionista</string>
+    <string name="catalogo_chip">Vinilo Catalog</string>
+    <string name="catalogo_titular_1">Explora</string>
+    <string name="catalogo_titular_2">álbumes</string>
+    <string name="catalogo_subtitulo">Archivador discográfico de alta fidelidad para melómanos y curadores.</string>
+    <string name="catalogo_lista">Catálogo</string>
+    <plurals name="catalogo_contador">
+        <item quantity="one">%d lanzamiento</item>
+        <item quantity="other">%d lanzamientos</item>
+    </plurals>
+    <!-- Los tres puntos son el texto exacto del mockup. -->
+    <string name="catalogo_cargando" tools:ignore="TypographyEllipsis">Cargando catálogo de vinilos...</string>
+    <string name="catalogo_actualizando">Actualizando catálogo</string>
+    <string name="catalogo_error">No pudimos cargar el catálogo</string>
+    <string name="catalogo_error_actualizar">No pudimos actualizar el catálogo</string>
+    <string name="catalogo_reintentar">Reintentar</string>
+    <string name="catalogo_vacio">Aún no hay álbumes en el catálogo</string>
+    <string name="catalogo_genero_anio">%1$s · %2$s</string>
+    <string name="catalogo_portada_descripcion">Portada de %1$s</string>
+    <string name="catalogo_seleccionar_descripcion">Ver detalle de %1$s</string>
 
     <string name="detalle_sin_canciones">Este álbum aún no tiene canciones registradas</string>
     <string name="detalle_sin_comentarios">Aún no hay comentarios para este álbum</string>
