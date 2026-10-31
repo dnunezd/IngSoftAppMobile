@@ -49,16 +49,15 @@ import org.junit.Test
 
 /**
  * E2E de la HU01 (catálogo de álbumes) contra el backend real BackVynils, con los 4 álbumes de
- * `sql/data.sql` (ids 100 a 103). E2E-01-03 (backend caído) usa `MockWebServer`, porque apagar el
+ * `sql/data.sql` (ids 100 a 103). FN01-ESC03 (backend caído) usa `MockWebServer`, porque apagar el
  * backend dentro de la prueba no es confiable; el caso real se verifica a mano (M-01-07).
  *
  * En un teléfono requiere `adb reverse tcp:3000 tcp:3000` y la app instalada con
- * `-PbaseUrl=http://localhost:3000/`. Cada paso guarda un pantallazo y una fila en
- * `.../files/e2e-evidencia/catalogo de albumes/informe.md`.
+ * `-PbaseUrl=http://localhost:3000/`. Los escenarios FN01-ESC01 a FN01-ESC05 guardan un pantallazo
+ * por paso, una fila en el informe y un PDF en su propia carpeta,
+ * `.../files/e2e-evidencia/FN01_ESCxx/` (solo en el dispositivo, no en el repo).
  */
 class CatalogoE2ETest {
-
-    private val carpetaEvidencia = "catalogo de albumes"
 
     @get:Rule
     val rule = createEmptyComposeRule()
@@ -93,13 +92,15 @@ class CatalogoE2ETest {
         rule.waitUntil(milis) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
 
     /** Da tiempo a que Coil pinte las portadas antes del pantallazo. */
-    private fun capturar(paso: String) {
+    private fun capturar(evidencia: String, paso: String) {
         SystemClock.sleep(2_000)
-        EvidenciaE2E.capturar(rule, carpetaEvidencia, paso)
+        EvidenciaE2E.capturar(rule, evidencia, paso)
     }
 
-    private fun verAlbumes() {
+    /** Desde el inicio (que queda en la evidencia como [pasoInicio]) abre el catálogo. */
+    private fun verAlbumes(evidencia: String, pasoInicio: String) {
         esperarA(TagInicio)
+        EvidenciaE2E.capturar(rule, evidencia, pasoInicio)
         rule.onNodeWithTag(TagVerAlbumes).performScrollTo().performClick()
         esperarA(tagAlbum(enOrden.first().first))
     }
@@ -118,15 +119,16 @@ class CatalogoE2ETest {
         assertEquals(esperados, rule.tagsDeAlbumesRecorriendo(esperados).filter { it in esperados })
     }
 
-    /** E2E-01-01: Visitante y Coleccionista ven los mismos 4 álbumes, en orden, con portada, nombre y género. */
+    /** FN01-ESC01: Visitante y Coleccionista ven los mismos 4 álbumes, en orden, con portada, nombre y género. */
     @Test
     fun visitanteYColeccionistaVenLosCuatroAlbumesEnOrden() {
+        val evidencia = "FN01_ESC01"
         ActivityScenario.launch(MainActivity::class.java).use {
             rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
-            verAlbumes()
+            verAlbumes(evidencia, "01_inicio_visitante")
             rule.onNodeWithTag(TagRolActivo).assertTextEquals("VISITANTE")
             rule.onNode(hasTestTag(tagAlbum(103)) and hasText("Rock · 1976")).assertIsDisplayed()
-            capturar("01_01_catalogo_visitante")
+            capturar(evidencia, "02_catalogo_visitante")
             comprobarLosCuatroAlbumesEnOrden()
 
             // Volver al ingreso y entrar como coleccionista.
@@ -137,23 +139,24 @@ class CatalogoE2ETest {
             rule.onNodeWithTag(TagEntrarColeccionista).performScrollTo().performClick()
             esperarA(tagColeccionista(100))
             rule.onNodeWithTag(tagColeccionista(100)).performClick()
-            verAlbumes()
+            verAlbumes(evidencia, "03_inicio_coleccionista")
             rule.onNodeWithTag(TagRolActivo).assertTextEquals("COLECCIONISTA")
-            capturar("01_02_catalogo_coleccionista")
+            capturar(evidencia, "04_catalogo_coleccionista")
             comprobarLosCuatroAlbumesEnOrden()
         }
     }
 
-    /** E2E-01-02: recorrer el catálogo hasta el final y actualizarlo deslizando hacia abajo. */
+    /** FN01-ESC02: recorrer el catálogo hasta el final y actualizarlo deslizando hacia abajo. */
     @Test
     fun recorrerHastaElFinalYDeslizarParaActualizar() {
+        val evidencia = "FN01_ESC02"
         ActivityScenario.launch(MainActivity::class.java).use {
             rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
-            verAlbumes()
+            verAlbumes(evidencia, "01_inicio_visitante")
 
             verAlbum(101)
             rule.onNodeWithTag(tagAlbum(101)).assertIsDisplayed()
-            capturar("02_01_final_del_catalogo")
+            capturar(evidencia, "02_final_del_catalogo")
 
             // Al principio de la lista, para que el gesto actualice en vez de solo desplazar.
             rule.onNodeWithTag(TagCuadriculaCatalogo).performScrollToIndex(0)
@@ -166,13 +169,14 @@ class CatalogoE2ETest {
             }
             rule.onNodeWithTag(TagContadorCatalogo).assertTextEquals("4 lanzamientos")
             rule.onNodeWithTag(tagAlbum(103)).assertIsDisplayed()
-            capturar("02_02_tras_actualizar")
+            capturar(evidencia, "03_tras_actualizar")
         }
     }
 
-    /** E2E-01-03: con el backend caído se ve el error y "Reintentar" recupera el catálogo (MockWebServer). */
+    /** FN01-ESC03: con el backend caído se ve el error y "Reintentar" recupera el catálogo (MockWebServer). */
     @Test
     fun conElBackendCaidoSeVeElErrorYReintentarRecuperaElCatalogo() {
+        val evidencia = "FN01_ESC03"
         val servidor = MockWebServer().apply { start() }
         try {
             ApplicationProvider.getApplicationContext<VinilosApplication>().container =
@@ -182,11 +186,12 @@ class CatalogoE2ETest {
             ActivityScenario.launch(MainActivity::class.java).use {
                 rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
                 esperarA(TagInicio)
+                EvidenciaE2E.capturar(rule, evidencia, "01_inicio_visitante")
                 rule.onNodeWithTag(TagVerAlbumes).performScrollTo().performClick()
                 esperarA(TagErrorCatalogo)
                 rule.onNodeWithTag(TagErrorCatalogo).assertTextEquals("No pudimos cargar el catálogo")
                 rule.onNodeWithText("Reintentar").performScrollTo().assertIsDisplayed()
-                capturar("03_01_backend_caido")
+                capturar(evidencia, "02_backend_caido")
 
                 servidor.enqueue(
                     MockResponse().setBody(
@@ -198,22 +203,23 @@ class CatalogoE2ETest {
                 rule.onNodeWithTag(TagReintentarCatalogo).performScrollTo().performClick()
                 esperarA(tagAlbum(100))
                 rule.onNodeWithText("Buscando América").assertIsDisplayed()
-                capturar("03_02_recuperado")
+                capturar(evidencia, "03_recuperado")
             }
         } finally {
             servidor.shutdown()
         }
     }
 
-    /** E2E-01-04: al girar, el catálogo conserva su posición y no vuelve a consultar el backend. */
+    /** FN01-ESC04: al girar, el catálogo conserva su posición y no vuelve a consultar el backend. */
     @Test
     fun alGirarConservaLaPosicionSinVolverAConsultar() {
+        val evidencia = "FN01_ESC04"
         ActivityScenario.launch(MainActivity::class.java).use { escenario ->
             rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
-            verAlbumes()
+            verAlbumes(evidencia, "01_inicio_visitante")
             verAlbum(101)
             rule.onNodeWithTag(tagAlbum(101)).assertIsDisplayed()
-            capturar("04_01_antes_de_girar")
+            capturar(evidencia, "02_antes_de_girar")
 
             escenario.recreate()
             rule.waitForIdle()
@@ -221,16 +227,17 @@ class CatalogoE2ETest {
             rule.onNodeWithTag(tagAlbum(101)).assertIsDisplayed()
             rule.onNodeWithTag(TagProgresoCatalogo).assertDoesNotExist()
             assertEquals(1, albumes.consultasCatalogo)
-            capturar("04_02_despues_de_girar")
+            capturar(evidencia, "03_despues_de_girar")
         }
     }
 
-    /** E2E-01-05: tocar un álbum abre su detalle real y "Atrás" vuelve al catálogo sin recargarlo. */
+    /** FN01-ESC05: tocar un álbum abre su detalle real y "Atrás" vuelve al catálogo sin recargarlo. */
     @Test
     fun tocarUnAlbumAbreSuDetalleYAtrasVuelveAlCatalogo() {
+        val evidencia = "FN01_ESC05"
         ActivityScenario.launch(MainActivity::class.java).use {
             rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
-            verAlbumes()
+            verAlbumes(evidencia, "01_inicio_visitante")
 
             verAlbum(100)
             rule.onNodeWithTag(tagAlbum(100)).performClick()
@@ -238,13 +245,13 @@ class CatalogoE2ETest {
                 rule.onAllNodesWithText("1 de agosto de 1984").fetchSemanticsNodes().isNotEmpty()
             }
             rule.onNodeWithText("Buscando América").assertIsDisplayed()
-            capturar("05_01_detalle")
+            capturar(evidencia, "02_detalle")
 
             Espresso.pressBack()
             esperarA(tagAlbum(100))
             rule.onNodeWithTag(TagRolActivo).assertTextEquals("VISITANTE")
             assertEquals(1, albumes.consultasCatalogo)
-            capturar("05_02_regreso_al_catalogo")
+            capturar(evidencia, "03_regreso_al_catalogo")
         }
     }
 }
