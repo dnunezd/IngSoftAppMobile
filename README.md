@@ -145,6 +145,55 @@ Si hay más de un dispositivo conectado, elige uno con la variable de entorno `A
 - Para una sola clase: `"-Pandroid.testInstrumentationRunnerArguments.class=com.example.vinilos.RecuperacionTest"` (instrumentadas) o `--tests "com.example.vinilos.viewmodel.CollectorsViewModelTest"` (unitarias).
 - Los reportes quedan en `app/build/reports/` (`tests/`, `androidTests/` y `lint-results-debug.html`). Referencia del lint: 0 errores y 48 avisos esperados.
 
+### E2E completas y su evidencia (PDF)
+
+Las clases E2E (anotadas con `EvidenciaE2E.capturar(...)`) corren contra el **backend real** (BackVynils con los datos de `sql/data.sql`) y generan, en el dispositivo, una carpeta con capturas y un informe en PDF por cada valor de `carpetaEvidencia` usado, en `.../files/e2e-evidencia/<carpeta>/`. No se versionan en el repositorio (`.gitignore` las excluye); se adjuntan a mano en la wiki.
+
+| Clase | Historia | Carpeta(s) de evidencia | Escenarios |
+|---|---|---|---|
+| `IngresoE2ETest` | HU00 | `FN00_ESC01`..`FN00_ESC03` (una por escenario) | 3 |
+| `CatalogoE2ETest` | HU01 | `catalogo de albumes` (compartida por los 5 escenarios: un solo PDF) | 5 |
+| `AlbumDetalleE2ETest` | HU02 | `FN02_ESC01` | 1 |
+| `AlbumDetalleBackendRealTest` | HU02 | `FN02_ESC02`, `FN02_ESC03` (una por escenario) | 2 |
+
+Por qué una "limpieza" antes de correrlas: `BuildConfig.BASE_URL` queda fijo dentro del APK de prueba al compilar, así que cambiar la `baseUrl` exige **reinstalar** (`installDebug installDebugAndroidTest`), no alcanza con solo volver a ejecutar; y las carpetas de evidencia se acumulan en el dispositivo entre corridas, así que conviene borrarlas antes de cada corrida para no mezclar capturas de ejecuciones distintas en el mismo PDF (esto ya pasaba, por ejemplo, si dos pruebas comparten `carpetaEvidencia`, como en `CatalogoE2ETest`).
+
+#### Correr todas las E2E de la app y traer su evidencia
+
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot"
+adb devices                                      # confirma el dispositivo/emulador conectado
+$env:ANDROID_SERIAL = "<serial>"                 # solo si hay más de uno
+
+# Compila e instala apuntando al backend real. En emulador puedes omitir -PbaseUrl
+# (usa 10.0.2.2 por defecto); en dispositivo físico es obligatorio.
+.\gradlew.bat installDebug installDebugAndroidTest "-PbaseUrl=http://localhost:3000/"
+
+# Solo en dispositivo físico por USB:
+adb reverse tcp:3000 tcp:3000
+
+# Limpia evidencia previa en el dispositivo (no es necesario un "gradle clean")
+adb shell rm -rf /sdcard/Android/data/com.example.vinilos/files/e2e-evidencia
+
+# Corre TODAS las clases E2E de la app
+adb shell am instrument -w -e class com.example.vinilos.IngresoE2ETest,com.example.vinilos.CatalogoE2ETest,com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest com.example.vinilos.test/androidx.test.runner.AndroidJUnitRunner
+
+# Trae la evidencia (pisa la carpeta local si ya existía)
+Remove-Item -Recurse -Force .\e2e-evidencia -ErrorAction SilentlyContinue
+adb pull /sdcard/Android/data/com.example.vinilos/files/e2e-evidencia .\e2e-evidencia
+```
+
+Debe terminar en `OK (11 tests)` (3 + 5 + 1 + 2). El dispositivo debe permanecer desbloqueado y con la pantalla encendida durante toda la corrida (`adb shell svc power stayon true` ayuda si se duerme).
+
+#### Correr solo una E2E específica
+
+Reemplaza la lista de `-e class` por una sola clase, por ejemplo para HU02:
+
+```powershell
+adb shell am instrument -w -e class com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest com.example.vinilos.test/androidx.test.runner.AndroidJUnitRunner
+adb pull /sdcard/Android/data/com.example.vinilos/files/e2e-evidencia .\e2e-evidencia
+```
+
 La [integración continua](.github/workflows/ci.yml) corre lint y pruebas unitarias con JDK 17 en cada Pull Request y en cada push a `develop` y `main`, y falla si hay un error de lint o una prueba fallida. Las instrumentadas no corren en CI porque necesitan un dispositivo; se corren a mano antes de integrar. Qué cubre cada nivel de prueba está en la estrategia de pruebas de cada sprint en la [wiki](https://github.com/dnunezd/IngSoftAppMobile/wiki).
 
 ## Problemas frecuentes
