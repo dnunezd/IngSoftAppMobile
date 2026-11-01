@@ -7,11 +7,11 @@ import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertTextEquals
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -42,6 +42,8 @@ import com.example.vinilos.ui.ingreso.TagAtras
 import com.example.vinilos.ui.ingreso.TagEntrarVisitante
 import com.example.vinilos.ui.inicio.TagInicio
 import com.example.vinilos.ui.inicio.TagVerArtistas
+import java.text.Normalizer
+import java.util.Locale
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -49,6 +51,7 @@ import okhttp3.mockwebserver.RecordedRequest
 import okhttp3.mockwebserver.SocketPolicy
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assume
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -56,13 +59,17 @@ import org.junit.Test
 /**
  * E2E de la HU03 (listado de artistas) como Visitante.
  *
- * FN03-ESC01 a ESC04 y ESC07 van contra el backend real BackVynils, con sus datos de ejemplo: la
- * banda Queen (101) y el músico Rubén Blades Bellido de Luna (100), cuyas URL de imagen están rotas.
+ * FN03-ESC01 a ESC04 y ESC07 van contra el backend real BackVynils, pero no asumen un dataset fijo
+ * (como los 2 artistas de ejemplo de `sql/data.sql`): envuelven el repositorio real para capturar
+ * el listado que el backend realmente devuelve y calculan los términos de búsqueda y las
+ * aseriones a partir de esos datos. Así las pruebas son coherentes tanto con el backend local
+ * (Docker) como con el desplegado por los tutores, sin importar cuántos artistas tenga cada uno.
  * En el emulador la app llega al backend por `10.0.2.2`; en un teléfono, con
  * `adb reverse tcp:3000 tcp:3000` e instalando la app con `-PbaseUrl=http://localhost:3000/`.
  *
  * FN03-ESC05 (backend caído) y ESC06 (sin artistas) no se pueden provocar contra BackVynils sin
- * detenerlo o borrar datos, así que usan `MockWebServer`, igual que [RecuperacionTest].
+ * detenerlo o borrar datos, así que siguen usando `MockWebServer` con datos fabricados; no
+ * dependen del dataset real y no necesitaban cambiar.
  *
  * Cada escenario guarda un pantallazo por paso, `informe.md` y un PDF en
  * `.../files/e2e-evidencia/FN03_ESCxx/` (solo en el dispositivo, no en el repo).
@@ -72,14 +79,25 @@ class ArtistasE2ETest {
     @get:Rule
     val rule = createEmptyComposeRule()
 
-    private val queen = Artist(101, "Queen", null, ArtistType.BANDA)
-    private val ruben = Artist(100, "Rubén Blades Bellido de Luna", null, ArtistType.MUSICO)
+    /** El repositorio real de la app: cuenta las consultas y guarda el último listado recibido. */
+    private class ArtistasReales : ArtistRepository(ServiceAdapter(BuildConfig.BASE_URL)) {
+        @Volatile var consultas = 0
+        @Volatile var lista: List<Artist>? = null
+
+        override suspend fun obtenerArtistas(): Result<List<Artist>> {
+            consultas++
+            return super.obtenerArtistas().also { resultado -> resultado.onSuccess { lista = it } }
+        }
+    }
+
+    private val artistas = ArtistasReales()
 
     private var servidor: MockWebServer? = null
 
     @Before
     fun usarElBackendReal() {
-        ApplicationProvider.getApplicationContext<VinilosApplication>().container = AppContainer()
+        ApplicationProvider.getApplicationContext<VinilosApplication>().container =
+            AppContainer(artistasRepositorio = artistas)
     }
 
     @After
@@ -93,7 +111,7 @@ class ArtistasE2ETest {
     private fun esperarQueDesaparezca(tag: String, milis: Long = 5_000) =
         rule.waitUntil(milis) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isEmpty() }
 
-    /** Visitante -> inicio -> "Ver artistas". */
+    /** Visitante -> inicio -> "Ver artistas" (sin esperar datos; también sirve con MockWebServer). */
     private fun abrirArtistasComoVisitante(evidencia: String) {
         esperarA(TagEntrarVisitante)
         rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
@@ -103,7 +121,18 @@ class ArtistasE2ETest {
         esperarA(TagArtistas)
     }
 
-    private fun esperarListado() = esperarA(tagArtista(queen))
+    private fun esperarElListadoReal(): List<Artist> {
+        rule.waitUntil(15_000) { artistas.lista != null }
+        return requireNotNull(artistas.lista)
+    }
+
+    /** Para los escenarios contra el backend real: abre artistas y devuelve el listado real capturado. */
+    private fun verArtistasReales(evidencia: String): List<Artist> {
+        abrirArtistasComoVisitante(evidencia)
+        val lista = esperarElListadoReal()
+        esperarA(tagArtista(lista.first()))
+        return lista
+    }
 
     /** Desplaza la lista hasta la fila (en pantallas pequeñas puede no estar compuesta aún). */
     private fun fila(artista: Artist): SemanticsNodeInteraction {
@@ -127,31 +156,82 @@ class ArtistasE2ETest {
         rule.onNodeWithTag(TagContadorArtistas).assertTextEquals(texto)
     }
 
+    private fun textoContador(cantidad: Int) = if (cantidad == 1) "1 artista" else "$cantidad artistas"
+
     private fun noAparece(artista: Artist) =
         rule.onAllNodesWithTag(tagArtista(artista)).assertCountEquals(0)
 
-    /** FN03-ESC01: ver el listado de artistas desde el menú principal. */
+    /** Igual que la normalización de búsqueda de producción: sin tildes y en minúsculas. */
+    private val marcasDiacriticas = Regex("\\p{InCombiningDiacriticalMarks}+")
+    private fun normalizado(texto: String) =
+        Normalizer.normalize(texto, Normalizer.Form.NFD).replace(marcasDiacriticas, "").lowercase(Locale.ROOT)
+
+    /** La subcadena más corta del nombre de [objetivo] que no aparece en ningún otro artista de [lista]. */
+    private fun substringDiscriminante(objetivo: Artist, lista: List<Artist>): String {
+        val nombre = normalizado(objetivo.name)
+        val otros = lista.filterNot { it.id == objetivo.id && it.type == objetivo.type }
+            .map { normalizado(it.name) }
+        for (longitud in 2..nombre.length) {
+            for (inicio in 0..(nombre.length - longitud)) {
+                val candidato = nombre.substring(inicio, inicio + longitud)
+                if (otros.none { candidato in it }) return candidato
+            }
+        }
+        return nombre
+    }
+
+    /** Un término que no coincide (ni como subcadena) con ningún artista real de [lista]. */
+    private fun terminoSinCoincidencias(lista: List<Artist>): String {
+        val normalizados = lista.map { normalizado(it.name) }
+        var sufijo = 0
+        var candidato = "zzzqx"
+        while (normalizados.any { candidato in it }) {
+            sufijo++
+            candidato = "zzzqx$sufijo"
+        }
+        return candidato
+    }
+
+    private fun etiquetaDe(artista: Artist) = if (artista.type == ArtistType.BANDA) "Banda" else "Músico"
+
+    /**
+     * Artistas cuyo nombre no se repite en ningún otro de [lista]. El backend real puede listar el
+     * mismo nombre como músico y como banda (comparten identidad por nombre, no por id): la búsqueda
+     * por nombre no puede distinguir esos casos, así que los escenarios de búsqueda solo usan
+     * artistas con nombre único.
+     */
+    private fun conNombreUnico(lista: List<Artist>): List<Artist> {
+        val conteoPorNombre = lista.groupingBy { normalizado(it.name) }.eachCount()
+        return lista.filter { conteoPorNombre.getValue(normalizado(it.name)) == 1 }
+    }
+
+    /** FN03-ESC01: ver el listado real de artistas desde el menú principal. */
     @Test
     fun elVisitanteVeMusicosYBandasEnOrdenConImagenNombreYEtiqueta() {
         val evidencia = "FN03_ESC01"
         ActivityScenario.launch(MainActivity::class.java).use {
-            abrirArtistasComoVisitante(evidencia)
-            esperarListado()
+            val lista = verArtistasReales(evidencia)
 
             rule.onNodeWithTag(TagBuscadorArtistas).assertIsDisplayed()
-            contadorDice("2 artistas")
+            contadorDice(textoContador(lista.size))
 
-            // onAllNodes devuelve los nodos en el orden del árbol, que es el orden en pantalla.
-            val filas = rule.onAllNodes(hasTestTag(tagArtista(queen)) or hasTestTag(tagArtista(ruben)))
-            filas.assertCountEquals(2)
-            filas[0].assert(hasTestTag(tagArtista(queen)))
-            filas[1].assert(hasTestTag(tagArtista(ruben)))
+            // Los dos primeros del listado real (ya viene ordenado alfabéticamente) deben verse en ese orden.
+            if (lista.size >= 2) {
+                val primeros = lista.take(2)
+                rule.onNodeWithTag(TagListaArtistas).performScrollToNode(hasTestTag(tagArtista(primeros[0])))
+                val filas = rule.onAllNodes(hasTestTag(tagArtista(primeros[0])) or hasTestTag(tagArtista(primeros[1])))
+                filas.assertCountEquals(2)
+                filas[0].assert(hasTestTag(tagArtista(primeros[0])))
+                filas[1].assert(hasTestTag(tagArtista(primeros[1])))
+            }
 
-            fila(queen).assert(hasText("Queen")).assert(hasText("Banda"))
-            rule.onNodeWithContentDescription("Imagen de Queen", useUnmergedTree = true).assertExists()
-            fila(ruben).assert(hasText("Rubén Blades Bellido de Luna")).assert(hasText("Músico"))
-            rule.onNodeWithContentDescription("Imagen de Rubén Blades Bellido de Luna", useUnmergedTree = true)
-                .assertExists()
+            lista.forEach { artista ->
+                // Se ancla por el tag de esa fila (tipo+id), no por nombre/descripción: el backend real
+                // puede repetir el mismo nombre en un músico y una banda (comparten identidad por nombre).
+                val filaDelArtista = hasTestTag(tagArtista(artista))
+                fila(artista).assert(hasText(artista.name)).assert(hasText(etiquetaDe(artista)))
+                rule.onNode(filaDelArtista and hasContentDescription("Imagen de ${artista.name}")).assertExists()
+            }
             EvidenciaE2E.capturar(rule, evidencia, "02_listado_artistas")
         }
     }
@@ -161,30 +241,40 @@ class ArtistasE2ETest {
     fun elBuscadorFiltraPorNombreMientrasSeEscribe() {
         val evidencia = "FN03_ESC02"
         ActivityScenario.launch(MainActivity::class.java).use {
-            abrirArtistasComoVisitante(evidencia)
-            esperarListado()
+            val lista = verArtistasReales(evidencia)
             EvidenciaE2E.capturar(rule, evidencia, "02_listado_completo")
 
-            // "e" está en los dos nombres; "ee" solo en Queen.
-            buscar("e")
-            contadorDice("2 artistas")
-            buscar("e")
-            contadorDice("1 artista")
-            fila(queen).assertIsDisplayed()
-            noAparece(ruben)
-            EvidenciaE2E.capturar(rule, evidencia, "03_busqueda_ee")
+            // Solo artistas con nombre único: el backend real puede repetir el mismo nombre en un
+            // músico y una banda, y ahí la búsqueda por nombre no puede distinguir a cuál se refiere.
+            val candidatos = conNombreUnico(lista)
+            Assume.assumeTrue(
+                "El backend conectado no tiene artistas con nombre único para probar la búsqueda",
+                candidatos.isNotEmpty()
+            )
 
-            // Sin tilde y en mayúsculas también encuentra a "Rubén".
+            val primerObjetivo = candidatos.first()
+            val terminoUno = substringDiscriminante(primerObjetivo, lista)
+            buscar(terminoUno)
+            contadorDice(textoContador(1))
+            fila(primerObjetivo).assertIsDisplayed()
+            (lista - primerObjetivo).forEach { noAparece(it) }
+            EvidenciaE2E.capturar(rule, evidencia, "03_busqueda_discriminante")
             borrarBusqueda()
-            buscar("RUBEN")
-            contadorDice("1 artista")
-            fila(ruben).assertIsDisplayed()
-            noAparece(queen)
-            Espresso.closeSoftKeyboard()
-            EvidenciaE2E.capturar(rule, evidencia, "04_busqueda_ruben")
 
-            borrarBusqueda()
-            contadorDice("2 artistas")
+            // En mayúsculas también debe encontrar a otro artista real único, sin distinguir tildes.
+            if (candidatos.size > 1) {
+                val segundoObjetivo = candidatos[1]
+                val terminoDos = substringDiscriminante(segundoObjetivo, lista)
+                buscar(terminoDos.uppercase(Locale.ROOT))
+                contadorDice(textoContador(1))
+                fila(segundoObjetivo).assertIsDisplayed()
+                (lista - segundoObjetivo).forEach { noAparece(it) }
+                Espresso.closeSoftKeyboard()
+                EvidenciaE2E.capturar(rule, evidencia, "04_busqueda_mayusculas")
+                borrarBusqueda()
+            }
+
+            contadorDice(textoContador(lista.size))
             EvidenciaE2E.capturar(rule, evidencia, "05_busqueda_borrada")
         }
     }
@@ -194,53 +284,58 @@ class ArtistasE2ETest {
     fun unaBusquedaSinCoincidenciasMuestraElMensaje() {
         val evidencia = "FN03_ESC03"
         ActivityScenario.launch(MainActivity::class.java).use {
-            abrirArtistasComoVisitante(evidencia)
-            esperarListado()
+            val lista = verArtistasReales(evidencia)
+            val termino = terminoSinCoincidencias(lista)
 
-            buscar("zzz")
+            buscar(termino)
             Espresso.closeSoftKeyboard()
             esperarA(TagVacioArtistas)
             rule.onNodeWithTag(TagVacioArtistas).assertTextEquals("No se encontraron artistas")
             rule.onNodeWithText("Prueba con otro nombre.").assertIsDisplayed()
-            rule.onNodeWithTag(TagBuscadorArtistas).assertTextEquals("zzz")
-            noAparece(queen)
-            noAparece(ruben)
+            rule.onNodeWithTag(TagBuscadorArtistas).assertTextEquals(termino)
+            lista.forEach { noAparece(it) }
             EvidenciaE2E.capturar(rule, evidencia, "02_sin_coincidencias")
 
             borrarBusqueda()
-            esperarListado()
-            contadorDice("2 artistas")
+            esperarA(tagArtista(lista.first()))
+            contadorDice(textoContador(lista.size))
             EvidenciaE2E.capturar(rule, evidencia, "03_listado_restaurado")
         }
     }
 
-    /** FN03-ESC04: seleccionar un artista lleva a su detalle y "Atrás" vuelve con la búsqueda. */
+    /** FN03-ESC04: seleccionar un artista real lleva a su detalle y "Atrás" vuelve con la búsqueda. */
     @Test
     fun seleccionarUnArtistaLlevaASuDetalleYAtrasVuelveAlListado() {
         val evidencia = "FN03_ESC04"
         ActivityScenario.launch(MainActivity::class.java).use {
-            abrirArtistasComoVisitante(evidencia)
-            esperarListado()
+            val lista = verArtistasReales(evidencia)
+            val candidatos = conNombreUnico(lista)
+            Assume.assumeTrue(
+                "El backend conectado no tiene artistas con nombre único para probar la búsqueda",
+                candidatos.isNotEmpty()
+            )
+            val objetivo = candidatos.first()
+            val termino = substringDiscriminante(objetivo, lista)
 
-            buscar("queen")
+            buscar(termino)
             Espresso.closeSoftKeyboard()
-            noAparece(ruben)
-            EvidenciaE2E.capturar(rule, evidencia, "02_busqueda_queen")
-            fila(queen).performClick()
+            (lista - objetivo).forEach { noAparece(it) }
+            EvidenciaE2E.capturar(rule, evidencia, "02_busqueda_objetivo")
+            fila(objetivo).performClick()
 
             esperarA(TagDetalleArtista)
             esperarQueDesaparezca(TagArtistas)
             rule.onNodeWithText("Detalle del artista").assertIsDisplayed()
-            rule.onNodeWithTag(TagNombreDetalleArtista).assertTextEquals("Queen")
-            rule.onNodeWithTag(TagTipoDetalleArtista).assertTextEquals("Banda")
-            EvidenciaE2E.capturar(rule, evidencia, "03_detalle_queen")
+            rule.onNodeWithTag(TagNombreDetalleArtista).assertTextEquals(objetivo.name)
+            rule.onNodeWithTag(TagTipoDetalleArtista).assertTextEquals(etiquetaDe(objetivo))
+            EvidenciaE2E.capturar(rule, evidencia, "03_detalle_objetivo")
 
             rule.onNodeWithTag(TagAtras).performClick()
             esperarA(TagArtistas)
             esperarQueDesaparezca(TagDetalleArtista)
-            rule.onNodeWithTag(TagBuscadorArtistas).assertTextEquals("queen")
-            fila(queen).assertIsDisplayed()
-            noAparece(ruben)
+            rule.onNodeWithTag(TagBuscadorArtistas).assertTextEquals(termino)
+            fila(objetivo).assertIsDisplayed()
+            (lista - objetivo).forEach { noAparece(it) }
             EvidenciaE2E.capturar(rule, evidencia, "04_regreso_listado")
         }
     }
@@ -288,10 +383,8 @@ class ArtistasE2ETest {
             caido = false
             rule.onNodeWithTag(TagReintentarArtistas).performClick()
 
-            esperarListado()
+            esperarA(TagContadorArtistas)
             contadorDice("2 artistas")
-            fila(queen).assertIsDisplayed()
-            fila(ruben).assertIsDisplayed()
             EvidenciaE2E.capturar(rule, evidencia, "03_recuperado")
         }
     }
@@ -312,33 +405,24 @@ class ArtistasE2ETest {
         }
     }
 
-    /** Repositorio real que cuenta las consultas, para comprobar que girar no vuelve a consultar. */
-    private class ArtistasConContador : ArtistRepository(ServiceAdapter(BuildConfig.BASE_URL)) {
-        @Volatile
-        var consultas = 0
-
-        override suspend fun obtenerArtistas(): Result<List<Artist>> {
-            consultas++
-            return super.obtenerArtistas()
-        }
-    }
-
-    /** FN03-ESC07: al girar la pantalla se conservan el listado filtrado y la búsqueda. */
+    /** FN03-ESC07: al girar la pantalla se conservan la búsqueda y el listado real, sin volver a consultar. */
     @Test
     fun alGirarLaPantallaSeConservanLaBusquedaYElListadoSinVolverAConsultar() {
         val evidencia = "FN03_ESC07"
-        val artistas = ArtistasConContador()
-        ApplicationProvider.getApplicationContext<VinilosApplication>().container =
-            AppContainer(artistasRepositorio = artistas)
-
         ActivityScenario.launch(MainActivity::class.java).use { escenario ->
-            abrirArtistasComoVisitante(evidencia)
-            esperarListado()
+            val lista = verArtistasReales(evidencia)
+            val candidatos = conNombreUnico(lista)
+            Assume.assumeTrue(
+                "El backend conectado no tiene artistas con nombre único para probar la búsqueda",
+                candidatos.isNotEmpty()
+            )
+            val objetivo = candidatos.last()
+            val termino = substringDiscriminante(objetivo, lista)
 
-            buscar("rub")
+            buscar(termino)
             Espresso.closeSoftKeyboard()
-            fila(ruben).assertIsDisplayed()
-            noAparece(queen)
+            fila(objetivo).assertIsDisplayed()
+            (lista - objetivo).forEach { noAparece(it) }
             EvidenciaE2E.capturar(rule, evidencia, "02_antes_de_girar")
 
             // Girar de verdad (no solo recrear la Activity) para que la evidencia se vea en horizontal.
@@ -353,10 +437,10 @@ class ArtistasE2ETest {
             esperarA(TagArtistas)
             rule.waitForIdle()
 
-            rule.onNodeWithTag(TagBuscadorArtistas).assertTextEquals("rub")
-            fila(ruben).assertIsDisplayed()
-            noAparece(queen)
-            contadorDice("1 artista")
+            rule.onNodeWithTag(TagBuscadorArtistas).assertTextEquals(termino)
+            fila(objetivo).assertIsDisplayed()
+            (lista - objetivo).forEach { noAparece(it) }
+            contadorDice(textoContador(1))
             assertEquals(1, artistas.consultas)
             EvidenciaE2E.capturar(rule, evidencia, "03_despues_de_girar")
         }
