@@ -88,7 +88,23 @@ Abre la raíz del repositorio en Android Studio y deja que sincronice Gradle. Si
 
 ### 2. Levantar el backend
 
-En la carpeta del repositorio de [BackVynils](https://github.com/TheSoftwareDesignLab/BackVynils):
+Hay dos formas de tener un backend disponible: el desplegado por los tutores (sin instalar nada) o uno local con Docker.
+
+#### Opción A: backend desplegado por los tutores (preferida)
+
+El APK debe apuntar por defecto a `https://backvynils-q6yc.onrender.com/`: no requiere Docker ni `adb reverse`, y funciona igual en emulador y en teléfono.
+
+> ⚠️ **Al momento de escribir esto, este backend está caído** (plan gratuito, confirmado por los tutores el 31/10). Mientras se restablece, compila con la opción B. Verifica su estado antes de compilar:
+>
+> ```bash
+> curl https://backvynils-q6yc.onrender.com/collectors
+> ```
+>
+> Si responde con datos (no vacío ni error), ya puedes usarlo; si no, usa la opción B.
+
+#### Opción B: backend local con Docker
+
+Abre **Docker Desktop** primero y espera a que el ícono de la ballena esté activo (sin eso, `docker compose` falla con un error de conexión al daemon). Luego, en la carpeta del repositorio de [BackVynils](https://github.com/TheSoftwareDesignLab/BackVynils):
 
 ```bash
 docker compose up -d --build
@@ -118,17 +134,22 @@ La URL base sale de la propiedad de Gradle `baseUrl` (por defecto `http://10.0.2
 
 | Dónde corres la app | Qué hacer |
 |---|---|
-| Emulador | Nada: `10.0.2.2` es el `localhost` del computador visto desde el emulador |
-| Dispositivo físico | Ejecuta `adb reverse tcp:3000 tcp:3000` (repítelo si se reconecta) y compila con `-PbaseUrl=http://localhost:3000/`, o guárdala como `baseUrl=http://localhost:3000/` en el `gradle.properties` de tu usuario (`~/.gradle/`) |
+| Emulador o dispositivo físico, con el backend desplegado (opción A, preferida) | Compila con `-PbaseUrl=https://backvynils-q6yc.onrender.com/`; no necesita `adb reverse` ni Docker |
+| Emulador, con backend local (opción B) | Nada: `10.0.2.2` es el `localhost` del computador visto desde el emulador |
+| Dispositivo físico, con backend local (opción B) | Ejecuta `adb reverse tcp:3000 tcp:3000` (repítelo si se reconecta) y compila con `-PbaseUrl=http://localhost:3000/`, o guárdala como `baseUrl=http://localhost:3000/` en el `gradle.properties` de tu usuario (`~/.gradle/`) |
 
 El HTTP sin cifrar solo está permitido hacia `localhost` y `10.0.2.2` (`app/src/main/res/xml/network_security_config.xml`).
 
 ### 4. Compilar e instalar
 
+El APK debe generarse apuntando al backend desplegado por los tutores (ver opción A); mientras esté caído, usa el local (opción B) con `http://localhost:3000/`.
+
 ```bash
-./gradlew assembleDebug                                     # APK en app/build/outputs/apk/debug/
-./gradlew installDebug -PbaseUrl=http://localhost:3000/     # instala en el dispositivo conectado
+./gradlew assembleDebug -PbaseUrl=https://backvynils-q6yc.onrender.com/     # APK en app/build/outputs/apk/debug/
+./gradlew installDebug -PbaseUrl=https://backvynils-q6yc.onrender.com/      # instala en el dispositivo conectado
 ```
+
+Si el backend desplegado está caído, reemplaza la URL por `http://localhost:3000/` (con `adb reverse tcp:3000 tcp:3000` en dispositivo físico, nada en emulador).
 
 Si hay más de un dispositivo conectado, elige uno con la variable de entorno `ANDROID_SERIAL=<serial>`.
 
