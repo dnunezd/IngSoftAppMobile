@@ -94,13 +94,13 @@ Hay dos formas de tener un backend disponible: el desplegado por los tutores (si
 
 **Desde esta versión, este es el valor por defecto del proyecto** (`app/build.gradle.kts`): compilar o instalar sin pasar `-PbaseUrl` apunta a `https://backvynils-q6yc.onrender.com/`. No requiere Docker ni `adb reverse`, y funciona igual en emulador y en teléfono.
 
-> ⚠️ **Al momento de escribir esto, este backend está caído** (plan gratuito, confirmado por los tutores el 31/10). Mientras se restablece, compila con la opción B. Verifica su estado antes de compilar:
+> 💡 Al estar en un plan gratuito, puede que esté disponible o puede que esté dormido/caído en un momento dado. Antes de compilar, date una vuelta y verifica si está despierto:
 >
 > ```bash
 > curl https://backvynils-q6yc.onrender.com/collectors
 > ```
 >
-> Si responde con datos (no vacío ni error), ya puedes usarlo; si no, usa la opción B.
+> Si responde con datos (no vacío ni error), ya puedes usarlo; si no responde o da error, usa la opción B mientras se restablece.
 
 #### Opción B: backend local con Docker
 
