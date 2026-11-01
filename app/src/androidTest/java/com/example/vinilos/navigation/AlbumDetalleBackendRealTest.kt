@@ -18,14 +18,22 @@ import com.example.vinilos.data.model.Collector
 import com.example.vinilos.e2e.EvidenciaE2E
 import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.SessionViewModel
+import kotlinx.coroutines.runBlocking
+import org.junit.Assume.assumeTrue
 import org.junit.Rule
 import org.junit.Test
 
 /**
  * E2E de la HU02 (detalle del álbum) contra el backend real BackVynils, para dos casos que se
  * prueban mejor navegando directo a la ruta por id (un id inexistente no aparece en el catálogo):
- *  - un álbum sin canciones ni comentarios (id 101, "Poeta del pueblo" en `sql/data.sql`), y
+ *  - un álbum sin canciones ni comentarios, y
  *  - un álbum inexistente (404 real del backend).
+ *
+ * El primer caso no asume un id ni un nombre fijo (como el álbum 101/"Poeta del pueblo" de
+ * `sql/data.sql`): consulta el catálogo real y busca, entre los primeros álbumes, uno cuyo
+ * detalle real no tenga canciones ni comentarios. Si el backend actual no tiene ningún álbum así
+ * (por ejemplo, el desplegado por los tutores), la prueba se omite en vez de fallar, porque el
+ * escenario que busca cubrir (mensajes de vacío) no se puede ejercitar con esos datos.
  *
  * Por eso se arma el mismo `VinilosNavHost` de la app (con el [AlbumRepository][com.example.vinilos.data.repository.AlbumRepository]
  * real de [AppContainer]) y se navega directo a la ruta del detalle por id, igual que hace el
@@ -46,8 +54,9 @@ class AlbumDetalleBackendRealTest {
 
     private lateinit var nav: TestNavHostController
 
+    private val contenedor = AppContainer()
+
     private fun mostrarDesde(ruta: String) {
-        val contenedor = AppContainer()
         rule.setContent {
             val contexto = LocalContext.current
             nav = remember {
@@ -69,20 +78,36 @@ class AlbumDetalleBackendRealTest {
 
     @Test
     fun unAlbumSinCancionesNiComentariosMuestraLosMensajesDeVacioConDatosReales() {
-        mostrarDesde(Rutas.detalleAlbum(101))
+        // Busca, entre los primeros 30 álbumes del catálogo real, uno sin canciones ni
+        // comentarios. No se asume cuál id cumple esa condición: depende del backend conectado.
+        val vacio = runBlocking {
+            val catalogo = contenedor.albumRepository.obtenerAlbumes().getOrThrow()
+            catalogo.asSequence().take(30).firstNotNullOfOrNull { resumen ->
+                contenedor.albumRepository.obtenerAlbum(resumen.id).getOrNull()
+                    ?.takeIf { it.canciones.isEmpty() && it.comentarios.isEmpty() }
+            }
+        }
+        assumeTrue(
+            "El backend conectado no tiene ningún álbum sin canciones ni comentarios " +
+                "entre los primeros 30 del catálogo",
+            vacio != null
+        )
+        requireNotNull(vacio)
+
+        mostrarDesde(Rutas.detalleAlbum(vacio.id))
 
         rule.waitUntil(15_000) {
-            rule.onAllNodesWithText("Poeta del pueblo").fetchSemanticsNodes().isNotEmpty()
+            rule.onAllNodesWithText(vacio.nombre).fetchSemanticsNodes().isNotEmpty()
         }
 
         // performScrollToNode se usa porque en una lista larga en un dispositivo real los
         // elementos mas abajo (artista, mensajes de vacio) pueden no estar compuestos aun.
         val lista = rule.onNode(hasScrollToNodeAction())
-        rule.onNodeWithText("Poeta del pueblo").assertIsDisplayed()
-        lista.performScrollToNode(hasText("Salsa"))
-        rule.onNodeWithText("Salsa").assertIsDisplayed()
-        lista.performScrollToNode(hasText("Rubén Blades Bellido de Luna"))
-        rule.onNodeWithText("Rubén Blades Bellido de Luna").assertIsDisplayed()
+        rule.onNodeWithText(vacio.nombre).assertIsDisplayed()
+        vacio.artistas.forEach { artista ->
+            lista.performScrollToNode(hasText(artista.nombre))
+            rule.onNodeWithText(artista.nombre).assertIsDisplayed()
+        }
         lista.performScrollToNode(hasText("Este álbum aún no tiene canciones registradas"))
         rule.onNodeWithText("Este álbum aún no tiene canciones registradas").assertIsDisplayed()
         lista.performScrollToNode(hasText("Aún no hay comentarios para este álbum"))

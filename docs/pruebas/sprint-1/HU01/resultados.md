@@ -15,13 +15,13 @@
 | Pixel 8 API 34 | Emulador | 14 (API 34) | 412×915 dp | — | 121/121 | 0 | 2026-10-30 |
 | Motorola Edge 30 | Físico | 14 (API 34) | 432×960 dp | — | 121/121 | 0 | 2026-10-30 |
 
-Las instrumentadas incluyen las 5 E2E del catálogo contra BackVynils real (en el Motorola, con `adb reverse` y `-PbaseUrl=http://localhost:3000/`). Los perfiles de 360×640 y 320×533 dp se simularon en el Nexus 5X con `adb shell wm size` y `wm density`. La ejecución de las E2E con capturas (`am instrument`, 5/5 y 10 capturas en los tres dispositivos) es del 2026-10-28 y 2026-10-29.
+Las instrumentadas incluyen las 5 E2E del catálogo contra BackVynils real (en el Motorola, con `adb reverse` y `-PbaseUrl=http://localhost:3000/`). Los perfiles de 360×640 y 320×533 dp se simularon en el Nexus 5X con `adb shell wm size` y `wm density`. La ejecución de las E2E con evidencia (`am instrument`, 5/5 en los tres dispositivos, con una carpeta, un informe y un PDF por escenario `FN01-ESC01` a `FN01-ESC05`) es del 2026-10-31.
 
 Lint: 0 errores y 48 avisos, los mismos que antes del cambio.
 
 Verificación manual del flujo (casos M-01) en el Motorola Edge 30 y el Nexus 5X API 23: 8/8 casos aplicables cumplen y 0 cierres en ambos (detalle en [`manual.md`](manual.md)).
 
-OBJ03: el informe [`e2e/informe.md`](e2e/informe.md) corresponde a la ejecución en el dispositivo físico (Motorola Edge 30 con `adb reverse` contra BackVynils). Por acuerdo del equipo, las 10 capturas (8,7 MB) no se suben al repositorio: se conservan en el equipo donde se ejecutaron, junto con las de la verificación manual, y se pueden regenerar con los comandos de abajo. En el informe, "Ok" significa que la captura se guardó; el resultado de las pruebas es `OK (5 tests)` de `am instrument`.
+OBJ03: el informe [`e2e/informe.md`](e2e/informe.md) resume la ejecución en los tres dispositivos y detalla los pasos en el físico (Motorola Edge 30 con `adb reverse` contra BackVynils). Cada escenario deja en el dispositivo su carpeta `e2e-evidencia/FN01_ESCxx/` con sus capturas (16 en total, empezando en el inicio), su `informe.md` y su `FN01_ESCxx.pdf`. Por acuerdo del equipo, las capturas y los PDF no se suben al repositorio: se conservan en el equipo donde se ejecutaron, junto con las de la verificación manual, y se pueden regenerar con los comandos de abajo. En el informe, "Ok" significa que la captura se guardó; el resultado de las pruebas es `OK (5 tests)` de `am instrument`.
 
 ## Comandos
 
@@ -37,7 +37,8 @@ adb logcat -b crash -c
 .\gradlew.bat connectedDebugAndroidTest
 adb logcat -b crash -d | Select-String "FATAL EXCEPTION"
 
-# E2E del catálogo conservando la evidencia (connectedDebugAndroidTest desinstala la app y la borra)
+# E2E del catálogo conservando la evidencia (connectedDebugAndroidTest desinstala la app y la borra).
+# Deja una carpeta FN01_ESC01 ... FN01_ESC05 por escenario, cada una con sus capturas, informe.md y PDF.
 .\gradlew.bat installDebug installDebugAndroidTest
 adb shell rm -rf /sdcard/Android/data/com.example.vinilos/files/e2e-evidencia
 adb shell am instrument -w -e class com.example.vinilos.CatalogoE2ETest com.example.vinilos.test/androidx.test.runner.AndroidJUnitRunner

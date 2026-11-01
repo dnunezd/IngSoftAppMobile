@@ -42,7 +42,7 @@ OBJ05 (reporte de resultados y gestión de defectos como issues) no se aplica po
 - **Estado** (`viewmodel`): nuevo `AlbumsViewModel` con `AlbumsUiState` (`Cargando`, `Exito`, `Vacio`, `Error`), `reintentar()` y `actualizar()`.
 - **Interfaz** (`ui.catalogo`): nueva `PantallaCatalogo`; textos en `strings.xml`; vectores `ic_cat_*` copiados de Material Symbols (Apache 2.0). Reutiliza la portada con respaldo de la HU02 (Coil, `inicio_albumes`).
 - **Navegación e inyección** (`navigation`, `AppContainer`, `MainActivity`): el destino `catalogo` usa la pantalla real y navega a `album/{id}`.
-- **Pruebas**: unitarias (repositorio con MockWebServer, ViewModel, orden), instrumentadas con repositorio falso (estados, lista larga, actualización, rotación, navegación) y E2E `CatalogoE2ETest` contra BackVynils (E2E-01-01 a 01-04).
+- **Pruebas**: unitarias (repositorio con MockWebServer, ViewModel, orden), instrumentadas con repositorio falso (estados, lista larga, actualización, rotación, navegación) y E2E `CatalogoE2ETest` contra BackVynils (FN01-ESC01 a ESC05, equivalentes a E2E-01-01 a 01-05 de la wiki).
 - **Resultados y evidencia** (`docs/pruebas/sprint-1/HU01/`, nuevo): matriz de trazabilidad, resultados por entorno, verificación manual e informe E2E. Se versiona en el repositorio, a diferencia de `e2e-evidencia/`, que está en `.gitignore`; las capturas E2E y manuales se conservan en el equipo de ejecución.
 - **Dependencias**: ninguna nueva. "Deslizar para actualizar" usa la API experimental de Material 3 1.2.1, que ya está en el proyecto.
 - **Coordinación**: el cambio de `AppContainer` coincide con lo comentado en el PR #71 (HU02), y la navegación catálogo → detalle cubre parte del issue #17 (T02-4, Lorena Nossa).

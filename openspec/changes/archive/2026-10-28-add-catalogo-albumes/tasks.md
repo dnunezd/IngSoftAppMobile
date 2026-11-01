@@ -39,8 +39,9 @@ Reglas para todos los grupos:
 ## 6. Pruebas E2E contra BackVynils (T01-5, #13)
 
 - [x] 6.1 Aplicar en `EvidenciaE2E` la captura compatible con API < 26 (`UiAutomation.takeScreenshot()` y `catch (e: Throwable)`) si no llegó antes desde la HU02, y esperar a que la portada termine de cargar antes de capturar. Verificar: genera capturas en API 23 y en API 34.
-- [x] 6.2 Implementar `CatalogoE2ETest` con E2E-01-01, 01-02, 01-04 y 01-05 contra BackVynils real y E2E-01-03 con MockWebServer (D8), con capturas de `EvidenciaE2E`. Verificar: pasan en el Motorola Edge 30 (`adb reverse tcp:3000 tcp:3000`, `-PbaseUrl=http://localhost:3000/`).
+- [x] 6.2 Implementar `CatalogoE2ETest` con FN01-ESC01, ESC02, ESC04 y ESC05 contra BackVynils real y FN01-ESC03 con MockWebServer (D8), con capturas de `EvidenciaE2E`. Verificar: pasan en el Motorola Edge 30 (`adb reverse tcp:3000 tcp:3000`, `-PbaseUrl=http://localhost:3000/`).
 - [x] 6.3 Ejecutar las E2E en el Motorola Edge 30 con `am instrument`, descargar la evidencia con `adb pull` y copiar el `informe.md` a `docs/pruebas/sprint-1/HU01/e2e/` (las capturas se conservan en el equipo de ejecución, no en el repositorio). Verificar: hay una captura por escenario y el informe indica 5/5 superadas (OBJ03: 4 contra el backend real en dispositivo físico).
+- [x] 6.4 (2026-10-31, después del archivo, rama `feature/HU01-evidencia-e2e`.) Alinear la evidencia con la de la HU00, la HU02 y la HU03: IDs `FN01-ESC01` a `ESC05` (equivalen a `E2E-01-01` a `01-05` de la wiki), una carpeta `e2e-evidencia/FN01_ESCxx/` por escenario con sus capturas, su `informe.md` y su PDF, y una primera captura en el inicio; regenerar `docs/pruebas/sprint-1/HU01/e2e/informe.md`. Verificar: `OK (5 tests)` en el Motorola Edge 30, el Nexus 5X API 23 y el Pixel 8 API 34, con 5 carpetas, 16 capturas en "Ok" y 5 PDF en cada uno.
 
 ## 7. Compatibilidad y resultados por entorno (OBJ04)
 
@@ -49,7 +50,7 @@ Reglas para todos los grupos:
 ## 8. Documentación (T01-6, #14)
 
 - [ ] 8.1 (En espera: no modificar la wiki hasta que el usuario lo indique.) Preparar para la wiki de la HU01: criterio 1 con el flujo Ingreso → (selector) → Inicio → "Ver álbumes" → Catálogo; textos de la HU frente a los del mockup; elementos del mockup fuera de alcance; orden alfabético frente al orden del mockup; enlace a `docs/pruebas/sprint-1/HU01/`. Verificar: borrador revisado por el usuario antes de publicarlo.
-- [ ] 8.2 (En espera: no modificar la wiki hasta que el usuario lo indique.) Preparar la actualización de los casos manuales M-01 (M-01-02, 03, 04, 05 y 06 remiten a las pruebas automáticas; M-01-08 indica que el Coleccionista ve lo mismo) y del inventario de pruebas de `Sprint-1.md` (E2E-01-05 nueva; E2E-01-03 con MockWebServer). Verificar: borrador revisado por el usuario antes de publicarlo.
+- [ ] 8.2 (En espera: no modificar la wiki hasta que el usuario lo indique.) Preparar la actualización de los casos manuales M-01 (M-01-02, 03, 04, 05 y 06 remiten a las pruebas automáticas; M-01-08 indica que el Coleccionista ve lo mismo) y del inventario de pruebas de `Sprint-1.md` (E2E-01-05 nueva; E2E-01-03 con MockWebServer; equivalencia con `FN01-ESC01` a `ESC05`). Verificar: borrador revisado por el usuario antes de publicarlo.
 - [x] 8.3 Actualizar `README.md` y `CLAUDE.md` donde dicen que el catálogo es provisional, y mencionar `docs/pruebas/`. Verificar: `grep -i provisional` no devuelve referencias al catálogo.
 
 ## Workflow follow-up
