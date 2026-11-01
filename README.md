@@ -158,13 +158,67 @@ Si hay más de un dispositivo conectado, elige uno con la variable de entorno `A
 | Tipo | Comando | Cantidad | Necesita |
 |---|---|---|---|
 | Lint y unitarias (lo que corre la CI) | `./gradlew lint testDebugUnitTest --continue` | 49 unitarias | Nada |
-| Instrumentadas sin E2E | `./gradlew connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.notClass=com.example.vinilos.IngresoE2ETest"` | 49 | Dispositivo |
-| Todas las instrumentadas (con E2E) | `./gradlew connectedDebugAndroidTest -PbaseUrl=http://localhost:3000/` | 53 | Dispositivo, backend con datos y `adb reverse` |
+| Instrumentadas sin E2E | `./gradlew connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.notClass=com.example.vinilos.IngresoE2ETest,com.example.vinilos.CatalogoE2ETest,com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest,com.example.vinilos.ArtistasE2ETest"` | 49 | Dispositivo |
+| Todas las instrumentadas (con E2E) | `./gradlew connectedDebugAndroidTest -PbaseUrl=http://localhost:3000/` | 68 (49 + 19 E2E) | Dispositivo, backend con datos y `adb reverse` |
 
 - El dispositivo debe estar **desbloqueado y con la pantalla encendida** durante toda la corrida; si no, las pruebas fallan con `No compose hierarchies found in the app`.
 - Para las E2E pasa `-PbaseUrl` también a `connectedDebugAndroidTest` apuntando a tu backend local (opción B): la URL queda fija en la APK de prueba y, como el default del proyecto ahora es el backend desplegado (que puede estar caído), **las E2E necesitan este flag explícito para no depender de él**.
 - Para una sola clase: `"-Pandroid.testInstrumentationRunnerArguments.class=com.example.vinilos.RecuperacionTest"` (instrumentadas) o `--tests "com.example.vinilos.viewmodel.CollectorsViewModelTest"` (unitarias).
 - Los reportes quedan en `app/build/reports/` (`tests/`, `androidTests/` y `lint-results-debug.html`). Referencia del lint: 0 errores y 48 avisos esperados.
+
+### E2E completas y su evidencia (PDF)
+
+Las clases E2E (las que llaman a `EvidenciaE2E.capturar(...)`) corren contra el **backend real** (BackVynils, local o el desplegado por los tutores) y generan, en el dispositivo, una carpeta con capturas y un informe en PDF por cada valor de `carpetaEvidencia`/`evidencia` usado, en `.../files/e2e-evidencia/<carpeta>/`. No se versionan en el repositorio (`.gitignore` las excluye con el sufijo `e2e-evidencia*`); mientras el equipo no defina un estándar único, algunos informes se han versionado también a mano en `docs/pruebas/sprint-1/<HU>/e2e/` (ver por ejemplo `docs/pruebas/sprint-1/HU01/e2e/informe.md`).
+
+| Clase | Historia | Carpeta(s) de evidencia | Escenarios |
+|---|---|---|---|
+| `IngresoE2ETest` | HU00 | `FN00_ESC01`..`FN00_ESC03` (una por escenario) | 3 |
+| `CatalogoE2ETest` | HU01 | `FN01_ESC01`..`FN01_ESC05` (una por escenario) | 5 |
+| `AlbumDetalleE2ETest` | HU02 | `FN02_ESC01` | 1 |
+| `AlbumDetalleBackendRealTest` | HU02 | `FN02_ESC02`, `FN02_ESC03` (una por escenario) | 2 |
+| `ArtistasE2ETest` | HU03 | `FN03_ESC01`..`FN03_ESC07` (una por escenario) | 7 |
+
+Total: **19 pruebas E2E**. Por qué una "limpieza" antes de correrlas: `BuildConfig.BASE_URL` queda fijo dentro del APK de prueba al compilar, así que cambiar la `baseUrl` exige **reinstalar** (`installDebug installDebugAndroidTest`), no alcanza con solo volver a ejecutar; y las carpetas de evidencia se acumulan en el dispositivo entre corridas, así que conviene borrarlas antes de cada corrida para no mezclar capturas de ejecuciones distintas en el mismo PDF.
+
+#### Correr todas las E2E de la app y traer su evidencia
+
+Comandos para bash (macOS, Linux o Git Bash); en PowerShell usa `.\gradlew.bat`, pon entre comillas los `-P` con puntos y `Remove-Item -Recurse -Force` en vez de `rm -rf` para la carpeta local.
+
+```bash
+adb devices                                      # confirma el dispositivo/emulador conectado
+export ANDROID_SERIAL="<serial>"                 # solo si hay más de uno
+
+# Compila e instala. El default del proyecto es el backend desplegado por los tutores; para
+# usar un backend local pasa -PbaseUrl explícito (http://10.0.2.2:3000/ en emulador,
+# http://localhost:3000/ en dispositivo físico con "adb reverse" hecho).
+./gradlew installDebug installDebugAndroidTest -PbaseUrl=http://localhost:3000/
+
+# Solo en dispositivo físico por USB, si usas el backend local:
+adb reverse tcp:3000 tcp:3000
+
+# Limpia evidencia previa en el dispositivo (no es necesario un "gradle clean")
+adb shell rm -rf /storage/emulated/0/Android/data/com.example.vinilos/files/e2e-evidencia
+
+# Corre TODAS las clases E2E de la app (las 19 pruebas)
+adb shell am instrument -w -e class com.example.vinilos.IngresoE2ETest,com.example.vinilos.CatalogoE2ETest,com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest,com.example.vinilos.ArtistasE2ETest com.example.vinilos.test/androidx.test.runner.AndroidJUnitRunner
+
+# Trae la evidencia (pisa la carpeta local si ya existía)
+rm -rf ./e2e-evidencia
+adb pull /storage/emulated/0/Android/data/com.example.vinilos/files/e2e-evidencia ./e2e-evidencia
+```
+
+Debe terminar en `OK (19 tests)` (3 + 5 + 1 + 2 + 7 escenarios con evidencia, más un test de navegación en `IngresoE2ETest` sin captura propia). El dispositivo debe permanecer desbloqueado y con la pantalla encendida durante toda la corrida (`adb shell svc power stayon true` ayuda si se duerme).
+
+> ⚠️ `./gradlew connectedDebugAndroidTest` instala, corre y **desinstala** la app al terminar, lo que borra su carpeta de evidencia antes de poder hacer `adb pull`. Usa `installDebug installDebugAndroidTest` + `adb shell am instrument` (como arriba) para dejar la app instalada y poder traer la evidencia después.
+
+#### Correr solo una E2E específica
+
+Reemplaza la lista de `-e class` por una sola clase, por ejemplo para HU02:
+
+```bash
+adb shell am instrument -w -e class com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest com.example.vinilos.test/androidx.test.runner.AndroidJUnitRunner
+adb pull /storage/emulated/0/Android/data/com.example.vinilos/files/e2e-evidencia ./e2e-evidencia
+```
 
 La [integración continua](.github/workflows/ci.yml) corre lint y pruebas unitarias con JDK 17 en cada Pull Request y en cada push a `develop` y `main`, y falla si hay un error de lint o una prueba fallida. Las instrumentadas no corren en CI porque necesitan un dispositivo; se corren a mano antes de integrar. Qué cubre cada nivel de prueba está en la estrategia de pruebas de cada sprint en la [wiki](https://github.com/dnunezd/IngSoftAppMobile/wiki).
 
