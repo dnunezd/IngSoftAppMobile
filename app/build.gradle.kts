@@ -18,9 +18,10 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-        // El emulador ve el localhost del anfitrión (donde corre BackVynils) como 10.0.2.2.
-        // En un dispositivo físico se sobrescribe con -PbaseUrl=http://localhost:3000/ y `adb reverse tcp:3000 tcp:3000`.
-        val baseUrl = (project.findProperty("baseUrl") as String?) ?: "http://10.0.2.2:3000/"
+        // Por defecto apunta al backend desplegado por los tutores (ver README, sección "Levantar el backend").
+        // Para desarrollo/pruebas local con Docker: -PbaseUrl=http://10.0.2.2:3000/ (emulador) o
+        // -PbaseUrl=http://localhost:3000/ junto con `adb reverse tcp:3000 tcp:3000` (dispositivo físico).
+        val baseUrl = (project.findProperty("baseUrl") as String?) ?: "https://backvynils-q6yc.onrender.com/"
         buildConfigField("String", "BASE_URL", "\"$baseUrl\"")
     }
 

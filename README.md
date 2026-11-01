@@ -92,7 +92,7 @@ Hay dos formas de tener un backend disponible: el desplegado por los tutores (si
 
 #### Opción A: backend desplegado por los tutores (preferida)
 
-El APK debe apuntar por defecto a `https://backvynils-q6yc.onrender.com/`: no requiere Docker ni `adb reverse`, y funciona igual en emulador y en teléfono.
+**Desde esta versión, este es el valor por defecto del proyecto** (`app/build.gradle.kts`): compilar o instalar sin pasar `-PbaseUrl` apunta a `https://backvynils-q6yc.onrender.com/`. No requiere Docker ni `adb reverse`, y funciona igual en emulador y en teléfono.
 
 > ⚠️ **Al momento de escribir esto, este backend está caído** (plan gratuito, confirmado por los tutores el 31/10). Mientras se restablece, compila con la opción B. Verifica su estado antes de compilar:
 >
@@ -130,26 +130,26 @@ La respuesta debe incluir a **Manolo Bellon** y **Jaime Monsalve** (ids 100 y 10
 
 ### 3. Conectar la app con el backend
 
-La URL base sale de la propiedad de Gradle `baseUrl` (por defecto `http://10.0.2.2:3000/`).
+La URL base sale de la propiedad de Gradle `baseUrl`. **Por defecto es `https://backvynils-q6yc.onrender.com/`** (el backend desplegado por los tutores); para usar el backend local con Docker hay que pasar `-PbaseUrl` explícitamente.
 
 | Dónde corres la app | Qué hacer |
 |---|---|
-| Emulador o dispositivo físico, con el backend desplegado (opción A, preferida) | Compila con `-PbaseUrl=https://backvynils-q6yc.onrender.com/`; no necesita `adb reverse` ni Docker |
-| Emulador, con backend local (opción B) | Nada: `10.0.2.2` es el `localhost` del computador visto desde el emulador |
+| Emulador o dispositivo físico, con el backend desplegado (opción A, preferida) | **Nada**: es el valor por defecto, no necesita `-PbaseUrl` ni `adb reverse` ni Docker |
+| Emulador, con backend local (opción B) | Compila con `-PbaseUrl=http://10.0.2.2:3000/` (`10.0.2.2` es el `localhost` del computador visto desde el emulador) |
 | Dispositivo físico, con backend local (opción B) | Ejecuta `adb reverse tcp:3000 tcp:3000` (repítelo si se reconecta) y compila con `-PbaseUrl=http://localhost:3000/`, o guárdala como `baseUrl=http://localhost:3000/` en el `gradle.properties` de tu usuario (`~/.gradle/`) |
 
 El HTTP sin cifrar solo está permitido hacia `localhost` y `10.0.2.2` (`app/src/main/res/xml/network_security_config.xml`).
 
 ### 4. Compilar e instalar
 
-El APK debe generarse apuntando al backend desplegado por los tutores (ver opción A); mientras esté caído, usa el local (opción B) con `http://localhost:3000/`.
+El APK ya apunta por defecto al backend desplegado por los tutores (ver opción A); mientras esté caído, genera el APK apuntando al local (opción B) con `-PbaseUrl=http://localhost:3000/` (o `http://10.0.2.2:3000/` en emulador).
 
 ```bash
-./gradlew assembleDebug -PbaseUrl=https://backvynils-q6yc.onrender.com/     # APK en app/build/outputs/apk/debug/
-./gradlew installDebug -PbaseUrl=https://backvynils-q6yc.onrender.com/      # instala en el dispositivo conectado
+./gradlew assembleDebug     # APK en app/build/outputs/apk/debug/, apunta al backend desplegado (default)
+./gradlew installDebug      # instala en el dispositivo conectado, apunta al backend desplegado (default)
 ```
 
-Si el backend desplegado está caído, reemplaza la URL por `http://localhost:3000/` (con `adb reverse tcp:3000 tcp:3000` en dispositivo físico, nada en emulador).
+Si el backend desplegado está caído, agrega `-PbaseUrl=http://localhost:3000/` (con `adb reverse tcp:3000 tcp:3000` en dispositivo físico) o `-PbaseUrl=http://10.0.2.2:3000/` en emulador.
 
 Si hay más de un dispositivo conectado, elige uno con la variable de entorno `ANDROID_SERIAL=<serial>`.
 
@@ -162,7 +162,7 @@ Si hay más de un dispositivo conectado, elige uno con la variable de entorno `A
 | Todas las instrumentadas (con E2E) | `./gradlew connectedDebugAndroidTest -PbaseUrl=http://localhost:3000/` | 53 | Dispositivo, backend con datos y `adb reverse` |
 
 - El dispositivo debe estar **desbloqueado y con la pantalla encendida** durante toda la corrida; si no, las pruebas fallan con `No compose hierarchies found in the app`.
-- Para las E2E pasa `-PbaseUrl` también a `connectedDebugAndroidTest`: la URL queda fija en la APK de prueba.
+- Para las E2E pasa `-PbaseUrl` también a `connectedDebugAndroidTest` apuntando a tu backend local (opción B): la URL queda fija en la APK de prueba y, como el default del proyecto ahora es el backend desplegado (que puede estar caído), **las E2E necesitan este flag explícito para no depender de él**.
 - Para una sola clase: `"-Pandroid.testInstrumentationRunnerArguments.class=com.example.vinilos.RecuperacionTest"` (instrumentadas) o `--tests "com.example.vinilos.viewmodel.CollectorsViewModelTest"` (unitarias).
 - Los reportes quedan en `app/build/reports/` (`tests/`, `androidTests/` y `lint-results-debug.html`). Referencia del lint: 0 errores y 48 avisos esperados.
 
