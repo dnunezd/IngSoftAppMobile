@@ -35,6 +35,14 @@ replay_pid*
 *.dex
 *.class
 
+### Evidencia de pruebas E2E (pantallazos + informe) ###
+# Se genera solo en el dispositivo (.../files/e2e-evidencia/); si se trae al PC con "adb pull",
+# no debe rastrearse: son artefactos locales de una ejecución, no código ni documentación.
+e2e-evidencia/
+**/e2e-evidencia/
+e2e-evidencia-*/
+**/e2e-evidencia-*/
+
 ### Firmas y servicios (secretos) ###
 *.jks
 *.keystore

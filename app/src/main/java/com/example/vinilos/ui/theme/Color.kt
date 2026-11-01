@@ -27,3 +27,7 @@ val AvatarAzulClaro = Color(0xFFB3C5FF)
 val AvatarAzul = Color(0xFF0050CC)
 val AvatarGrisClaro = Color(0xFFC8C6C8)
 val AvatarGris = Color(0xFF5C5B5E)
+
+// Listado de artistas (HU03): etiquetas "Músico" y "Banda" del mockup.
+val EtiquetaBandaFondo = Color(0xFFDDE4FF)
+val EtiquetaBandaTexto = Color(0xFF0050CC)

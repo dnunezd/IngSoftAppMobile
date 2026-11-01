@@ -1,12 +1,16 @@
 package com.example.vinilos.data.repository
 
 import com.example.vinilos.data.model.Collector
+import com.example.vinilos.data.remote.CollectorApi
+import com.example.vinilos.data.remote.CollectorDto
 import com.example.vinilos.data.remote.ErrorDeCarga
 import com.example.vinilos.data.remote.ServiceAdapter
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
 import okhttp3.OkHttpClient
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
+import okhttp3.mockwebserver.SocketPolicy
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -109,5 +113,43 @@ class CollectorRepositoryTest {
         servidor.enqueue(MockResponse().setResponseCode(500))
 
         assertTrue(repositorio.obtenerColeccionistas().exceptionOrNull() is ErrorDeCarga)
+    }
+
+    @Test
+    fun sinConexionSeTraduceAErrorDeCarga() = runTest {
+        servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
+
+        assertTrue(repositorio.obtenerColeccionistas().exceptionOrNull() is ErrorDeCarga)
+    }
+
+    @Test
+    fun tiempoDeEsperaAgotadoSeTraduceAErrorDeCarga() = runTest {
+        servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE))
+
+        assertTrue(repositorio.obtenerColeccionistas().exceptionOrNull() is ErrorDeCarga)
+    }
+
+    @Test
+    fun jsonMalformadoSeTraduceAErrorDeCarga() = runTest {
+        servidor.enqueue(MockResponse().setBody("esto no es json"))
+
+        assertTrue(repositorio.obtenerColeccionistas().exceptionOrNull() is ErrorDeCarga)
+    }
+
+    @Test
+    fun laCancelacionSeRelanzaYNoSeConvierteEnError() = runTest {
+        val api = object : CollectorApi {
+            override suspend fun getCollectors(): List<CollectorDto> = throw CancellationException("cancelado")
+        }
+
+        var relanzada = false
+        try {
+            CollectorRepository(ServiceAdapter(servidor.url("/").toString()), api)
+                .obtenerColeccionistas()
+        } catch (e: CancellationException) {
+            relanzada = true
+        }
+
+        assertTrue(relanzada)
     }
 }
