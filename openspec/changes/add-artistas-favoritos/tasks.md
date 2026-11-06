@@ -21,10 +21,10 @@
 - [ ] 4.2 Mostrar "No se pudo guardar el favorito, intenta de nuevo" con el botón disponible para reintentar; prueba de Compose UI para ese estado. Implementado en el grupo 3 (`errorGuardadoMuestraElMensajeYElBotonDisponibleParaReintentar`) más `errorGuardadoNoMuestraNingunaConfirmacion`, que confirma que el mensaje de confirmación no aparece si el guardado falla; **pendiente de ejecutar en dispositivo/emulador**.
 - [ ] 4.3 Mostrar la confirmación transitoria ("<nombre> se agregó a tus favoritos") que desaparece sola tras unos segundos, sin aparecer si el guardado falla; prueba de Compose UI que confirme la aparición y, con `advanceTimeBy`/`mainClock`, su desaparición automática. Implementado: `LaunchedEffect` con `delay(2500)` en `SeccionFavorito` llama a `onConfirmacionFavoritoMostrada`; pruebas `favoritoConConfirmacionMuestraElMensajeConElNombre` y `laConfirmacionDesapareceSolaDespuesDeUnosSegundos` (con `rule.mainClock.autoAdvance = false` + `advanceTimeBy`). Compila (`compileDebugAndroidTestKotlin`); **pendiente de ejecutar en dispositivo/emulador**.
 
-## 5. Cierre de T02-3 y documentación
+## 5. Cierre de T10-2/T10-3/T10-4 y documentación
 
-- [ ] 5.1 Correr toda la suite unitaria (`.\gradlew.bat testDebugUnitTest`) y registrar en `design.md`/este `tasks.md` cualquier ajuste de contrato descubierto durante la implementación.
-- [ ] 5.2 Documentar en el README o en la wiki del equipo (T10-6 si aplica) qué quedó verificado (unitarias) y qué queda pendiente (E2E, a cargo de otro integrante; diseño visual T10-1; detalle real HU04).
+- [x] 5.1 Correr toda la suite unitaria (`.\gradlew.bat testDebugUnitTest --rerun`): 170/170 OK, sin fallos ni regresiones (incluye las 8 pruebas de `FavoriteRepositoryTest` y las 11 de `FavoritoViewModelTest`). No se descubrió ningún ajuste de contrato adicional respecto de lo ya documentado en `design.md`.
+- [x] 5.2 Documentado en [`docs/pruebas/sprint-2/HU10/README.md`](../../../docs/pruebas/sprint-2/HU10/README.md) qué quedó verificado (170 unitarias JVM, 9/9 criterios de aceptación cubiertos) y qué queda pendiente: las 11 pruebas de Compose UI (`PantallaArtistaProvisionalFavoritoTest`) compiladas pero no ejecutadas por falta de emulador/dispositivo en esta sesión; E2E a cargo de otro integrante; diseño visual (T10-1); detalle real de artista (HU04).
 
 ## Workflow follow-up
 
