@@ -1,5 +1,8 @@
 package com.example.vinilos.ui.artistas
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -144,6 +147,23 @@ class PantallaArtistaProvisionalFavoritoTest {
     }
 
     @Test
+    fun errorGuardadoNoMuestraNingunaConfirmacion() {
+        rule.setContent {
+            VinilosTheme {
+                PantallaArtistaProvisional(
+                    nombre = "Rubén Blades",
+                    tipo = ArtistType.MUSICO,
+                    onAtras = {},
+                    estadoFavorito = FavoritoUiState.ErrorGuardado
+                )
+            }
+        }
+
+        rule.onNodeWithTag(TagConfirmacionFavorito).assertDoesNotExist()
+        rule.onNodeWithText("Rubén Blades se agregó a tus favoritos").assertDoesNotExist()
+    }
+
+    @Test
     fun noDisponibleMuestraElMensajeYElBotonParaVolverAlListado() {
         var regresos = 0
         rule.setContent {
@@ -178,5 +198,31 @@ class PantallaArtistaProvisionalFavoritoTest {
 
         rule.onNodeWithTag(TagConfirmacionFavorito).assertIsDisplayed()
         rule.onNodeWithText("Rubén Blades se agregó a tus favoritos").assertIsDisplayed()
+    }
+
+    @Test
+    fun laConfirmacionDesapareceSolaDespuesDeUnosSegundos() {
+        rule.mainClock.autoAdvance = false
+        rule.setContent {
+            VinilosTheme {
+                var estado by mutableStateOf<FavoritoUiState>(FavoritoUiState.Favorito(mostrarConfirmacion = true))
+                PantallaArtistaProvisional(
+                    nombre = "Rubén Blades",
+                    tipo = ArtistType.MUSICO,
+                    onAtras = {},
+                    estadoFavorito = estado,
+                    onConfirmacionFavoritoMostrada = {
+                        estado = FavoritoUiState.Favorito(mostrarConfirmacion = false)
+                    }
+                )
+            }
+        }
+
+        rule.onNodeWithTag(TagConfirmacionFavorito).assertIsDisplayed()
+
+        rule.mainClock.advanceTimeBy(3_000L)
+        rule.waitForIdle()
+
+        rule.onNodeWithTag(TagConfirmacionFavorito).assertDoesNotExist()
     }
 }

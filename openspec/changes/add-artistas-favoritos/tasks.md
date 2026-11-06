@@ -17,9 +17,9 @@
 
 ## 4. Mensajes al usuario (T10-4)
 
-- [ ] 4.1 Mostrar "El artista ya no está disponible" con un botón para volver al listado de artistas (reutiliza `popBackStack`, que ya hace que el listado se recargue sin el artista eliminado); prueba de Compose UI que verifique el mensaje y la navegación de regreso.
-- [ ] 4.2 Mostrar "No se pudo guardar el favorito, intenta de nuevo" con el botón disponible para reintentar; prueba de Compose UI para ese estado.
-- [ ] 4.3 Mostrar la confirmación transitoria ("<nombre> se agregó a tus favoritos") que desaparece sola tras unos segundos, sin aparecer si el guardado falla; prueba de Compose UI que confirme la aparición y, con `advanceTimeBy`/`mainClock`, su desaparición automática.
+- [ ] 4.1 Mostrar "El artista ya no está disponible" con un botón para volver al listado de artistas (reutiliza `popBackStack`, que ya hace que el listado se recargue sin el artista eliminado); prueba de Compose UI que verifique el mensaje y la navegación de regreso. Implementado en el grupo 3 (`noDisponibleMuestraElMensajeYElBotonParaVolverAlListado`); **pendiente de ejecutar en dispositivo/emulador**.
+- [ ] 4.2 Mostrar "No se pudo guardar el favorito, intenta de nuevo" con el botón disponible para reintentar; prueba de Compose UI para ese estado. Implementado en el grupo 3 (`errorGuardadoMuestraElMensajeYElBotonDisponibleParaReintentar`) más `errorGuardadoNoMuestraNingunaConfirmacion`, que confirma que el mensaje de confirmación no aparece si el guardado falla; **pendiente de ejecutar en dispositivo/emulador**.
+- [ ] 4.3 Mostrar la confirmación transitoria ("<nombre> se agregó a tus favoritos") que desaparece sola tras unos segundos, sin aparecer si el guardado falla; prueba de Compose UI que confirme la aparición y, con `advanceTimeBy`/`mainClock`, su desaparición automática. Implementado: `LaunchedEffect` con `delay(2500)` en `SeccionFavorito` llama a `onConfirmacionFavoritoMostrada`; pruebas `favoritoConConfirmacionMuestraElMensajeConElNombre` y `laConfirmacionDesapareceSolaDespuesDeUnosSegundos` (con `rule.mainClock.autoAdvance = false` + `advanceTimeBy`). Compila (`compileDebugAndroidTestKotlin`); **pendiente de ejecutar en dispositivo/emulador**.
 
 ## 5. Cierre de T02-3 y documentación
 
