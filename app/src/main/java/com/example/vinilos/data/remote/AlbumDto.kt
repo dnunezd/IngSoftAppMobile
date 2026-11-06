@@ -13,6 +13,16 @@ data class AlbumDto(
     val comments: List<ComentarioDto>?
 )
 
+/** Cuerpo de `POST /albums`: el backend rechaza con 400 cualquier otro campo, incluso `id`. */
+data class CrearAlbumDto(
+    val name: String,
+    val cover: String,
+    val releaseDate: String,
+    val description: String,
+    val genre: String,
+    val recordLabel: String
+)
+
 data class CancionDto(val name: String?, val duration: String?)
 
 data class ArtistaDto(val name: String?, val image: String?)
