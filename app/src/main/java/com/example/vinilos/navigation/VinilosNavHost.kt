@@ -15,9 +15,11 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.vinilos.data.model.ArtistType
+import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.AlbumRepository
 import com.example.vinilos.data.repository.ArtistRepository
 import com.example.vinilos.data.repository.CollectorRepository
+import com.example.vinilos.data.repository.FavoriteRepository
 import com.example.vinilos.ui.artistas.PantallaArtistaProvisional
 import com.example.vinilos.ui.artistas.PantallaArtistas
 import com.example.vinilos.ui.catalogo.PantallaCatalogo
@@ -29,6 +31,7 @@ import com.example.vinilos.viewmodel.AlbumViewModel
 import com.example.vinilos.viewmodel.AlbumsViewModel
 import com.example.vinilos.viewmodel.ArtistsViewModel
 import com.example.vinilos.viewmodel.CollectorsViewModel
+import com.example.vinilos.viewmodel.FavoritoViewModel
 import com.example.vinilos.viewmodel.SessionViewModel
 
 object Rutas {
@@ -62,7 +65,10 @@ fun VinilosNavHost(
     collectorRepository: CollectorRepository,
     artistRepository: ArtistRepository,
     albumRepository: AlbumRepository,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    // Sin wiring en AppContainer/MainActivity todavía: HU10 agrega este repositorio de forma
+    // autocontenida para no tocar ese archivo compartido; se puede migrar a AppContainer después.
+    favoriteRepository: FavoriteRepository = FavoriteRepository(ServiceAdapter(com.example.vinilos.BuildConfig.BASE_URL))
 ) {
     fun irAlInicio() {
         navController.navigate(Rutas.Inicio) {
@@ -164,11 +170,38 @@ fun VinilosNavHost(
             )
         ) { entrada ->
             val argumentos = requireNotNull(entrada.arguments)
-            PantallaArtistaProvisional(
-                nombre = argumentos.getString("nombre").orEmpty(),
-                tipo = ArtistType.valueOf(requireNotNull(argumentos.getString("tipo"))),
-                onAtras = { navController.popBackStack() }
-            )
+            val nombre = argumentos.getString("nombre").orEmpty()
+            val tipo = ArtistType.valueOf(requireNotNull(argumentos.getString("tipo")))
+            val artistId = argumentos.getInt("id")
+            val session by sessionViewModel.session.collectAsStateWithLifecycle()
+            val coleccionista = (session as? com.example.vinilos.data.model.Session.Collector)?.collector
+            if (coleccionista != null) {
+                // Solo el Coleccionista comprueba y guarda favoritos; el Visitante no ve el botón.
+                val favoritoViewModel: FavoritoViewModel = viewModel(
+                    key = "favorito-$artistId",
+                    factory = viewModelFactory {
+                        initializer {
+                            FavoritoViewModel(coleccionista.id, artistId, tipo, favoriteRepository)
+                        }
+                    }
+                )
+                val estadoFavorito by favoritoViewModel.uiState.collectAsStateWithLifecycle()
+                PantallaArtistaProvisional(
+                    nombre = nombre,
+                    tipo = tipo,
+                    onAtras = { navController.popBackStack() },
+                    estadoFavorito = estadoFavorito,
+                    onAgregarFavorito = favoritoViewModel::agregarFavorito,
+                    onReintentarFavorito = favoritoViewModel::reintentarComprobacion,
+                    onConfirmacionFavoritoMostrada = favoritoViewModel::confirmacionMostrada
+                )
+            } else {
+                PantallaArtistaProvisional(
+                    nombre = nombre,
+                    tipo = tipo,
+                    onAtras = { navController.popBackStack() }
+                )
+            }
         }
         composable(
             Rutas.DetalleAlbum,

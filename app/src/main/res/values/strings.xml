@@ -81,6 +81,17 @@
     <!-- Destino provisional del detalle del artista (lo reemplaza HU04) -->
     <string name="artista_detalle_titulo">Detalle del artista</string>
 
+    <!-- Botón de favorito en el detalle del artista (HU10), solo para el Coleccionista -->
+    <string name="favoritos_agregar">Agregar Favorito</string>
+    <string name="favoritos_guardando" tools:ignore="TypographyEllipsis">Guardando...</string>
+    <string name="favoritos_favorito">Favorito</string>
+    <string name="favoritos_reintentar">Reintentar</string>
+    <string name="favoritos_error_comprobacion">No pudimos comprobar si es tu favorito</string>
+    <string name="favoritos_error_guardado">No se pudo guardar el favorito, intenta de nuevo</string>
+    <string name="favoritos_no_disponible">El artista ya no está disponible</string>
+    <string name="favoritos_volver_artistas">Volver al listado de artistas</string>
+    <string name="favoritos_confirmacion">%1$s se agregó a tus favoritos</string>
+
     <!-- Catálogo de álbumes (HU01): los mensajes de estado son los de la HU; el resto, del mockup. -->
     <string name="catalogo_encabezado">Álbumes</string>
     <string name="catalogo_etiqueta_visitante">Visitante</string>
