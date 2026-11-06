@@ -8,6 +8,7 @@ Ejecución del 2026-11-06 sobre `feature/hu07-crear-album`, con JDK 21. Las prue
 |---|---|---|
 | Unitarias (`testDebugUnitTest`) | 192 sin fallos (40 nuevas) | JVM |
 | Lint | 0 errores, 48 avisos (los mismos de `develop`) | JVM |
+| CI (lint y unitarias) | Pasó | GitHub Actions, JDK 17 |
 | Instrumentadas sin E2E (`connectedDebugAndroidTest`) | 109 sin fallos | `Pixel_8_API_34` |
 
 ## Recorrido en dispositivo
@@ -37,6 +38,5 @@ Si el servidor guarda el álbum después de vencer el timeout de 10 s, el client
 
 ## Sin verificar
 
-- Compilación con el JDK 17 de la CI.
 - Pruebas E2E y de regresión (T07-5 y T07-6).
 - TalkBack activo en un dispositivo: se comprobó que el botón expone su nombre, pero no se escuchó el lector.
