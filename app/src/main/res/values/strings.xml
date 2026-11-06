@@ -78,9 +78,6 @@
     <string name="artistas_imagen_descripcion">Imagen de %1$s</string>
     <string name="artistas_seleccionar_descripcion">Ver detalle de %1$s</string>
 
-    <!-- Destino provisional del detalle del artista (lo reemplaza HU04) -->
-    <string name="artista_detalle_titulo">Detalle del artista</string>
-
     <!-- Detalle del artista (HU04) -->
     <string name="artista_titulo">Artista</string>
     <!-- Los tres puntos son el texto exacto del mockup. -->
