@@ -18,10 +18,6 @@ import com.example.vinilos.R
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.ui.ingreso.EncabezadoVinilo
 
-const val TagDetalleArtista = "detalle_artista"
-const val TagNombreDetalleArtista = "detalle_artista_nombre"
-const val TagTipoDetalleArtista = "detalle_artista_tipo"
-
 /** Destino provisional del detalle del artista: HU04 lo reemplaza por el detalle real. */
 @Composable
 fun PantallaArtistaProvisional(

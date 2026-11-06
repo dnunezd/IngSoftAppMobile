@@ -81,6 +81,32 @@
     <!-- Destino provisional del detalle del artista (lo reemplaza HU04) -->
     <string name="artista_detalle_titulo">Detalle del artista</string>
 
+    <!-- Detalle del artista (HU04) -->
+    <string name="artista_titulo">Artista</string>
+    <!-- Los tres puntos son el texto exacto del mockup. -->
+    <string name="artista_cargando" tools:ignore="TypographyEllipsis">Cargando artista...</string>
+    <string name="artista_error">No se pudo cargar el artista</string>
+    <string name="artista_fecha_nacimiento">FECHA DE NACIMIENTO</string>
+    <string name="artista_fecha_creacion">FECHA DE CREACIÓN</string>
+    <string name="artista_integrantes">Integrantes</string>
+    <string name="artista_sin_integrantes">Sin integrantes</string>
+    <plurals name="artista_integrantes_contador">
+        <item quantity="one">%d integrante</item>
+        <item quantity="other">%d integrantes</item>
+    </plurals>
+    <string name="artista_albumes">Álbumes</string>
+    <string name="artista_sin_albumes">Sin álbumes</string>
+    <plurals name="artista_albumes_contador">
+        <item quantity="one">%d álbum</item>
+        <item quantity="other">%d álbumes</item>
+    </plurals>
+    <string name="artista_premios">Premios</string>
+    <string name="artista_sin_premios">Sin premios</string>
+    <plurals name="artista_premios_contador">
+        <item quantity="one">%d premio</item>
+        <item quantity="other">%d premios</item>
+    </plurals>
+
     <!-- Catálogo de álbumes (HU01): los mensajes de estado son los de la HU; el resto, del mockup. -->
     <string name="catalogo_encabezado">Álbumes</string>
     <string name="catalogo_etiqueta_visitante">Visitante</string>
