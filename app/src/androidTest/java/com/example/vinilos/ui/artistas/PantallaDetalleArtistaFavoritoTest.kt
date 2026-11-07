@@ -12,45 +12,64 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import com.example.vinilos.data.model.ArtistType
+import com.example.vinilos.data.model.ArtistaDetalle
 import com.example.vinilos.ui.theme.VinilosTheme
+import com.example.vinilos.viewmodel.ArtistaDetalleUiState
 import com.example.vinilos.viewmodel.FavoritoUiState
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
-/** Botón de favorito del detalle provisional del artista (HU10), un estado a la vez. */
-class PantallaArtistaProvisionalFavoritoTest {
+/** Botón de favorito en el detalle real del artista (HU10 sobre HU04), un estado a la vez. */
+class PantallaDetalleArtistaFavoritoTest {
     @get:Rule
     val rule = createComposeRule()
 
-    @Test
-    fun visitanteNoVeNingunBotonDeFavorito() {
+    private val rubenBlades = ArtistaDetalle(
+        id = 100,
+        nombre = "Rubén Blades",
+        imagen = null,
+        descripcion = null,
+        tipo = ArtistType.MUSICO,
+        fecha = null,
+        integrantes = emptyList(),
+        albumes = emptyList(),
+        premios = emptyList()
+    )
+
+    private fun mostrar(
+        estadoFavorito: FavoritoUiState?,
+        onAtras: () -> Unit = {},
+        onAgregarFavorito: () -> Unit = {},
+        onReintentarFavorito: () -> Unit = {},
+        onConfirmacionFavoritoMostrada: () -> Unit = {}
+    ) {
         rule.setContent {
             VinilosTheme {
-                PantallaArtistaProvisional(
-                    nombre = "Rubén Blades",
-                    tipo = ArtistType.MUSICO,
-                    onAtras = {},
-                    estadoFavorito = null
+                PantallaDetalleArtista(
+                    estado = ArtistaDetalleUiState.Exito(rubenBlades),
+                    onSeleccionarAlbum = {},
+                    onReintentar = {},
+                    onAtras = onAtras,
+                    estadoFavorito = estadoFavorito,
+                    onAgregarFavorito = onAgregarFavorito,
+                    onReintentarFavorito = onReintentarFavorito,
+                    onConfirmacionFavoritoMostrada = onConfirmacionFavoritoMostrada
                 )
             }
         }
+    }
+
+    @Test
+    fun visitanteNoVeNingunBotonDeFavorito() {
+        mostrar(estadoFavorito = null)
 
         rule.onNodeWithTag(TagBotonFavorito).assertDoesNotExist()
     }
 
     @Test
     fun comprobandoMuestraElBotonDesactivado() {
-        rule.setContent {
-            VinilosTheme {
-                PantallaArtistaProvisional(
-                    nombre = "Rubén Blades",
-                    tipo = ArtistType.MUSICO,
-                    onAtras = {},
-                    estadoFavorito = FavoritoUiState.Comprobando
-                )
-            }
-        }
+        mostrar(estadoFavorito = FavoritoUiState.Comprobando)
 
         rule.onNodeWithTag(TagBotonFavorito).assertIsDisplayed().assertIsNotEnabled()
     }
@@ -58,17 +77,7 @@ class PantallaArtistaProvisionalFavoritoTest {
     @Test
     fun noFavoritoMuestraElBotonActivoParaAgregar() {
         var toques = 0
-        rule.setContent {
-            VinilosTheme {
-                PantallaArtistaProvisional(
-                    nombre = "Rubén Blades",
-                    tipo = ArtistType.MUSICO,
-                    onAtras = {},
-                    estadoFavorito = FavoritoUiState.NoFavorito,
-                    onAgregarFavorito = { toques++ }
-                )
-            }
-        }
+        mostrar(estadoFavorito = FavoritoUiState.NoFavorito, onAgregarFavorito = { toques++ })
 
         rule.onNodeWithText("Agregar Favorito").assertIsDisplayed().assertIsEnabled().performClick()
         assertEquals(1, toques)
@@ -76,32 +85,14 @@ class PantallaArtistaProvisionalFavoritoTest {
 
     @Test
     fun guardandoMuestraElBotonDesactivadoConSuTexto() {
-        rule.setContent {
-            VinilosTheme {
-                PantallaArtistaProvisional(
-                    nombre = "Rubén Blades",
-                    tipo = ArtistType.MUSICO,
-                    onAtras = {},
-                    estadoFavorito = FavoritoUiState.Guardando
-                )
-            }
-        }
+        mostrar(estadoFavorito = FavoritoUiState.Guardando)
 
         rule.onNodeWithText("Guardando...").assertIsDisplayed().assertIsNotEnabled()
     }
 
     @Test
     fun favoritoMuestraElBotonDesactivadoConSuTexto() {
-        rule.setContent {
-            VinilosTheme {
-                PantallaArtistaProvisional(
-                    nombre = "Rubén Blades",
-                    tipo = ArtistType.MUSICO,
-                    onAtras = {},
-                    estadoFavorito = FavoritoUiState.Favorito(mostrarConfirmacion = false)
-                )
-            }
-        }
+        mostrar(estadoFavorito = FavoritoUiState.Favorito(mostrarConfirmacion = false))
 
         rule.onNodeWithText("Favorito").assertIsDisplayed().assertIsNotEnabled()
     }
@@ -109,17 +100,10 @@ class PantallaArtistaProvisionalFavoritoTest {
     @Test
     fun errorComprobacionMuestraElBotonDesactivadoYPermiteReintentar() {
         var reintentos = 0
-        rule.setContent {
-            VinilosTheme {
-                PantallaArtistaProvisional(
-                    nombre = "Rubén Blades",
-                    tipo = ArtistType.MUSICO,
-                    onAtras = {},
-                    estadoFavorito = FavoritoUiState.ErrorComprobacion,
-                    onReintentarFavorito = { reintentos++ }
-                )
-            }
-        }
+        mostrar(
+            estadoFavorito = FavoritoUiState.ErrorComprobacion,
+            onReintentarFavorito = { reintentos++ }
+        )
 
         rule.onNodeWithTag(TagBotonFavorito).assertIsNotEnabled()
         rule.onNodeWithTag(TagErrorFavorito).assertIsDisplayed()
@@ -130,17 +114,7 @@ class PantallaArtistaProvisionalFavoritoTest {
     @Test
     fun errorGuardadoMuestraElMensajeYElBotonDisponibleParaReintentar() {
         var toques = 0
-        rule.setContent {
-            VinilosTheme {
-                PantallaArtistaProvisional(
-                    nombre = "Rubén Blades",
-                    tipo = ArtistType.MUSICO,
-                    onAtras = {},
-                    estadoFavorito = FavoritoUiState.ErrorGuardado,
-                    onAgregarFavorito = { toques++ }
-                )
-            }
-        }
+        mostrar(estadoFavorito = FavoritoUiState.ErrorGuardado, onAgregarFavorito = { toques++ })
 
         rule.onNodeWithTag(TagErrorFavorito).assertIsDisplayed()
         rule.onNodeWithText("Agregar Favorito").assertIsEnabled().performClick()
@@ -149,16 +123,7 @@ class PantallaArtistaProvisionalFavoritoTest {
 
     @Test
     fun errorGuardadoNoMuestraNingunaConfirmacion() {
-        rule.setContent {
-            VinilosTheme {
-                PantallaArtistaProvisional(
-                    nombre = "Rubén Blades",
-                    tipo = ArtistType.MUSICO,
-                    onAtras = {},
-                    estadoFavorito = FavoritoUiState.ErrorGuardado
-                )
-            }
-        }
+        mostrar(estadoFavorito = FavoritoUiState.ErrorGuardado)
 
         rule.onNodeWithTag(TagConfirmacionFavorito).assertDoesNotExist()
         rule.onNodeWithText("Rubén Blades se agregó a tus favoritos").assertDoesNotExist()
@@ -167,16 +132,7 @@ class PantallaArtistaProvisionalFavoritoTest {
     @Test
     fun noDisponibleMuestraElMensajeYElBotonParaVolverAlListado() {
         var regresos = 0
-        rule.setContent {
-            VinilosTheme {
-                PantallaArtistaProvisional(
-                    nombre = "Rubén Blades",
-                    tipo = ArtistType.MUSICO,
-                    onAtras = { regresos++ },
-                    estadoFavorito = FavoritoUiState.NoDisponible
-                )
-            }
-        }
+        mostrar(estadoFavorito = FavoritoUiState.NoDisponible, onAtras = { regresos++ })
 
         rule.onNodeWithTag(TagNoDisponibleFavorito).assertIsDisplayed()
         rule.onNodeWithTag(TagBotonFavorito).assertDoesNotExist()
@@ -186,16 +142,7 @@ class PantallaArtistaProvisionalFavoritoTest {
 
     @Test
     fun favoritoConConfirmacionMuestraElMensajeConElNombre() {
-        rule.setContent {
-            VinilosTheme {
-                PantallaArtistaProvisional(
-                    nombre = "Rubén Blades",
-                    tipo = ArtistType.MUSICO,
-                    onAtras = {},
-                    estadoFavorito = FavoritoUiState.Favorito(mostrarConfirmacion = true)
-                )
-            }
-        }
+        mostrar(estadoFavorito = FavoritoUiState.Favorito(mostrarConfirmacion = true))
 
         rule.onNodeWithTag(TagConfirmacionFavorito).assertIsDisplayed()
         rule.onNodeWithText("Rubén Blades se agregó a tus favoritos").assertIsDisplayed()
@@ -206,9 +153,10 @@ class PantallaArtistaProvisionalFavoritoTest {
         rule.setContent {
             VinilosTheme {
                 var estado by mutableStateOf<FavoritoUiState>(FavoritoUiState.Favorito(mostrarConfirmacion = true))
-                PantallaArtistaProvisional(
-                    nombre = "Rubén Blades",
-                    tipo = ArtistType.MUSICO,
+                PantallaDetalleArtista(
+                    estado = ArtistaDetalleUiState.Exito(rubenBlades),
+                    onSeleccionarAlbum = {},
+                    onReintentar = {},
                     onAtras = {},
                     estadoFavorito = estado,
                     onConfirmacionFavoritoMostrada = {

@@ -22,6 +22,11 @@ val TitularGris = Color(0xFF8A8A93)
 val TextoTenue = Color(0xFF71717A)
 val FondoImagen = Color(0xFFF4F4F6)
 
+// Errores de formulario (HU07), de `DESIGN.md`.
+val ErrorFormulario = Color(0xFFBA1A1A)
+val ErrorFormularioFondo = Color(0xFFFFDAD6)
+val ErrorFormularioTexto = Color(0xFF93000A)
+
 // Avatares de iniciales: el primero usa el azul y los demás el gris del mockup.
 val AvatarAzulClaro = Color(0xFFB3C5FF)
 val AvatarAzul = Color(0xFF0050CC)

@@ -325,7 +325,8 @@ class ArtistasE2ETest {
 
             esperarA(TagDetalleArtista)
             esperarQueDesaparezca(TagArtistas)
-            rule.onNodeWithText("Detalle del artista").assertIsDisplayed()
+            // El nombre ya no viaja en la ruta: aparece cuando termina la consulta del detalle al backend.
+            esperarA(TagNombreDetalleArtista)
             rule.onNodeWithTag(TagNombreDetalleArtista).assertTextEquals(objetivo.name)
             rule.onNodeWithTag(TagTipoDetalleArtista).assertTextEquals(etiquetaDe(objetivo))
             EvidenciaE2E.capturar(rule, evidencia, "03_detalle_objetivo")

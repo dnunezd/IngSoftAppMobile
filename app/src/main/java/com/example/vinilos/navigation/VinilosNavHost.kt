@@ -1,6 +1,5 @@
 package com.example.vinilos.navigation
 
-import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -20,17 +19,22 @@ import com.example.vinilos.data.repository.AlbumRepository
 import com.example.vinilos.data.repository.ArtistRepository
 import com.example.vinilos.data.repository.CollectorRepository
 import com.example.vinilos.data.repository.FavoriteRepository
-import com.example.vinilos.ui.artistas.PantallaArtistaProvisional
 import com.example.vinilos.ui.artistas.PantallaArtistas
+import com.example.vinilos.ui.artistas.PantallaDetalleArtista
 import com.example.vinilos.ui.catalogo.PantallaCatalogo
+import com.example.vinilos.ui.crear.AccionesCrearAlbum
+import com.example.vinilos.ui.crear.PantallaCrearAlbum
 import com.example.vinilos.ui.detalle.PantallaDetalleAlbum
 import com.example.vinilos.ui.ingreso.PantallaColeccionistas
 import com.example.vinilos.ui.ingreso.PantallaIngreso
 import com.example.vinilos.ui.inicio.PantallaInicio
 import com.example.vinilos.viewmodel.AlbumViewModel
 import com.example.vinilos.viewmodel.AlbumsViewModel
+import com.example.vinilos.viewmodel.ArtistaDetalleViewModel
 import com.example.vinilos.viewmodel.ArtistsViewModel
 import com.example.vinilos.viewmodel.CollectorsViewModel
+import com.example.vinilos.viewmodel.CrearAlbumViewModel
+import com.example.vinilos.viewmodel.EnvioAlbum
 import com.example.vinilos.viewmodel.FavoritoViewModel
 import com.example.vinilos.viewmodel.SessionViewModel
 
@@ -41,21 +45,26 @@ object Rutas {
     const val Catalogo = "catalogo"
     const val Artistas = "artistas"
 
-    /** Detalle del artista (HU04). El nombre viaja para el destino provisional; HU04 lo consulta por id. */
-    const val DetalleArtista = "artista/{tipo}/{id}?nombre={nombre}"
+    /** Detalle del artista (HU04). El tipo distingue a un músico de una banda con el mismo id. */
+    const val DetalleArtista = "artista/{tipo}/{id}"
 
     /** Detalle del álbum (HU02). */
     const val DetalleAlbum = "album/{id}"
 
-    fun detalleArtista(tipo: ArtistType, id: Int, nombre: String) =
-        "artista/${tipo.name}/$id?nombre=${Uri.encode(nombre)}"
+    /** Formulario para crear un álbum (HU07), solo para el Coleccionista. */
+    const val CrearAlbum = "crear-album"
+
+    fun detalleArtista(tipo: ArtistType, id: Int) = "artista/${tipo.name}/$id"
 
     fun detalleAlbum(id: Int) = "album/$id"
 }
 
+/** Clave con la que el formulario le entrega al catálogo el id del álbum creado. */
+private const val ClaveAlbumCreado = "album_creado"
+
 /**
  * Grafo de navegación: ingreso -> (coleccionistas) -> inicio -> catálogo -> detalle del álbum |
- * artistas -> detalle del artista. Al entrar al
+ * crear álbum, y artistas -> detalle del artista -> detalle del álbum. Al entrar al
  * inicio el ingreso queda en la pila (para poder cambiar de perfil) y el selector sale de ella.
  */
 @Composable
@@ -74,6 +83,11 @@ fun VinilosNavHost(
         navController.navigate(Rutas.Inicio) {
             popUpTo(Rutas.Ingreso) { inclusive = false }
         }
+    }
+
+    /** Dos toques rápidos no deben sacar también el catálogo. */
+    fun cerrarFormulario() {
+        if (navController.currentDestination?.route == Rutas.CrearAlbum) navController.popBackStack()
     }
 
     NavHost(
@@ -122,7 +136,7 @@ fun VinilosNavHost(
                 onVerArtistas = { navController.navigate(Rutas.Artistas) }
             )
         }
-        composable(Rutas.Catalogo) {
+        composable(Rutas.Catalogo) { entrada ->
             val session by sessionViewModel.session.collectAsStateWithLifecycle()
             val viewModel: AlbumsViewModel = viewModel(
                 factory = viewModelFactory {
@@ -130,6 +144,17 @@ fun VinilosNavHost(
                 }
             )
             val estado by viewModel.uiState.collectAsStateWithLifecycle()
+            val albumNuevo by viewModel.albumNuevo.collectAsStateWithLifecycle()
+            val albumCreado by entrada.savedStateHandle
+                .getStateFlow<Int?>(ClaveAlbumCreado, null)
+                .collectAsStateWithLifecycle()
+            LaunchedEffect(albumCreado) {
+                albumCreado?.let { id ->
+                    viewModel.albumCreado(id)
+                    // Se borra para que girar la pantalla no repita el aviso ni la consulta.
+                    entrada.savedStateHandle[ClaveAlbumCreado] = null
+                }
+            }
             PantallaCatalogo(
                 estado = estado,
                 session = session,
@@ -139,7 +164,45 @@ fun VinilosNavHost(
                 onSeleccionar = { id ->
                     navController.navigate(Rutas.detalleAlbum(id)) { launchSingleTop = true }
                 },
-                onAtras = { navController.popBackStack() }
+                onAtras = { navController.popBackStack() },
+                albumNuevo = albumNuevo,
+                onCrearAlbum = { navController.navigate(Rutas.CrearAlbum) { launchSingleTop = true } },
+                onAvisoCreadoMostrado = viewModel::avisoCreadoMostrado,
+                onDesplazadoAlNuevo = viewModel::desplazadoAlNuevo
+            )
+        }
+        composable(Rutas.CrearAlbum) {
+            val session by sessionViewModel.session.collectAsStateWithLifecycle()
+            val viewModel: CrearAlbumViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer { CrearAlbumViewModel(albumRepository) }
+                }
+            )
+            val estado by viewModel.uiState.collectAsStateWithLifecycle()
+            // La pila se restaura al morir el proceso, pero la sesión no.
+            LaunchedEffect(session) {
+                if (!session.collectorActionsEnabled) cerrarFormulario()
+            }
+            val envio = estado.envio
+            LaunchedEffect(envio) {
+                if (envio is EnvioAlbum.Creado) {
+                    navController.previousBackStackEntry?.savedStateHandle?.set(ClaveAlbumCreado, envio.id)
+                    cerrarFormulario()
+                }
+            }
+            PantallaCrearAlbum(
+                estado = estado,
+                session = session,
+                acciones = AccionesCrearAlbum(
+                    onNombre = viewModel::cambiarNombre,
+                    onPortada = viewModel::cambiarPortada,
+                    onFecha = viewModel::cambiarFecha,
+                    onGenero = viewModel::cambiarGenero,
+                    onDisquera = viewModel::cambiarDisquera,
+                    onDescripcion = viewModel::cambiarDescripcion,
+                    onCrear = viewModel::crear,
+                    onCancelar = ::cerrarFormulario
+                )
             )
         }
         composable(Rutas.Artistas) {
@@ -154,7 +217,7 @@ fun VinilosNavHost(
                 onBuscar = viewModel::buscar,
                 onReintentar = viewModel::reintentar,
                 onSeleccionar = { artista ->
-                    navController.navigate(Rutas.detalleArtista(artista.type, artista.id, artista.name)) {
+                    navController.navigate(Rutas.detalleArtista(artista.type, artista.id)) {
                         launchSingleTop = true
                     }
                 },
@@ -165,14 +228,19 @@ fun VinilosNavHost(
             Rutas.DetalleArtista,
             arguments = listOf(
                 navArgument("tipo") { type = NavType.StringType },
-                navArgument("id") { type = NavType.IntType },
-                navArgument("nombre") { type = NavType.StringType; defaultValue = "" }
+                navArgument("id") { type = NavType.IntType }
             )
         ) { entrada ->
             val argumentos = requireNotNull(entrada.arguments)
-            val nombre = argumentos.getString("nombre").orEmpty()
             val tipo = ArtistType.valueOf(requireNotNull(argumentos.getString("tipo")))
             val artistId = argumentos.getInt("id")
+            // Ligado a la entrada de navegación: sobrevive a la rotación y a la ida y vuelta al álbum.
+            val viewModel: ArtistaDetalleViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer { ArtistaDetalleViewModel(tipo, artistId, artistRepository) }
+                }
+            )
+            val estado by viewModel.uiState.collectAsStateWithLifecycle()
             val session by sessionViewModel.session.collectAsStateWithLifecycle()
             val coleccionista = (session as? com.example.vinilos.data.model.Session.Collector)?.collector
             if (coleccionista != null) {
@@ -186,9 +254,12 @@ fun VinilosNavHost(
                     }
                 )
                 val estadoFavorito by favoritoViewModel.uiState.collectAsStateWithLifecycle()
-                PantallaArtistaProvisional(
-                    nombre = nombre,
-                    tipo = tipo,
+                PantallaDetalleArtista(
+                    estado = estado,
+                    onSeleccionarAlbum = { idAlbum ->
+                        navController.navigate(Rutas.detalleAlbum(idAlbum)) { launchSingleTop = true }
+                    },
+                    onReintentar = viewModel::reintentar,
                     onAtras = { navController.popBackStack() },
                     estadoFavorito = estadoFavorito,
                     onAgregarFavorito = favoritoViewModel::agregarFavorito,
@@ -196,9 +267,12 @@ fun VinilosNavHost(
                     onConfirmacionFavoritoMostrada = favoritoViewModel::confirmacionMostrada
                 )
             } else {
-                PantallaArtistaProvisional(
-                    nombre = nombre,
-                    tipo = tipo,
+                PantallaDetalleArtista(
+                    estado = estado,
+                    onSeleccionarAlbum = { idAlbum ->
+                        navController.navigate(Rutas.detalleAlbum(idAlbum)) { launchSingleTop = true }
+                    },
+                    onReintentar = viewModel::reintentar,
                     onAtras = { navController.popBackStack() }
                 )
             }

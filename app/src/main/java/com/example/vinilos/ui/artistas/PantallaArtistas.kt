@@ -97,7 +97,7 @@ fun PantallaArtistas(
             .windowInsetsPadding(WindowInsets.safeDrawing)
             .testTag(TagArtistas)
     ) {
-        Encabezado(onAtras)
+        EncabezadoArtistas(stringResource(R.string.artistas_titulo), onAtras)
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
@@ -118,7 +118,7 @@ fun PantallaArtistas(
                     item { Cargando() }
                     items(5) { FilaEsqueleto() }
                 }
-                ArtistsUiState.Error -> item { Error(onReintentar) }
+                ArtistsUiState.Error -> item { ErrorArtistas(stringResource(R.string.artistas_error), onReintentar) }
                 ArtistsUiState.Vacio -> item { Vacio(conBusqueda = false) }
                 is ArtistsUiState.Exito -> {
                     if (estado.visibles.isEmpty()) {
@@ -135,8 +135,9 @@ fun PantallaArtistas(
     }
 }
 
+/** Encabezado del listado y del detalle del artista: flecha de atrás y título. */
 @Composable
-private fun Encabezado(onAtras: () -> Unit) {
+internal fun EncabezadoArtistas(titulo: String, onAtras: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -159,7 +160,7 @@ private fun Encabezado(onAtras: () -> Unit) {
             )
         }
         Text(
-            text = stringResource(R.string.artistas_titulo),
+            text = titulo,
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground
         )
@@ -319,7 +320,7 @@ private fun FilaArtista(artista: Artist, onSeleccionar: (Artist) -> Unit) {
 }
 
 @Composable
-private fun EtiquetaTipo(tipo: ArtistType) {
+internal fun EtiquetaTipo(tipo: ArtistType, modifier: Modifier = Modifier) {
     val (texto, fondo, contenido) = when (tipo) {
         ArtistType.MUSICO -> Triple(
             stringResource(R.string.artistas_tipo_musico),
@@ -332,7 +333,7 @@ private fun EtiquetaTipo(tipo: ArtistType) {
         text = texto,
         style = MaterialTheme.typography.labelLarge,
         color = contenido,
-        modifier = Modifier
+        modifier = modifier
             .clip(CircleShape)
             .background(fondo)
             .padding(horizontal = 12.dp, vertical = 2.dp)
@@ -437,8 +438,9 @@ private fun Vacio(conBusqueda: Boolean) {
     }
 }
 
+/** Error de carga del listado y del detalle del artista: [mensaje] y botón "Reintentar". */
 @Composable
-private fun Error(onReintentar: () -> Unit) {
+internal fun ErrorArtistas(mensaje: String, onReintentar: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -463,7 +465,7 @@ private fun Error(onReintentar: () -> Unit) {
             }
         }
         Text(
-            text = stringResource(R.string.artistas_error),
+            text = mensaje,
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground,
             textAlign = TextAlign.Center,
