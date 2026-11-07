@@ -18,8 +18,10 @@ import com.example.vinilos.RepositorioAlbumesFalso
 import com.example.vinilos.RepositorioArtistasFalso
 import com.example.vinilos.RepositorioFalso
 import com.example.vinilos.data.model.Album
+import com.example.vinilos.data.model.AlbumArtista
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
+import com.example.vinilos.data.model.ArtistaDetalle
 import com.example.vinilos.data.model.Collector
 import com.example.vinilos.data.model.Session
 import com.example.vinilos.data.remote.ErrorDeCarga
@@ -27,8 +29,10 @@ import com.example.vinilos.ui.artistas.TagArtistas
 import com.example.vinilos.ui.artistas.TagBuscadorArtistas
 import com.example.vinilos.ui.artistas.TagDetalleArtista
 import com.example.vinilos.ui.artistas.TagListaArtistas
+import com.example.vinilos.ui.artistas.TagListaDetalleArtista
 import com.example.vinilos.ui.artistas.TagNombreDetalleArtista
 import com.example.vinilos.ui.artistas.TagTipoDetalleArtista
+import com.example.vinilos.ui.artistas.tagAlbumArtista
 import com.example.vinilos.ui.artistas.tagArtista
 import com.example.vinilos.ui.catalogo.TagCatalogo
 import com.example.vinilos.ui.catalogo.TagCuadriculaCatalogo
@@ -65,7 +69,21 @@ class VinilosNavHostTest {
 
     private val queen = Artist(101, "Queen", null, ArtistType.BANDA)
     private val ruben = Artist(100, "Rubén Blades Bellido de Luna", null, ArtistType.MUSICO)
-    private val artistas = RepositorioArtistasFalso(Result.success(listOf(queen, ruben)))
+    private val detalleQueen = ArtistaDetalle(
+        101, "Queen", null, "Banda británica", ArtistType.BANDA, "1 de enero de 1970", emptyList(),
+        listOf(AlbumArtista(100, "Bailando con lobos", null, "2020")), emptyList()
+    )
+    private val detalleRuben = ArtistaDetalle(
+        100, "Rubén Blades Bellido de Luna", null, "Cantante", ArtistType.MUSICO, "16 de julio de 1948",
+        emptyList(), emptyList(), emptyList()
+    )
+    private val artistas = RepositorioArtistasFalso(
+        Result.success(listOf(queen, ruben)),
+        mapOf(
+            (ArtistType.BANDA to 101) to Result.success(detalleQueen),
+            (ArtistType.MUSICO to 100) to Result.success(detalleRuben)
+        )
+    )
 
     private val albumDePrueba = Album(
         100, "Bailando con lobos", null, "Descripción de prueba",
@@ -334,12 +352,49 @@ class VinilosNavHostTest {
         rule.onNodeWithTag(TagDetalleArtista).assertIsDisplayed()
         rule.onNodeWithTag(TagNombreDetalleArtista).assertTextEquals("Queen")
         rule.onNodeWithTag(TagTipoDetalleArtista).assertTextEquals("Banda")
+        assertEquals(listOf(ArtistType.BANDA to 101), artistas.consultasDetalle)
 
         rule.onNodeWithTag(TagAtras).performClick()
         rule.waitForIdle()
         assertEquals(Rutas.Artistas, ruta())
         rule.onNodeWithTag(TagBuscadorArtistas).assertTextEquals("que")
         assertEquals(1, artistas.consultas)
+    }
+
+    @Test
+    fun seleccionarUnAlbumDelArtistaAbreSuDetalleYVolverNoRepiteLaConsultaDelArtista() {
+        mostrar(RepositorioFalso(Result.success(listOf(manolo))))
+        entrarComoVisitante()
+        rule.onNodeWithTag(TagVerArtistas).performScrollTo().performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag(tagArtista(queen)).performScrollTo().performClick()
+        rule.waitForIdle()
+
+        rule.onNodeWithTag(TagListaDetalleArtista).performScrollToNode(hasTestTag(tagAlbumArtista(100)))
+        rule.onNodeWithTag(tagAlbumArtista(100)).performClick()
+        rule.waitForIdle()
+        assertEquals(Rutas.DetalleAlbum, ruta())
+        assertEquals(100, albumes.ultimoId)
+
+        rule.onNodeWithTag(TagAtras).performClick()
+        rule.waitForIdle()
+        assertEquals(Rutas.DetalleArtista, ruta())
+        rule.onNodeWithTag(TagNombreDetalleArtista).assertTextEquals("Queen")
+        assertEquals(listOf(ArtistType.BANDA to 101), artistas.consultasDetalle)
+    }
+
+    @Test
+    fun elMusicoSeConsultaPorSuTipoEId() {
+        mostrar(RepositorioFalso(Result.success(listOf(manolo))))
+        entrarComoVisitante()
+        rule.onNodeWithTag(TagVerArtistas).performScrollTo().performClick()
+        rule.waitForIdle()
+
+        rule.onNodeWithTag(TagListaArtistas).performScrollToNode(hasTestTag(tagArtista(ruben)))
+        rule.onNodeWithTag(tagArtista(ruben)).performClick()
+        rule.waitForIdle()
+
+        assertEquals(listOf(ArtistType.MUSICO to 100), artistas.consultasDetalle)
     }
 
     @Test
