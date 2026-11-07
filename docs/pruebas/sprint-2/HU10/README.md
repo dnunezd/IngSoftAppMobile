@@ -2,21 +2,23 @@
 
 Especificación: [`openspec/changes/add-artistas-favoritos/specs/favoritos-artista/spec.md`](../../../../openspec/changes/add-artistas-favoritos/specs/favoritos-artista/spec.md). Diseño técnico en [`design.md`](../../../../openspec/changes/add-artistas-favoritos/design.md). Tareas y su estado en [`tasks.md`](../../../../openspec/changes/add-artistas-favoritos/tasks.md).
 
-Todas las pruebas unitarias (JVM) se escribieron con TDD: ROJO (falla antes de implementar) y VERDE (pasa con el código mínimo), una prueba a la vez. Las pruebas de Compose UI (instrumentadas) se escribieron junto con la implementación y se compilaron (`compileDebugAndroidTestKotlin`), pero su ejecución en dispositivo/emulador queda a cargo de otro integrante del equipo (ver "Pendiente" más abajo).
+Todas las pruebas unitarias (JVM) se escribieron con TDD: ROJO (falla antes de implementar) y VERDE (pasa con el código mínimo), una prueba a la vez. Las pruebas de Compose UI (instrumentadas) se escribieron junto con la implementación y ya se ejecutaron en dispositivo físico y en emulador (ver "Resultado de la última ejecución").
+
+**Nota sobre la pantalla:** el botón se integró primero en `PantallaArtistaProvisional` (placeholder de HU03). Cuando HU04 se fusionó a `develop`, la integración se migró a la pantalla de detalle real (`PantallaDetalleArtista`) sin cambiar el contrato del ViewModel; la clase de pruebas pasó a llamarse `PantallaDetalleArtistaFavoritoTest`. Después, a pedido del usuario y con mockups de referencia, se rediseñó visualmente la sección de favorito (botón en píldora con ícono, nota de bloqueo temporal, tarjetas de error/no-disponible), sin tocar el resto de la pantalla (biografía, estadísticas, discografía), que es territorio de HU04.
 
 ## Cada criterio de aceptación tiene al menos una prueba automatizada
 
-| # | Criterio | Unitarias (JVM) | Compose UI (instrumentadas, pendientes de ejecutar) |
+| # | Criterio | Unitarias (JVM) | Compose UI (instrumentadas) |
 |---|---|---|---|
-| 1 | Marcar como favorito desde el detalle; el botón pasa a mostrar "Favorito" | `FavoritoViewModelTest.noFavoritoPasaAGuardandoYLuegoAFavoritoConConfirmacion`, `FavoriteRepositoryTest.agregarFavoritoUsaElEndpointDeBandaCuandoElTipoEsBanda`, `…agregarFavoritoUsaElEndpointDeMusicoCuandoElTipoEsMusico` | `PantallaArtistaProvisionalFavoritoTest.favoritoMuestraElBotonDesactivadoConSuTexto` |
-| 2 | Si ya es favorito, el botón aparece como "Favorito" y desactivado | `FavoritoViewModelTest.comprobandoPasaAFavoritoCuandoElArtistaYaEsFavorito`, `FavoriteRepositoryTest.esFavoritoEncuentraElArtistaPorIdEnElListadoDelColeccionista` | `PantallaArtistaProvisionalFavoritoTest.favoritoMuestraElBotonDesactivadoConSuTexto` |
-| 3 | El botón refleja el estado de favorito cada vez que se abre el detalle (persistencia entre sesiones de la app) | `FavoritoViewModelTest.comprobandoPasaANoFavoritoCuandoElArtistaNoEsFavorito`, `FavoriteRepositoryTest.esFavoritoDevuelveFalsoCuandoElIdNoEstaEnElListado` | `PantallaArtistaProvisionalFavoritoTest.noFavoritoMuestraElBotonActivoParaAgregar` |
-| 4 | Si falla la comprobación, el botón aparece desactivado con opción de reintentar | `FavoritoViewModelTest.comprobandoPasaAErrorComprobacionCuandoFallaLaConsulta`, `…reintentarComprobacionPasaDeErrorComprobacionAFavoritoOtraVez`, `FavoriteRepositoryTest.esFavoritoDevuelveErrorDeCargaSiLaConsultaFalla` | `PantallaArtistaProvisionalFavoritoTest.errorComprobacionMuestraElBotonDesactivadoYPermiteReintentar` |
-| 5 | El Visitante no ve el botón de favorito | — (decisión de composición en `VinilosNavHost`, ver design.md) | `PantallaArtistaProvisionalFavoritoTest.visitanteNoVeNingunBotonDeFavorito` |
-| 6 | Si el artista ya no existe al guardar, "El artista ya no está disponible" + botón para volver al listado actualizado | `FavoritoViewModelTest.guardarFavoritoPasaANoDisponibleCuandoElArtistaYaNoExiste` | `PantallaArtistaProvisionalFavoritoTest.noDisponibleMuestraElMensajeYElBotonParaVolverAlListado` |
-| 7 | Si falla la conexión/servicio al guardar, "No se pudo guardar el favorito, intenta de nuevo" + botón disponible para reintentar | `FavoritoViewModelTest.guardarFavoritoPasaAErrorGuardadoYPermiteReintentar`, `FavoriteRepositoryTest.agregarFavoritoDevuelveErrorDeCargaSiFallaLaConexion` | `PantallaArtistaProvisionalFavoritoTest.errorGuardadoMuestraElMensajeYElBotonDisponibleParaReintentar`, `…errorGuardadoNoMuestraNingunaConfirmacion` |
-| 8 | Mientras se guarda, el botón se desactiva y muestra "Guardando...", evitando toques repetidos | `FavoritoViewModelTest.segundoToqueMientrasGuardandoSeIgnora` | `PantallaArtistaProvisionalFavoritoTest.guardandoMuestraElBotonDesactivadoConSuTexto` |
-| 9 | Al guardar correctamente, mensaje breve de confirmación con el nombre del artista, que desaparece solo tras unos segundos; no aparece si falla | `FavoritoViewModelTest.confirmacionMostradaOcultaElMensajeDeFavorito` | `PantallaArtistaProvisionalFavoritoTest.favoritoConConfirmacionMuestraElMensajeConElNombre`, `…laConfirmacionDesapareceSolaDespuesDeUnosSegundos` |
+| 1 | Marcar como favorito desde el detalle; el botón pasa a mostrar "En tus favoritos" | `FavoritoViewModelTest.noFavoritoPasaAGuardandoYLuegoAFavoritoConConfirmacion`, `FavoriteRepositoryTest.agregarFavoritoUsaElEndpointDeBandaCuandoElTipoEsBanda`, `…agregarFavoritoUsaElEndpointDeMusicoCuandoElTipoEsMusico` | `PantallaDetalleArtistaFavoritoTest.favoritoMuestraElBotonDesactivadoConSuTexto` |
+| 2 | Si ya es favorito, el botón aparece como "En tus favoritos" y desactivado | `FavoritoViewModelTest.comprobandoPasaAFavoritoCuandoElArtistaYaEsFavorito`, `FavoriteRepositoryTest.esFavoritoEncuentraElArtistaPorIdEnElListadoDelColeccionista` | `PantallaDetalleArtistaFavoritoTest.favoritoMuestraElBotonDesactivadoConSuTexto` |
+| 3 | El botón refleja el estado de favorito cada vez que se abre el detalle (persistencia entre sesiones de la app) | `FavoritoViewModelTest.comprobandoPasaANoFavoritoCuandoElArtistaNoEsFavorito`, `FavoriteRepositoryTest.esFavoritoDevuelveFalsoCuandoElIdNoEstaEnElListado` | `PantallaDetalleArtistaFavoritoTest.noFavoritoMuestraElBotonActivoParaAgregar` |
+| 4 | Si falla la comprobación, el botón aparece desactivado con opción de reintentar | `FavoritoViewModelTest.comprobandoPasaAErrorComprobacionCuandoFallaLaConsulta`, `…reintentarComprobacionPasaDeErrorComprobacionAFavoritoOtraVez`, `FavoriteRepositoryTest.esFavoritoDevuelveErrorDeCargaSiLaConsultaFalla` | `PantallaDetalleArtistaFavoritoTest.errorComprobacionMuestraElBotonDesactivadoYPermiteReintentar` |
+| 5 | El Visitante no ve el botón de favorito | — (decisión de composición en `VinilosNavHost`, ver design.md) | `PantallaDetalleArtistaFavoritoTest.visitanteNoVeNingunBotonDeFavorito` |
+| 6 | Si el artista ya no existe al guardar, "El artista ya no está disponible" + botón para volver al listado actualizado | `FavoritoViewModelTest.guardarFavoritoPasaANoDisponibleCuandoElArtistaYaNoExiste` | `PantallaDetalleArtistaFavoritoTest.noDisponibleMuestraElMensajeYElBotonParaVolverAlListado` |
+| 7 | Si falla la conexión/servicio al guardar, "No se pudo guardar el favorito, intenta de nuevo" + botón disponible para reintentar | `FavoritoViewModelTest.guardarFavoritoPasaAErrorGuardadoYPermiteReintentar`, `FavoriteRepositoryTest.agregarFavoritoDevuelveErrorDeCargaSiFallaLaConexion` | `PantallaDetalleArtistaFavoritoTest.errorGuardadoMuestraElMensajeYElBotonDisponibleParaReintentar`, `…errorGuardadoNoMuestraNingunaConfirmacion` |
+| 8 | Mientras se guarda, el botón se desactiva y muestra "Guardando...", evitando toques repetidos | `FavoritoViewModelTest.segundoToqueMientrasGuardandoSeIgnora` | `PantallaDetalleArtistaFavoritoTest.guardandoMuestraElBotonDesactivadoConSuTexto` |
+| 9 | Al guardar correctamente, mensaje breve de confirmación con el nombre del artista, que desaparece solo tras unos segundos; no aparece si falla | `FavoritoViewModelTest.confirmacionMostradaOcultaElMensajeDeFavorito` | `PantallaDetalleArtistaFavoritoTest.favoritoConConfirmacionMuestraElMensajeConElNombre`, `…laConfirmacionDesapareceSolaDespuesDeUnosSegundos` |
 
 Cobertura: 9/9 criterios con al menos una prueba automatizada (unitaria o de Compose UI).
 
@@ -29,22 +31,41 @@ Cobertura: 9/9 criterios con al menos una prueba automatizada (unitaria o de Com
 
 ## Resultado de la última ejecución
 
-- **Pruebas unitarias (JVM, `.\gradlew.bat testDebugUnitTest`)**: 170/170 OK (incluye las 8 de `FavoriteRepositoryTest` y las 11 de `FavoritoViewModelTest` de HU10, sin regresiones en el resto del proyecto).
-- **Pruebas de Compose UI de HU10 (`PantallaArtistaProvisionalFavoritoTest`, 11 pruebas)**: implementadas y compiladas (`compileDebugAndroidTestKotlin` sin errores); **no ejecutadas** por quien implementó el código (sin acceso a emulador/dispositivo en esta sesión de trabajo). Deben ejecutarse en un dispositivo/emulador antes de cerrar la historia.
+- **Pruebas unitarias (JVM, `.\gradlew.bat testDebugUnitTest`)**: sin fallos, incluye las 8 de `FavoriteRepositoryTest` y las 11 de `FavoritoViewModelTest` de HU10, sin regresiones en el resto del proyecto.
+- **Lint (`lintDebug`)**: sin errores.
+- **Pruebas de Compose UI de HU10 (`PantallaDetalleArtistaFavoritoTest`, 11 pruebas)**: ejecutadas en emulador (`Perfil_prueba_23`, API 23) de forma aislada y como parte de la suite completa — **sin fallos**. Durante la primera ejecución se detectó y corrigió un bug en la propia prueba (`laConfirmacionDesapareceSolaDespuesDeUnosSegundos`: estado local declarado sin `remember`, se reiniciaba en cada recomposición) — commit `2afcd30`.
+- **Suite instrumentada completa (`connectedDebugAndroidTest`, 142 pruebas)**: ejecutada en emulador tras integrar HU10 — **141/142 OK**. El único fallo es `ArtistasE2ETest.alGirarLaPantallaSeConservanLaBusquedaYElListadoSinVolverAConsultar`, un bug pre-existente de HU03 (no introducido por HU10, ver abajo).
+- **Verificación manual en dispositivo físico (Samsung SM-A356E)**: confirmada por el usuario — favorito, estados y rediseño visual funcionando correctamente.
 
-## Pendiente (no bloquea la implementación, sí el cierre de la historia)
+## Rediseño visual de la sección de favorito
 
-- Ejecutar en dispositivo/emulador las 11 pruebas de `PantallaArtistaProvisionalFavoritoTest` (comando sugerido más abajo).
+A pedido del usuario, que compartió mockups de la pantalla "Detalle Del Artista", se rediseñó **solo la sección de favorito** (sin tocar biografía/estadísticas/discografía, territorio de HU04):
+
+- Botón en forma de píldora con ícono de corazón (vacío/lleno); textos actualizados a "Agregar a Favoritos" y "En tus favoritos".
+- Nota de bloqueo temporal bajo el botón cuando ya es favorito, explicando por qué queda inactivo.
+- Tarjeta de error al guardar (estilo visual consistente con `TarjetaError` de HU07: fondo `errorContainer`, ícono de advertencia) con botón "Reintentar guardar". El texto de error se mantuvo sin cambios (genérico, honesto) porque el `ViewModel` no distingue causas específicas (se descartó explícitamente inventar un diagnóstico tipo "red inestable").
+- Tarjeta restyled para "artista no disponible".
+- Sin dependencias nuevas: los íconos usados (`Favorite`, `FavoriteBorder`, `Lock`, `Refresh`, `Warning`) ya están incluidos en `material-icons-core`.
+
+## Bug pre-existente de HU03 (no introducido por HU10)
+
+El buscador de artistas trunca el texto escrito al girar físicamente la pantalla (`ArtistasE2ETest`, ver [`bug-busqueda-artistas-rotacion.md`](./bug-busqueda-artistas-rotacion.md)). Se investigó a fondo durante la integración de HU10 porque comparte el archivo `PantallaArtistas.kt`, con 4 intentos de corrección distintos, todos verificados en dispositivo/emulador real, ninguno cambió el síntoma. Se concluyó que el origen está fuera del código de la app (comportamiento del IME/plataforma durante la recreación real de la Activity) y se documentó como riesgo conocido de HU03, sin seguir intentando correcciones a ciegas.
+
+## Riesgo operativo: datos de prueba en el backend compartido
+
+Al probar manualmente contra el backend compartido/desplegado (no el local), guardar un favorito hace un `POST` real y persistente (no hay endpoint `DELETE` en la API para deshacerlo). El coleccionista de prueba (normalmente id `100`) puede tener ahora artistas marcados como favoritos por pruebas manuales de esta historia. El usuario se encarga de avisar al equipo/tutores si esto requiere atención.
+
+## Pendiente (no bloquea el cierre de T10-2/T10-3/T10-4)
+
 - Pruebas E2E de HU10: a cargo de otro integrante del equipo; no se incluyen en este change (`add-artistas-favoritos`).
-- Diseño visual detallado del botón y los mensajes (T10-1): a cargo de diseño; esta implementación solo fija los estados y el contrato de datos (ver `design.md`).
-- Detalle real de artista (HU04): el botón se integró en `PantallaArtistaProvisional` (pantalla provisional de HU03) de forma explícitamente temporal; se debe migrar cuando HU04 exista.
-- Bug pre-existente de HU03 (no introducido por HU10, detectado al correr la suite completa durante la integración): ver [`bug-busqueda-artistas-rotacion.md`](./bug-busqueda-artistas-rotacion.md).
+- "Quitar de favoritos": es una historia de usuario distinta (no HU10); la API actual no expone un endpoint `DELETE`.
+- Diseño visual del resto de la pantalla de detalle (biografía, estadísticas, discografía): a cargo de HU04, fuera de este alcance.
 
-### Comando para ejecutar las pruebas instrumentadas pendientes
+### Comando para repetir las pruebas instrumentadas
 
 Con un emulador o dispositivo conectado:
 
 ```powershell
 $env:JAVA_HOME = "C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot"
-.\gradlew.bat connectedDebugAndroidTest --tests "com.example.vinilos.ui.artistas.PantallaArtistaProvisionalFavoritoTest"
+.\gradlew.bat connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.class=com.example.vinilos.ui.artistas.PantallaDetalleArtistaFavoritoTest"
 ```

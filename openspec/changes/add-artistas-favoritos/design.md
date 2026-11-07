@@ -1,5 +1,7 @@
 # Design
 
+> **Nota de actualización (post-implementación):** HU04 se fusionó a `develop` después de escrito este diseño y reemplazó `PantallaArtistaProvisional` por el detalle real (`PantallaDetalleArtista`). La integración de HU10 se migró a ese archivo sin cambiar el contrato (`FavoritoUiState`/`FavoritoViewModel` no cambiaron). Además, a pedido del usuario, la sección de favorito se rediseñó visualmente según mockups (botón en píldora con ícono, nota de bloqueo temporal, tarjetas de error/no-disponible) — ver `tasks.md`, sección 6. El contexto original de esta sección se conserva sin editar para no perder la motivación histórica de las decisiones.
+
 ## Context
 
 El detalle de artista todavía no existe como tal (HU04 no está implementada); hoy la navegación lleva a `PantallaArtistaProvisional`, que solo recibe `nombre` y `tipo` desde la ruta `Rutas.DetalleArtista` (`artista/{tipo}/{id}?nombre={nombre}`) y no usa el `id` que ya viaja en la navegación. HU10 debe agregar el botón de favorito ahí, de forma explícitamente temporal.

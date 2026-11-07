@@ -1,5 +1,7 @@
 # Proposal
 
+> **Nota de actualización (post-implementación):** HU04 se fusionó a `develop` durante el desarrollo de HU10 y trajo el detalle real de artista (`PantallaDetalleArtista`), reemplazando la pantalla provisional mencionada abajo. La integración se migró a ese archivo sin cambiar el contrato del ViewModel. También se rediseñó visualmente la sección de favorito según mockups que compartió el usuario (ver `tasks.md`, sección 6); el resto de la pantalla (biografía, estadísticas, discografía) sigue siendo responsabilidad de HU04 y no se tocó.
+
 ## Why
 
 HU10 pide que un coleccionista pueda marcar artistas (músicos o bandas) como favoritos desde su detalle, y que ese estado persista entre aperturas de la app. Hoy no existe ningún consumo de los endpoints de favoritos del backend ni un botón de favorito en la UI; sin esto, los coleccionistas no tienen forma de expresar ni consultar sus gustos musicales.
