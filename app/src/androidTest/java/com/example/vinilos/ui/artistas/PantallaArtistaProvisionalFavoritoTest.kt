@@ -7,6 +7,7 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -202,7 +203,6 @@ class PantallaArtistaProvisionalFavoritoTest {
 
     @Test
     fun laConfirmacionDesapareceSolaDespuesDeUnosSegundos() {
-        rule.mainClock.autoAdvance = false
         rule.setContent {
             VinilosTheme {
                 var estado by mutableStateOf<FavoritoUiState>(FavoritoUiState.Favorito(mostrarConfirmacion = true))
@@ -220,8 +220,9 @@ class PantallaArtistaProvisionalFavoritoTest {
 
         rule.onNodeWithTag(TagConfirmacionFavorito).assertIsDisplayed()
 
-        rule.mainClock.advanceTimeBy(3_000L)
-        rule.waitForIdle()
+        rule.waitUntil(timeoutMillis = 5_000) {
+            rule.onAllNodesWithTag(TagConfirmacionFavorito).fetchSemanticsNodes().isEmpty()
+        }
 
         rule.onNodeWithTag(TagConfirmacionFavorito).assertDoesNotExist()
     }

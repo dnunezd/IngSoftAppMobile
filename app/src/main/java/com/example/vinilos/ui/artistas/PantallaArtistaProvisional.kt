@@ -114,54 +114,53 @@ private fun SeccionFavorito(
             Button(onClick = onVolverAlListado) {
                 Text(stringResource(R.string.favoritos_volver_artistas))
             }
-            return@Column
-        }
-
-        val textoBoton = when (estado) {
-            FavoritoUiState.Guardando -> stringResource(R.string.favoritos_guardando)
-            is FavoritoUiState.Favorito -> stringResource(R.string.favoritos_favorito)
-            else -> stringResource(R.string.favoritos_agregar)
-        }
-        val botonActivo = estado == FavoritoUiState.NoFavorito || estado == FavoritoUiState.ErrorGuardado
-        Button(
-            onClick = onAgregar,
-            enabled = botonActivo,
-            modifier = Modifier.testTag(TagBotonFavorito)
-        ) {
-            Text(textoBoton)
-        }
-
-        if (estado == FavoritoUiState.ErrorComprobacion) {
-            Text(
-                text = stringResource(R.string.favoritos_error_comprobacion),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.testTag(TagErrorFavorito)
-            )
-            TextButton(onClick = onReintentar, modifier = Modifier.testTag(TagReintentarFavorito)) {
-                Text(stringResource(R.string.favoritos_reintentar))
+        } else {
+            val textoBoton = when (estado) {
+                FavoritoUiState.Guardando -> stringResource(R.string.favoritos_guardando)
+                is FavoritoUiState.Favorito -> stringResource(R.string.favoritos_favorito)
+                else -> stringResource(R.string.favoritos_agregar)
             }
-        }
+            val botonActivo = estado == FavoritoUiState.NoFavorito || estado == FavoritoUiState.ErrorGuardado
+            Button(
+                onClick = onAgregar,
+                enabled = botonActivo,
+                modifier = Modifier.testTag(TagBotonFavorito)
+            ) {
+                Text(textoBoton)
+            }
 
-        if (estado == FavoritoUiState.ErrorGuardado) {
-            Text(
-                text = stringResource(R.string.favoritos_error_guardado),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.testTag(TagErrorFavorito)
-            )
-        }
+            if (estado == FavoritoUiState.ErrorComprobacion) {
+                Text(
+                    text = stringResource(R.string.favoritos_error_comprobacion),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.testTag(TagErrorFavorito)
+                )
+                TextButton(onClick = onReintentar, modifier = Modifier.testTag(TagReintentarFavorito)) {
+                    Text(stringResource(R.string.favoritos_reintentar))
+                }
+            }
 
-        if (estado is FavoritoUiState.Favorito && estado.mostrarConfirmacion) {
-            Text(
-                text = stringResource(R.string.favoritos_confirmacion, nombre),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.testTag(TagConfirmacionFavorito)
-            )
-            LaunchedEffect(Unit) {
-                delay(DuracionConfirmacionFavoritoMs)
-                onConfirmacionMostrada()
+            if (estado == FavoritoUiState.ErrorGuardado) {
+                Text(
+                    text = stringResource(R.string.favoritos_error_guardado),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.testTag(TagErrorFavorito)
+                )
+            }
+
+            if (estado is FavoritoUiState.Favorito && estado.mostrarConfirmacion) {
+                Text(
+                    text = stringResource(R.string.favoritos_confirmacion, nombre),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.testTag(TagConfirmacionFavorito)
+                )
+                LaunchedEffect(Unit) {
+                    delay(DuracionConfirmacionFavoritoMs)
+                    onConfirmacionMostrada()
+                }
             }
         }
     }
