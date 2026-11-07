@@ -202,8 +202,11 @@ private fun Titular() {
 @Composable
 private fun Buscador(consultaInicial: String, habilitado: Boolean, onBuscar: (String) -> Unit) {
     // Texto local para que escribir no dependa del viaje por el ViewModel; el ViewModel conserva
-    // el valor y rememberSaveable lo restaura al girar la pantalla.
-    var texto by rememberSaveable { mutableStateOf(consultaInicial) }
+    // el valor y rememberSaveable lo restaura al girar la pantalla. La clave es fija (no autogenerada
+    // por posición de composición): este composable vive en un "item" de LazyColumn, y al rotar el
+    // viewport cambia los ítems visibles/recompuestos, lo que puede desalinear una clave automática
+    // entre distintos ítems y restaurar un valor incorrecto o truncado.
+    var texto by rememberSaveable(key = "buscador_artistas_texto") { mutableStateOf(consultaInicial) }
     BasicTextField(
         value = texto,
         onValueChange = {
