@@ -105,13 +105,16 @@
     </plurals>
 
     <!-- Botón de favorito en el detalle del artista (HU10), solo para el Coleccionista -->
-    <string name="favoritos_agregar">Agregar Favorito</string>
+    <string name="favoritos_agregar">Agregar a Favoritos</string>
     <string name="favoritos_guardando" tools:ignore="TypographyEllipsis">Guardando...</string>
-    <string name="favoritos_favorito">Favorito</string>
+    <string name="favoritos_favorito">En tus favoritos</string>
+    <string name="favoritos_bloqueado_nota">Botón bloqueado temporalmente para evitar peticiones duplicadas.</string>
     <string name="favoritos_reintentar">Reintentar</string>
+    <string name="favoritos_reintentar_guardado">Reintentar guardar</string>
     <string name="favoritos_error_comprobacion">No pudimos comprobar si es tu favorito</string>
     <string name="favoritos_error_guardado">No se pudo guardar el favorito, intenta de nuevo</string>
     <string name="favoritos_no_disponible">El artista ya no está disponible</string>
+    <string name="favoritos_no_disponible_descripcion">El artista seleccionado ya no se encuentra en el catálogo o fue retirado de la colección.</string>
     <string name="favoritos_volver_artistas">Volver al listado de artistas</string>
     <string name="favoritos_confirmacion">%1$s se agregó a tus favoritos</string>
 

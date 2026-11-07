@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,12 +27,20 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -296,62 +305,179 @@ private fun SeccionFavorito(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        if (estado == FavoritoUiState.NoDisponible) {
-            Text(
-                text = stringResource(R.string.favoritos_no_disponible),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.error,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.testTag(TagNoDisponibleFavorito)
+        when (estado) {
+            FavoritoUiState.NoDisponible -> TarjetaFavoritoNoDisponible(onVolverAlListado)
+            // El guardado reintenta con la misma acción de agregar (onAgregar); la tarjeta de
+            // error reemplaza al botón principal en vez de mostrarse junto a él.
+            FavoritoUiState.ErrorGuardado -> TarjetaErrorGuardado(
+                onReintentar = onAgregar,
+                modifier = Modifier.testTag(TagErrorFavorito)
             )
-            Button(onClick = onVolverAlListado) {
-                Text(stringResource(R.string.favoritos_volver_artistas))
-            }
-        } else {
-            val textoBoton = when (estado) {
-                FavoritoUiState.Guardando -> stringResource(R.string.favoritos_guardando)
-                is FavoritoUiState.Favorito -> stringResource(R.string.favoritos_favorito)
-                else -> stringResource(R.string.favoritos_agregar)
-            }
-            val botonActivo = estado == FavoritoUiState.NoFavorito || estado == FavoritoUiState.ErrorGuardado
-            Button(
-                onClick = onAgregar,
-                enabled = botonActivo,
-                modifier = Modifier.testTag(TagBotonFavorito)
-            ) {
-                Text(textoBoton)
-            }
+            else -> {
+                val esFavorito = estado is FavoritoUiState.Favorito
+                val botonActivo = estado == FavoritoUiState.NoFavorito
+                val textoBoton = when (estado) {
+                    FavoritoUiState.Guardando -> stringResource(R.string.favoritos_guardando)
+                    is FavoritoUiState.Favorito -> stringResource(R.string.favoritos_favorito)
+                    else -> stringResource(R.string.favoritos_agregar)
+                }
+                Button(
+                    onClick = onAgregar,
+                    enabled = botonActivo,
+                    shape = RoundedCornerShape(50),
+                    colors = ButtonDefaults.buttonColors(
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(TagBotonFavorito)
+                ) {
+                    Icon(
+                        imageVector = if (esFavorito) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                        contentDescription = null,
+                        tint = if (esFavorito) MaterialTheme.colorScheme.error else LocalContentColor.current
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(textoBoton)
+                }
 
-            if (estado == FavoritoUiState.ErrorComprobacion) {
-                Text(
-                    text = stringResource(R.string.favoritos_error_comprobacion),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.testTag(TagErrorFavorito)
-                )
-                TextButton(onClick = onReintentar, modifier = Modifier.testTag(TagReintentarFavorito)) {
-                    Text(stringResource(R.string.favoritos_reintentar))
+                if (esFavorito) {
+                    NotaBloqueoTemporalFavorito()
+                }
+
+                if (estado == FavoritoUiState.ErrorComprobacion) {
+                    Text(
+                        text = stringResource(R.string.favoritos_error_comprobacion),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.testTag(TagErrorFavorito)
+                    )
+                    TextButton(onClick = onReintentar, modifier = Modifier.testTag(TagReintentarFavorito)) {
+                        Text(stringResource(R.string.favoritos_reintentar))
+                    }
+                }
+
+                if (estado is FavoritoUiState.Favorito && estado.mostrarConfirmacion) {
+                    Text(
+                        text = stringResource(R.string.favoritos_confirmacion, nombre),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.testTag(TagConfirmacionFavorito)
+                    )
                 }
             }
+        }
+    }
+}
 
-            if (estado == FavoritoUiState.ErrorGuardado) {
-                Text(
-                    text = stringResource(R.string.favoritos_error_guardado),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.testTag(TagErrorFavorito)
-                )
-            }
+/** Nota bajo el botón ya marcado como favorito: explica por qué queda inactivo (HU10). */
+@Composable
+private fun NotaBloqueoTemporalFavorito() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Lock,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(18.dp)
+        )
+        Text(
+            text = stringResource(R.string.favoritos_bloqueado_nota),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
 
-            if (estado is FavoritoUiState.Favorito && estado.mostrarConfirmacion) {
-                Text(
-                    text = stringResource(R.string.favoritos_confirmacion, nombre),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.testTag(TagConfirmacionFavorito)
-                )
-            }
+/**
+ * Tarjeta de error al guardar el favorito (HU10), con el mismo lenguaje visual que [TarjetaError]
+ * en la creación de álbum (HU07): fondo errorContainer, ícono de advertencia y botón de reintento.
+ */
+@Composable
+private fun TarjetaErrorGuardado(onReintentar: () -> Unit, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(MaterialTheme.colorScheme.errorContainer)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Icon(
+                imageVector = Icons.Filled.Warning,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error
+            )
+            Text(
+                text = stringResource(R.string.favoritos_error_guardado),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+        }
+        Button(
+            onClick = onReintentar,
+            shape = RoundedCornerShape(50),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(imageVector = Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.favoritos_reintentar_guardado))
+        }
+    }
+}
+
+/** Tarjeta cuando el artista ya no existe en el backend (HU10): mensaje y regreso al listado. */
+@Composable
+private fun TarjetaFavoritoNoDisponible(onVolverAlListado: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Warning,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.error
+        )
+        Text(
+            text = stringResource(R.string.favoritos_no_disponible),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.testTag(TagNoDisponibleFavorito)
+        )
+        Text(
+            text = stringResource(R.string.favoritos_no_disponible_descripcion),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+        Button(
+            onClick = onVolverAlListado,
+            shape = RoundedCornerShape(50),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.favoritos_volver_artistas))
         }
     }
 }

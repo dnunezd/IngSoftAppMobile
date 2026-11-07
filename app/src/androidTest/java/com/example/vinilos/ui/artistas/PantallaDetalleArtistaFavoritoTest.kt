@@ -80,7 +80,7 @@ class PantallaDetalleArtistaFavoritoTest {
         var toques = 0
         mostrar(estadoFavorito = FavoritoUiState.NoFavorito, onAgregarFavorito = { toques++ })
 
-        rule.onNodeWithText("Agregar Favorito").assertIsDisplayed().assertIsEnabled().performClick()
+        rule.onNodeWithText("Agregar a Favoritos").assertIsDisplayed().assertIsEnabled().performClick()
         assertEquals(1, toques)
     }
 
@@ -95,7 +95,7 @@ class PantallaDetalleArtistaFavoritoTest {
     fun favoritoMuestraElBotonDesactivadoConSuTexto() {
         mostrar(estadoFavorito = FavoritoUiState.Favorito(mostrarConfirmacion = false))
 
-        rule.onNodeWithText("Favorito").assertIsDisplayed().assertIsNotEnabled()
+        rule.onNodeWithText("En tus favoritos").assertIsDisplayed().assertIsNotEnabled()
     }
 
     @Test
@@ -118,7 +118,8 @@ class PantallaDetalleArtistaFavoritoTest {
         mostrar(estadoFavorito = FavoritoUiState.ErrorGuardado, onAgregarFavorito = { toques++ })
 
         rule.onNodeWithTag(TagErrorFavorito).assertIsDisplayed()
-        rule.onNodeWithText("Agregar Favorito").assertIsEnabled().performClick()
+        rule.onNodeWithTag(TagBotonFavorito).assertDoesNotExist()
+        rule.onNodeWithText("Reintentar guardar").assertIsEnabled().performClick()
         assertEquals(1, toques)
     }
 
