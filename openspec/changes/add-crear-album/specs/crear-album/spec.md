@@ -38,15 +38,20 @@ Al pulsar "Crear álbum", la app SHALL marcar cada campo faltante con "Campo obl
 - **AND** los demás campos siguen marcados
 
 ### Requirement: URL de la portada
-Si la portada no empieza con "http://" o "https://", la app SHALL mostrar "Ingresa una URL válida" al pulsar "Crear álbum" y MUST NOT enviar nada al servidor. El prefijo MUST compararse sin distinguir mayúsculas.
+Si la portada no empieza con "http://" o "https://", o no tiene un dominio después del prefijo, la app SHALL mostrar "Ingresa una URL válida" al pulsar "Crear álbum" y MUST NOT enviar nada al servidor. El prefijo MUST compararse sin distinguir mayúsculas.
 
 #### Scenario: Protocolo no permitido
 - **WHEN** la portada es "ftp://servidor/portada.png" y el usuario pulsa "Crear álbum"
 - **THEN** la portada muestra "Ingresa una URL válida"
 - **AND** no se envía nada al servidor
 
+#### Scenario: Prefijo sin dominio
+- **WHEN** la portada es "https://" y el usuario pulsa "Crear álbum"
+- **THEN** la portada muestra "Ingresa una URL válida"
+- **AND** no se envía nada al servidor
+
 #### Scenario: Prefijos válidos
-- **WHEN** la portada empieza con "http://", "https://" o "HTTPS://"
+- **WHEN** la portada empieza con "http://", "https://" o "HTTPS://" seguido de un dominio
 - **THEN** la portada no muestra error
 
 ### Requirement: Selector de fecha

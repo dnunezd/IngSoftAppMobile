@@ -71,4 +71,18 @@ class ValidacionAlbumTest {
             assertFalse(portada, portadaValida(portada))
         }
     }
+
+    @Test
+    fun laPortadaDebeTenerDominio() {
+        for (portada in listOf("https://", "http://", "HTTPS://", "https:// ", "https:///b.png", "https://?a=1", "https://#a", "https://:8080", "https://.")) {
+            assertFalse(portada, portadaValida(portada))
+        }
+    }
+
+    @Test
+    fun elDominioAdmitePuertoRutaYConsulta() {
+        for (portada in listOf("https://a.co", "http://localhost:3000/b.png", "https://a.co?x=1", "https://a.co/b c.png", "https://música.co/b.png")) {
+            assertTrue(portada, portadaValida(portada))
+        }
+    }
 }

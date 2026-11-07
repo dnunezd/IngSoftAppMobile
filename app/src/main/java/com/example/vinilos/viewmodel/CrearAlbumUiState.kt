@@ -32,10 +32,10 @@ data class CrearAlbumUiState(
     val enviando: Boolean get() = envio == EnvioAlbum.Enviando
 }
 
-fun portadaValida(portada: String): Boolean {
-    val url = portada.trim()
-    return url.startsWith("http://", ignoreCase = true) || url.startsWith("https://", ignoreCase = true)
-}
+/** `http://` o `https://` seguido de un dominio; el puerto, la ruta y la consulta son opcionales. */
+private val UrlPortada = Regex("""https?://[\p{L}\p{N}][^/?#:@\s]*([:/?#].*)?""", RegexOption.IGNORE_CASE)
+
+fun portadaValida(portada: String): Boolean = UrlPortada.matches(portada.trim())
 
 fun validarAlbum(estado: CrearAlbumUiState): Map<CampoAlbum, ErrorCampo> = buildMap {
     if (estado.nombre.isBlank()) put(CampoAlbum.Nombre, ErrorCampo.Obligatorio)
