@@ -1,6 +1,5 @@
 package com.example.vinilos.navigation
 
-import android.net.Uri
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -18,8 +17,8 @@ import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.repository.AlbumRepository
 import com.example.vinilos.data.repository.ArtistRepository
 import com.example.vinilos.data.repository.CollectorRepository
-import com.example.vinilos.ui.artistas.PantallaArtistaProvisional
 import com.example.vinilos.ui.artistas.PantallaArtistas
+import com.example.vinilos.ui.artistas.PantallaDetalleArtista
 import com.example.vinilos.ui.catalogo.PantallaCatalogo
 import com.example.vinilos.ui.crear.AccionesCrearAlbum
 import com.example.vinilos.ui.crear.PantallaCrearAlbum
@@ -29,6 +28,7 @@ import com.example.vinilos.ui.ingreso.PantallaIngreso
 import com.example.vinilos.ui.inicio.PantallaInicio
 import com.example.vinilos.viewmodel.AlbumViewModel
 import com.example.vinilos.viewmodel.AlbumsViewModel
+import com.example.vinilos.viewmodel.ArtistaDetalleViewModel
 import com.example.vinilos.viewmodel.ArtistsViewModel
 import com.example.vinilos.viewmodel.CollectorsViewModel
 import com.example.vinilos.viewmodel.CrearAlbumViewModel
@@ -42,8 +42,8 @@ object Rutas {
     const val Catalogo = "catalogo"
     const val Artistas = "artistas"
 
-    /** Detalle del artista (HU04). El nombre viaja para el destino provisional; HU04 lo consulta por id. */
-    const val DetalleArtista = "artista/{tipo}/{id}?nombre={nombre}"
+    /** Detalle del artista (HU04). El tipo distingue a un músico de una banda con el mismo id. */
+    const val DetalleArtista = "artista/{tipo}/{id}"
 
     /** Detalle del álbum (HU02). */
     const val DetalleAlbum = "album/{id}"
@@ -51,8 +51,7 @@ object Rutas {
     /** Formulario para crear un álbum (HU07), solo para el Coleccionista. */
     const val CrearAlbum = "crear-album"
 
-    fun detalleArtista(tipo: ArtistType, id: Int, nombre: String) =
-        "artista/${tipo.name}/$id?nombre=${Uri.encode(nombre)}"
+    fun detalleArtista(tipo: ArtistType, id: Int) = "artista/${tipo.name}/$id"
 
     fun detalleAlbum(id: Int) = "album/$id"
 }
@@ -62,7 +61,7 @@ private const val ClaveAlbumCreado = "album_creado"
 
 /**
  * Grafo de navegación: ingreso -> (coleccionistas) -> inicio -> catálogo -> detalle del álbum |
- * crear álbum, y artistas -> detalle del artista. Al entrar al
+ * crear álbum, y artistas -> detalle del artista -> detalle del álbum. Al entrar al
  * inicio el ingreso queda en la pila (para poder cambiar de perfil) y el selector sale de ella.
  */
 @Composable
@@ -212,7 +211,7 @@ fun VinilosNavHost(
                 onBuscar = viewModel::buscar,
                 onReintentar = viewModel::reintentar,
                 onSeleccionar = { artista ->
-                    navController.navigate(Rutas.detalleArtista(artista.type, artista.id, artista.name)) {
+                    navController.navigate(Rutas.detalleArtista(artista.type, artista.id)) {
                         launchSingleTop = true
                     }
                 },
@@ -223,14 +222,25 @@ fun VinilosNavHost(
             Rutas.DetalleArtista,
             arguments = listOf(
                 navArgument("tipo") { type = NavType.StringType },
-                navArgument("id") { type = NavType.IntType },
-                navArgument("nombre") { type = NavType.StringType; defaultValue = "" }
+                navArgument("id") { type = NavType.IntType }
             )
         ) { entrada ->
             val argumentos = requireNotNull(entrada.arguments)
-            PantallaArtistaProvisional(
-                nombre = argumentos.getString("nombre").orEmpty(),
-                tipo = ArtistType.valueOf(requireNotNull(argumentos.getString("tipo"))),
+            val tipo = ArtistType.valueOf(requireNotNull(argumentos.getString("tipo")))
+            val id = argumentos.getInt("id")
+            // Ligado a la entrada de navegación: sobrevive a la rotación y a la ida y vuelta al álbum.
+            val viewModel: ArtistaDetalleViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer { ArtistaDetalleViewModel(tipo, id, artistRepository) }
+                }
+            )
+            val estado by viewModel.uiState.collectAsStateWithLifecycle()
+            PantallaDetalleArtista(
+                estado = estado,
+                onSeleccionarAlbum = { idAlbum ->
+                    navController.navigate(Rutas.detalleAlbum(idAlbum)) { launchSingleTop = true }
+                },
+                onReintentar = viewModel::reintentar,
                 onAtras = { navController.popBackStack() }
             )
         }
