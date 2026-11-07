@@ -16,7 +16,7 @@ La documentación del proyecto (historias de usuario, sprints con su arquitectur
 | HU01 · Catálogo de álbumes | Implementada: cuadrícula de álbumes con portada, nombre y género en orden alfabético, estados de carga, vacío y error con "Reintentar", deslizar para actualizar, posición conservada al girar y paso al detalle. Pruebas y evidencia en [`docs/pruebas/sprint-1/HU01/`](docs/pruebas/sprint-1/HU01/) |
 | HU02 · Detalle de álbum | T02-3, T02-4 y T02-5 completas y verificadas en dispositivo físico (Samsung SM-A356E, Android 16) y en emulador API 23 contra el backend real: consulta, presentación, estados de pantalla, portada real con Coil, navegación desde un enlace provisional del catálogo, pruebas E2E y fecha en API 23 (91/91 instrumentadas sin fallos en ambos dispositivos). Pendiente: documentación en wiki/mockups (T02-6, borradores sin publicar) |
 | HU03 · Listado de artistas | Integrado desde `develop`: listado de músicos y bandas y cargador compartido de imágenes Coil; verificación de UI de esta integración pendiente |
-| HU04 · Detalle de artista | Implementada: datos del músico o la banda, integrantes, álbumes con paso a su detalle y premios, con estados de carga y error y datos conservados al girar. 131/131 instrumentadas sin fallos en Samsung SM-S938B (Android 17) contra el backend desplegado, que no tiene bandas con integrantes: su mapeo se cubre con datos de prueba y su presentación no tiene prueba automatizada. Pendiente: corrida en API 23 y wiki y mockups (T04-6) |
+| HU04 · Detalle de artista | Implementada: datos del músico o la banda, integrantes, álbumes con paso a su detalle y premios, con estados de carga y error y datos conservados al girar. 131/131 instrumentadas sin fallos en Samsung SM-S938B (Android 17) contra el backend desplegado, que no tiene bandas con integrantes: su mapeo se cubre con datos de prueba y su presentación no tiene prueba automatizada. E2E (T04-5): 7 escenarios `FN04_ESC01`..`ESC07` en `ArtistaDetalleE2ETest`, con su evidencia en [`docs/pruebas/sprint-2/HU04/`](docs/pruebas/sprint-2/HU04/). Pendiente: corrida en API 23 y wiki y mockups (T04-6) |
 | HU07 · Crear un álbum | Parte 1 implementada: formulario solo para el Coleccionista, validación, selector de fecha, envío con reintento y álbum nuevo marcado en el catálogo. Faltan las pruebas E2E y de regresión. Evidencia en [`docs/pruebas/sprint-2/HU07`](docs/pruebas/sprint-2/HU07/README.md). |
 
 ## Versión y APK
@@ -179,8 +179,9 @@ Las clases E2E (las que llaman a `EvidenciaE2E.capturar(...)`) corren contra el 
 | `AlbumDetalleE2ETest` | HU02 | `FN02_ESC01` | 1 |
 | `AlbumDetalleBackendRealTest` | HU02 | `FN02_ESC02`, `FN02_ESC03` (una por escenario) | 2 |
 | `ArtistasE2ETest` | HU03 | `FN03_ESC01`..`FN03_ESC07` (una por escenario) | 7 |
+| `ArtistaDetalleE2ETest` | HU04 | `FN04_ESC01`..`FN04_ESC07` (una por escenario; PDF en `docs/pruebas/sprint-2/HU04/e2e/`) | 7 |
 
-Total: **19 pruebas E2E**. Por qué una "limpieza" antes de correrlas: `BuildConfig.BASE_URL` queda fijo dentro del APK de prueba al compilar, así que cambiar la `baseUrl` exige **reinstalar** (`installDebug installDebugAndroidTest`), no alcanza con solo volver a ejecutar; y las carpetas de evidencia se acumulan en el dispositivo entre corridas, así que conviene borrarlas antes de cada corrida para no mezclar capturas de ejecuciones distintas en el mismo PDF.
+Total: **26 pruebas E2E**. Por qué una "limpieza" antes de correrlas: `BuildConfig.BASE_URL` queda fijo dentro del APK de prueba al compilar, así que cambiar la `baseUrl` exige **reinstalar** (`installDebug installDebugAndroidTest`), no alcanza con solo volver a ejecutar; y las carpetas de evidencia se acumulan en el dispositivo entre corridas, así que conviene borrarlas antes de cada corrida para no mezclar capturas de ejecuciones distintas en el mismo PDF.
 
 #### Correr todas las E2E de la app y traer su evidencia
 
@@ -201,15 +202,15 @@ adb reverse tcp:3000 tcp:3000
 # Limpia evidencia previa en el dispositivo (no es necesario un "gradle clean")
 adb shell rm -rf /storage/emulated/0/Android/data/com.example.vinilos/files/e2e-evidencia
 
-# Corre TODAS las clases E2E de la app (las 19 pruebas)
-adb shell am instrument -w -e class com.example.vinilos.IngresoE2ETest,com.example.vinilos.CatalogoE2ETest,com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest,com.example.vinilos.ArtistasE2ETest com.example.vinilos.test/androidx.test.runner.AndroidJUnitRunner
+# Corre TODAS las clases E2E de la app (las 26 pruebas)
+adb shell am instrument -w -e class com.example.vinilos.IngresoE2ETest,com.example.vinilos.CatalogoE2ETest,com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest,com.example.vinilos.ArtistasE2ETest,com.example.vinilos.ArtistaDetalleE2ETest com.example.vinilos.test/androidx.test.runner.AndroidJUnitRunner
 
 # Trae la evidencia (pisa la carpeta local si ya existía)
 rm -rf ./e2e-evidencia
 adb pull /storage/emulated/0/Android/data/com.example.vinilos/files/e2e-evidencia ./e2e-evidencia
 ```
 
-Debe terminar en `OK (19 tests)` (3 + 5 + 1 + 2 + 7 escenarios con evidencia, más un test de navegación en `IngresoE2ETest` sin captura propia). El dispositivo debe permanecer desbloqueado y con la pantalla encendida durante toda la corrida (`adb shell svc power stayon true` ayuda si se duerme).
+Debe terminar en `OK (26 tests)` (3 + 5 + 1 + 2 + 7 + 7 escenarios con evidencia, más un test de navegación en `IngresoE2ETest` sin captura propia). El dispositivo debe permanecer desbloqueado y con la pantalla encendida durante toda la corrida (`adb shell svc power stayon true` ayuda si se duerme).
 
 > ⚠️ `./gradlew connectedDebugAndroidTest` instala, corre y **desinstala** la app al terminar, lo que borra su carpeta de evidencia antes de poder hacer `adb pull`. Usa `installDebug installDebugAndroidTest` + `adb shell am instrument` (como arriba) para dejar la app instalada y poder traer la evidencia después.
 
