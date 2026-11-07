@@ -217,7 +217,11 @@ private fun Buscador(consultaInicial: String, habilitado: Boolean, onBuscar: (St
         singleLine = true,
         textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        // autoCorrect = false: evita que el IME retenga una "región de composición" (texto
+        // subrayado aún no confirmado) mientras el campo tiene foco. Con corrección automática
+        // activa, un cambio de configuración (como girar la pantalla) puede reconstruir la
+        // conexión de entrada antes de que esa región se confirme, perdiendo caracteres.
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search, autoCorrect = false),
         modifier = Modifier
             .fillMaxWidth()
             .testTag(TagBuscadorArtistas),

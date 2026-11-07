@@ -168,7 +168,10 @@ class PantallaDetalleArtistaFavoritoTest {
 
         rule.onNodeWithTag(TagConfirmacionFavorito).assertIsDisplayed()
 
-        rule.waitUntil(timeoutMillis = 5_000) {
+        // La pantalla real (HU04) compone más contenido que la antigua pantalla provisional
+        // (álbumes, premios, imagen), por lo que en emuladores lentos el margen sobre los 2.5s
+        // de espera de producción debe ser mayor; el valor de producción no cambia.
+        rule.waitUntil(timeoutMillis = 10_000) {
             rule.onAllNodesWithTag(TagConfirmacionFavorito).fetchSemanticsNodes().isEmpty()
         }
 
