@@ -29,7 +29,7 @@ Restricciones: Compose BOM 2024.04.01 (Material 3 1.2.1), `minSdk` 23 sin desuga
 
 **Non-Goals:**
 - Sobrevivir a la muerte del proceso: el criterio solo pide conservar al girar y la sesión tampoco se persiste.
-- Validar que la URL apunte a una imagen: el criterio solo exige el prefijo.
+- Validar que la URL apunte a una imagen: solo se exigen el prefijo y un dominio.
 - Impedir nombres de álbum repetidos: el backend los permite.
 
 ## Decisions
@@ -73,7 +73,7 @@ Los demás ViewModels usan estados sellados, pero aquí los datos deben sobreviv
 
 ### D4. Validación pura y protección contra duplicados
 
-`validarAlbum(estado): Map<CampoAlbum, ErrorCampo>` recorta los textos y marca `Obligatorio` en cada campo vacío. Si la portada no está vacía y no empieza con `http://` o `https://` (sin distinguir mayúsculas), marca `UrlInvalida`.
+`validarAlbum(estado): Map<CampoAlbum, ErrorCampo>` recorta los textos y marca `Obligatorio` en cada campo vacío. Si la portada no está vacía y no empieza con `http://` o `https://` (sin distinguir mayúsculas) seguido de un dominio, marca `UrlInvalida`.
 
 `crear()` termina de inmediato si `envio` es `Enviando` o `Creado`, antes de lanzar la corrutina. Esa es la protección real ante dos toques seguidos; desactivar el botón no basta porque el backend guarda los dos álbumes. Se envían los textos recortados.
 
@@ -178,7 +178,7 @@ Al cerrar la parte 1 se repite la medición de `design.md` ("Mediciones") y se c
 
 ## Open Questions
 
-- Los criterios 5 y 6 de la wiki deben ajustarse: "Cancelar" no aplica durante el envío y falta la regla de fecha no futura. Se confirma con el equipo y se actualiza en T07-7.
+- El criterio 6 de la wiki debe ajustarse: falta la regla de fecha no futura. Se actualiza en T07-7. El criterio 5 ya indica que "Cancelar" no aplica durante el envío.
 - Los mockups locales y los de la wiki no coinciden y T07-1 (#5) sigue abierta. Se resuelve en T07-7.
 - La rúbrica evalúa escenarios automatizados con Espresso o Kraken para las historias de las iteraciones 1 y 2, así que T07-5 no puede quedar diferida más allá del cierre de la iteración si la HU07 es una de las cinco.
 - La rúbrica dice "iniciando en la versión L" (API 21) y `minSdk` es 23; `lower-min-sdk-23` dejó fuera de alcance bajar de 23. Falta confirmarlo con los tutores.
