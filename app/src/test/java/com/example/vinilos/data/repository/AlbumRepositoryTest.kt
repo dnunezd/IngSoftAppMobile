@@ -1,15 +1,19 @@
 package com.example.vinilos.data.repository
 
 import com.example.vinilos.data.model.Album
+import com.example.vinilos.data.model.AlbumNuevo
 import com.example.vinilos.data.model.AlbumResumen
 import com.example.vinilos.data.model.Artista
 import com.example.vinilos.data.model.Cancion
 import com.example.vinilos.data.model.Comentario
 import com.example.vinilos.data.remote.AlbumApi
 import com.example.vinilos.data.remote.AlbumDto
+import com.example.vinilos.data.remote.CrearAlbumDto
 import com.example.vinilos.data.remote.ErrorDeCarga
 import com.example.vinilos.data.remote.ServiceAdapter
+import com.google.gson.Gson
 import com.google.gson.JsonParseException
+import com.google.gson.JsonObject
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
@@ -207,6 +211,7 @@ class AlbumRepositoryTest {
         val api = object : AlbumApi {
             override suspend fun obtenerAlbum(id: Int): Response<AlbumDto> = throw esperado
             override suspend fun obtenerAlbumes(): List<AlbumDto> = throw esperado
+            override suspend fun crearAlbum(album: CrearAlbumDto): AlbumDto = throw esperado
         }
         val repositorio = AlbumRepository(ServiceAdapter(servidor.url("/").toString()), api)
 
@@ -223,6 +228,7 @@ class AlbumRepositoryTest {
         val api = object : AlbumApi {
             override suspend fun obtenerAlbum(id: Int): Response<AlbumDto> = awaitCancellation()
             override suspend fun obtenerAlbumes(): List<AlbumDto> = awaitCancellation()
+            override suspend fun crearAlbum(album: CrearAlbumDto): AlbumDto = awaitCancellation()
         }
         val repositorio = AlbumRepository(ServiceAdapter(servidor.url("/").toString()), api)
         var devolvioResultado = false
@@ -416,6 +422,7 @@ class AlbumRepositoryTest {
         val api = object : AlbumApi {
             override suspend fun obtenerAlbum(id: Int): Response<AlbumDto> = awaitCancellation()
             override suspend fun obtenerAlbumes(): List<AlbumDto> = awaitCancellation()
+            override suspend fun crearAlbum(album: CrearAlbumDto): AlbumDto = awaitCancellation()
         }
         val repositorio = AlbumRepository(ServiceAdapter(servidor.url("/").toString()), api)
         val consulta = async(start = CoroutineStart.UNDISPATCHED) { repositorio.obtenerAlbumes() }
@@ -427,6 +434,87 @@ class AlbumRepositoryTest {
             fail("La consulta cancelada no debe devolver un Result")
         } catch (error: CancellationException) {
             assertTrue(consulta.isCancelled)
+        }
+    }
+
+    private val albumNuevo = AlbumNuevo(
+        nombre = "Abbey Road",
+        portada = "https://example.com/abbey.jpg",
+        fechaLanzamientoMillis = -8_380_800_000L,
+        descripcion = "Undécimo álbum de estudio",
+        genero = "Rock",
+        disquera = "EMI"
+    )
+
+    @Test
+    fun crearAlbumEnviaPostConLosSeisCamposYDevuelveElId() = runTest {
+        servidor.enqueue(MockResponse().setBody("""{"id": 205, "name": "Abbey Road"}"""))
+
+        val resultado = repositorio.crearAlbum(albumNuevo)
+
+        assertEquals(205, resultado.getOrThrow())
+        val peticion = servidor.takeRequest(1, TimeUnit.SECONDS)
+        assertNotNull(peticion)
+        assertEquals("POST", peticion!!.method)
+        assertEquals("/albums", peticion.path)
+        val cuerpo = Gson().fromJson(peticion.body.readUtf8(), JsonObject::class.java)
+        assertEquals(
+            setOf("name", "cover", "releaseDate", "description", "genre", "recordLabel"),
+            cuerpo.keySet()
+        )
+        assertEquals("Abbey Road", cuerpo["name"].asString)
+        assertEquals("https://example.com/abbey.jpg", cuerpo["cover"].asString)
+        assertEquals("1969-09-26T00:00:00.000Z", cuerpo["releaseDate"].asString)
+        assertEquals("Undécimo álbum de estudio", cuerpo["description"].asString)
+        assertEquals("Rock", cuerpo["genre"].asString)
+        assertEquals("EMI", cuerpo["recordLabel"].asString)
+    }
+
+    @Test
+    fun crearAlbumRechazadoPorElBackendEsErrorDeCarga() = runTest {
+        servidor.enqueue(MockResponse().setResponseCode(400).setBody("""{"statusCode": 400}"""))
+
+        assertTrue(repositorio.crearAlbum(albumNuevo).exceptionOrNull() is ErrorDeCarga)
+    }
+
+    @Test
+    fun crearAlbumConErrorDelServidorEsErrorDeCarga() = runTest {
+        servidor.enqueue(MockResponse().setResponseCode(500))
+
+        assertTrue(repositorio.crearAlbum(albumNuevo).exceptionOrNull() is ErrorDeCarga)
+    }
+
+    @Test
+    fun crearAlbumSinConexionEsErrorDeCarga() = runTest {
+        servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
+
+        assertTrue(repositorio.crearAlbum(albumNuevo).exceptionOrNull() is ErrorDeCarga)
+    }
+
+    @Test
+    fun crearAlbumConRespuestaSinIdEsErrorDeCarga() = runTest {
+        servidor.enqueue(MockResponse().setBody("""{"name": "Abbey Road"}"""))
+
+        assertTrue(repositorio.crearAlbum(albumNuevo).exceptionOrNull() is ErrorDeCarga)
+    }
+
+    @Test
+    fun cancelarLaCreacionPropagaLaCancelacion() = runTest {
+        val api = object : AlbumApi {
+            override suspend fun obtenerAlbum(id: Int): Response<AlbumDto> = awaitCancellation()
+            override suspend fun obtenerAlbumes(): List<AlbumDto> = awaitCancellation()
+            override suspend fun crearAlbum(album: CrearAlbumDto): AlbumDto = awaitCancellation()
+        }
+        val repositorio = AlbumRepository(ServiceAdapter(servidor.url("/").toString()), api)
+        val envio = async(start = CoroutineStart.UNDISPATCHED) { repositorio.crearAlbum(albumNuevo) }
+
+        envio.cancel(CancellationException("El usuario salió del formulario"))
+
+        try {
+            envio.await()
+            fail("El envío cancelado no debe devolver un Result")
+        } catch (error: CancellationException) {
+            assertTrue(envio.isCancelled)
         }
     }
 }

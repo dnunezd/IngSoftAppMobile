@@ -127,6 +127,40 @@
     <string name="catalogo_genero_anio">%1$s · %2$s</string>
     <string name="catalogo_portada_descripcion">Portada de %1$s</string>
     <string name="catalogo_seleccionar_descripcion">Ver detalle de %1$s</string>
+    <string name="catalogo_album_creado">Álbum creado</string>
+    <string name="catalogo_nuevo">Nuevo</string>
+
+    <!-- Crear un álbum (HU07): los mensajes son los de la HU; el resto, de los mockups. -->
+    <string name="crear_encabezado">Crear</string>
+    <string name="crear_titular_1">Nuevo</string>
+    <string name="crear_titular_2">álbum</string>
+    <string name="crear_subtitulo">Ingresa la información para catalogar tu vinilo en el archivo central.</string>
+    <string name="crear_nombre">Nombre del álbum</string>
+    <string name="crear_nombre_indicacion">Ej. Abbey Road</string>
+    <string name="crear_portada">Portada (URL)</string>
+    <string name="crear_portada_indicacion">https://</string>
+    <string name="crear_portada_vista_previa">Vista previa de la portada</string>
+    <string name="crear_fecha">Fecha de lanzamiento</string>
+    <string name="crear_fecha_indicacion">DD/MM/AAAA</string>
+    <string name="crear_fecha_titulo">Selecciona la fecha de lanzamiento</string>
+    <string name="crear_fecha_aceptar">Aceptar</string>
+    <string name="crear_genero">Género</string>
+    <string name="crear_genero_indicacion">Selecciona un género</string>
+    <string name="crear_disquera">Disquera</string>
+    <string name="crear_disquera_indicacion">Selecciona una disquera</string>
+    <string name="crear_descripcion">Descripción</string>
+    <string name="crear_descripcion_indicacion">Escribe detalles del álbum</string>
+    <string name="crear_contador">%1$d / %2$d</string>
+    <string name="crear_campo_obligatorio">Campo obligatorio</string>
+    <string name="crear_url_invalida">Ingresa una URL válida</string>
+    <string name="crear_aviso_titulo">Atención requerida</string>
+    <string name="crear_aviso_detalle">Corrige los campos marcados para continuar con el registro.</string>
+    <string name="crear_album">Crear álbum</string>
+    <!-- Los tres puntos son el texto exacto de la HU. -->
+    <string name="crear_enviando" tools:ignore="TypographyEllipsis">Creando...</string>
+    <string name="crear_reintentar">Reintentar creación</string>
+    <string name="crear_cancelar">Cancelar</string>
+    <string name="crear_error_envio">No se pudo crear el álbum, intenta de nuevo</string>
 
     <string name="detalle_sin_canciones">Este álbum aún no tiene canciones registradas</string>
     <string name="detalle_sin_comentarios">Aún no hay comentarios para este álbum</string>
