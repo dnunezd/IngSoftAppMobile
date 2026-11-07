@@ -105,8 +105,12 @@ fun PantallaArtistas(
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            item { Titular() }
-            item {
+            // Keys explicitas: sin ellas, la clave posicional de estos dos primeros items puede
+            // desalinearse con el valor guardado (rememberSaveable) de Buscador cuando cambia el
+            // numero de items que le siguen entre el guardado y la restauracion (p. ej. al rotar
+            // justo cuando el estado pasa de Cargando a Exito), restaurando un texto truncado.
+            item(key = "titular") { Titular() }
+            item(key = "buscador") {
                 Buscador(
                     consultaInicial = (estado as? ArtistsUiState.Exito)?.consulta.orEmpty(),
                     habilitado = estado is ArtistsUiState.Exito,

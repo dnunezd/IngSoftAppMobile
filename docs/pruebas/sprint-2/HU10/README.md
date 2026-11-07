@@ -38,6 +38,7 @@ Cobertura: 9/9 criterios con al menos una prueba automatizada (unitaria o de Com
 - Pruebas E2E de HU10: a cargo de otro integrante del equipo; no se incluyen en este change (`add-artistas-favoritos`).
 - Diseño visual detallado del botón y los mensajes (T10-1): a cargo de diseño; esta implementación solo fija los estados y el contrato de datos (ver `design.md`).
 - Detalle real de artista (HU04): el botón se integró en `PantallaArtistaProvisional` (pantalla provisional de HU03) de forma explícitamente temporal; se debe migrar cuando HU04 exista.
+- Bug pre-existente de HU03 (no introducido por HU10, detectado al correr la suite completa durante la integración): ver [`bug-busqueda-artistas-rotacion.md`](./bug-busqueda-artistas-rotacion.md).
 
 ### Comando para ejecutar las pruebas instrumentadas pendientes
 
