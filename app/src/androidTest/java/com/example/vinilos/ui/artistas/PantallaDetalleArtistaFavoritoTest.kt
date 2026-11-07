@@ -2,6 +2,7 @@ package com.example.vinilos.ui.artistas
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
@@ -152,7 +153,11 @@ class PantallaDetalleArtistaFavoritoTest {
     fun laConfirmacionDesapareceSolaDespuesDeUnosSegundos() {
         rule.setContent {
             VinilosTheme {
-                var estado by mutableStateOf<FavoritoUiState>(FavoritoUiState.Favorito(mostrarConfirmacion = true))
+                // Sin remember, esta línea se re-ejecutaría en cada recomposición y reiniciaría
+                // "estado" a mostrarConfirmacion = true, impidiendo que la confirmación desaparezca.
+                var estado by remember {
+                    mutableStateOf<FavoritoUiState>(FavoritoUiState.Favorito(mostrarConfirmacion = true))
+                }
                 PantallaDetalleArtista(
                     estado = ArtistaDetalleUiState.Exito(rubenBlades),
                     onSeleccionarAlbum = {},
