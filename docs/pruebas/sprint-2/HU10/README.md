@@ -57,7 +57,7 @@ Al probar manualmente contra el backend compartido/desplegado (no el local), gua
 
 ## Pendiente (no bloquea el cierre de T10-2/T10-3/T10-4)
 
-- Pruebas E2E de HU10: a cargo de otro integrante del equipo; no se incluyen en este change (`add-artistas-favoritos`).
+- **Pruebas E2E de HU10:** **pendientes**. Se planearon a cargo de otro integrante del equipo, pero aún no se han escrito ni ejecutado; no se incluyen en este change (`add-artistas-favoritos`).
 - "Quitar de favoritos": es una historia de usuario distinta (no HU10); la API actual no expone un endpoint `DELETE`.
 - Diseño visual del resto de la pantalla de detalle (biografía, estadísticas, discografía): a cargo de HU04, fuera de este alcance.
 

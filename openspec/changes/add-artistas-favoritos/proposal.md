@@ -13,7 +13,7 @@ HU10 pide que un coleccionista pueda marcar artistas (músicos o bandas) como fa
 - Integrar el botón de favorito en la pantalla provisional de detalle de artista (`PantallaArtistaProvisional`, el placeholder de HU03), marcado explícitamente como temporal hasta que exista el detalle real de HU04. No se crea una pantalla de detalle nueva.
 - El botón solo se muestra si la sesión es de Coleccionista (reutiliza `Session.collectorActionsEnabled`); para Visitante no aparece.
 - Agregar los mensajes al usuario: confirmación transitoria al guardar ("<nombre> se agregó a tus favoritos"), "El artista ya no está disponible" con botón para volver al listado (y refrescarlo sin ese artista), y "No se pudo guardar el favorito, intenta de nuevo" con reintento.
-- Fuera de alcance de este change: la pantalla real de detalle de artista (HU04), las pruebas E2E (responsabilidad de otro integrante) y el diseño visual detallado (T10-1, a cargo de diseño).
+- Fuera de alcance de este change: la pantalla real de detalle de artista (HU04) y el diseño visual detallado (T10-1, a cargo de diseño). Las pruebas E2E de HU10 quedan **pendientes**: se planearon para otro integrante del equipo, pero no se han escrito ni ejecutado.
 
 ## Capabilities
 

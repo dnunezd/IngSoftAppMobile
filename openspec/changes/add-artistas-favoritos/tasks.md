@@ -38,7 +38,7 @@
 
 ## Workflow follow-up
 
-- Las pruebas E2E de HU10 las implementa otro integrante del equipo; no se incluyen en este change.
+- Las pruebas E2E de HU10 están **pendientes**: se planearon a cargo de otro integrante del equipo, pero todavía no se han escrito ni ejecutado; no se incluyen en este change.
 - T10-1 (diseño visual detallado) se resolvió parcialmente dentro de este change: el usuario compartió mockups y se rediseñó la sección de favorito (ver tarea 6) dentro del alcance de HU10; el resto de la pantalla (biografía, estadísticas, discografía) es responsabilidad de HU04.
 - Pendiente fuera de este change: si el equipo decide agregar "quitar de favoritos", es una historia nueva (no HU10); la API actual no tiene endpoint DELETE.
 - Archivar este change cuando el equipo confirme que T10-2, T10-3, T10-4 y el rediseño están verificados y el PR fue revisado.
