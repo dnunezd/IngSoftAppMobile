@@ -111,6 +111,15 @@ fun PantallaDetalleArtista(
     onReintentarFavorito: () -> Unit = {},
     onConfirmacionFavoritoMostrada: () -> Unit = {}
 ) {
+    // Se maneja aquí arriba (fuera del LazyColumn) y no dentro de la tarjeta: esa tarjeta se
+    // compone en un "item" sin key explícita, y un LaunchedEffect allí puede reiniciarse si el
+    // item se recompone/recicla, lo que impedía que la espera de 2.5s llegara a completarse.
+    if (estadoFavorito is FavoritoUiState.Favorito && estadoFavorito.mostrarConfirmacion) {
+        LaunchedEffect(estadoFavorito) {
+            delay(DuracionConfirmacionFavoritoMs)
+            onConfirmacionFavoritoMostrada()
+        }
+    }
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -142,7 +151,6 @@ fun PantallaDetalleArtista(
                     estadoFavorito = estadoFavorito,
                     onAgregarFavorito = onAgregarFavorito,
                     onReintentarFavorito = onReintentarFavorito,
-                    onConfirmacionFavoritoMostrada = onConfirmacionFavoritoMostrada,
                     onVolverAlListado = onAtras
                 )
             }
@@ -156,16 +164,14 @@ private fun LazyListScope.contenido(
     estadoFavorito: FavoritoUiState?,
     onAgregarFavorito: () -> Unit,
     onReintentarFavorito: () -> Unit,
-    onConfirmacionFavoritoMostrada: () -> Unit,
     onVolverAlListado: () -> Unit
 ) {
-    item {
+    item(key = "tarjeta_principal") {
         TarjetaPrincipal(
             detalle = detalle,
             estadoFavorito = estadoFavorito,
             onAgregarFavorito = onAgregarFavorito,
             onReintentarFavorito = onReintentarFavorito,
-            onConfirmacionFavoritoMostrada = onConfirmacionFavoritoMostrada,
             onVolverAlListado = onVolverAlListado
         )
     }
@@ -220,7 +226,6 @@ private fun TarjetaPrincipal(
     estadoFavorito: FavoritoUiState?,
     onAgregarFavorito: () -> Unit,
     onReintentarFavorito: () -> Unit,
-    onConfirmacionFavoritoMostrada: () -> Unit,
     onVolverAlListado: () -> Unit
 ) {
     val porDefecto = painterResource(porDefectoDe(detalle.tipo))
@@ -271,7 +276,6 @@ private fun TarjetaPrincipal(
                 estado = estadoFavorito,
                 onAgregar = onAgregarFavorito,
                 onReintentar = onReintentarFavorito,
-                onConfirmacionMostrada = onConfirmacionFavoritoMostrada,
                 onVolverAlListado = onVolverAlListado
             )
         }
@@ -285,7 +289,6 @@ private fun SeccionFavorito(
     estado: FavoritoUiState,
     onAgregar: () -> Unit,
     onReintentar: () -> Unit,
-    onConfirmacionMostrada: () -> Unit,
     onVolverAlListado: () -> Unit
 ) {
     Column(
@@ -348,10 +351,6 @@ private fun SeccionFavorito(
                     textAlign = TextAlign.Center,
                     modifier = Modifier.testTag(TagConfirmacionFavorito)
                 )
-                LaunchedEffect(Unit) {
-                    delay(DuracionConfirmacionFavoritoMs)
-                    onConfirmacionMostrada()
-                }
             }
         }
     }
