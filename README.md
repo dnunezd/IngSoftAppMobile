@@ -31,7 +31,7 @@ Evidencia de pruebas en [`docs/pruebas/sprint-1/`](docs/pruebas/sprint-1/).
 
 ### Sprint 2 · en curso
 
-Va del 2 al 15 de noviembre de 2026. Estado al 8 de noviembre, al cierre de la semana 1: el [milestone](https://github.com/dnunezd/IngSoftAppMobile/milestone/3) tiene 8 issues cerrados y 12 abiertos.
+Va del 2 al 15 de noviembre de 2026. Su primer release será **`v2.0.0` – Sprint 2**. Estado al 8 de noviembre, al cierre de la semana 1: el [milestone](https://github.com/dnunezd/IngSoftAppMobile/milestone/3) tiene 8 issues cerrados y 12 abiertos.
 
 | Historia | En `develop` | En revisión | Pendiente |
 |---|---|---|---|
@@ -54,16 +54,18 @@ Va del 2 al 15 de noviembre de 2026. Estado al 8 de noviembre, al cierre de la s
 - **Pendiente para cerrar la iteración 2:**
   - Optimizar las cinco historias de las iteraciones 1 y 2: micro-optimizaciones con el Lint de Android, corrutinas para evitar ANR y menor consumo de memoria.
   - Perfilarlas en al menos tres dispositivos físicos.
-  - Generar el release con su APK.
+  - Generar el release `v2.0.0` con su APK.
   - Actualizar la wiki.
 
 ## Versión y APK
 
 La versión publicada es `1.1.0` (`versionCode` 2), en el release [`v1.1.0`](https://github.com/dnunezd/IngSoftAppMobile/releases/tag/v1.1.0) sobre `main`, con el APK `vinilos-v1.1.0.apk` adjunto. El identificador de la app es `com.example.vinilos` y funciona desde Android 6.0 (API 23). Para instalarla sin compilar, descarga el APK del release en el teléfono y ábrelo.
 
+El primer release del Sprint 2 será **`v2.0.0` – Sprint 2**, con `versionName` `2.0.0` y `versionCode` 3. Los releases siguen el formato `v<versión> – Sprint <n>`, como `v1.1.0 – Sprint 1`.
+
 Para cada release:
 
-1. Sube `versionCode` en 1 y deja `versionName` igual al tag (por ejemplo `1.2.0` para `v1.2.0`), ambos en `app/build.gradle.kts`.
+1. Sube `versionCode` en 1 y deja `versionName` igual al tag (por ejemplo `2.0.0` para `v2.0.0`), ambos en `app/build.gradle.kts`.
 2. Genera el APK con `./gradlew assembleDebug`. Queda en `app/build/outputs/apk/debug/app-debug.apk` y apunta al backend desplegado. La variante release no está firmada y Android no la instala.
 3. Adjúntalo al release como `vinilos-v<versión>.apk`.
 
