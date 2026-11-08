@@ -188,6 +188,8 @@ class CrearAlbumE2ETest {
 
     private fun escribir(tag: String, texto: String) {
         rule.onNodeWithTag(tag).performScrollTo().performTextInput(texto)
+        // En API 23 el teclado abierto puede tapar el siguiente campo o botón y el toque se pierde.
+        Espresso.closeSoftKeyboard()
     }
 
     private fun elegirOpcion(tag: String, opcion: String) {

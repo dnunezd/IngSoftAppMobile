@@ -52,6 +52,8 @@ Como crean álbumes, se corren contra **BackVynils local** (`-PbaseUrl=http://10
 
 Resultados en el emulador Pixel 8 (API 34), 2026-11-07, contra BackVynils local: `CrearAlbumE2ETest` `OK (7 tests)` con 27 capturas en "Ok"; suite instrumentada completa `OK (138 tests)`; 220 unitarias sin fallos y 0 errores de lint. Tras cada corrida el backend quedó con sus cuatro álbumes de ejemplo.
 
+En la revisión del PR se corrió la clase 3 veces por dispositivo en un Motorola Edge 30 (API 34), el emulador Pixel 8 (API 34) y un emulador Nexus 5X (API 23), cada uno con su BackVynils local. En API 23, ESC05 y ESC07 fallaban de forma intermitente porque el teclado abierto tapaba el siguiente campo o botón y el toque se perdía; con el cierre del teclado después de escribir en cada campo, la clase pasó 9/9 (7/7 en cada corrida) y el backend quedó con sus álbumes de ejemplo.
+
 ```bash
 ./gradlew installDebug installDebugAndroidTest -PbaseUrl=http://10.0.2.2:3000/
 adb shell rm -rf /sdcard/Android/data/com.example.vinilos/files/e2e-evidencia
