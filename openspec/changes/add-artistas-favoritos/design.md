@@ -63,6 +63,7 @@ Dado el hallazgo de ids globalmente únicos entre músicos y bandas en el backen
 - [Dos POST distintos para banda/músico con la misma lógica de backend] → El repositorio decide el endpoint a partir del `tipo` que ya viaja en la navegación (`Rutas.DetalleArtista`), sin necesitar detectar el tipo desde la respuesta.
 - [Mensaje de confirmación con el nombre del artista] → El ViewModel no necesita volver a consultar el nombre: ya lo recibe como parámetro (igual que hoy `PantallaArtistaProvisional` lo recibe de la navegación), evitando una dependencia adicional del DTO de respuesta del POST.
 - [Doble toque mientras se guarda] → Cubierto por el estado `Guardando` (botón inactivo) más el `Job?` cancelable, igual que en `AlbumViewModel`.
+- [`FavoriteRepository` creado dentro de `VinilosNavHost`] → **Nota de actualización (revisión de PR):** la primera versión creaba este repositorio como valor por defecto de un parámetro de `VinilosNavHost`, con su propio `ServiceAdapter`, para no tocar `AppContainer`/`MainActivity.kt`. El revisor (@lorennossauniandes) señaló que esto ignoraba los reemplazos de `AppContainer` en pruebas instrumentadas y creaba un `OkHttpClient` nuevo en cada recomposición. Con autorización para tocar `MainActivity.kt`, se migró `favoriteRepository` a `AppContainer` (mismo patrón que los demás repositorios) y `VinilosNavHost` ahora lo recibe como parámetro obligatorio.
 
 ## Open Questions
 

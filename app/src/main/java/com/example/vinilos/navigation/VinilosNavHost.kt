@@ -14,7 +14,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.vinilos.data.model.ArtistType
-import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.AlbumRepository
 import com.example.vinilos.data.repository.ArtistRepository
 import com.example.vinilos.data.repository.CollectorRepository
@@ -77,10 +76,8 @@ fun VinilosNavHost(
     collectorRepository: CollectorRepository,
     artistRepository: ArtistRepository,
     albumRepository: AlbumRepository,
-    modifier: Modifier = Modifier,
-    // Sin wiring en AppContainer/MainActivity todavía: HU10 agrega este repositorio de forma
-    // autocontenida para no tocar ese archivo compartido; se puede migrar a AppContainer después.
-    favoriteRepository: FavoriteRepository = FavoriteRepository(ServiceAdapter(com.example.vinilos.BuildConfig.BASE_URL))
+    favoriteRepository: FavoriteRepository,
+    modifier: Modifier = Modifier
 ) {
     fun irAlInicio() {
         navController.navigate(Rutas.Inicio) {
