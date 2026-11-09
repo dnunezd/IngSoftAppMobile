@@ -28,13 +28,13 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -68,8 +68,8 @@ import com.example.vinilos.data.model.AlbumResumen
 import com.example.vinilos.data.model.Session
 import com.example.vinilos.ui.detalle.PortadaAlbum
 import com.example.vinilos.ui.ingreso.ChipEtiqueta
-import com.example.vinilos.ui.ingreso.TagAtras
 import com.example.vinilos.ui.theme.VinilosTheme
+import com.example.vinilos.viewmodel.AlbumNuevoCatalogo
 import com.example.vinilos.viewmodel.AlbumsUiState
 
 /** `catalogo` y `catalogo_rol` son los tags que ya usaban las pruebas de ingreso y rotación (HU00). */
@@ -82,13 +82,20 @@ const val TagContadorCatalogo = "catalogo_contador"
 const val TagVacioCatalogo = "catalogo_vacio"
 const val TagErrorCatalogo = "catalogo_error"
 const val TagReintentarCatalogo = "catalogo_reintentar"
+const val TagCrearAlbumCatalogo = "catalogo_crear_album"
 
 fun tagAlbum(id: Int) = "album_$id"
 
+fun tagAlbumNuevo(id: Int) = "album_nuevo_$id"
+
+/** Elementos de la cuadrícula antes del primer álbum: el titular y el encabezado de la lista. */
+private const val ElementosAntesDeAlbumes = 2
+
 /**
  * Catálogo de álbumes (HU01): cuadrícula con portada, nombre y género, deslizar hacia abajo para
- * actualizar y estados de carga, vacío y error. Es igual para el Visitante y el Coleccionista; solo
- * cambia la etiqueta del rol.
+ * actualizar y estados de carga, vacío y error. Los álbumes son los mismos para el Visitante y el
+ * Coleccionista; este último ve además el botón "Crear álbum" (HU07), y al volver de crear uno se
+ * avisa, se desplaza hasta él y se marca como nuevo.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -100,7 +107,11 @@ fun PantallaCatalogo(
     onAvisoMostrado: () -> Unit,
     onSeleccionar: (Int) -> Unit,
     onAtras: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    albumNuevo: AlbumNuevoCatalogo? = null,
+    onCrearAlbum: () -> Unit = {},
+    onAvisoCreadoMostrado: () -> Unit = {},
+    onDesplazadoAlNuevo: () -> Unit = {}
 ) {
     val cargado = estado is AlbumsUiState.Exito || estado is AlbumsUiState.Vacio
     val deslizar = rememberPullToRefreshState(enabled = { cargado })
@@ -128,6 +139,34 @@ fun PantallaCatalogo(
         }
     }
 
+    val mensajeCreado = stringResource(R.string.catalogo_album_creado)
+    val avisoCreadoPendiente = albumNuevo?.avisoPendiente == true
+    LaunchedEffect(avisoCreadoPendiente) {
+        if (avisoCreadoPendiente) {
+            try {
+                avisos.showSnackbar(mensajeCreado)
+            } finally {
+                onAvisoCreadoMostrado()
+            }
+        }
+    }
+
+    val cuadricula = rememberLazyGridState()
+    // El álbum nuevo puede quedar lejos por el orden alfabético. Se espera a que la lista lo contenga.
+    val indiceNuevo = (estado as? AlbumsUiState.Exito)?.albumes
+        ?.indexOfFirst { it.id == albumNuevo?.id }
+        ?.takeIf { it >= 0 && albumNuevo?.desplazamientoPendiente == true }
+    LaunchedEffect(indiceNuevo) {
+        if (indiceNuevo != null) {
+            try {
+                cuadricula.animateScrollToItem(indiceNuevo + ElementosAntesDeAlbumes)
+            } finally {
+                onDesplazadoAlNuevo()
+            }
+        }
+    }
+
+    val puedeCrear = session.collectorActionsEnabled
     Column(
         modifier = modifier
             .fillMaxSize()
@@ -135,7 +174,7 @@ fun PantallaCatalogo(
             .windowInsetsPadding(WindowInsets.safeDrawing)
             .testTag(TagCatalogo)
     ) {
-        Encabezado(session, onAtras)
+        EncabezadoConRol(session, stringResource(R.string.catalogo_encabezado), onAtras)
         // clipToBounds: el indicador de deslizar espera oculto sobre la lista y no debe verse
         // encima del encabezado.
         Box(
@@ -146,11 +185,16 @@ fun PantallaCatalogo(
         ) {
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = 156.dp),
-                state = rememberLazyGridState(),
+                state = cuadricula,
                 modifier = Modifier
                     .fillMaxSize()
                     .testTag(TagCuadriculaCatalogo),
-                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+                contentPadding = PaddingValues(
+                    start = 20.dp,
+                    top = 8.dp,
+                    end = 20.dp,
+                    bottom = if (puedeCrear) EspacioBotonCrear else 8.dp
+                ),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -168,7 +212,7 @@ fun PantallaCatalogo(
                     is AlbumsUiState.Exito -> {
                         anchoCompleto("encabezado") { EncabezadoLista(estado.albumes.size, estado.actualizando) }
                         items(estado.albumes, key = { it.id }, contentType = { "album" }) { album ->
-                            TarjetaAlbum(album, onSeleccionar)
+                            TarjetaAlbum(album, album.id == albumNuevo?.id, onSeleccionar)
                         }
                     }
                 }
@@ -179,59 +223,43 @@ fun PantallaCatalogo(
                 containerColor = MaterialTheme.colorScheme.surface,
                 contentColor = MaterialTheme.colorScheme.primary
             )
-            SnackbarHost(hostState = avisos, modifier = Modifier.align(Alignment.BottomCenter))
+            if (puedeCrear) {
+                ExtendedFloatingActionButton(
+                    onClick = onCrearAlbum,
+                    // Material oculta el texto a la accesibilidad, así que el nombre lo da el ícono.
+                    icon = {
+                        Icon(
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = stringResource(R.string.crear_album)
+                        )
+                    },
+                    text = {
+                        Text(stringResource(R.string.crear_album), style = MaterialTheme.typography.labelLarge)
+                    },
+                    shape = CircleShape,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(16.dp)
+                        .testTag(TagCrearAlbumCatalogo)
+                )
+            }
+            SnackbarHost(
+                hostState = avisos,
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(bottom = if (puedeCrear) EspacioBotonCrear else 0.dp)
+            )
         }
     }
 }
+
+/** Espacio que deja libre el botón "Crear álbum": su alto de 56 dp más los márgenes. */
+private val EspacioBotonCrear = 88.dp
 
 private fun LazyGridScope.anchoCompleto(clave: String, contenido: @Composable () -> Unit) =
     item(key = clave, span = { GridItemSpan(maxLineSpan) }) { contenido() }
-
-@Composable
-private fun Encabezado(session: Session, onAtras: () -> Unit) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(64.dp)
-            .padding(horizontal = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        IconButton(
-            onClick = onAtras,
-            modifier = Modifier
-                .testTag(TagAtras)
-                .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surface)
-        ) {
-            Icon(
-                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                contentDescription = stringResource(R.string.atras_descripcion),
-                tint = MaterialTheme.colorScheme.secondary
-            )
-        }
-        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            val rol = when (session) {
-                Session.Visitor -> stringResource(R.string.catalogo_etiqueta_visitante)
-                is Session.Collector -> stringResource(R.string.catalogo_etiqueta_coleccionista)
-                Session.None -> null
-            }
-            if (rol != null) {
-                ChipEtiqueta(
-                    texto = rol,
-                    fondo = MaterialTheme.colorScheme.onBackground,
-                    contenido = MaterialTheme.colorScheme.surface,
-                    modifier = Modifier.testTag(TagRolActivo)
-                )
-            }
-            Text(
-                text = stringResource(R.string.catalogo_encabezado),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-        }
-    }
-}
 
 @Composable
 private fun Titular() {
@@ -311,7 +339,7 @@ private fun EncabezadoLista(cantidad: Int, actualizando: Boolean) {
 }
 
 @Composable
-private fun TarjetaAlbum(album: AlbumResumen, onSeleccionar: (Int) -> Unit) {
+private fun TarjetaAlbum(album: AlbumResumen, esNuevo: Boolean, onSeleccionar: (Int) -> Unit) {
     val descripcion = stringResource(R.string.catalogo_seleccionar_descripcion, album.nombre)
     Column(
         modifier = Modifier
@@ -333,7 +361,18 @@ private fun TarjetaAlbum(album: AlbumResumen, onSeleccionar: (Int) -> Unit) {
                     .aspectRatio(1f)
                     .background(MaterialTheme.colorScheme.surfaceVariant)
             )
-            if (album.anio != null) {
+            // El año sigue visible junto al género, así que la insignia ocupa su lugar.
+            if (esNuevo) {
+                ChipEtiqueta(
+                    texto = stringResource(R.string.catalogo_nuevo),
+                    fondo = MaterialTheme.colorScheme.primary,
+                    contenido = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(8.dp)
+                        .testTag(tagAlbumNuevo(album.id))
+                )
+            } else if (album.anio != null) {
                 Text(
                     text = album.anio,
                     style = MaterialTheme.typography.labelLarge,

@@ -21,7 +21,10 @@ private val EsquemaClaro = lightColorScheme(
     onSurface = TextoPrincipal,
     surfaceVariant = SuperficieVariante,
     onSurfaceVariant = TextoSecundario,
-    outline = Contorno
+    outline = Contorno,
+    error = ErrorFormulario,
+    errorContainer = ErrorFormularioFondo,
+    onErrorContainer = ErrorFormularioTexto
 )
 
 @Composable

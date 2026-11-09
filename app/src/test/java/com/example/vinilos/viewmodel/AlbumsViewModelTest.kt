@@ -12,6 +12,7 @@ import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withContext
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -238,5 +239,124 @@ class AlbumsViewModelTest {
         assertTrue("El error inesperado debe propagarse, no mostrarse como error de carga", error != null)
         assertTrue(generateSequence(error) { it.cause }.any { it === esperado })
         assertTrue(estadoFinal != AlbumsUiState.Error)
+    }
+
+    private val abbey = AlbumResumen(205, "Abbey Road", null, "Rock", "", "1969")
+
+    @Test
+    fun albumCreadoConElCatalogoCargadoActualizaSinQuitarLaLista() = runTest {
+        val (viewModel, repositorio) = cargado(Result.success(listOf(opera)))
+
+        viewModel.albumCreado(abbey.id)
+        advanceUntilIdle()
+
+        assertEquals(AlbumsUiState.Exito(listOf(opera), actualizando = true), viewModel.uiState.value)
+        assertEquals(2, repositorio.consultas.size)
+        repositorio.responder(Result.success(listOf(abbey, opera)))
+        advanceUntilIdle()
+        assertEquals(AlbumsUiState.Exito(listOf(abbey, opera)), viewModel.uiState.value)
+    }
+
+    @Test
+    fun albumCreadoConElCatalogoVacioActualiza() = runTest {
+        val (viewModel, repositorio) = cargado(Result.success(emptyList()))
+
+        viewModel.albumCreado(abbey.id)
+        advanceUntilIdle()
+        repositorio.responder(Result.success(listOf(abbey)))
+        advanceUntilIdle()
+
+        assertEquals(AlbumsUiState.Exito(listOf(abbey)), viewModel.uiState.value)
+    }
+
+    @Test
+    fun albumCreadoConElCatalogoEnErrorVuelveACargar() = runTest {
+        val (viewModel, repositorio) = cargado(Result.failure(ErrorDeCarga()))
+
+        viewModel.albumCreado(abbey.id)
+        assertEquals(AlbumsUiState.Cargando, viewModel.uiState.value)
+        advanceUntilIdle()
+        repositorio.responder(Result.success(listOf(abbey)))
+        advanceUntilIdle()
+
+        assertEquals(AlbumsUiState.Exito(listOf(abbey)), viewModel.uiState.value)
+    }
+
+    @Test
+    fun albumCreadoMientrasCargaRepiteLaConsultaParaIncluirlo() = runTest {
+        val repositorio = CatalogoFalso()
+        val viewModel = AlbumsViewModel(repositorio)
+        advanceUntilIdle()
+
+        viewModel.albumCreado(abbey.id)
+        advanceUntilIdle()
+        repositorio.responder(Result.success(listOf(abbey)))
+        advanceUntilIdle()
+
+        assertEquals(2, repositorio.consultas.size)
+        assertEquals(AlbumsUiState.Exito(listOf(abbey)), viewModel.uiState.value)
+    }
+
+    @Test
+    fun albumCreadoActivaElAvisoYElDesplazamientoHastaQueSeMarcanHechos() = runTest {
+        val (viewModel, _) = cargado(Result.success(listOf(opera)))
+        assertNull(viewModel.albumNuevo.value)
+
+        viewModel.albumCreado(abbey.id)
+
+        assertEquals(AlbumNuevoCatalogo(abbey.id), viewModel.albumNuevo.value)
+        viewModel.avisoCreadoMostrado()
+        assertEquals(
+            AlbumNuevoCatalogo(abbey.id, avisoPendiente = false),
+            viewModel.albumNuevo.value
+        )
+        viewModel.desplazadoAlNuevo()
+        assertEquals(
+            AlbumNuevoCatalogo(abbey.id, avisoPendiente = false, desplazamientoPendiente = false),
+            viewModel.albumNuevo.value
+        )
+    }
+
+    @Test
+    fun laMarcaDelAlbumNuevoSigueTrasDeslizarParaActualizar() = runTest {
+        val (viewModel, repositorio) = cargado(Result.success(listOf(opera)))
+        viewModel.albumCreado(abbey.id)
+        advanceUntilIdle()
+        repositorio.responder(Result.success(listOf(abbey, opera)))
+        advanceUntilIdle()
+
+        viewModel.actualizar()
+        advanceUntilIdle()
+        repositorio.responder(Result.success(listOf(abbey, opera)))
+        advanceUntilIdle()
+
+        assertEquals(abbey.id, viewModel.albumNuevo.value?.id)
+    }
+
+    @Test
+    fun unSegundoAlbumReemplazaLaMarca() = runTest {
+        val (viewModel, _) = cargado(Result.success(listOf(opera)))
+        viewModel.albumCreado(abbey.id)
+        viewModel.avisoCreadoMostrado()
+
+        viewModel.albumCreado(300)
+
+        assertEquals(AlbumNuevoCatalogo(300), viewModel.albumNuevo.value)
+    }
+
+    @Test
+    fun siFallaLaConsultaPosteriorSeConservaElAvisoDeCreadoYElDeActualizacion() = runTest {
+        val (viewModel, repositorio) = cargado(Result.success(listOf(opera)))
+
+        viewModel.albumCreado(abbey.id)
+        advanceUntilIdle()
+        repositorio.responder(Result.failure(ErrorDeCarga()))
+        advanceUntilIdle()
+
+        assertEquals(
+            AlbumsUiState.Exito(listOf(opera), errorAlActualizar = true),
+            viewModel.uiState.value
+        )
+        assertEquals(AlbumNuevoCatalogo(abbey.id), viewModel.albumNuevo.value)
     }
 }

@@ -12,7 +12,13 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
+import com.example.vinilos.data.model.Artist
+import com.example.vinilos.data.model.ArtistType
+import com.example.vinilos.data.model.ArtistaDetalle
 import com.example.vinilos.data.model.Collector
+import com.example.vinilos.ui.artistas.TagNombreDetalleArtista
+import com.example.vinilos.ui.artistas.TagProgresoDetalleArtista
+import com.example.vinilos.ui.artistas.tagArtista
 import com.example.vinilos.ui.catalogo.TagCuadriculaCatalogo
 import com.example.vinilos.ui.catalogo.TagProgresoCatalogo
 import com.example.vinilos.ui.catalogo.TagRolActivo
@@ -25,6 +31,7 @@ import com.example.vinilos.ui.ingreso.TagEntrarColeccionista
 import com.example.vinilos.ui.ingreso.tagColeccionista
 import com.example.vinilos.ui.inicio.TagInicio
 import com.example.vinilos.ui.inicio.TagVerAlbumes
+import com.example.vinilos.ui.inicio.TagVerArtistas
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -121,6 +128,38 @@ class RotacionTest {
             rule.onNodeWithTag(tagAlbum(30)).assertIsDisplayed()
             rule.onNodeWithTag(TagProgresoCatalogo).assertDoesNotExist()
             assertEquals(1, albumes.consultasCatalogo)
+        }
+    }
+
+    @Test
+    fun alGirarElDetalleDelArtistaLoConservaSinVolverAConsultar() {
+        val queen = Artist(101, "Queen", null, ArtistType.BANDA)
+        val artistas = RepositorioArtistasFalso(
+            Result.success(listOf(queen)),
+            mapOf(
+                (ArtistType.BANDA to 101) to Result.success(
+                    ArtistaDetalle(
+                        101, "Queen", null, "Banda británica", ArtistType.BANDA, "1 de enero de 1970",
+                        emptyList(), emptyList(), emptyList()
+                    )
+                )
+            )
+        )
+        ApplicationProvider.getApplicationContext<VinilosApplication>().container =
+            AppContainer(artistasRepositorio = artistas)
+
+        ActivityScenario.launch(MainActivity::class.java).use { escenario ->
+            rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
+            rule.onNodeWithTag(TagVerArtistas).performScrollTo().performClick()
+            rule.onNodeWithTag(tagArtista(queen)).performClick()
+            rule.onNodeWithTag(TagNombreDetalleArtista).assertTextEquals("Queen")
+
+            escenario.recreate()
+            rule.waitForIdle()
+
+            rule.onNodeWithTag(TagNombreDetalleArtista).assertTextEquals("Queen")
+            rule.onNodeWithTag(TagProgresoDetalleArtista).assertDoesNotExist()
+            assertEquals(1, artistas.consultasDetalle.size)
         }
     }
 }

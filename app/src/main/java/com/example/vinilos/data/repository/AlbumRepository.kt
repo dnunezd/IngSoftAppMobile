@@ -1,13 +1,16 @@
 package com.example.vinilos.data.repository
 
 import com.example.vinilos.data.model.Album
+import com.example.vinilos.data.model.AlbumNuevo
 import com.example.vinilos.data.model.AlbumResumen
 import com.example.vinilos.data.model.Artista
 import com.example.vinilos.data.model.Cancion
 import com.example.vinilos.data.model.Comentario
+import com.example.vinilos.data.model.fechaIsoUtc
 import com.example.vinilos.data.remote.AlbumApi
 import com.example.vinilos.data.remote.AlbumDto
 import com.example.vinilos.data.remote.ArtistaDto
+import com.example.vinilos.data.remote.CrearAlbumDto
 import com.example.vinilos.data.remote.ErrorDeCarga
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.ui.detalle.formatearFechaLanzamiento
@@ -46,6 +49,19 @@ open class AlbumRepository(
         adaptador.llamar {
             api.obtenerAlbumes().mapNotNull { it.aResumen() }.sortedWith(ordenCatalogo)
         }
+
+    /** Crea el álbum (HU07) y devuelve su id, que el catálogo usa para marcarlo como nuevo. */
+    open suspend fun crearAlbum(album: AlbumNuevo): Result<Int> =
+        adaptador.llamar { requerido(api.crearAlbum(album.aDto()).id, "id") }
+
+    private fun AlbumNuevo.aDto() = CrearAlbumDto(
+        name = nombre,
+        cover = portada,
+        releaseDate = fechaIsoUtc(fechaLanzamientoMillis),
+        description = descripcion,
+        genre = genero,
+        recordLabel = disquera
+    )
 
     private fun AlbumDto.aResumen(): AlbumResumen? {
         return AlbumResumen(

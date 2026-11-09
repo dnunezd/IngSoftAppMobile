@@ -325,7 +325,8 @@ class ArtistasE2ETest {
 
             esperarA(TagDetalleArtista)
             esperarQueDesaparezca(TagArtistas)
-            rule.onNodeWithText("Detalle del artista").assertIsDisplayed()
+            // El nombre ya no viaja en la ruta: aparece cuando termina la consulta del detalle al backend.
+            esperarA(TagNombreDetalleArtista)
             rule.onNodeWithTag(TagNombreDetalleArtista).assertTextEquals(objetivo.name)
             rule.onNodeWithTag(TagTipoDetalleArtista).assertTextEquals(etiquetaDe(objetivo))
             EvidenciaE2E.capturar(rule, evidencia, "03_detalle_objetivo")
@@ -424,6 +425,10 @@ class ArtistasE2ETest {
             fila(objetivo).assertIsDisplayed()
             (lista - objetivo).forEach { noAparece(it) }
             EvidenciaE2E.capturar(rule, evidencia, "02_antes_de_girar")
+            // En API 23, si el buscador sigue enfocado al girar, el teclado se reconecta y vuelve a
+            // enviar el texto escrito por la prueba ("ru" -> "ruru"). Se quita el foco antes de girar.
+            escenario.onActivity { it.currentFocus?.clearFocus() }
+            rule.waitForIdle()
 
             // Girar de verdad (no solo recrear la Activity) para que la evidencia se vea en horizontal.
             escenario.onActivity { it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE }

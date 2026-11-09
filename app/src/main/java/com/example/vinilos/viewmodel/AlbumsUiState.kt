@@ -2,6 +2,16 @@ package com.example.vinilos.viewmodel
 
 import com.example.vinilos.data.model.AlbumResumen
 
+/**
+ * Álbum recién creado (HU07). El backend no entrega fecha de creación, así que la marca es local y
+ * dura lo que dure el catálogo. Va aparte de [AlbumsUiState] porque también existe mientras carga.
+ */
+data class AlbumNuevoCatalogo(
+    val id: Int,
+    val avisoPendiente: Boolean = true,
+    val desplazamientoPendiente: Boolean = true
+)
+
 sealed interface AlbumsUiState {
     data object Cargando : AlbumsUiState
 
