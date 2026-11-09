@@ -118,7 +118,11 @@ fun PantallaDetalleArtista(
     estadoFavorito: FavoritoUiState? = null,
     onAgregarFavorito: () -> Unit = {},
     onReintentarFavorito: () -> Unit = {},
-    onConfirmacionFavoritoMostrada: () -> Unit = {}
+    onConfirmacionFavoritoMostrada: () -> Unit = {},
+    // Volver al listado tras "artista ya no disponible": por defecto es igual a onAtras, pero
+    // VinilosNavHost pasa uno propio para marcar el listado y forzar una nueva consulta (sin
+    // eso, popBackStack por sí solo no recarga el listado; ver bug corregido en HU10).
+    onVolverAlListado: () -> Unit = onAtras
 ) {
     // Se maneja aquí arriba (fuera del LazyColumn) y no dentro de la tarjeta: esa tarjeta se
     // compone en un "item" sin key explícita, y un LaunchedEffect allí puede reiniciarse si el
@@ -160,7 +164,7 @@ fun PantallaDetalleArtista(
                     estadoFavorito = estadoFavorito,
                     onAgregarFavorito = onAgregarFavorito,
                     onReintentarFavorito = onReintentarFavorito,
-                    onVolverAlListado = onAtras
+                    onVolverAlListado = onVolverAlListado
                 )
             }
         }

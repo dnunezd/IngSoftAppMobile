@@ -10,12 +10,12 @@ Todas las pruebas unitarias (JVM) se escribieron con TDD: ROJO (falla antes de i
 
 | # | Criterio | Unitarias (JVM) | Compose UI (instrumentadas) |
 |---|---|---|---|
-| 1 | Marcar como favorito desde el detalle; el botón pasa a mostrar "En tus favoritos" | `FavoritoViewModelTest.noFavoritoPasaAGuardandoYLuegoAFavoritoConConfirmacion`, `FavoriteRepositoryTest.agregarFavoritoUsaElEndpointDeBandaCuandoElTipoEsBanda`, `…agregarFavoritoUsaElEndpointDeMusicoCuandoElTipoEsMusico` | `PantallaDetalleArtistaFavoritoTest.favoritoMuestraElBotonDesactivadoConSuTexto` |
-| 2 | Si ya es favorito, el botón aparece como "En tus favoritos" y desactivado | `FavoritoViewModelTest.comprobandoPasaAFavoritoCuandoElArtistaYaEsFavorito`, `FavoriteRepositoryTest.esFavoritoEncuentraElArtistaPorIdEnElListadoDelColeccionista` | `PantallaDetalleArtistaFavoritoTest.favoritoMuestraElBotonDesactivadoConSuTexto` |
+| 1 | Marcar como favorito desde el detalle; el botón pasa a mostrar "Favorito" | `FavoritoViewModelTest.noFavoritoPasaAGuardandoYLuegoAFavoritoConConfirmacion`, `FavoriteRepositoryTest.agregarFavoritoUsaElEndpointDeBandaCuandoElTipoEsBanda`, `…agregarFavoritoUsaElEndpointDeMusicoCuandoElTipoEsMusico` | `PantallaDetalleArtistaFavoritoTest.favoritoMuestraElBotonDesactivadoConSuTexto` |
+| 2 | Si ya es favorito, el botón aparece como "Favorito" y desactivado | `FavoritoViewModelTest.comprobandoPasaAFavoritoCuandoElArtistaYaEsFavorito`, `FavoriteRepositoryTest.esFavoritoEncuentraElArtistaPorIdEnElListadoDelColeccionista` | `PantallaDetalleArtistaFavoritoTest.favoritoMuestraElBotonDesactivadoConSuTexto` |
 | 3 | El botón refleja el estado de favorito cada vez que se abre el detalle (persistencia entre sesiones de la app) | `FavoritoViewModelTest.comprobandoPasaANoFavoritoCuandoElArtistaNoEsFavorito`, `FavoriteRepositoryTest.esFavoritoDevuelveFalsoCuandoElIdNoEstaEnElListado` | `PantallaDetalleArtistaFavoritoTest.noFavoritoMuestraElBotonActivoParaAgregar` |
 | 4 | Si falla la comprobación, el botón aparece desactivado con opción de reintentar | `FavoritoViewModelTest.comprobandoPasaAErrorComprobacionCuandoFallaLaConsulta`, `…reintentarComprobacionPasaDeErrorComprobacionAFavoritoOtraVez`, `FavoriteRepositoryTest.esFavoritoDevuelveErrorDeCargaSiLaConsultaFalla` | `PantallaDetalleArtistaFavoritoTest.errorComprobacionMuestraElBotonDesactivadoYPermiteReintentar` |
 | 5 | El Visitante no ve el botón de favorito | — (decisión de composición en `VinilosNavHost`, ver design.md) | `PantallaDetalleArtistaFavoritoTest.visitanteNoVeNingunBotonDeFavorito` |
-| 6 | Si el artista ya no existe al guardar, "El artista ya no está disponible" + botón para volver al listado actualizado | `FavoritoViewModelTest.guardarFavoritoPasaANoDisponibleCuandoElArtistaYaNoExiste` | `PantallaDetalleArtistaFavoritoTest.noDisponibleMuestraElMensajeYElBotonParaVolverAlListado` |
+| 6 | Si el artista ya no existe al guardar, "El artista ya no está disponible" + botón para volver al listado actualizado | `FavoritoViewModelTest.guardarFavoritoPasaANoDisponibleCuandoElArtistaYaNoExiste` | `PantallaDetalleArtistaFavoritoTest.noDisponibleMuestraElMensajeYElBotonParaVolverAlListado`, `…noDisponibleUsaUnCallbackDeVolverAlListadoDistintoDeAtras`, `VinilosNavHostTest.alVolverDesdeArtistaNoDisponibleElListadoSeActualizaSinElArtistaEliminado` |
 | 7 | Si falla la conexión/servicio al guardar, "No se pudo guardar el favorito, intenta de nuevo" + botón disponible para reintentar | `FavoritoViewModelTest.guardarFavoritoPasaAErrorGuardadoYPermiteReintentar`, `FavoriteRepositoryTest.agregarFavoritoDevuelveErrorDeCargaSiFallaLaConexion` | `PantallaDetalleArtistaFavoritoTest.errorGuardadoMuestraElMensajeYElBotonDisponibleParaReintentar`, `…errorGuardadoNoMuestraNingunaConfirmacion` |
 | 8 | Mientras se guarda, el botón se desactiva y muestra "Guardando...", evitando toques repetidos | `FavoritoViewModelTest.segundoToqueMientrasGuardandoSeIgnora` | `PantallaDetalleArtistaFavoritoTest.guardandoMuestraElBotonDesactivadoConSuTexto` |
 | 9 | Al guardar correctamente, mensaje breve de confirmación con el nombre del artista, que desaparece solo tras unos segundos; no aparece si falla | `FavoritoViewModelTest.confirmacionMostradaOcultaElMensajeDeFavorito` | `PantallaDetalleArtistaFavoritoTest.favoritoConConfirmacionMuestraElMensajeConElNombre`, `…laConfirmacionDesapareceSolaDespuesDeUnosSegundos` |
@@ -41,11 +41,20 @@ Cobertura: 9/9 criterios con al menos una prueba automatizada (unitaria o de Com
 
 A pedido del usuario, que compartió mockups de la pantalla "Detalle Del Artista", se rediseñó **solo la sección de favorito** (sin tocar biografía/estadísticas/discografía, territorio de HU04):
 
-- Botón en forma de píldora con ícono de corazón (vacío/lleno); textos actualizados a "Agregar a Favoritos" y "En tus favoritos".
+- Botón en forma de píldora con ícono de corazón (vacío/lleno); textos actualizados a "Agregar Favorito" y "Favorito".
 - Nota de bloqueo temporal bajo el botón cuando ya es favorito, explicando por qué queda inactivo.
 - Tarjeta de error al guardar (estilo visual consistente con `TarjetaError` de HU07: fondo `errorContainer`, ícono de advertencia) con botón "Reintentar guardar". El texto de error se mantuvo sin cambios (genérico, honesto) porque el `ViewModel` no distingue causas específicas (se descartó explícitamente inventar un diagnóstico tipo "red inestable").
 - Tarjeta restyled para "artista no disponible".
 - Sin dependencias nuevas: los íconos usados (`Favorite`, `FavoriteBorder`, `Lock`, `Refresh`, `Warning`) ya están incluidos en `material-icons-core`.
+
+## Correcciones por revisión de PR (@lorennossauniandes)
+
+Revisión del PR `1c833be` en Motorola Edge 30, Pixel 8 (API 34) y Nexus 5X (API 23) con backend local; los criterios 3, 4, 5, 7, 8 y 9 se cumplieron sin observaciones. Se reportaron dos puntos, ambos corregidos:
+
+- **Criterio 6 — el listado no se actualizaba sin el artista eliminado:** al volver desde "El artista ya no está disponible", el `popBackStack()` simple no forzaba una nueva consulta (`ArtistsViewModel` solo consulta en `init`), así que el artista eliminado seguía visible en el listado. Se agregó un callback `onVolverAlListado` propio (distinto de `onAtras`) y una bandera `ClaveArtistaEliminado` en el `SavedStateHandle` de `VinilosNavHost` (mismo patrón que `ClaveAlbumCreado` de HU07) que dispara `ArtistsViewModel.reintentar()` al regresar. Ver `design.md` y `tasks.md` (sección 4.1) para el detalle y las pruebas nuevas: `PantallaDetalleArtistaFavoritoTest.noDisponibleUsaUnCallbackDeVolverAlListadoDistintoDeAtras` y `VinilosNavHostTest.alVolverDesdeArtistaNoDisponibleElListadoSeActualizaSinElArtistaEliminado`.
+- **Criterios 1 y 2 — textos del botón no coincidían con la wiki/spec.md:** se optó por la Opción A sugerida por el revisor (alinear el código a la especificación, mismo criterio aplicado en HU07). `strings.xml`: `favoritos_agregar` pasó de "Agregar a Favoritos" a "Agregar Favorito", y `favoritos_favorito` de "En tus favoritos" a "Favorito". Se actualizaron las aserciones de texto en `PantallaDetalleArtistaFavoritoTest`.
+
+Pendiente, fuera de este alcance: el issue de GitHub de la revisión se deja abierto a propósito (no se cierra desde este cambio).
 
 ## Bug pre-existente de HU03 (no introducido por HU10)
 

@@ -47,6 +47,8 @@ Se crea `FavoritoViewModel(collectorId: Int, artistId: Int, tipo: ArtistType, re
 - `ErrorGuardado` – mensaje "No se pudo guardar el favorito, intenta de nuevo"; botón vuelve a "Agregar Favorito" activo.
 - `NoDisponible` – mensaje "El artista ya no está disponible"; la pantalla ofrece volver al listado (navegación ya existente, `popBackStack`), que al recargar vuelve a consultar `ArtistRepository.obtenerArtistas()` y por lo tanto ya no incluye el artista eliminado, sin lógica adicional.
 
+> **Nota de actualización (revisión de PR):** el párrafo anterior era incorrecto. `popBackStack()` por sí solo NO vuelve a consultar el listado: `ArtistsViewModel` solo llama a `obtenerArtistas()` en su `init`, así que al regresar se reutiliza la instancia de ViewModel ya existente en la pila y se conserva la lista anterior (con el artista ya eliminado todavía visible). La corrección agrega un callback `onVolverAlListado` propio en `PantallaDetalleArtista` (distinto de `onAtras`) que, en `VinilosNavHost`, marca una bandera `ClaveArtistaEliminado` en el `SavedStateHandle` de la entrada anterior de la pila (mismo patrón que `ClaveAlbumCreado` de HU07); el destino `Rutas.Artistas` observa esa bandera y llama a `ArtistsViewModel.reintentar()` para forzar la nueva consulta antes de limpiarla.
+
 Se reutiliza el contador `consultaVigente`/`Job?` de `AlbumViewModel` para ambas operaciones asíncronas (comprobar y guardar), evitando que una respuesta tardía de "comprobar" sobrescriba un "guardando" en curso, o viceversa.
 
 ### Visibilidad del botón: decisión en la capa de navegación/composición, no en el ViewModel

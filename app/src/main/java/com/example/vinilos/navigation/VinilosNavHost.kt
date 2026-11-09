@@ -62,6 +62,9 @@ object Rutas {
 /** Clave con la que el formulario le entrega al catálogo el id del álbum creado. */
 private const val ClaveAlbumCreado = "album_creado"
 
+/** Clave con la que el detalle del artista avisa al listado que un favorito ya no está disponible. */
+private const val ClaveArtistaEliminado = "artista_eliminado"
+
 /**
  * Grafo de navegación: ingreso -> (coleccionistas) -> inicio -> catálogo -> detalle del álbum |
  * crear álbum, y artistas -> detalle del artista -> detalle del álbum. Al entrar al
@@ -205,13 +208,24 @@ fun VinilosNavHost(
                 )
             )
         }
-        composable(Rutas.Artistas) {
+        composable(Rutas.Artistas) { entrada ->
             val viewModel: ArtistsViewModel = viewModel(
                 factory = viewModelFactory {
                     initializer { ArtistsViewModel(artistRepository) }
                 }
             )
             val estado by viewModel.uiState.collectAsStateWithLifecycle()
+            val artistaEliminado by entrada.savedStateHandle
+                .getStateFlow(ClaveArtistaEliminado, false)
+                .collectAsStateWithLifecycle()
+            LaunchedEffect(artistaEliminado) {
+                if (artistaEliminado) {
+                    // El artista ya no existe en el backend: se vuelve a consultar para que el
+                    // listado no lo siga mostrando (popBackStack por sí solo no alcanza).
+                    viewModel.reintentar()
+                    entrada.savedStateHandle[ClaveArtistaEliminado] = false
+                }
+            }
             PantallaArtistas(
                 estado = estado,
                 onBuscar = viewModel::buscar,
@@ -264,7 +278,12 @@ fun VinilosNavHost(
                     estadoFavorito = estadoFavorito,
                     onAgregarFavorito = favoritoViewModel::agregarFavorito,
                     onReintentarFavorito = favoritoViewModel::reintentarComprobacion,
-                    onConfirmacionFavoritoMostrada = favoritoViewModel::confirmacionMostrada
+                    onConfirmacionFavoritoMostrada = favoritoViewModel::confirmacionMostrada,
+                    onVolverAlListado = {
+                        navController.previousBackStackEntry?.savedStateHandle
+                            ?.set(ClaveArtistaEliminado, true)
+                        navController.popBackStack()
+                    }
                 )
             } else {
                 PantallaDetalleArtista(

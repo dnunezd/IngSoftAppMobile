@@ -41,6 +41,7 @@ class PantallaDetalleArtistaFavoritoTest {
     private fun mostrar(
         estadoFavorito: FavoritoUiState?,
         onAtras: () -> Unit = {},
+        onVolverAlListado: () -> Unit = onAtras,
         onAgregarFavorito: () -> Unit = {},
         onReintentarFavorito: () -> Unit = {},
         onConfirmacionFavoritoMostrada: () -> Unit = {}
@@ -55,7 +56,8 @@ class PantallaDetalleArtistaFavoritoTest {
                     estadoFavorito = estadoFavorito,
                     onAgregarFavorito = onAgregarFavorito,
                     onReintentarFavorito = onReintentarFavorito,
-                    onConfirmacionFavoritoMostrada = onConfirmacionFavoritoMostrada
+                    onConfirmacionFavoritoMostrada = onConfirmacionFavoritoMostrada,
+                    onVolverAlListado = onVolverAlListado
                 )
             }
         }
@@ -80,7 +82,7 @@ class PantallaDetalleArtistaFavoritoTest {
         var toques = 0
         mostrar(estadoFavorito = FavoritoUiState.NoFavorito, onAgregarFavorito = { toques++ })
 
-        rule.onNodeWithText("Agregar a Favoritos").assertIsDisplayed().assertIsEnabled().performClick()
+        rule.onNodeWithText("Agregar Favorito").assertIsDisplayed().assertIsEnabled().performClick()
         assertEquals(1, toques)
     }
 
@@ -95,7 +97,7 @@ class PantallaDetalleArtistaFavoritoTest {
     fun favoritoMuestraElBotonDesactivadoConSuTexto() {
         mostrar(estadoFavorito = FavoritoUiState.Favorito(mostrarConfirmacion = false))
 
-        rule.onNodeWithText("En tus favoritos").assertIsDisplayed().assertIsNotEnabled()
+        rule.onNodeWithText("Favorito").assertIsDisplayed().assertIsNotEnabled()
     }
 
     @Test
@@ -140,6 +142,25 @@ class PantallaDetalleArtistaFavoritoTest {
         rule.onNodeWithTag(TagBotonFavorito).assertDoesNotExist()
         rule.onNodeWithText("Volver al listado de artistas").performClick()
         assertEquals(1, regresos)
+    }
+
+    @Test
+    fun noDisponibleUsaUnCallbackDeVolverAlListadoDistintoDeAtras() {
+        // Corrige un bug de revisión de PR: VinilosNavHost necesita distinguir "volver al
+        // listado tras artista no disponible" (que debe forzar una nueva consulta) de "atrás"
+        // normal; si ambos compartieran el mismo callback, no habría forma de diferenciarlos.
+        var atras = 0
+        var volverAlListado = 0
+        mostrar(
+            estadoFavorito = FavoritoUiState.NoDisponible,
+            onAtras = { atras++ },
+            onVolverAlListado = { volverAlListado++ }
+        )
+
+        rule.onNodeWithText("Volver al listado de artistas").performClick()
+
+        assertEquals(0, atras)
+        assertEquals(1, volverAlListado)
     }
 
     @Test
