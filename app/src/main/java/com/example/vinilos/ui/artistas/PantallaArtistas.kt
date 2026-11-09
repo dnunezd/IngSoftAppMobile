@@ -105,12 +105,8 @@ fun PantallaArtistas(
             contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            // Keys explicitas: sin ellas, la clave posicional de estos dos primeros items puede
-            // desalinearse con el valor guardado (rememberSaveable) de Buscador cuando cambia el
-            // numero de items que le siguen entre el guardado y la restauracion (p. ej. al rotar
-            // justo cuando el estado pasa de Cargando a Exito), restaurando un texto truncado.
-            item(key = "titular") { Titular() }
-            item(key = "buscador") {
+            item { Titular() }
+            item {
                 Buscador(
                     consultaInicial = (estado as? ArtistsUiState.Exito)?.consulta.orEmpty(),
                     habilitado = estado is ArtistsUiState.Exito,
@@ -206,11 +202,8 @@ private fun Titular() {
 @Composable
 private fun Buscador(consultaInicial: String, habilitado: Boolean, onBuscar: (String) -> Unit) {
     // Texto local para que escribir no dependa del viaje por el ViewModel; el ViewModel conserva
-    // el valor y rememberSaveable lo restaura al girar la pantalla. La clave es fija (no autogenerada
-    // por posición de composición): este composable vive en un "item" de LazyColumn, y al rotar el
-    // viewport cambia los ítems visibles/recompuestos, lo que puede desalinear una clave automática
-    // entre distintos ítems y restaurar un valor incorrecto o truncado.
-    var texto by rememberSaveable(key = "buscador_artistas_texto") { mutableStateOf(consultaInicial) }
+    // el valor y rememberSaveable lo restaura al girar la pantalla.
+    var texto by rememberSaveable { mutableStateOf(consultaInicial) }
     BasicTextField(
         value = texto,
         onValueChange = {
@@ -221,11 +214,7 @@ private fun Buscador(consultaInicial: String, habilitado: Boolean, onBuscar: (St
         singleLine = true,
         textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-        // autoCorrect = false: evita que el IME retenga una "región de composición" (texto
-        // subrayado aún no confirmado) mientras el campo tiene foco. Con corrección automática
-        // activa, un cambio de configuración (como girar la pantalla) puede reconstruir la
-        // conexión de entrada antes de que esa región se confirme, perdiendo caracteres.
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search, autoCorrect = false),
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
         modifier = Modifier
             .fillMaxWidth()
             .testTag(TagBuscadorArtistas),

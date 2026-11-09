@@ -56,18 +56,30 @@ Revisión del PR `1c833be` en Motorola Edge 30, Pixel 8 (API 34) y Nexus 5X (API
 
 Pendiente, fuera de este alcance: el issue de GitHub de la revisión se deja abierto a propósito (no se cierra desde este cambio).
 
+### Segunda ronda de revisión (@lorennossauniandes, Pixel 8 API 34, BackVynils local)
+
+238 pruebas unitarias, `lintDebug` y la suite instrumentada completa (142 pruebas, incluidas las 11 de `PantallaDetalleArtistaFavoritoTest`) sin fallos. La lógica del `ViewModel` (respuestas tardías, doble toque, 404 vs. error de red) quedó validada sin observaciones. Se reportaron 3 puntos corregidos y 4 recomendaciones no bloqueantes:
+
+- **Cambios de HU03 fuera de alcance (corregido):** se revirtieron en `PantallaArtistas.kt` las keys explícitas de los items (`"titular"`/`"buscador"`), la key fija de `rememberSaveable` y `autoCorrect = false` del buscador; y en `ArtistasE2ETest` la llamada a `performImeAction()` agregada a la prueba de rotación. Ninguno de esos 4 intentos cambió el síntoma del bug (confirmado en `bug-busqueda-artistas-rotacion.md`), y en el Pixel 8 la prueba de rotación pasa igual en `develop` que en esta rama, lo que apunta a un problema del emulador donde se ejecutó, no del código. El diagnóstico y los 5 intentos siguen documentados sin cambios; solo se revirtió el código que no correspondía al alcance de HU10.
+- **Nota confusa bajo el botón (corregido):** cuando el artista ya es favorito, el texto decía "Botón bloqueado temporalmente para evitar peticiones duplicadas", pero el bloqueo es permanente (ya es favorito), no temporal. Se cambió a "Este artista ya está en tus favoritos." en `strings.xml` (`favoritos_bloqueado_nota`).
+- **Nota del `DELETE` en este README (corregido):** ver la corrección agregada en la sección "Riesgo operativo" más abajo.
+- **`FavoriteRepository` fuera de `AppContainer` (recomendación, no bloqueante, pendiente):** hoy se crea como valor por defecto de un parámetro de `VinilosNavHost` con `BuildConfig.BASE_URL`, lo que ignora los reemplazos de `AppContainer` que usan las pruebas instrumentadas (una E2E con `MockWebServer` consultaría el backend real) y crea un `ServiceAdapter`/`OkHttpClient` nuevo en cada recomposición. La solución propuesta (agregarlo a `AppContainer` y pasarlo desde `MainActivity`) requiere tocar `MainActivity.kt`, fuera de lo permitido en esta sesión de trabajo; queda pendiente para quien gestione ese archivo, antes de las E2E de T10-5.
+- **`Closes` de T10-2/T10-3/T10-4 en la descripción del PR:** pendiente, se gestiona en GitHub al editar la descripción del PR, no en este repositorio.
+
 ## Bug pre-existente de HU03 (no introducido por HU10)
 
 El buscador de artistas trunca el texto escrito al girar físicamente la pantalla (`ArtistasE2ETest`, ver [`bug-busqueda-artistas-rotacion.md`](./bug-busqueda-artistas-rotacion.md)). Se investigó a fondo durante la integración de HU10 porque comparte el archivo `PantallaArtistas.kt`, con 4 intentos de corrección distintos, todos verificados en dispositivo/emulador real, ninguno cambió el síntoma. Se concluyó que el origen está fuera del código de la app (comportamiento del IME/plataforma durante la recreación real de la Activity) y se documentó como riesgo conocido de HU03, sin seguir intentando correcciones a ciegas.
 
 ## Riesgo operativo: datos de prueba en el backend compartido
 
-Al probar manualmente contra el backend compartido/desplegado (no el local), guardar un favorito hace un `POST` real y persistente (no hay endpoint `DELETE` en la API para deshacerlo). El coleccionista de prueba (normalmente id `100`) puede tener ahora artistas marcados como favoritos por pruebas manuales de esta historia. El usuario se encarga de avisar al equipo/tutores si esto requiere atención.
+Al probar manualmente contra el backend compartido/desplegado (no el local), guardar un favorito hace un `POST` real y persistente. El coleccionista de prueba (normalmente id `100`) puede tener ahora artistas marcados como favoritos por pruebas manuales de esta historia. El usuario se encarga de avisar al equipo/tutores si esto requiere atención.
+
+**Corrección (revisión de PR, @lorennossauniandes):** BackVynils sí expone un endpoint para deshacer el favorito: `DELETE /collectors/{collectorId}/musicians/{musicianId}` y `DELETE /collectors/{collectorId}/bands/{bandId}` (`collectorperformer.controller.ts`). Con eso se pueden borrar los favoritos que dejaron las pruebas manuales en el backend desplegado; la afirmación original de que "no hay endpoint DELETE" era incorrecta.
 
 ## Pendiente (no bloquea el cierre de T10-2/T10-3/T10-4)
 
 - **Pruebas E2E de HU10:** **pendientes**. Se planearon a cargo de otro integrante del equipo, pero aún no se han escrito ni ejecutado; no se incluyen en este change (`add-artistas-favoritos`).
-- "Quitar de favoritos": es una historia de usuario distinta (no HU10); la API actual no expone un endpoint `DELETE`.
+- "Quitar de favoritos" desde la UI: es una historia de usuario distinta (no HU10); la API sí expone `DELETE` (ver corrección más arriba), pero esta historia no implementa el botón para removerlos desde la app.
 - Diseño visual del resto de la pantalla de detalle (biografía, estadísticas, discografía): a cargo de HU04, fuera de este alcance.
 
 ### Comando para repetir las pruebas instrumentadas

@@ -15,7 +15,6 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performImeAction
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextClearance
@@ -444,12 +443,6 @@ class ArtistasE2ETest {
             val termino = substringDiscriminante(objetivo, lista)
 
             buscar(termino)
-            // Cuarto intento sobre este bug: antes solo se cerraba el teclado con closeSoftKeyboard(),
-            // que oculta la vista del IME pero no necesariamente "confirma" el texto compuesto en la
-            // sesion de entrada. performImeAction() dispara la accion "Buscar" configurada en el campo,
-            // que es la señal natural para que el IME confirme (finishComposingText) el texto antes de
-            // cerrarse, igual que haria un usuario real al presionar Buscar en el teclado.
-            rule.onNodeWithTag(TagBuscadorArtistas).performImeAction()
             Espresso.closeSoftKeyboard()
             fila(objetivo).assertIsDisplayed()
             (lista - objetivo).forEach { noAparece(it) }

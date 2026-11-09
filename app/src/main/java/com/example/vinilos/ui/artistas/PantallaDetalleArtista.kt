@@ -376,7 +376,7 @@ private fun SeccionFavorito(
     }
 }
 
-/** Nota bajo el botón ya marcado como favorito: explica por qué queda inactivo (HU10). */
+/** Nota bajo el botón ya marcado como favorito: confirma que ya es favorito (HU10). */
 @Composable
 private fun NotaBloqueoTemporalFavorito() {
     Row(
