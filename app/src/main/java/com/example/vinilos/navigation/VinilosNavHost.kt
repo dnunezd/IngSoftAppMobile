@@ -17,6 +17,7 @@ import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.repository.AlbumRepository
 import com.example.vinilos.data.repository.ArtistRepository
 import com.example.vinilos.data.repository.CollectorRepository
+import com.example.vinilos.data.repository.FavoriteRepository
 import com.example.vinilos.ui.artistas.PantallaArtistas
 import com.example.vinilos.ui.artistas.PantallaDetalleArtista
 import com.example.vinilos.ui.catalogo.PantallaCatalogo
@@ -33,6 +34,7 @@ import com.example.vinilos.viewmodel.ArtistsViewModel
 import com.example.vinilos.viewmodel.CollectorsViewModel
 import com.example.vinilos.viewmodel.CrearAlbumViewModel
 import com.example.vinilos.viewmodel.EnvioAlbum
+import com.example.vinilos.viewmodel.FavoritoViewModel
 import com.example.vinilos.viewmodel.SessionViewModel
 
 object Rutas {
@@ -59,6 +61,9 @@ object Rutas {
 /** Clave con la que el formulario le entrega al catálogo el id del álbum creado. */
 private const val ClaveAlbumCreado = "album_creado"
 
+/** Clave con la que el detalle del artista avisa al listado que un favorito ya no está disponible. */
+private const val ClaveArtistaEliminado = "artista_eliminado"
+
 /**
  * Grafo de navegación: ingreso -> (coleccionistas) -> inicio -> catálogo -> detalle del álbum |
  * crear álbum, y artistas -> detalle del artista -> detalle del álbum. Al entrar al
@@ -71,6 +76,7 @@ fun VinilosNavHost(
     collectorRepository: CollectorRepository,
     artistRepository: ArtistRepository,
     albumRepository: AlbumRepository,
+    favoriteRepository: FavoriteRepository,
     modifier: Modifier = Modifier
 ) {
     fun irAlInicio() {
@@ -199,13 +205,24 @@ fun VinilosNavHost(
                 )
             )
         }
-        composable(Rutas.Artistas) {
+        composable(Rutas.Artistas) { entrada ->
             val viewModel: ArtistsViewModel = viewModel(
                 factory = viewModelFactory {
                     initializer { ArtistsViewModel(artistRepository) }
                 }
             )
             val estado by viewModel.uiState.collectAsStateWithLifecycle()
+            val artistaEliminado by entrada.savedStateHandle
+                .getStateFlow(ClaveArtistaEliminado, false)
+                .collectAsStateWithLifecycle()
+            LaunchedEffect(artistaEliminado) {
+                if (artistaEliminado) {
+                    // El artista ya no existe en el backend: se vuelve a consultar para que el
+                    // listado no lo siga mostrando (popBackStack por sí solo no alcanza).
+                    viewModel.reintentar()
+                    entrada.savedStateHandle[ClaveArtistaEliminado] = false
+                }
+            }
             PantallaArtistas(
                 estado = estado,
                 onBuscar = viewModel::buscar,
@@ -227,22 +244,54 @@ fun VinilosNavHost(
         ) { entrada ->
             val argumentos = requireNotNull(entrada.arguments)
             val tipo = ArtistType.valueOf(requireNotNull(argumentos.getString("tipo")))
-            val id = argumentos.getInt("id")
+            val artistId = argumentos.getInt("id")
             // Ligado a la entrada de navegación: sobrevive a la rotación y a la ida y vuelta al álbum.
             val viewModel: ArtistaDetalleViewModel = viewModel(
                 factory = viewModelFactory {
-                    initializer { ArtistaDetalleViewModel(tipo, id, artistRepository) }
+                    initializer { ArtistaDetalleViewModel(tipo, artistId, artistRepository) }
                 }
             )
             val estado by viewModel.uiState.collectAsStateWithLifecycle()
-            PantallaDetalleArtista(
-                estado = estado,
-                onSeleccionarAlbum = { idAlbum ->
-                    navController.navigate(Rutas.detalleAlbum(idAlbum)) { launchSingleTop = true }
-                },
-                onReintentar = viewModel::reintentar,
-                onAtras = { navController.popBackStack() }
-            )
+            val session by sessionViewModel.session.collectAsStateWithLifecycle()
+            val coleccionista = (session as? com.example.vinilos.data.model.Session.Collector)?.collector
+            if (coleccionista != null) {
+                // Solo el Coleccionista comprueba y guarda favoritos; el Visitante no ve el botón.
+                val favoritoViewModel: FavoritoViewModel = viewModel(
+                    key = "favorito-$artistId",
+                    factory = viewModelFactory {
+                        initializer {
+                            FavoritoViewModel(coleccionista.id, artistId, tipo, favoriteRepository)
+                        }
+                    }
+                )
+                val estadoFavorito by favoritoViewModel.uiState.collectAsStateWithLifecycle()
+                PantallaDetalleArtista(
+                    estado = estado,
+                    onSeleccionarAlbum = { idAlbum ->
+                        navController.navigate(Rutas.detalleAlbum(idAlbum)) { launchSingleTop = true }
+                    },
+                    onReintentar = viewModel::reintentar,
+                    onAtras = { navController.popBackStack() },
+                    estadoFavorito = estadoFavorito,
+                    onAgregarFavorito = favoritoViewModel::agregarFavorito,
+                    onReintentarFavorito = favoritoViewModel::reintentarComprobacion,
+                    onConfirmacionFavoritoMostrada = favoritoViewModel::confirmacionMostrada,
+                    onVolverAlListado = {
+                        navController.previousBackStackEntry?.savedStateHandle
+                            ?.set(ClaveArtistaEliminado, true)
+                        navController.popBackStack()
+                    }
+                )
+            } else {
+                PantallaDetalleArtista(
+                    estado = estado,
+                    onSeleccionarAlbum = { idAlbum ->
+                        navController.navigate(Rutas.detalleAlbum(idAlbum)) { launchSingleTop = true }
+                    },
+                    onReintentar = viewModel::reintentar,
+                    onAtras = { navController.popBackStack() }
+                )
+            }
         }
         composable(
             Rutas.DetalleAlbum,

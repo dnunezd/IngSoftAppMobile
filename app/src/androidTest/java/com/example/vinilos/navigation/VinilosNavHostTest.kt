@@ -3,8 +3,10 @@ package com.example.vinilos.navigation
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -17,6 +19,7 @@ import androidx.navigation.testing.TestNavHostController
 import com.example.vinilos.RepositorioAlbumesFalso
 import com.example.vinilos.RepositorioArtistasFalso
 import com.example.vinilos.RepositorioFalso
+import com.example.vinilos.RepositorioFavoritosFalso
 import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.AlbumArtista
 import com.example.vinilos.data.model.Artist
@@ -24,8 +27,10 @@ import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.ArtistaDetalle
 import com.example.vinilos.data.model.Collector
 import com.example.vinilos.data.model.Session
+import com.example.vinilos.data.repository.ArtistaNoDisponible
 import com.example.vinilos.data.remote.ErrorDeCarga
 import com.example.vinilos.ui.artistas.TagArtistas
+import com.example.vinilos.ui.artistas.TagBotonFavorito
 import com.example.vinilos.ui.artistas.TagBuscadorArtistas
 import com.example.vinilos.ui.artistas.TagDetalleArtista
 import com.example.vinilos.ui.artistas.TagListaArtistas
@@ -98,6 +103,7 @@ class VinilosNavHostTest {
         mapOf(100 to Result.success(albumDePrueba)),
         catalogo = listOf(Result.success(catalogoDePrueba))
     )
+    private val favoritos = RepositorioFavoritosFalso()
 
     private fun mostrar(repositorio: RepositorioFalso, albumesRepositorio: RepositorioAlbumesFalso = albumes) {
         albumes = albumesRepositorio
@@ -106,7 +112,12 @@ class VinilosNavHostTest {
             nav = remember {
                 TestNavHostController(contexto).apply { navigatorProvider.addNavigator(ComposeNavigator()) }
             }
-            VinilosTheme { VinilosNavHost(nav, session, repositorio, artistas, albumesRepositorio) }
+            VinilosTheme {
+                VinilosNavHost(
+                    nav, session, repositorio, artistas, albumesRepositorio,
+                    favoriteRepository = favoritos
+                )
+            }
         }
         rule.waitForIdle()
     }
@@ -413,6 +424,39 @@ class VinilosNavHostTest {
         atrasDelSistema()
         assertEquals(Rutas.Artistas, ruta())
         assertEquals(Session.Visitor, session.session.value)
+    }
+
+    @Test
+    fun alVolverDesdeArtistaNoDisponibleElListadoSeActualizaSinElArtistaEliminado() {
+        // Corrige un bug de revisión de PR: antes, "Volver al listado" solo hacía popBackStack()
+        // y el listado conservaba al artista ya eliminado porque ArtistsViewModel solo consulta
+        // en su init. Ahora debe forzar una nueva consulta (ArtistsViewModel.reintentar()).
+        favoritos.esFavorito = Result.success(false)
+        favoritos.agregarResultado = Result.failure(ArtistaNoDisponible())
+        mostrar(RepositorioFalso(Result.success(listOf(manolo))))
+        entrarComoColeccionista()
+        elegir(manolo)
+        rule.onNodeWithTag(TagVerArtistas).performScrollTo().performClick()
+        rule.waitForIdle()
+
+        rule.onNodeWithTag(TagListaArtistas).performScrollToNode(hasTestTag(tagArtista(ruben)))
+        rule.onNodeWithTag(tagArtista(ruben)).performClick()
+        rule.waitForIdle()
+        assertEquals(1, artistas.consultas)
+
+        rule.onNodeWithTag(TagBotonFavorito).performScrollTo().performClick()
+        rule.waitForIdle()
+
+        // El artista ya no existe en el backend real: la siguiente consulta del listado no debe
+        // incluirlo.
+        artistas.resultado = Result.success(listOf(queen))
+        rule.onNodeWithText("Volver al listado de artistas").performClick()
+        rule.waitForIdle()
+
+        assertEquals(Rutas.Artistas, ruta())
+        assertEquals(2, artistas.consultas)
+        rule.onNodeWithTag(tagArtista(queen)).assertIsDisplayed()
+        rule.onAllNodesWithTag(tagArtista(ruben)).assertCountEquals(0)
     }
 
     private fun irAlCatalogoComoVisitante() {

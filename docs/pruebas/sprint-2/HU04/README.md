@@ -45,6 +45,8 @@ Emulador Pixel 8 (API 34), 2026-11-07.
 | Suite instrumentada completa | `OK (138 tests)` |
 | `testDebugUnitTest` y `lintDebug` | 220 sin fallos; 0 errores de lint |
 
+En la revisión del PR se corrió la clase 3 veces por dispositivo, en paralelo, en un Motorola Edge 30 (API 34), el emulador Pixel 8 (API 34) y un emulador Nexus 5X (API 23). Contra el backend desplegado pasó 3/3 `OK (7 tests)` en cada uno, sin omitidos y con 30 capturas por dispositivo; contra BackVynils local, 3/3 con ESC04 omitido. No hubo fallos intermitentes: estas pruebas no escriben en ningún campo, así que no les afecta el teclado en API 23.
+
 ## Cómo correrlas
 
 ```bash

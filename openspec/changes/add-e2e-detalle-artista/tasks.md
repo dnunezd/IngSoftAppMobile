@@ -9,7 +9,7 @@
 
 ## 2. Verificación
 
-- [ ] 2.1 Ejecutar la clase contra el backend desplegado y contra el local, y la clase en el emulador API 23; verificar `OK (7 tests)` sin escenarios omitidos. Hecho en el Pixel 8: desplegado `OK (7 tests)` sin omitidos y local `OK (7 tests)` con ESC04 omitido por falta de datos. Falta la corrida en API 23: no hay un emulador API 23 en este equipo.
+- [x] 2.1 Ejecutar la clase contra el backend desplegado y contra el local, y la clase en el emulador API 23; verificar `OK (7 tests)` sin escenarios omitidos. Hecho en el Pixel 8: desplegado `OK (7 tests)` sin omitidos y local `OK (7 tests)` con ESC04 omitido por falta de datos. La corrida en API 23 la hizo la revisión del PR en un emulador Nexus 5X: 3/3 `OK (7 tests)` contra el desplegado y 3/3 con ESC04 omitido contra el local.
 - [x] 2.2 Ejecutar `testDebugUnitTest`, `lintDebug` y la suite instrumentada completa en el Pixel 8; verificar que no hay fallos ni errores de lint.
 
 ## 3. Evidencia y documentación
