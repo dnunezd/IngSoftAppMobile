@@ -1,5 +1,8 @@
 package com.example.vinilos.data.repository
 
+import android.database.sqlite.SQLiteException
+import com.example.vinilos.data.local.AlbumDao
+import com.example.vinilos.data.local.AlbumEntity
 import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.AlbumNuevo
 import com.example.vinilos.data.model.AlbumResumen
@@ -20,9 +23,15 @@ import java.text.ParseException
 
 class AlbumNoDisponible(causa: Throwable? = null) : Exception("El álbum ya no está disponible", causa)
 
+/**
+ * Álbumes del backend. Con [albumDao], el catálogo además se guarda en el dispositivo
+ * (add-cache-catalogo); sin él, se comporta como antes, que es lo que usan las pruebas que no
+ * tienen `Context`.
+ */
 open class AlbumRepository(
     private val adaptador: ServiceAdapter,
-    private val api: AlbumApi = adaptador.api()
+    private val api: AlbumApi = adaptador.api(),
+    private val albumDao: AlbumDao? = null
 ) {
 
     open suspend fun obtenerAlbum(id: Int): Result<Album> {
@@ -43,12 +52,40 @@ open class AlbumRepository(
 
     /**
      * Catálogo (HU01) ordenado por nombre. A diferencia del detalle, la conversión es tolerante:
-     * un álbum sin id, nombre o género se descarta sin afectar a los demás.
+     * un álbum sin id, nombre o género se descarta sin afectar a los demás. Si la consulta sale bien,
+     * la respuesta reemplaza el catálogo guardado.
      */
     open suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> =
         adaptador.llamar {
             api.obtenerAlbumes().mapNotNull { it.aResumen() }.sortedWith(ordenCatalogo)
+        }.onSuccess { guardar(it) }
+
+    /**
+     * Último catálogo guardado en el dispositivo, en el mismo orden que la consulta. Vacío si no hay
+     * caché o si no se pudo leer: la caché es una mejora, nunca una condición (design.md, D7).
+     */
+    open suspend fun obtenerAlbumesGuardados(): List<AlbumResumen> {
+        val dao = albumDao ?: return emptyList()
+        return try {
+            dao.todos().map { it.aResumen() }.sortedWith(ordenCatalogo)
+        } catch (e: SQLiteException) {
+            emptyList()
         }
+    }
+
+    /** Un fallo al escribir no cambia el resultado de la consulta, que ya llegó bien. */
+    private suspend fun guardar(albumes: List<AlbumResumen>) {
+        val dao = albumDao ?: return
+        try {
+            dao.reemplazar(albumes.map { it.aEntidad() })
+        } catch (e: SQLiteException) {
+            // Se sigue mostrando la respuesta; la siguiente consulta exitosa vuelve a intentarlo.
+        }
+    }
+
+    private fun AlbumResumen.aEntidad() = AlbumEntity(id, nombre, portada, genero, artista, anio)
+
+    private fun AlbumEntity.aResumen() = AlbumResumen(id, nombre, portada, genero, artista, anio)
 
     /** Crea el álbum (HU07) y devuelve su id, que el catálogo usa para marcarlo como nuevo. */
     open suspend fun crearAlbum(album: AlbumNuevo): Result<Int> =
