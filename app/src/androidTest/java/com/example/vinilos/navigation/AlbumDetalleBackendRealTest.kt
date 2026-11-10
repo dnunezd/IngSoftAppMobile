@@ -68,7 +68,8 @@ class AlbumDetalleBackendRealTest {
                     sessionViewModel = SessionViewModel().apply { enterAsVisitor() },
                     collectorRepository = RepositorioFalso(Result.success(emptyList<Collector>())),
                     artistRepository = RepositorioArtistasFalso(Result.success(emptyList())),
-                    albumRepository = contenedor.albumRepository
+                    albumRepository = contenedor.albumRepository,
+                    favoriteRepository = contenedor.favoriteRepository
                 )
             }
         }

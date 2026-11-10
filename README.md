@@ -4,118 +4,117 @@
 
 Proyecto educativo del **equipo 9** del curso de Ingeniería de software para aplicaciones móviles: Daniel Alejandro Nuñez Donado · Jeffrey Alexander Díaz Pérez · Michael Andrés Mora Poveda · Ivette Lorena Nossa Ruiz.
 
-**Vinilos** es una app Android para consultar y administrar un catálogo de álbumes musicales: el visitante explora álbumes y artistas, y el coleccionista aporta información al catálogo. Consume **BackVynils**, una API REST ya existente (NestJS + PostgreSQL).
+**Vinilos** es una app Android para consultar y administrar un catálogo de álbumes musicales: el Visitante explora álbumes y artistas, y el Coleccionista aporta información al catálogo. Consume **BackVynils**, una API REST ya existente (NestJS + PostgreSQL).
 
-La documentación del proyecto (historias de usuario, sprints con su arquitectura y estrategia de pruebas, actas y diseño en Figma) está en la [wiki](https://github.com/dnunezd/IngSoftAppMobile/wiki).
+La documentación del proyecto (historias de usuario, arquitectura y estrategia de pruebas de cada sprint, actas y diseño en Figma) está en la [wiki](https://github.com/dnunezd/IngSoftAppMobile/wiki).
 
-## Estado
+## Historias por sprint
 
-| Historia | Estado |
-|---|---|
-| HU00 · Ingreso a la plataforma | Implementada: ingreso como Visitante o Coleccionista, selector de coleccionista, sesión por rol y pantalla de inicio |
-| HU01 · Catálogo de álbumes | Implementada: cuadrícula de álbumes con portada, nombre y género en orden alfabético, estados de carga, vacío y error con "Reintentar", deslizar para actualizar, posición conservada al girar y paso al detalle. Pruebas y evidencia en [`docs/pruebas/sprint-1/HU01/`](docs/pruebas/sprint-1/HU01/) |
-| HU02 · Detalle de álbum | T02-3, T02-4 y T02-5 completas y verificadas en dispositivo físico (Samsung SM-A356E, Android 16) y en emulador API 23 contra el backend real: consulta, presentación, estados de pantalla, portada real con Coil, navegación desde un enlace provisional del catálogo, pruebas E2E y fecha en API 23 (91/91 instrumentadas sin fallos en ambos dispositivos). Pendiente: documentación en wiki/mockups (T02-6, borradores sin publicar) |
-| HU03 · Listado de artistas | Integrado desde `develop`: listado de músicos y bandas y cargador compartido de imágenes Coil; verificación de UI de esta integración pendiente |
-| HU04 · Detalle de artista | Implementada: datos del músico o la banda, integrantes, álbumes con paso a su detalle y premios, con estados de carga y error y datos conservados al girar. 131/131 instrumentadas sin fallos en Samsung SM-S938B (Android 17) contra el backend desplegado, que no tiene bandas con integrantes: su mapeo se cubre con datos de prueba y su presentación no tiene prueba automatizada. Pendiente: corrida en API 23 y wiki y mockups (T04-6) |
-| HU07 · Crear un álbum | Parte 1 implementada: formulario solo para el Coleccionista, validación, selector de fecha, envío con reintento y álbum nuevo marcado en el catálogo. Pruebas E2E (T07-5): 7 escenarios `FN07_ESC01`..`ESC07` en `CrearAlbumE2ETest`. Evidencia en [`docs/pruebas/sprint-2/HU07`](docs/pruebas/sprint-2/HU07/README.md). |
+### Sprint 1 · release [`v1.1.0`](https://github.com/dnunezd/IngSoftAppMobile/releases/tag/v1.1.0)
+
+Cerró el 1 de noviembre de 2026.
+
+| Historia | Qué hace | Responsable | Pull Requests |
+|---|---|---|---|
+| HU00 · Ingreso a la plataforma | Ingreso como Visitante o Coleccionista, selector de coleccionista, sesión por rol y pantalla de inicio | Daniel Nuñez | [#64](https://github.com/dnunezd/IngSoftAppMobile/pull/64), [#75](https://github.com/dnunezd/IngSoftAppMobile/pull/75) |
+| HU01 · Catálogo de álbumes | Álbumes en orden alfabético con portada, nombre y género; carga, vacío, error con "Reintentar", deslizar para actualizar y paso al detalle | Jeffrey Díaz | [#72](https://github.com/dnunezd/IngSoftAppMobile/pull/72), [#78](https://github.com/dnunezd/IngSoftAppMobile/pull/78) |
+| HU02 · Detalle de álbum | Portada, datos del álbum, artistas, canciones, comentarios y promedio; mensaje propio para un álbum inexistente (404) | Lorena Nossa | [#71](https://github.com/dnunezd/IngSoftAppMobile/pull/71), [#77](https://github.com/dnunezd/IngSoftAppMobile/pull/77), [#80](https://github.com/dnunezd/IngSoftAppMobile/pull/80) |
+| HU03 · Listado de artistas | Músicos y bandas en orden alfabético con búsqueda por nombre (sin distinguir mayúsculas ni tildes) | Michael Mora | [#66](https://github.com/dnunezd/IngSoftAppMobile/pull/66), [#76](https://github.com/dnunezd/IngSoftAppMobile/pull/76) |
+
+Base técnica del sprint:
+- `ServiceAdapter` como único punto de acceso al backend ([#68](https://github.com/dnunezd/IngSoftAppMobile/pull/68)).
+- Soporte desde Android 6.0 (API 23).
+- CI con lint y pruebas unitarias.
+- Backend desplegado de los tutores como valor por defecto ([#79](https://github.com/dnunezd/IngSoftAppMobile/pull/79)).
+
+Evidencia de pruebas en [`docs/pruebas/sprint-1/`](docs/pruebas/sprint-1/).
+
+### Sprint 2 · en curso
+
+Va del 2 al 15 de noviembre de 2026. Su primer release será **`v2.0.0` – Sprint 2**. Estado al 8 de noviembre, al cierre de la semana 1: el [milestone](https://github.com/dnunezd/IngSoftAppMobile/milestone/3) tiene 8 issues cerrados y 12 abiertos.
+
+| Historia | En `develop` | En revisión | Pendiente |
+|---|---|---|---|
+| HU04 · Detalle de artista (Daniel Nuñez) | Datos del músico o la banda, integrantes, álbumes con paso a su detalle y premios ([#82](https://github.com/dnunezd/IngSoftAppMobile/pull/82)) | E2E `FN04-ESC01` a `ESC07` ([#84](https://github.com/dnunezd/IngSoftAppMobile/pull/84)) | Wiki y mockups (T04-6) |
+| HU07 · Crear un álbum (Jeffrey Díaz) | Parte 1: formulario solo para el Coleccionista, validación, selector de fecha, envío con reintento y álbum nuevo marcado en el catálogo ([#83](https://github.com/dnunezd/IngSoftAppMobile/pull/83)) | E2E `FN07-ESC01` a `ESC07` ([#85](https://github.com/dnunezd/IngSoftAppMobile/pull/85)) | Wiki y mockups (T07-7) y parte 2 de desempeño |
+| HU10 · Agregar artistas favoritos (Lorena Nossa) | — | Botón de favorito en el detalle del artista, con confirmación y errores ([#86](https://github.com/dnunezd/IngSoftAppMobile/pull/86)) | E2E (T10-5), wiki y mockups (T10-7) |
+
+- **Regresión:** el equipo decidió no hacer pruebas de regresión en este sprint (T07-6 y T10-6).
+- **Pruebas que fallaban en API 23:** se corrigieron dos.
+  - En `FN03-ESC07`, el buscador quedaba enfocado al girar y el teclado reenviaba el texto (`ru` → `ruru`); ahora la prueba quita el foco antes de girar.
+  - En `CrearAlbumE2ETest` (en #85), el teclado tapaba el siguiente campo; ahora se cierra después de escribir.
+- **Verificación de `develop`** (8 de noviembre, contra BackVynils local) en un Motorola Edge 30 (Android 14), un emulador Pixel 8 (API 34) y un emulador Nexus 5X (API 23):
+
+  | Prueba | Resultado |
+  |---|---|
+  | Lint | 0 errores, 48 avisos esperados |
+  | Unitarias | 220 sin fallos |
+  | Instrumentadas | 130 sin fallos en cada dispositivo, corridas en paralelo |
+  | `ExampleInstrumentedTest` | Sin fallos en los dos emuladores, corrida aparte porque compara el paquete de la app |
+- **Pendiente para cerrar la iteración 2:**
+  - Optimizar las cinco historias de las iteraciones 1 y 2: micro-optimizaciones con el Lint de Android, corrutinas para evitar ANR y menor consumo de memoria.
+  - Perfilarlas en al menos tres dispositivos físicos.
+  - Generar el release `v2.0.0` con su APK.
+  - Actualizar la wiki.
 
 ## Versión y APK
 
-La versión a entregar para el Sprint 1 es `1.1.0` (`versionCode` 2), publicada como el release [`v1.1.0`](https://github.com/dnunezd/IngSoftAppMobile/releases/tag/v1.1.0) sobre `main`. La versión anterior, `1.0.0`, fue la entregada la semana previa para la revisión de los tutores ([`v1.0.0`](https://github.com/dnunezd/IngSoftAppMobile/releases/tag/v1.0.0)). El identificador de la app es `com.example.vinilos` y funciona en Android 6.0 Marshmallow (API 23) o superior.
+La versión publicada es `1.1.0` (`versionCode` 2), en el release [`v1.1.0`](https://github.com/dnunezd/IngSoftAppMobile/releases/tag/v1.1.0) sobre `main`, con el APK `vinilos-v1.1.0.apk` adjunto. El identificador de la app es `com.example.vinilos` y funciona desde Android 6.0 (API 23). Para instalarla sin compilar, descarga el APK del release en el teléfono y ábrelo.
 
-Para instalarla sin compilar, descarga en el teléfono el APK adjunto al [release](https://github.com/dnunezd/IngSoftAppMobile/releases) y ábrelo. Ese APK está compilado para un dispositivo físico: necesita BackVynils corriendo en el computador ([paso 2](#2-levantar-el-backend)) y el teléfono conectado por USB con `adb reverse tcp:3000 tcp:3000`.
+El primer release del Sprint 2 será **`v2.0.0` – Sprint 2**. `app/build.gradle.kts` ya tiene `versionName` `2.0.0` y `versionCode` 3. Los releases siguen el formato `v<versión> – Sprint <n>`, como `v1.1.0 – Sprint 1`.
 
-En cada release se sube `versionCode` en 1 y `versionName` sigue el tag (por ejemplo `1.1.0` para `v1.1.0`), ambos en `app/build.gradle.kts`. El APK del release se genera con `./gradlew assembleDebug -PbaseUrl=http://localhost:3000/` y se adjunta renombrado como `vinilos-v<versión>.apk` (la variante de release no está firmada y Android no la instala).
+Para cada release:
 
-### HU02: portada real con Coil y comprobación del detalle
+1. Sube `versionCode` en 1 y deja `versionName` igual al tag (por ejemplo `2.0.0` para `v2.0.0`), ambos en `app/build.gradle.kts`.
+2. Genera el APK con `./gradlew assembleDebug`. Queda en `app/build/outputs/apk/debug/app-debug.apk` y apunta al backend desplegado. La variante release no está firmada y Android no la instala.
+3. Adjúntalo al release como `vinilos-v<versión>.apk`.
 
-`ContenidoAlbum` usa una única `PortadaAlbum`, conservando el estilo de HU00. El componente se alineó al patrón ya establecido por HU03: un `AsyncImage` de Coil que reutiliza el cargador compartido de la app (`VinilosApplication`), con `inicio_albumes` como `placeholder`, `error` y `fallback` genérico. Sin URL (o en blanco) muestra directamente esa ilustración local; con URL, Coil intenta la descarga real y cae al mismo recurso si falla. Los artistas ahora también usan Coil con `artista.imagen` (mismo patrón, `inicio_artistas` como `placeholder`/`error`/`fallback`): deja de ser una imagen provisional fija.
-
-Rediseño visual (sobre referencia `album.png` del usuario): fondo crema y tarjetas blancas locales a esta pantalla, promedio mostrado con estrellas (`★`/`☆`) en vez de un número junto a "X avg", fecha de estreno destacada junto al promedio, canciones numeradas y comentarios con estrellas en vez del texto "X / 5". El botón "+ Agregar comentario" (solo coleccionista) que pidió el usuario **no** se implementó: es funcionalidad nueva de escritura fuera del alcance de HU02 (que es solo de consulta); queda pendiente de decidir como tarea o historia aparte.
-
-Comprobación de este cambio: **120 unitarias sin fallos**, compilación de las pruebas instrumentadas correcta y lint sin errores nuevos. Las pruebas de `PortadaAlbum` y `ContenidoAlbum` verifican que el componente se muestra con y sin URL, sin forzar un estado de carga/error específico: Coil los gestiona internamente y no son determinísticos de probar sin mockear red. **Verificado en dispositivo físico**: las 90 pruebas instrumentadas del módulo (incluyendo esta sección) pasaron contra el backend real.
-
-Para repetir las comprobaciones sin dispositivo, desde PowerShell:
-
-```powershell
-$env:JAVA_HOME='C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot'
-.\gradlew.bat testDebugUnitTest :app:assembleDebugAndroidTest
-```
-
-Para ejecutar las pruebas de UI pendientes, conecta y desbloquea un teléfono o usa un emulador ya disponible; comprueba el dispositivo con `adb devices` y, si hay varios, define `$env:ANDROID_SERIAL='<serial>'`:
-
-```powershell
-$env:JAVA_HOME='C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot'
-.\gradlew.bat connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.package=com.example.vinilos.ui.detalle"
-```
-
-Este filtro ejecuta `PortadaAlbumTest`, `ContenidoAlbumTest` y `PantallaDetalleAlbumTest` con datos controlados, **sin Docker ni backend**. Comprueba portada con y sin URL, posición antes de los metadatos, artistas, canciones, comentarios, promedio, vacíos, regreso, reintento y 404.
-
-**T02-3 está completa y verificada en dispositivo** (consulta, presentación, estados de pantalla y portada real con Coil).
-
-### HU02: navegación desde el catálogo (T02-4)
-
-Al tocar un álbum del catálogo (HU01) se navega a la ruta `album/{id}` con su id; volver desde el detalle (éxito o 404) regresa al catálogo sin repetir su consulta. El enlace provisional que se usó mientras HU01 no existía (`PantallaCatalogoProvisional`, `AlbumIdProvisional = 100`) ya se eliminó.
-
-Comprobación de este cambio: **119 unitarias sin fallos**, `:app:assembleDebugAndroidTest` compila sin errores y lint sin errores. Las pruebas de navegación (`VinilosNavHostTest`) y del enlace provisional (ya eliminado) se escribieron primero (ROJO por compilación) y luego se implementó lo mínimo para que compilen. **Verificado en dispositivo físico por el usuario**: se detectó que el id inicial (`1`) no correspondía a un álbum real (los ids de álbum de BackVynils empiezan en 100, igual que collectors/artistas) y se corrigió a `100`.
-
-Para ejecutar estas pruebas de navegación, conecta y desbloquea un teléfono o usa un emulador ya disponible:
-
-```powershell
-$env:JAVA_HOME='C:\Program Files\Eclipse Adoptium\jdk-17.0.20.101-hotspot'
-.\gradlew.bat connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.package=com.example.vinilos.navigation"
-```
-
-E2E (T02-5) ejecutadas y verificadas contra backend real en dispositivo físico: `AlbumDetalleE2ETest` (flujo completo del visitante con el álbum 100) y `AlbumDetalleBackendRealTest` (álbum 101 sin canciones/comentarios y un id inexistente para el 404 real). Suite completa del módulo: 90/90 pruebas instrumentadas sin fallos.
+Antes de generarlo, comprueba que el backend desplegado responda (ver [opción A](#opción-a-backend-desplegado-por-los-tutores)). El 8 de noviembre de 2026 respondía `500`. Si sigue caído, el APK se puede compilar con `-PbaseUrl=http://localhost:3000/`, pero solo funcionará con BackVynils local y `adb reverse tcp:3000 tcp:3000`.
 
 ## Requisitos
 
 | Herramienta | Versión |
 |---|---|
-| JDK | 17. Para compilar por terminal define `JAVA_HOME` con un JDK 17: el que trae Android Studio puede ser más nuevo y Gradle 8.7 no lo soporta |
-| Android Studio | Compatible con AGP 8.6.0 (Koala Feature Drop, 2024.1.2, o superior) |
+| JDK | 17. Gradle 8.7 no arranca con un JDK más nuevo (como el que trae Android Studio): define `JAVA_HOME` con un JDK 17 |
+| Android Studio | Compatible con AGP 8.6.0 (Koala Feature Drop 2024.1.2 o superior) |
 | Android SDK | Plataforma 34 (`minSdk` 23, `compileSdk` y `targetSdk` 34), con `adb` en `platform-tools` |
-| Docker | Docker Desktop o Docker Engine con Compose, para levantar BackVynils |
+| Docker | Docker Desktop o Docker Engine con Compose, solo para el backend local |
 | Dispositivo | Físico o emulador con Android 6.0 (API 23) o superior |
 
-Gradle 8.7 viene con el wrapper. Stack: Kotlin 1.9, Jetpack Compose con Material 3, MVVM + Repository, Retrofit + OkHttp, Navigation Compose y corrutinas.
+Stack: Kotlin 1.9, Jetpack Compose con Material 3, MVVM + Repository, Retrofit + OkHttp, Coil, Navigation Compose y corrutinas. Gradle 8.7 viene con el wrapper.
 
 ## Puesta en marcha
 
-Los comandos se ejecutan desde la raíz del repositorio y están escritos para macOS, Linux o Git Bash. En PowerShell usa `.\gradlew.bat` en lugar de `./gradlew`, `curl.exe` en lugar de `curl`, y pon entre comillas los argumentos `-P` cuyo nombre lleva puntos.
+Los comandos se ejecutan desde la raíz del repositorio y están escritos para macOS, Linux o Git Bash. En PowerShell usa `.\gradlew.bat`, `curl.exe` y pon entre comillas los argumentos `-P` cuyo nombre lleva puntos. La ruta del repositorio no debe tener tildes (ver [problemas frecuentes](#problemas-frecuentes)).
 
 ### 1. Abrir el proyecto
 
-Abre la raíz del repositorio en Android Studio y deja que sincronice Gradle. Si compilas solo por terminal y Gradle dice `SDK location not found`, define `ANDROID_HOME` con la ruta del SDK o crea `local.properties` (no se versiona) con `sdk.dir=<ruta del SDK>`.
+Abre la raíz del repositorio en Android Studio y deja que sincronice Gradle. Si Gradle dice `SDK location not found`, define `ANDROID_HOME` o crea `local.properties` (no se versiona) con `sdk.dir=<ruta del SDK>`.
 
-### 2. Levantar el backend
+### 2. Elegir el backend
 
-Hay dos formas de tener un backend disponible: el desplegado por los tutores (sin instalar nada) o uno local con Docker.
+#### Opción A: backend desplegado por los tutores
 
-#### Opción A: backend desplegado por los tutores (preferida)
+Es el valor por defecto (`https://backvynils-q6yc.onrender.com/`). No requiere Docker ni `adb reverse`. Está en un plan gratuito y puede estar dormido o caído; compruébalo antes:
 
-**Desde esta versión, este es el valor por defecto del proyecto** (`app/build.gradle.kts`): compilar o instalar sin pasar `-PbaseUrl` apunta a `https://backvynils-q6yc.onrender.com/`. No requiere Docker ni `adb reverse`, y funciona igual en emulador y en teléfono.
+```bash
+curl https://backvynils-q6yc.onrender.com/collectors
+```
 
-> 💡 Al estar en un plan gratuito, puede que esté disponible o puede que esté dormido/caído en un momento dado. Antes de compilar, date una vuelta y verifica si está despierto:
->
-> ```bash
-> curl https://backvynils-q6yc.onrender.com/collectors
-> ```
->
-> Si responde con datos (no vacío ni error), ya puedes usarlo; si no responde o da error, usa la opción B mientras se restablece.
+Si no responde con datos, usa la opción B.
 
 #### Opción B: backend local con Docker
 
-Abre **Docker Desktop** primero y espera a que el ícono de la ballena esté activo (sin eso, `docker compose` falla con un error de conexión al daemon). Luego, en la carpeta del repositorio de [BackVynils](https://github.com/TheSoftwareDesignLab/BackVynils):
+Con Docker Desktop abierto, en la carpeta del repositorio de [BackVynils](https://github.com/TheSoftwareDesignLab/BackVynils):
 
 ```bash
 docker compose up -d --build
 curl http://localhost:3000/collectors
 ```
 
-La respuesta debe incluir a **Manolo Bellon** y **Jaime Monsalve** (ids 100 y 101); las pruebas E2E dependen de esos datos. Dos ajustes que pueden hacer falta:
+La respuesta debe incluir a **Manolo Bellon** y **Jaime Monsalve** (ids 100 y 101): las pruebas E2E dependen de esos datos de ejemplo. Si hace falta:
 
-- **PostgreSQL no arranca** (el compose usa la imagen `postgres` sin versión): crea `docker-compose.override.yml` junto al compose con este contenido y vuelve a levantarlo.
+- **PostgreSQL no arranca** (el compose usa `postgres` sin versión, y la más reciente no abre los datos creados con la 13): crea `docker-compose.override.yml` junto al compose y vuelve a levantarlo.
 
   ```yaml
   services:
@@ -132,98 +131,63 @@ La respuesta debe incluir a **Manolo Bellon** y **Jaime Monsalve** (ids 100 y 10
 
 ### 3. Conectar la app con el backend
 
-La URL base sale de la propiedad de Gradle `baseUrl`. **Por defecto es `https://backvynils-q6yc.onrender.com/`** (el backend desplegado por los tutores); para usar el backend local con Docker hay que pasar `-PbaseUrl` explícitamente.
+La URL sale de la propiedad de Gradle `baseUrl` y queda fija en la APK al compilar.
 
 | Dónde corres la app | Qué hacer |
 |---|---|
-| Emulador o dispositivo físico, con el backend desplegado (opción A, preferida) | **Nada**: es el valor por defecto, no necesita `-PbaseUrl` ni `adb reverse` ni Docker |
-| Emulador, con backend local (opción B) | Compila con `-PbaseUrl=http://10.0.2.2:3000/` (`10.0.2.2` es el `localhost` del computador visto desde el emulador) |
-| Dispositivo físico, con backend local (opción B) | Ejecuta `adb reverse tcp:3000 tcp:3000` (repítelo si se reconecta) y compila con `-PbaseUrl=http://localhost:3000/`, o guárdala como `baseUrl=http://localhost:3000/` en el `gradle.properties` de tu usuario (`~/.gradle/`) |
+| Cualquier dispositivo, backend desplegado | Nada: es el valor por defecto |
+| Emulador, backend local | Compila con `-PbaseUrl=http://10.0.2.2:3000/` (`10.0.2.2` es el computador visto desde el emulador) |
+| Dispositivo físico, backend local | Ejecuta `adb reverse tcp:3000 tcp:3000` (repítelo si se reconecta) y compila con `-PbaseUrl=http://localhost:3000/` |
 
 El HTTP sin cifrar solo está permitido hacia `localhost` y `10.0.2.2` (`app/src/main/res/xml/network_security_config.xml`).
 
 ### 4. Compilar e instalar
 
-El APK ya apunta por defecto al backend desplegado por los tutores (ver opción A); mientras esté caído, genera el APK apuntando al local (opción B) con `-PbaseUrl=http://localhost:3000/` (o `http://10.0.2.2:3000/` en emulador).
-
 ```bash
-./gradlew assembleDebug     # APK en app/build/outputs/apk/debug/, apunta al backend desplegado (default)
-./gradlew installDebug      # instala en el dispositivo conectado, apunta al backend desplegado (default)
+./gradlew assembleDebug     # APK en app/build/outputs/apk/debug/
+./gradlew installDebug      # instala en el dispositivo conectado
 ```
 
-Si el backend desplegado está caído, agrega `-PbaseUrl=http://localhost:3000/` (con `adb reverse tcp:3000 tcp:3000` en dispositivo físico) o `-PbaseUrl=http://10.0.2.2:3000/` en emulador.
-
-Si hay más de un dispositivo conectado, elige uno con la variable de entorno `ANDROID_SERIAL=<serial>`.
+Agrega `-PbaseUrl=...` para usar el backend local. Si hay varios dispositivos conectados, elige uno con `ANDROID_SERIAL=<serial>`.
 
 ## Pruebas
 
 | Tipo | Comando | Cantidad | Necesita |
 |---|---|---|---|
-| Lint y unitarias (lo que corre la CI) | `./gradlew lint testDebugUnitTest --continue` | 49 unitarias | Nada |
-| Instrumentadas sin E2E | `./gradlew connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.notClass=com.example.vinilos.IngresoE2ETest,com.example.vinilos.CatalogoE2ETest,com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest,com.example.vinilos.ArtistasE2ETest"` | 49 | Dispositivo |
-| Todas las instrumentadas (con E2E) | `./gradlew connectedDebugAndroidTest -PbaseUrl=http://localhost:3000/` | 68 (49 + 19 E2E) | Dispositivo, backend con datos y `adb reverse` |
+| Lint y unitarias (lo que corre la CI) | `./gradlew lint testDebugUnitTest --continue` | 220 unitarias | Nada |
+| Instrumentadas sin E2E | `./gradlew connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.notClass=com.example.vinilos.IngresoE2ETest,com.example.vinilos.CatalogoE2ETest,com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest,com.example.vinilos.ArtistasE2ETest"` | 112 | Dispositivo |
+| Todas las instrumentadas (con E2E) | `./gradlew connectedDebugAndroidTest -PbaseUrl=http://localhost:3000/` | 131 (112 + 19 E2E) | Dispositivo, backend local con datos y `adb reverse` en un teléfono |
 
-- El dispositivo debe estar **desbloqueado y con la pantalla encendida** durante toda la corrida; si no, las pruebas fallan con `No compose hierarchies found in the app`.
-- Para las E2E pasa `-PbaseUrl` también a `connectedDebugAndroidTest` apuntando a tu backend local (opción B): la URL queda fija en la APK de prueba y, como el default del proyecto ahora es el backend desplegado (que puede estar caído), **las E2E necesitan este flag explícito para no depender de él**.
-- Para una sola clase: `"-Pandroid.testInstrumentationRunnerArguments.class=com.example.vinilos.RecuperacionTest"` (instrumentadas) o `--tests "com.example.vinilos.viewmodel.CollectorsViewModelTest"` (unitarias).
-- Los reportes quedan en `app/build/reports/` (`tests/`, `androidTests/` y `lint-results-debug.html`). Referencia del lint: 0 errores y 48 avisos esperados.
+- El dispositivo debe estar **desbloqueado y con la pantalla encendida** durante toda la corrida.
+- Pasa `-PbaseUrl` también a las instrumentadas: la URL queda fija en la APK de prueba. Las E2E que crean datos deben correr contra el backend local.
+- Para una sola clase: `"-Pandroid.testInstrumentationRunnerArguments.class=com.example.vinilos.RotacionTest"` (instrumentadas) o `--tests "com.example.vinilos.viewmodel.CollectorsViewModelTest"` (unitarias).
+- Los reportes quedan en `app/build/reports/` (`tests/`, `androidTests/` y `lint-results-debug.html`). El lint debe quedar con 0 errores; los 48 avisos son esperados.
+- La [CI](.github/workflows/ci.yml) corre lint y unitarias con JDK 17 en cada Pull Request y en cada push a `develop` y `main`. Las instrumentadas necesitan un dispositivo y se corren a mano antes de integrar.
 
-### E2E completas y su evidencia (PDF)
+### Pruebas E2E y su evidencia
 
-Las clases E2E (las que llaman a `EvidenciaE2E.capturar(...)`) corren contra el **backend real** (BackVynils, local o el desplegado por los tutores) y generan, en el dispositivo, una carpeta con capturas y un informe en PDF por cada valor de `carpetaEvidencia`/`evidencia` usado, en `.../files/e2e-evidencia/<carpeta>/`. No se versionan en el repositorio (`.gitignore` las excluye con el sufijo `e2e-evidencia*`); mientras el equipo no defina un estándar único, algunos informes se han versionado también a mano en `docs/pruebas/sprint-1/<HU>/e2e/` (ver por ejemplo `docs/pruebas/sprint-1/HU01/e2e/informe.md`).
+Las E2E recorren la app contra el backend real. Cada escenario se nombra con el id de su historia (`FN03-ESC07`) y guarda en el dispositivo capturas, un informe y un PDF en `.../files/e2e-evidencia/<escenario>/`. Esa carpeta no se versiona; los PDF que se entregan se copian a `docs/pruebas/<sprint>/<HU>/e2e/`.
 
-| Clase | Historia | Carpeta(s) de evidencia | Escenarios |
-|---|---|---|---|
-| `IngresoE2ETest` | HU00 | `FN00_ESC01`..`FN00_ESC03` (una por escenario) | 3 |
-| `CatalogoE2ETest` | HU01 | `FN01_ESC01`..`FN01_ESC05` (una por escenario) | 5 |
-| `AlbumDetalleE2ETest` | HU02 | `FN02_ESC01` | 1 |
-| `AlbumDetalleBackendRealTest` | HU02 | `FN02_ESC02`, `FN02_ESC03` (una por escenario) | 2 |
-| `ArtistasE2ETest` | HU03 | `FN03_ESC01`..`FN03_ESC07` (una por escenario) | 7 |
-| `CrearAlbumE2ETest` | HU07 | `FN07_ESC01`..`FN07_ESC07` (una por escenario; PDF en `docs/pruebas/sprint-2/HU07/e2e/`). Crea y borra álbumes: correr contra el backend local | 7 |
+| Clase | Historia | Escenarios |
+|---|---|---|
+| `IngresoE2ETest` | HU00 | `FN00-ESC01` a `ESC03`, más una prueba de navegación |
+| `CatalogoE2ETest` | HU01 | `FN01-ESC01` a `ESC05` |
+| `AlbumDetalleE2ETest` | HU02 | `FN02-ESC01` |
+| `AlbumDetalleBackendRealTest` | HU02 | `FN02-ESC02` y `ESC03` |
+| `ArtistasE2ETest` | HU03 | `FN03-ESC01` a `ESC07` |
+| `CrearAlbumE2ETest` | HU07 | `FN07-ESC01` a `ESC07` (crea y borra álbumes: correr contra BackVynils local) |
 
-Total: **26 pruebas E2E**. Por qué una "limpieza" antes de correrlas: `BuildConfig.BASE_URL` queda fijo dentro del APK de prueba al compilar, así que cambiar la `baseUrl` exige **reinstalar** (`installDebug installDebugAndroidTest`), no alcanza con solo volver a ejecutar; y las carpetas de evidencia se acumulan en el dispositivo entre corridas, así que conviene borrarlas antes de cada corrida para no mezclar capturas de ejecuciones distintas en el mismo PDF.
-
-#### Correr todas las E2E de la app y traer su evidencia
-
-Comandos para bash (macOS, Linux o Git Bash); en PowerShell usa `.\gradlew.bat`, pon entre comillas los `-P` con puntos y `Remove-Item -Recurse -Force` en vez de `rm -rf` para la carpeta local.
+Total: **26 pruebas E2E**. Para correrlas y traer la evidencia (con `connectedDebugAndroidTest` la app se desinstala al terminar y la evidencia se pierde):
 
 ```bash
-adb devices                                      # confirma el dispositivo/emulador conectado
-export ANDROID_SERIAL="<serial>"                 # solo si hay más de uno
-
-# Compila e instala. El default del proyecto es el backend desplegado por los tutores; para
-# usar un backend local pasa -PbaseUrl explícito (http://10.0.2.2:3000/ en emulador,
-# http://localhost:3000/ en dispositivo físico con "adb reverse" hecho).
 ./gradlew installDebug installDebugAndroidTest -PbaseUrl=http://localhost:3000/
-
-# Solo en dispositivo físico por USB, si usas el backend local:
-adb reverse tcp:3000 tcp:3000
-
-# Limpia evidencia previa en el dispositivo (no es necesario un "gradle clean")
+adb reverse tcp:3000 tcp:3000                    # solo en un teléfono
 adb shell rm -rf /storage/emulated/0/Android/data/com.example.vinilos/files/e2e-evidencia
-
-# Corre TODAS las clases E2E de la app (las 26 pruebas)
 adb shell am instrument -w -e class com.example.vinilos.IngresoE2ETest,com.example.vinilos.CatalogoE2ETest,com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest,com.example.vinilos.ArtistasE2ETest,com.example.vinilos.CrearAlbumE2ETest com.example.vinilos.test/androidx.test.runner.AndroidJUnitRunner
-
-# Trae la evidencia (pisa la carpeta local si ya existía)
-rm -rf ./e2e-evidencia
 adb pull /storage/emulated/0/Android/data/com.example.vinilos/files/e2e-evidencia ./e2e-evidencia
 ```
 
-Debe terminar en `OK (26 tests)` (3 + 5 + 1 + 2 + 7 + 7 escenarios con evidencia, más un test de navegación en `IngresoE2ETest` sin captura propia). El dispositivo debe permanecer desbloqueado y con la pantalla encendida durante toda la corrida (`adb shell svc power stayon true` ayuda si se duerme).
-
-> ⚠️ `./gradlew connectedDebugAndroidTest` instala, corre y **desinstala** la app al terminar, lo que borra su carpeta de evidencia antes de poder hacer `adb pull`. Usa `installDebug installDebugAndroidTest` + `adb shell am instrument` (como arriba) para dejar la app instalada y poder traer la evidencia después.
-
-#### Correr solo una E2E específica
-
-Reemplaza la lista de `-e class` por una sola clase, por ejemplo para HU02:
-
-```bash
-adb shell am instrument -w -e class com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest com.example.vinilos.test/androidx.test.runner.AndroidJUnitRunner
-adb pull /storage/emulated/0/Android/data/com.example.vinilos/files/e2e-evidencia ./e2e-evidencia
-```
-
-La [integración continua](.github/workflows/ci.yml) corre lint y pruebas unitarias con JDK 17 en cada Pull Request y en cada push a `develop` y `main`, y falla si hay un error de lint o una prueba fallida. Las instrumentadas no corren en CI porque necesitan un dispositivo; se corren a mano antes de integrar. Qué cubre cada nivel de prueba está en la estrategia de pruebas de cada sprint en la [wiki](https://github.com/dnunezd/IngSoftAppMobile/wiki).
+Debe terminar en `OK (26 tests)`. En Git Bash antepone `MSYS_NO_PATHCONV=1` a los `adb` que llevan rutas del dispositivo.
 
 ## Problemas frecuentes
 
@@ -231,9 +195,11 @@ La [integración continua](.github/workflows/ci.yml) corre lint y pruebas unitar
 |---|---|
 | `No compose hierarchies found in the app` | El dispositivo está bloqueado o con la pantalla apagada. |
 | "No pudimos cargar los coleccionistas" o fallan las E2E | Backend caído, falta `adb reverse` o la app se instaló con otra `baseUrl`. Revisa `curl http://localhost:3000/collectors` y reinstala con `-PbaseUrl`. |
+| El backend desplegado responde `{"statusCode":500,"message":"Internal server error"}` | Está caído o dormido. Usa el [backend local](#opción-b-backend-local-con-docker). |
+| Una E2E que escribe en un campo falla solo en API 23 (toque sin efecto o texto repetido al girar) | El teclado de API 23 sigue abierto o conectado al campo. Ciérralo después de escribir (`Espresso.closeSoftKeyboard()`) y quita el foco antes de girar. |
 | `Cleartext HTTP traffic not permitted` | El host del backend no está en `network_security_config.xml`. |
 | `more than one device/emulator` | Elige un dispositivo con `ANDROID_SERIAL`. |
-| `Your project path contains non-ASCII characters` (Windows) | La ruta del repositorio tiene tildes. Clónalo en una ruta sin ellas (por ejemplo `C:\dev\IngSoftAppMobile`); `android.overridePathCheck=true` no basta, porque las pruebas unitarias fallan con `ClassNotFoundException`. |
+| `Your project path contains non-ASCII characters` (Windows) | La ruta del repositorio tiene tildes. Clónalo en una ruta sin ellas (por ejemplo `C:\dev\IngSoftAppMobile`); `android.overridePathCheck=true` no basta, porque las unitarias fallan con `ClassNotFoundException`. |
 | Gradle falla al arrancar y solo muestra una versión de Java (por ejemplo `25.0.3`) | Gradle 8.7 no soporta ese JDK: define `JAVA_HOME` con un JDK 17. |
 
 ## Estructura y arquitectura
@@ -245,6 +211,7 @@ app/src/main/java/com/example/vinilos/
   ui/          pantallas Compose por funcionalidad y tema
   navigation/  VinilosNavHost: grafo de navegación
 app/src/test/ y app/src/androidTest/   pruebas unitarias e instrumentadas
+docs/pruebas/  evidencia de pruebas por sprint e historia
 openspec/      specs vigentes (specs/), cambios en curso (changes/) y archivados (changes/archive/)
 ```
 
@@ -253,4 +220,5 @@ openspec/      specs vigentes (specs/), cambios en curso (changes/) y archivados
 ## Flujo de trabajo
 
 - Gitflow con `main`, `develop` y `feature/*`: cada historia se integra a `develop` por Pull Request (*squash and merge*, dos revisores y `Closes #n`), y cada release se etiqueta sobre `main`.
+- Commits y títulos de PR con Conventional Commits en español (`feat(catalogo): ...`).
 - El comportamiento se especifica con [OpenSpec](https://github.com/Fission-AI/OpenSpec) en `openspec/`, con requisitos y escenarios verificables por capacidad.

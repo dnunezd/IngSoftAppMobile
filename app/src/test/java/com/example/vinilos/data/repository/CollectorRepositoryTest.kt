@@ -4,6 +4,7 @@ import com.example.vinilos.data.model.Collector
 import com.example.vinilos.data.remote.CollectorApi
 import com.example.vinilos.data.remote.CollectorDto
 import com.example.vinilos.data.remote.ErrorDeCarga
+import com.example.vinilos.data.remote.PerformerDto
 import com.example.vinilos.data.remote.ServiceAdapter
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
@@ -140,6 +141,15 @@ class CollectorRepositoryTest {
     fun laCancelacionSeRelanzaYNoSeConvierteEnError() = runTest {
         val api = object : CollectorApi {
             override suspend fun getCollectors(): List<CollectorDto> = throw CancellationException("cancelado")
+
+            override suspend fun getFavoritePerformers(collectorId: Int): List<PerformerDto> =
+                throw UnsupportedOperationException("no usado en esta prueba")
+
+            override suspend fun addFavoriteBand(collectorId: Int, bandId: Int): PerformerDto =
+                throw UnsupportedOperationException("no usado en esta prueba")
+
+            override suspend fun addFavoriteMusician(collectorId: Int, musicianId: Int): PerformerDto =
+                throw UnsupportedOperationException("no usado en esta prueba")
         }
 
         var relanzada = false
