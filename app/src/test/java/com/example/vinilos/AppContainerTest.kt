@@ -1,5 +1,7 @@
 package com.example.vinilos
 
+import com.example.vinilos.data.local.AlbumDao
+import com.example.vinilos.data.local.AlbumEntity
 import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.Collector
 import com.example.vinilos.data.remote.ServiceAdapter
@@ -60,4 +62,32 @@ class AppContainerTest {
         assertSame(falso, contenedor.albumRepository)
         assertTrue(contenedor.albumRepository.obtenerAlbum(1).exceptionOrNull() is AlbumNoDisponible)
     }
+
+    @Test
+    fun elDaoDelContenedorLlegaAlRepositorioDeAlbumes() = runTest {
+        val dao = AlbumDaoEnMemoria()
+        servidor.enqueue(
+            MockResponse().setBody("""[{"id": 100, "name": "Buscando América", "genre": "Salsa"}]""")
+        )
+        val contenedor = AppContainer(baseUrl = servidor.url("/").toString(), albumDao = dao)
+
+        contenedor.albumRepository.obtenerAlbumes().getOrThrow()
+
+        assertEquals(listOf(100), dao.filas.map { it.id })
+        assertEquals(listOf(100), contenedor.albumRepository.obtenerAlbumesGuardados().map { it.id })
+    }
+
+    @Test
+    fun sinDaoElRepositorioDeAlbumesNoGuardaNada() = runTest {
+        val contenedor = AppContainer(baseUrl = servidor.url("/").toString())
+
+        assertTrue(contenedor.albumRepository.obtenerAlbumesGuardados().isEmpty())
+    }
+}
+
+private class AlbumDaoEnMemoria : AlbumDao() {
+    var filas: List<AlbumEntity> = emptyList()
+    override suspend fun todos() = filas
+    override suspend fun borrarTodos() { filas = emptyList() }
+    override suspend fun insertar(albumes: List<AlbumEntity>) { filas = filas + albumes }
 }

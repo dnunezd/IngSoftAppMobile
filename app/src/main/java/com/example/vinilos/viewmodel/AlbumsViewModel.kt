@@ -74,28 +74,49 @@ class AlbumsViewModel(private val repositorio: AlbumRepository) : ViewModel() {
             else -> null
         }
 
+    /**
+     * Carga inicial (add-cache-catalogo, D5): si hay un catálogo guardado se muestra de inmediato como
+     * si se estuviera deslizando para actualizar, y un fallo de la consulta solo activa el aviso. Sin
+     * nada guardado, se comporta como antes: `Cargando` y `Error` si falla.
+     */
     private fun cargar() {
         _uiState.value = AlbumsUiState.Cargando
-        consultar(alFallar = AlbumsUiState.Error)
+        lanzar { consulta ->
+            val guardados = repositorio.obtenerAlbumesGuardados()
+            if (consulta != consultaVigente) return@lanzar
+            val alFallar = if (guardados.isEmpty()) {
+                AlbumsUiState.Error
+            } else {
+                val enPantalla = AlbumsUiState.Exito(guardados, actualizando = true)
+                _uiState.value = enPantalla
+                enPantalla.copy(actualizando = false, errorAlActualizar = true)
+            }
+            consultarAhora(consulta, alFallar)
+        }
     }
 
-    private fun consultar(alFallar: AlbumsUiState) {
+    private fun consultar(alFallar: AlbumsUiState) = lanzar { consulta -> consultarAhora(consulta, alFallar) }
+
+    /** Cancela lo que esté en curso y lanza [bloque] como la carga vigente. */
+    private fun lanzar(bloque: suspend (consulta: Long) -> Unit) {
         val consulta = ++consultaVigente
         carga?.cancel()
-        carga = viewModelScope.launch {
-            val resultado = repositorio.obtenerAlbumes()
-            if (consulta != consultaVigente) return@launch
-            _uiState.value = resultado.fold(
-                onSuccess = { albumes ->
-                    if (albumes.isEmpty()) AlbumsUiState.Vacio() else AlbumsUiState.Exito(albumes)
-                },
-                onFailure = {
-                    when (it) {
-                        is ErrorDeCarga -> alFallar
-                        else -> throw it
-                    }
+        carga = viewModelScope.launch { bloque(consulta) }
+    }
+
+    private suspend fun consultarAhora(consulta: Long, alFallar: AlbumsUiState) {
+        val resultado = repositorio.obtenerAlbumes()
+        if (consulta != consultaVigente) return
+        _uiState.value = resultado.fold(
+            onSuccess = { albumes ->
+                if (albumes.isEmpty()) AlbumsUiState.Vacio() else AlbumsUiState.Exito(albumes)
+            },
+            onFailure = {
+                when (it) {
+                    is ErrorDeCarga -> alFallar
+                    else -> throw it
                 }
-            )
-        }
+            }
+        )
     }
 }
