@@ -175,18 +175,19 @@ Las E2E recorren la app contra el backend real. Cada escenario se nombra con el 
 | `AlbumDetalleE2ETest` | HU02 | `FN02-ESC01` |
 | `AlbumDetalleBackendRealTest` | HU02 | `FN02-ESC02` y `ESC03` |
 | `ArtistasE2ETest` | HU03 | `FN03-ESC01` a `ESC07` |
+| `ArtistaDetalleE2ETest` | HU04 | `FN04-ESC01` a `ESC07` |
 
-Total: **19 pruebas E2E**. Para correrlas y traer la evidencia (con `connectedDebugAndroidTest` la app se desinstala al terminar y la evidencia se pierde):
+Total: **26 pruebas E2E**. Para correrlas y traer la evidencia (con `connectedDebugAndroidTest` la app se desinstala al terminar y la evidencia se pierde):
 
 ```bash
 ./gradlew installDebug installDebugAndroidTest -PbaseUrl=http://localhost:3000/
 adb reverse tcp:3000 tcp:3000                    # solo en un teléfono
 adb shell rm -rf /storage/emulated/0/Android/data/com.example.vinilos/files/e2e-evidencia
-adb shell am instrument -w -e class com.example.vinilos.IngresoE2ETest,com.example.vinilos.CatalogoE2ETest,com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest,com.example.vinilos.ArtistasE2ETest com.example.vinilos.test/androidx.test.runner.AndroidJUnitRunner
+adb shell am instrument -w -e class com.example.vinilos.IngresoE2ETest,com.example.vinilos.CatalogoE2ETest,com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest,com.example.vinilos.ArtistasE2ETest,com.example.vinilos.ArtistaDetalleE2ETest com.example.vinilos.test/androidx.test.runner.AndroidJUnitRunner
 adb pull /storage/emulated/0/Android/data/com.example.vinilos/files/e2e-evidencia ./e2e-evidencia
 ```
 
-Debe terminar en `OK (19 tests)`. En Git Bash antepone `MSYS_NO_PATHCONV=1` a los `adb` que llevan rutas del dispositivo.
+Debe terminar en `OK (26 tests)`. En Git Bash antepone `MSYS_NO_PATHCONV=1` a los `adb` que llevan rutas del dispositivo.
 
 ## Problemas frecuentes
 
