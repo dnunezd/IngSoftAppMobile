@@ -76,10 +76,65 @@ Al probar manualmente contra el backend compartido/desplegado (no el local), gua
 
 **Corrección (revisión de PR, @lorennossauniandes):** BackVynils sí expone un endpoint para deshacer el favorito: `DELETE /collectors/{collectorId}/musicians/{musicianId}` y `DELETE /collectors/{collectorId}/bands/{bandId}` (`collectorperformer.controller.ts`). Con eso se pueden borrar los favoritos que dejaron las pruebas manuales en el backend desplegado; la afirmación original de que "no hay endpoint DELETE" era incorrecta.
 
+**Nota (E2E, T10-5):** el endpoint existe, pero no borra. En `collectorperformer.service.ts` (`deleteCollectorPerformer`) el resultado de `favoritePerformers.filter(...)` no se asigna: responde 204 y el favorito sigue. Además, el id del artista llega como texto (`main.ts` no convierte los `@Param` y no hay `ParseIntPipe`), así que `e.id !== performerId` compara un número con un texto y sería `true` siempre aunque se asignara el resultado. La corrección necesita las dos partes: `collector.favoritePerformers = collector.favoritePerformers.filter(e => e.id !== Number(performerId))`. Para quitar un favorito hay que borrar la fila en la tabla `performer_collectors_collector` o borrar el coleccionista (`DELETE /collectors/{id}`), que se lleva sus favoritos. Por eso las E2E crean su propio coleccionista (ver [Pruebas E2E](#pruebas-e2e-t10-5)).
+
+## Pruebas E2E (T10-5)
+
+Clase `ArtistasFavoritosE2ETest` (cambio de OpenSpec [`add-e2e-artistas-favoritos`](../../../../openspec/changes/add-e2e-artistas-favoritos/)). Recorre la app desde el ingreso, como la persona. ESC01 a ESC05 van contra BackVynils; como agregan favoritos, se corren contra el backend **local**. Cada escenario que agrega favoritos crea su propio coleccionista (`POST /collectors`) y lo borra al terminar (`DELETE /collectors/{id}`), lo que también borra sus favoritos. ESC06 a ESC08 usan `MockWebServer` para provocar los errores.
+
+| ID | Descripción del escenario | Resultado esperado | Backend | Evidencia |
+|---|---|---|---|---|
+| FN10-ESC01 | El Visitante abre el detalle de una banda y de un músico | Ninguno de los dos muestra el botón de favorito ni consulta los favoritos | BackVynils local | [PDF](e2e/FN10_ESC01.pdf) |
+| FN10-ESC02 | El Coleccionista agrega una banda como favorita | "Agregar Favorito" pasa a "Favorito" desactivado; aparece "<banda> se agregó a tus favoritos" y desaparece sola; el backend la devuelve en `GET /collectors/{id}/performers` | BackVynils local | [PDF](e2e/FN10_ESC02.pdf) |
+| FN10-ESC03 | El Coleccionista agrega un músico como favorito | Lo mismo que ESC02, con el músico | BackVynils local | [PDF](e2e/FN10_ESC03.pdf) |
+| FN10-ESC04 | Agrega un favorito, cierra la app, la vuelve a abrir y entra con el mismo coleccionista | El botón sigue como "Favorito" desactivado, sin confirmación, y se consultó de nuevo el backend | BackVynils local | [PDF](e2e/FN10_ESC04.pdf) |
+| FN10-ESC05 | Abre el detalle de un artista que ya es su favorito | "Favorito" desactivado con "Este artista ya está en tus favoritos."; tocarlo no envía nada | BackVynils local | [PDF](e2e/FN10_ESC05.pdf) |
+| FN10-ESC06 | No se puede comprobar si el artista es favorito | Botón desactivado, "No pudimos comprobar si es tu favorito" y "Reintentar"; al reintentar con el servicio arriba queda "Agregar Favorito" | `MockWebServer` | [PDF](e2e/FN10_ESC06.pdf) |
+| FN10-ESC07 | Agrega un favorito y el guardado tarda y falla | Mientras guarda, "Guardando..." desactivado y un segundo toque no envía nada; luego "No se pudo guardar el favorito, intenta de nuevo" sin confirmación; "Reintentar guardar" lo guarda | `MockWebServer` | [PDF](e2e/FN10_ESC07.pdf) |
+| FN10-ESC08 | Agrega un favorito y el artista ya no existe (404) | "El artista ya no está disponible"; "Volver al listado de artistas" muestra el listado ya sin ese artista | `MockWebServer` | [PDF](e2e/FN10_ESC08.pdf) |
+
+Criterios de la [HU10](https://github.com/dnunezd/IngSoftAppMobile/wiki/HU10) cubiertos por las E2E:
+
+| # | Criterio | Escenarios |
+|---|---|---|
+| 1 | Marcar como favorito una banda o un músico; el botón pasa a "Favorito" | ESC02, ESC03 |
+| 2 | Si ya es favorito, "Favorito" y desactivado | ESC04, ESC05 |
+| 3 | El botón refleja el favorito aunque se cierre y vuelva a abrir la app | ESC04 |
+| 4 | Si no se puede comprobar, botón desactivado con opción de reintentar | ESC06 |
+| 5 | El Visitante no ve el botón | ESC01 |
+| 6 | Artista que ya no existe: mensaje y volver al listado actualizado | ESC08 |
+| 7 | Error al guardar: mensaje y botón disponible para reintentar | ESC07 |
+| 8 | Mientras guarda, "Guardando..." y desactivado | ESC07 |
+| 9 | Confirmación breve al guardar; no aparece si falla | ESC02, ESC03, ESC07, ESC08 |
+
+**Cerrar y volver a abrir (ESC04):** se cierra la Activity y se abre de nuevo dentro del mismo proceso de prueba, porque matar el proceso termina la instrumentación. La HU10 no guarda nada en el dispositivo: el botón sale de `GET /collectors/{id}/performers`, y la prueba comprueba que esa consulta se repite.
+
+### Resultados
+
+Emulador Pixel 8 (API 34), 2026-11-10, contra BackVynils local:
+
+| Ejecución | Resultado |
+|---|---|
+| `ArtistasFavoritosE2ETest`, 3 corridas seguidas | `OK (8 tests)` en cada una, sin escenarios omitidos; 31 capturas en "Ok" (evidencia de esta carpeta: la última corrida) |
+| Backend después de cada corrida | Los 2 coleccionistas de ejemplo con su favorito de ejemplo; ningún coleccionista ni favorito de prueba |
+| Suite instrumentada completa | `OK (152 tests)`, ninguna omitida ni ignorada |
+| `testDebugUnitTest` y `lintDebug` | 238 sin fallos; 0 errores de lint |
+
+### Cómo correrlas
+
+```bash
+./gradlew installDebug installDebugAndroidTest -PbaseUrl=http://10.0.2.2:3000/   # BackVynils local
+adb shell rm -rf /sdcard/Android/data/com.example.vinilos/files/e2e-evidencia
+adb shell am instrument -w -e class com.example.vinilos.ArtistasFavoritosE2ETest com.example.vinilos.test/androidx.test.runner.AndroidJUnitRunner
+adb pull /sdcard/Android/data/com.example.vinilos/files/e2e-evidencia ./e2e-evidencia
+```
+
+En un teléfono, usa `-PbaseUrl=http://localhost:3000/` y `adb reverse tcp:3000 tcp:3000`.
+
 ## Pendiente (no bloquea el cierre de T10-2/T10-3/T10-4)
 
-- **Pruebas E2E de HU10:** **pendientes**. Se planearon a cargo de otro integrante del equipo, pero aún no se han escrito ni ejecutado; no se incluyen en este change (`add-artistas-favoritos`).
-- "Quitar de favoritos" desde la UI: es una historia de usuario distinta (no HU10); la API sí expone `DELETE` (ver corrección más arriba), pero esta historia no implementa el botón para removerlos desde la app.
+- **Pruebas E2E de HU10:** hechas en un cambio aparte (`add-e2e-artistas-favoritos`); ver [Pruebas E2E](#pruebas-e2e-t10-5).
+- "Quitar de favoritos" desde la UI: es una historia de usuario distinta (no HU10). La API expone `DELETE`, pero hoy no borra (ver la nota más arriba), y esta historia no implementa el botón para removerlos desde la app.
 - Diseño visual del resto de la pantalla de detalle (biografía, estadísticas, discografía): a cargo de HU04, fuera de este alcance.
 
 ### Comando para repetir las pruebas instrumentadas
