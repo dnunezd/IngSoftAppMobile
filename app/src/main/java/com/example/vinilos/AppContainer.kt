@@ -1,5 +1,6 @@
 package com.example.vinilos
 
+import com.example.vinilos.data.local.AlbumDao
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.AlbumRepository
 import com.example.vinilos.data.repository.ArtistRepository
@@ -15,7 +16,9 @@ class AppContainer(
     colectoresRepositorio: CollectorRepository? = null,
     artistasRepositorio: ArtistRepository? = null,
     albumesRepositorio: AlbumRepository? = null,
-    favoritosRepositorio: FavoriteRepository? = null
+    favoritosRepositorio: FavoriteRepository? = null,
+    /** Caché del catálogo (add-cache-catalogo). Sin él, el catálogo solo usa la red, como antes. */
+    albumDao: AlbumDao? = null
 ) {
 
     val serviceAdapter: ServiceAdapter = ServiceAdapter(baseUrl)
@@ -26,7 +29,7 @@ class AppContainer(
 
     /** Se puede reemplazar con [albumesRepositorio] en las pruebas instrumentadas. */
     val albumRepository: AlbumRepository =
-        albumesRepositorio ?: AlbumRepository(serviceAdapter)
+        albumesRepositorio ?: AlbumRepository(serviceAdapter, albumDao = albumDao)
 
     /** Se puede reemplazar con [artistasRepositorio] en las pruebas instrumentadas. */
     val artistRepository: ArtistRepository =
