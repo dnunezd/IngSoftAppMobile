@@ -8,6 +8,8 @@ import com.example.vinilos.data.local.ArtistaDetalleEntity
 import com.example.vinilos.data.local.ArtistaEntity
 import com.example.vinilos.data.local.ColeccionistaDao
 import com.example.vinilos.data.local.ColeccionistaEntity
+import com.example.vinilos.data.local.FavoritoDao
+import com.example.vinilos.data.local.FavoritoEntity
 import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.AlbumNuevo
 import com.example.vinilos.data.model.AlbumResumen
@@ -125,6 +127,17 @@ class AppContainerTest {
         assertEquals(listOf(101), dao.filas.map { it.id })
         assertEquals(listOf(101), contenedor.artistRepository.obtenerArtistasGuardados().map { it.id })
     }
+
+    @Test
+    fun elDaoDeFavoritosLlegaAlRepositorio() = runTest {
+        val dao = FavoritoDaoEnMemoria()
+        servidor.enqueue(MockResponse().setBody("""[{"id": 5}]"""))
+        val contenedor = AppContainer(baseUrl = servidor.url("/").toString(), favoritoDao = dao)
+
+        assertTrue(contenedor.favoriteRepository.esFavorito(100, 5).getOrThrow())
+
+        assertTrue(contenedor.favoriteRepository.esFavoritoGuardado(100, 5))
+    }
 }
 
 private class AlbumDaoEnMemoria : AlbumDao() {
@@ -156,4 +169,13 @@ private class ArtistaDaoEnMemoria : ArtistaDao() {
     override suspend fun detalle(tipo: ArtistType, id: Int): ArtistaDetalleEntity? = null
     override suspend fun guardarDetalle(detalle: ArtistaDetalleEntity) = Unit
     override suspend fun borrarDetalle(tipo: ArtistType, id: Int) = Unit
+}
+
+private class FavoritoDaoEnMemoria : FavoritoDao() {
+    var filas: Set<FavoritoEntity> = emptySet()
+    override suspend fun existe(coleccionistaId: Int, artistaId: Int) = FavoritoEntity(coleccionistaId, artistaId) in filas
+    override suspend fun deColeccionista(coleccionistaId: Int) =
+        filas.filter { it.coleccionistaId == coleccionistaId }.map { it.artistaId }
+    override suspend fun borrarDe(coleccionistaId: Int) { filas = filas.filterNot { it.coleccionistaId == coleccionistaId }.toSet() }
+    override suspend fun insertar(favoritos: List<FavoritoEntity>) { filas = filas + favoritos }
 }

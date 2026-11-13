@@ -22,7 +22,8 @@ class VinilosApplication : Application(), ImageLoaderFactory {
         container = AppContainer(
             albumDao = db.albumDao(),
             coleccionistaDao = db.coleccionistaDao(),
-            artistaDao = db.artistaDao()
+            artistaDao = db.artistaDao(),
+            favoritoDao = db.favoritoDao()
         )
     }
 
