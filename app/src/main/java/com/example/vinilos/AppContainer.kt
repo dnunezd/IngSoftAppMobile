@@ -3,9 +3,13 @@ package com.example.vinilos
 import com.example.vinilos.data.local.AlbumDao
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.AlbumRepository
+import com.example.vinilos.data.repository.AlbumRepositoryImpl
 import com.example.vinilos.data.repository.ArtistRepository
+import com.example.vinilos.data.repository.ArtistRepositoryImpl
 import com.example.vinilos.data.repository.CollectorRepository
+import com.example.vinilos.data.repository.CollectorRepositoryImpl
 import com.example.vinilos.data.repository.FavoriteRepository
+import com.example.vinilos.data.repository.FavoriteRepositoryImpl
 
 /**
  * Contenedor de dependencias manual: crea una sola vez el [ServiceAdapter] y los repositorios
@@ -25,15 +29,15 @@ class AppContainer(
 
     /** Se puede reemplazar con [colectoresRepositorio] en las pruebas instrumentadas. */
     val collectorRepository: CollectorRepository =
-        colectoresRepositorio ?: CollectorRepository(serviceAdapter)
+        colectoresRepositorio ?: CollectorRepositoryImpl(serviceAdapter)
 
     /** Se puede reemplazar con [albumesRepositorio] en las pruebas instrumentadas. */
     val albumRepository: AlbumRepository =
-        albumesRepositorio ?: AlbumRepository(serviceAdapter, albumDao = albumDao)
+        albumesRepositorio ?: AlbumRepositoryImpl(serviceAdapter, albumDao = albumDao)
 
     /** Se puede reemplazar con [artistasRepositorio] en las pruebas instrumentadas. */
     val artistRepository: ArtistRepository =
-        artistasRepositorio ?: ArtistRepository(serviceAdapter)
+        artistasRepositorio ?: ArtistRepositoryImpl(serviceAdapter)
 
     /**
      * Se puede reemplazar con [favoritosRepositorio] en las pruebas instrumentadas (p. ej. con
@@ -42,5 +46,5 @@ class AppContainer(
      * (@lorennossauniandes).
      */
     val favoriteRepository: FavoriteRepository =
-        favoritosRepositorio ?: FavoriteRepository(serviceAdapter)
+        favoritosRepositorio ?: FavoriteRepositoryImpl(serviceAdapter)
 }

@@ -3,7 +3,6 @@ package com.example.vinilos.viewmodel
 import com.example.vinilos.MainDispatcherRule
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.remote.ErrorDeCarga
-import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.ArtistaNoDisponible
 import com.example.vinilos.data.repository.FavoriteRepository
 import kotlinx.coroutines.CompletableDeferred
@@ -14,7 +13,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
-private class FavoriteRepositoryFalso : FavoriteRepository(ServiceAdapter("http://localhost/")) {
+private class FavoriteRepositoryFalso : FavoriteRepository {
     val comprobaciones = mutableListOf<CompletableDeferred<Result<Boolean>>>()
     val guardados = mutableListOf<CompletableDeferred<Result<Unit>>>()
 

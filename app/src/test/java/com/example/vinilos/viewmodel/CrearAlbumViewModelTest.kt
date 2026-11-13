@@ -1,9 +1,10 @@
 package com.example.vinilos.viewmodel
 
 import com.example.vinilos.MainDispatcherRule
+import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.AlbumNuevo
+import com.example.vinilos.data.model.AlbumResumen
 import com.example.vinilos.data.remote.ErrorDeCarga
-import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.AlbumRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -15,7 +16,7 @@ import org.junit.Rule
 import org.junit.Test
 
 /** Cada envío queda pendiente hasta que la prueba lo completa. */
-private class CreacionFalsa : AlbumRepository(ServiceAdapter("http://localhost/")) {
+private class CreacionFalsa : AlbumRepository {
     val envios = mutableListOf<AlbumNuevo>()
     private val respuestas = mutableListOf<CompletableDeferred<Result<Int>>>()
 
@@ -27,6 +28,10 @@ private class CreacionFalsa : AlbumRepository(ServiceAdapter("http://localhost/"
     }
 
     fun responder(resultado: Result<Int>) = respuestas.last().complete(resultado)
+
+    override suspend fun obtenerAlbum(id: Int): Result<Album> = error("No se usa en esta prueba")
+    override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> = error("No se usa en esta prueba")
+    override suspend fun obtenerAlbumesGuardados(): List<AlbumResumen> = error("No se usa en esta prueba")
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

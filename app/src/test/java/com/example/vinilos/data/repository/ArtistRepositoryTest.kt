@@ -50,7 +50,7 @@ class ArtistRepositoryTest {
             .readTimeout(300, TimeUnit.MILLISECONDS)
             .connectTimeout(300, TimeUnit.MILLISECONDS)
             .build()
-        repositorio = ArtistRepository(ServiceAdapter(servidor.url("/").toString(), cliente))
+        repositorio = ArtistRepositoryImpl(ServiceAdapter(servidor.url("/").toString(), cliente))
     }
 
     @After

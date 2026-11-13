@@ -22,7 +22,9 @@ import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.ArtistRepository
+import com.example.vinilos.data.repository.ArtistRepositoryImpl
 import com.example.vinilos.data.repository.FavoriteRepository
+import com.example.vinilos.data.repository.FavoriteRepositoryImpl
 import com.example.vinilos.e2e.EvidenciaE2E
 import com.example.vinilos.ui.artistas.TagBotonFavorito
 import com.example.vinilos.ui.artistas.TagConfirmacionFavorito
@@ -86,18 +88,20 @@ class ArtistasFavoritosE2ETest {
     val rule = createEmptyComposeRule()
 
     /** El repositorio real de la app, que además cuenta las consultas y los envíos (design.md, D1). */
-    private class FavoritosReales : FavoriteRepository(ServiceAdapter(BuildConfig.BASE_URL)) {
+    private class FavoritosReales(
+        private val real: FavoriteRepository = FavoriteRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL))
+    ) : FavoriteRepository by real {
         @Volatile var consultas = 0
         @Volatile var envios = 0
 
         override suspend fun esFavorito(collectorId: Int, artistId: Int): Result<Boolean> {
             consultas++
-            return super.esFavorito(collectorId, artistId)
+            return real.esFavorito(collectorId, artistId)
         }
 
         override suspend fun agregarFavorito(collectorId: Int, artistId: Int, tipo: ArtistType): Result<Unit> {
             envios++
-            return super.agregarFavorito(collectorId, artistId, tipo)
+            return real.agregarFavorito(collectorId, artistId, tipo)
         }
     }
 
@@ -127,7 +131,7 @@ class ArtistasFavoritosE2ETest {
     // ---------- Datos reales (design.md, D3) ----------
 
     private fun artistasReales(): List<Artist> = runBlocking {
-        ArtistRepository(ServiceAdapter(BuildConfig.BASE_URL)).obtenerArtistas().getOrThrow()
+        ArtistRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL)).obtenerArtistas().getOrThrow()
     }
 
     /** La primera banda o el primer músico del backend; si no hay, el escenario se omite. */

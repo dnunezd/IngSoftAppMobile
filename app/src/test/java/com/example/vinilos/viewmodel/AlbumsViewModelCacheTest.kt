@@ -1,9 +1,10 @@
 package com.example.vinilos.viewmodel
 
 import com.example.vinilos.MainDispatcherRule
+import com.example.vinilos.data.model.Album
+import com.example.vinilos.data.model.AlbumNuevo
 import com.example.vinilos.data.model.AlbumResumen
 import com.example.vinilos.data.remote.ErrorDeCarga
-import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.AlbumRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -15,7 +16,7 @@ import org.junit.Rule
 import org.junit.Test
 
 /** La lectura de lo guardado y cada consulta quedan pendientes hasta que la prueba las completa. */
-private class CatalogoConCacheFalso : AlbumRepository(ServiceAdapter("http://localhost/")) {
+private class CatalogoConCacheFalso : AlbumRepository {
     val lecturas = mutableListOf<CompletableDeferred<List<AlbumResumen>>>()
     val consultas = mutableListOf<CompletableDeferred<Result<List<AlbumResumen>>>>()
 
@@ -28,6 +29,9 @@ private class CatalogoConCacheFalso : AlbumRepository(ServiceAdapter("http://loc
     fun leer(guardados: List<AlbumResumen>) = lecturas.last().complete(guardados)
 
     fun responder(resultado: Result<List<AlbumResumen>>) = consultas.last().complete(resultado)
+
+    override suspend fun obtenerAlbum(id: Int): Result<Album> = error("No se usa en esta prueba")
+    override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> = error("No se usa en esta prueba")
 }
 
 /** Carga inicial con catálogo guardado (add-cache-catalogo, D5). */

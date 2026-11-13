@@ -47,7 +47,7 @@ class AlbumRepositoryTest {
     fun preparar() {
         servidor = MockWebServer()
         servidor.start()
-        repositorio = AlbumRepository(ServiceAdapter(servidor.url("/").toString()))
+        repositorio = AlbumRepositoryImpl(ServiceAdapter(servidor.url("/").toString()))
     }
 
     @After
@@ -213,7 +213,7 @@ class AlbumRepositoryTest {
             override suspend fun obtenerAlbumes(): List<AlbumDto> = throw esperado
             override suspend fun crearAlbum(album: CrearAlbumDto): AlbumDto = throw esperado
         }
-        val repositorio = AlbumRepository(ServiceAdapter(servidor.url("/").toString()), api)
+        val repositorio = AlbumRepositoryImpl(ServiceAdapter(servidor.url("/").toString()), api)
 
         try {
             repositorio.obtenerAlbum(101)
@@ -230,7 +230,7 @@ class AlbumRepositoryTest {
             override suspend fun obtenerAlbumes(): List<AlbumDto> = awaitCancellation()
             override suspend fun crearAlbum(album: CrearAlbumDto): AlbumDto = awaitCancellation()
         }
-        val repositorio = AlbumRepository(ServiceAdapter(servidor.url("/").toString()), api)
+        val repositorio = AlbumRepositoryImpl(ServiceAdapter(servidor.url("/").toString()), api)
         var devolvioResultado = false
         val consulta = async(start = CoroutineStart.UNDISPATCHED) {
             val resultado = repositorio.obtenerAlbum(101)
@@ -424,7 +424,7 @@ class AlbumRepositoryTest {
             override suspend fun obtenerAlbumes(): List<AlbumDto> = awaitCancellation()
             override suspend fun crearAlbum(album: CrearAlbumDto): AlbumDto = awaitCancellation()
         }
-        val repositorio = AlbumRepository(ServiceAdapter(servidor.url("/").toString()), api)
+        val repositorio = AlbumRepositoryImpl(ServiceAdapter(servidor.url("/").toString()), api)
         val consulta = async(start = CoroutineStart.UNDISPATCHED) { repositorio.obtenerAlbumes() }
 
         consulta.cancel(CancellationException("El usuario salió del catálogo"))
@@ -505,7 +505,7 @@ class AlbumRepositoryTest {
             override suspend fun obtenerAlbumes(): List<AlbumDto> = awaitCancellation()
             override suspend fun crearAlbum(album: CrearAlbumDto): AlbumDto = awaitCancellation()
         }
-        val repositorio = AlbumRepository(ServiceAdapter(servidor.url("/").toString()), api)
+        val repositorio = AlbumRepositoryImpl(ServiceAdapter(servidor.url("/").toString()), api)
         val envio = async(start = CoroutineStart.UNDISPATCHED) { repositorio.crearAlbum(albumNuevo) }
 
         envio.cancel(CancellationException("El usuario salió del formulario"))

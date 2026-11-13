@@ -3,7 +3,6 @@ package com.example.vinilos.viewmodel
 import com.example.vinilos.MainDispatcherRule
 import com.example.vinilos.data.model.Collector
 import com.example.vinilos.data.remote.ErrorDeCarga
-import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.CollectorRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -14,7 +13,7 @@ import org.junit.Rule
 import org.junit.Test
 
 /** Repositorio falso: cada llamada devuelve el resultado que se complete a mano. */
-private class RepositorioFalso : CollectorRepository(ServiceAdapter("http://localhost/")) {
+private class RepositorioFalso : CollectorRepository {
     val llamadas = mutableListOf<CompletableDeferred<Result<List<Collector>>>>()
 
     override suspend fun obtenerColeccionistas(): Result<List<Collector>> {

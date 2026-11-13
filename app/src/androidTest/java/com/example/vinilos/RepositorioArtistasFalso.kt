@@ -4,14 +4,13 @@ import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.ArtistaDetalle
 import com.example.vinilos.data.remote.ErrorDeCarga
-import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.ArtistRepository
 
 /** Repositorio de artistas sin red para las pruebas de UI y de navegación. */
 class RepositorioArtistasFalso(
     var resultado: Result<List<Artist>> = Result.success(emptyList()),
     var detalles: Map<Pair<ArtistType, Int>, Result<ArtistaDetalle>> = emptyMap()
-) : ArtistRepository(ServiceAdapter("http://localhost/")) {
+) : ArtistRepository {
     var consultas = 0
     val consultasDetalle = mutableListOf<Pair<ArtistType, Int>>()
 
