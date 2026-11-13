@@ -12,4 +12,10 @@ interface ArtistRepository {
 
     /** Detalle del artista según su tipo (HU04). */
     suspend fun obtenerDetalle(tipo: ArtistType, id: Int): Result<ArtistaDetalle>
+
+    /** Último listado guardado en el dispositivo (add-cache-consultas), ordenado por nombre; vacío si no hay. */
+    suspend fun obtenerArtistasGuardados(): List<Artist>
+
+    /** Detalle guardado de un artista que ya se abrió; `null` si no hay o no se pudo leer. */
+    suspend fun obtenerDetalleGuardado(tipo: ArtistType, id: Int): ArtistaDetalle?
 }

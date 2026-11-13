@@ -233,7 +233,8 @@ fun VinilosNavHost(
                         launchSingleTop = true
                     }
                 },
-                onAtras = { navController.popBackStack() }
+                onAtras = { navController.popBackStack() },
+                onAvisoMostrado = viewModel::avisoMostrado
             )
         }
         composable(
@@ -281,7 +282,8 @@ fun VinilosNavHost(
                         navController.previousBackStackEntry?.savedStateHandle
                             ?.set(ClaveArtistaEliminado, true)
                         navController.popBackStack()
-                    }
+                    },
+                    onAvisoMostrado = viewModel::avisoMostrado
                 )
             } else {
                 PantallaDetalleArtista(
@@ -290,7 +292,8 @@ fun VinilosNavHost(
                         navController.navigate(Rutas.detalleAlbum(idAlbum)) { launchSingleTop = true }
                     },
                     onReintentar = viewModel::reintentar,
-                    onAtras = { navController.popBackStack() }
+                    onAtras = { navController.popBackStack() },
+                    onAvisoMostrado = viewModel::avisoMostrado
                 )
             }
         }

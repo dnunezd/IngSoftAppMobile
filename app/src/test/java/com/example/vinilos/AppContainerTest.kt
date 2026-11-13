@@ -3,11 +3,15 @@ package com.example.vinilos
 import com.example.vinilos.data.local.AlbumDao
 import com.example.vinilos.data.local.AlbumDetalleEntity
 import com.example.vinilos.data.local.AlbumEntity
+import com.example.vinilos.data.local.ArtistaDao
+import com.example.vinilos.data.local.ArtistaDetalleEntity
+import com.example.vinilos.data.local.ArtistaEntity
 import com.example.vinilos.data.local.ColeccionistaDao
 import com.example.vinilos.data.local.ColeccionistaEntity
 import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.AlbumNuevo
 import com.example.vinilos.data.model.AlbumResumen
+import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.Collector
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.AlbumNoDisponible
@@ -104,6 +108,23 @@ class AppContainerTest {
         assertEquals(listOf(100), dao.filas.map { it.id })
         assertEquals(listOf(100), contenedor.collectorRepository.obtenerColeccionistasGuardados().map { it.id })
     }
+
+    @Test
+    fun elDaoDeArtistasLlegaAlRepositorio() = runTest {
+        val dao = ArtistaDaoEnMemoria()
+        servidor.dispatcher = object : okhttp3.mockwebserver.Dispatcher() {
+            override fun dispatch(request: okhttp3.mockwebserver.RecordedRequest) = when (request.path) {
+                "/bands" -> MockResponse().setBody("""[{"id": 101, "name": "Queen", "image": null}]""")
+                else -> MockResponse().setBody("[]")
+            }
+        }
+        val contenedor = AppContainer(baseUrl = servidor.url("/").toString(), artistaDao = dao)
+
+        contenedor.artistRepository.obtenerArtistas().getOrThrow()
+
+        assertEquals(listOf(101), dao.filas.map { it.id })
+        assertEquals(listOf(101), contenedor.artistRepository.obtenerArtistasGuardados().map { it.id })
+    }
 }
 
 private class AlbumDaoEnMemoria : AlbumDao() {
@@ -125,4 +146,14 @@ private class ColeccionistaDaoEnMemoria : ColeccionistaDao() {
     override suspend fun todos() = filas
     override suspend fun borrarTodos() { filas = emptyList() }
     override suspend fun insertar(coleccionistas: List<ColeccionistaEntity>) { filas = filas + coleccionistas }
+}
+
+private class ArtistaDaoEnMemoria : ArtistaDao() {
+    var filas: List<ArtistaEntity> = emptyList()
+    override suspend fun todos() = filas
+    override suspend fun borrarTodos() { filas = emptyList() }
+    override suspend fun insertar(artistas: List<ArtistaEntity>) { filas = filas + artistas }
+    override suspend fun detalle(tipo: ArtistType, id: Int): ArtistaDetalleEntity? = null
+    override suspend fun guardarDetalle(detalle: ArtistaDetalleEntity) = Unit
+    override suspend fun borrarDetalle(tipo: ArtistType, id: Int) = Unit
 }

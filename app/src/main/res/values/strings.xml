@@ -73,6 +73,8 @@
     <string name="artistas_tipo_banda">Banda</string>
     <string name="artistas_vacio">No se encontraron artistas</string>
     <string name="artistas_error">No se pudo cargar el listado de artistas</string>
+    <string name="artistas_error_actualizar">No se pudo actualizar el listado de artistas</string>
+    <string name="artistas_actualizando">Actualizando artistas</string>
     <string name="artistas_reintentar">Reintentar</string>
     <!-- Los tres puntos son el texto exacto del mockup. -->
     <string name="artistas_cargando" tools:ignore="TypographyEllipsis">Cargando artistas...</string>
@@ -85,6 +87,8 @@
     <!-- Los tres puntos son el texto exacto del mockup. -->
     <string name="artista_cargando" tools:ignore="TypographyEllipsis">Cargando artista...</string>
     <string name="artista_error">No se pudo cargar el artista</string>
+    <string name="artista_error_actualizar">No se pudo actualizar el artista</string>
+    <string name="artista_actualizando">Actualizando artista</string>
     <string name="artista_fecha_nacimiento">FECHA DE NACIMIENTO</string>
     <string name="artista_fecha_creacion">FECHA DE CREACIÓN</string>
     <string name="artista_integrantes">Integrantes</string>

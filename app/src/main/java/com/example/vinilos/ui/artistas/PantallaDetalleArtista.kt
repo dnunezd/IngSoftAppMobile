@@ -42,10 +42,13 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,6 +74,8 @@ import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.ArtistaDetalle
 import com.example.vinilos.data.model.IntegranteArtista
 import com.example.vinilos.data.model.PremioArtista
+import com.example.vinilos.ui.ingreso.AvisoUnaVez
+import com.example.vinilos.ui.ingreso.IndicadorActualizando
 import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.ArtistaDetalleUiState
 import com.example.vinilos.viewmodel.FavoritoUiState
@@ -91,6 +96,7 @@ const val TagReintentarFavorito = "detalle_artista_reintentar_favorito"
 const val TagErrorFavorito = "detalle_artista_error_favorito"
 const val TagConfirmacionFavorito = "detalle_artista_confirmacion_favorito"
 const val TagNoDisponibleFavorito = "detalle_artista_no_disponible_favorito"
+const val TagActualizandoDetalleArtista = "detalle_artista_actualizando"
 
 /** Milisegundos que permanece visible la confirmación de favorito antes de ocultarse sola. */
 private const val DuracionConfirmacionFavoritoMs = 2500L
@@ -122,7 +128,8 @@ fun PantallaDetalleArtista(
     // Volver al listado tras "artista ya no disponible": por defecto es igual a onAtras, pero
     // VinilosNavHost pasa uno propio para marcar el listado y forzar una nueva consulta (sin
     // eso, popBackStack por sí solo no recarga el listado; ver bug corregido en HU10).
-    onVolverAlListado: () -> Unit = onAtras
+    onVolverAlListado: () -> Unit = onAtras,
+    onAvisoMostrado: () -> Unit = {}
 ) {
     // Se maneja aquí arriba (fuera del LazyColumn) y no dentro de la tarjeta: esa tarjeta se
     // compone en un "item" sin key explícita, y un LaunchedEffect allí puede reiniciarse si el
@@ -133,41 +140,61 @@ fun PantallaDetalleArtista(
             onConfirmacionFavoritoMostrada()
         }
     }
-    Column(
+    val exito = estado as? ArtistaDetalleUiState.Exito
+    val avisos = remember { SnackbarHostState() }
+    AvisoUnaVez(
+        mostrar = exito?.errorAlActualizar == true,
+        mensaje = stringResource(R.string.artista_error_actualizar),
+        avisos = avisos,
+        onMostrado = onAvisoMostrado
+    )
+    val descripcionActualizando = stringResource(R.string.artista_actualizando)
+    Box(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.safeDrawing)
             .testTag(TagDetalleArtista)
     ) {
-        EncabezadoArtistas(stringResource(R.string.artista_titulo), onAtras)
-        // Una sola columna perezosa: un artista puede tener muchos álbumes y premios.
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .testTag(TagListaDetalleArtista),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            when (estado) {
-                ArtistaDetalleUiState.Cargando -> {
-                    item { Cargando() }
-                    item { TarjetaEsqueleto() }
-                    items(FILAS_DE_RELLENO) { FilaEsqueleto() }
+        Column(modifier = Modifier.fillMaxSize()) {
+            EncabezadoArtistas(
+                stringResource(R.string.artista_titulo),
+                onAtras,
+                accion = if (exito?.actualizando == true) {
+                    { IndicadorActualizando(descripcionActualizando, TagActualizandoDetalleArtista) }
+                } else {
+                    null
                 }
-                ArtistaDetalleUiState.Error -> item {
-                    ErrorArtistas(stringResource(R.string.artista_error), onReintentar)
+            )
+            // Una sola columna perezosa: un artista puede tener muchos álbumes y premios.
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .testTag(TagListaDetalleArtista),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                when (estado) {
+                    ArtistaDetalleUiState.Cargando -> {
+                        item { Cargando() }
+                        item { TarjetaEsqueleto() }
+                        items(FILAS_DE_RELLENO) { FilaEsqueleto() }
+                    }
+                    ArtistaDetalleUiState.Error -> item {
+                        ErrorArtistas(stringResource(R.string.artista_error), onReintentar)
+                    }
+                    is ArtistaDetalleUiState.Exito -> contenido(
+                        detalle = estado.detalle,
+                        onSeleccionarAlbum = onSeleccionarAlbum,
+                        estadoFavorito = estadoFavorito,
+                        onAgregarFavorito = onAgregarFavorito,
+                        onReintentarFavorito = onReintentarFavorito,
+                        onVolverAlListado = onVolverAlListado
+                    )
                 }
-                is ArtistaDetalleUiState.Exito -> contenido(
-                    detalle = estado.detalle,
-                    onSeleccionarAlbum = onSeleccionarAlbum,
-                    estadoFavorito = estadoFavorito,
-                    onAgregarFavorito = onAgregarFavorito,
-                    onReintentarFavorito = onReintentarFavorito,
-                    onVolverAlListado = onVolverAlListado
-                )
             }
         }
+        SnackbarHost(avisos, Modifier.align(Alignment.BottomCenter))
     }
 }
 
