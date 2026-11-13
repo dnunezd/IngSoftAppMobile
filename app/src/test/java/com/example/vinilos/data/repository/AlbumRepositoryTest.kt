@@ -10,6 +10,7 @@ import com.example.vinilos.data.remote.AlbumApi
 import com.example.vinilos.data.remote.AlbumDto
 import com.example.vinilos.data.remote.CrearAlbumDto
 import com.example.vinilos.data.remote.ErrorDeCarga
+import com.example.vinilos.data.remote.RecursoNoEncontrado
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.google.gson.Gson
 import com.google.gson.JsonParseException
@@ -31,7 +32,6 @@ import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import retrofit2.HttpException
-import retrofit2.Response
 import java.io.IOException
 import java.lang.reflect.Modifier
 import java.net.SocketTimeoutException
@@ -208,7 +208,7 @@ class AlbumRepositoryTest {
     fun errorInesperadoSePropagaSinDisfrazarloDeErrorDeCarga() = runTest {
         val esperado = IllegalStateException("Error de programación")
         val api = object : AlbumApi {
-            override suspend fun obtenerAlbum(id: Int): Response<AlbumDto> = throw esperado
+            override suspend fun obtenerAlbum(id: Int): AlbumDto = throw esperado
             override suspend fun obtenerAlbumes(): List<AlbumDto> = throw esperado
             override suspend fun crearAlbum(album: CrearAlbumDto): AlbumDto = throw esperado
         }
@@ -226,7 +226,7 @@ class AlbumRepositoryTest {
     @Test
     fun cancelarLaConsultaPropagaLaCancelacionSinErrorDeCarga() = runTest {
         val api = object : AlbumApi {
-            override suspend fun obtenerAlbum(id: Int): Response<AlbumDto> = awaitCancellation()
+            override suspend fun obtenerAlbum(id: Int): AlbumDto = awaitCancellation()
             override suspend fun obtenerAlbumes(): List<AlbumDto> = awaitCancellation()
             override suspend fun crearAlbum(album: CrearAlbumDto): AlbumDto = awaitCancellation()
         }
@@ -257,8 +257,10 @@ class AlbumRepositoryTest {
 
         val error = repositorio.obtenerAlbum(101).exceptionOrNull()
 
+        // Retrofit lanza KotlinNullPointerException ante el cuerpo nulo y el adaptador la traduce.
         assertTrue("Una respuesta sin álbum debe ser un error de carga", error is ErrorDeCarga)
-        assertTrue(error!!.cause is JsonParseException)
+        assertTrue("Un cuerpo nulo no es un 404", error !is RecursoNoEncontrado)
+        assertTrue(error !is AlbumNoDisponible)
     }
 
     // ---- Catálogo (HU01): GET /albums ----
@@ -420,7 +422,7 @@ class AlbumRepositoryTest {
     @Test
     fun cancelarElCatalogoPropagaLaCancelacion() = runTest {
         val api = object : AlbumApi {
-            override suspend fun obtenerAlbum(id: Int): Response<AlbumDto> = awaitCancellation()
+            override suspend fun obtenerAlbum(id: Int): AlbumDto = awaitCancellation()
             override suspend fun obtenerAlbumes(): List<AlbumDto> = awaitCancellation()
             override suspend fun crearAlbum(album: CrearAlbumDto): AlbumDto = awaitCancellation()
         }
@@ -501,7 +503,7 @@ class AlbumRepositoryTest {
     @Test
     fun cancelarLaCreacionPropagaLaCancelacion() = runTest {
         val api = object : AlbumApi {
-            override suspend fun obtenerAlbum(id: Int): Response<AlbumDto> = awaitCancellation()
+            override suspend fun obtenerAlbum(id: Int): AlbumDto = awaitCancellation()
             override suspend fun obtenerAlbumes(): List<AlbumDto> = awaitCancellation()
             override suspend fun crearAlbum(album: CrearAlbumDto): AlbumDto = awaitCancellation()
         }

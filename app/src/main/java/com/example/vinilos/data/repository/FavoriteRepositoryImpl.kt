@@ -2,12 +2,11 @@ package com.example.vinilos.data.repository
 
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.remote.CollectorApi
-import com.example.vinilos.data.remote.ErrorDeCarga
+import com.example.vinilos.data.remote.RecursoNoEncontrado
 import com.example.vinilos.data.remote.ServiceAdapter
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import retrofit2.HttpException
 
 /**
  * Favoritos de artista del coleccionista (HU10): comprobar y guardar, sobre /collectors/{id}/...
@@ -36,11 +35,7 @@ class FavoriteRepositoryImpl(
                 }
                 Unit
             }
-            val causa = (resultado.exceptionOrNull() as? ErrorDeCarga)?.cause
-            if (causa is HttpException && causa.code() == 404) {
-                Result.failure(ArtistaNoDisponible(causa))
-            } else {
-                resultado
-            }
+            val error = resultado.exceptionOrNull()
+            if (error is RecursoNoEncontrado) Result.failure(ArtistaNoDisponible(error.cause)) else resultado
         }
 }

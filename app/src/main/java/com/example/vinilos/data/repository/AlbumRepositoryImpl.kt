@@ -14,14 +14,13 @@ import com.example.vinilos.data.remote.AlbumApi
 import com.example.vinilos.data.remote.AlbumDto
 import com.example.vinilos.data.remote.ArtistaDto
 import com.example.vinilos.data.remote.CrearAlbumDto
-import com.example.vinilos.data.remote.ErrorDeCarga
+import com.example.vinilos.data.remote.RecursoNoEncontrado
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.ui.detalle.formatearFechaLanzamiento
 import com.google.gson.JsonParseException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import retrofit2.HttpException
 import java.text.ParseException
 
 /**
@@ -40,13 +39,9 @@ class AlbumRepositoryImpl(
 ) : AlbumRepository {
 
     override suspend fun obtenerAlbum(id: Int): Result<Album> = withContext(dispatcher) {
-        val respuesta = adaptador.llamar {
-            val respuestaHttp = api.obtenerAlbum(id)
-            if (!respuestaHttp.isSuccessful) throw HttpException(respuestaHttp)
-            requerido(respuestaHttp.body(), "album").aModelo()
-        }
-        val causa = (respuesta.exceptionOrNull() as? ErrorDeCarga)?.cause
-        if (causa is HttpException && causa.code() == 404) Result.failure(AlbumNoDisponible(causa)) else respuesta
+        val respuesta = adaptador.llamar { api.obtenerAlbum(id).aModelo() }
+        val error = respuesta.exceptionOrNull()
+        if (error is RecursoNoEncontrado) Result.failure(AlbumNoDisponible(error.cause)) else respuesta
     }
 
     /**
