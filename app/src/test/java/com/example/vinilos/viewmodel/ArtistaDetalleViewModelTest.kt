@@ -1,10 +1,10 @@
 package com.example.vinilos.viewmodel
 
 import com.example.vinilos.MainDispatcherRule
+import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.ArtistaDetalle
 import com.example.vinilos.data.remote.ErrorDeCarga
-import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.ArtistRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -14,7 +14,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
-private class ArtistRepositoryFalso : ArtistRepository(ServiceAdapter("http://localhost/")) {
+private class ArtistRepositoryFalso : ArtistRepository {
     val consultas = mutableListOf<Triple<ArtistType, Int, CompletableDeferred<Result<ArtistaDetalle>>>>()
 
     override suspend fun obtenerDetalle(tipo: ArtistType, id: Int): Result<ArtistaDetalle> {
@@ -22,6 +22,8 @@ private class ArtistRepositoryFalso : ArtistRepository(ServiceAdapter("http://lo
         consultas += Triple(tipo, id, respuesta)
         return respuesta.await()
     }
+
+    override suspend fun obtenerArtistas(): Result<List<Artist>> = error("No se usa en esta prueba")
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

@@ -24,7 +24,9 @@ import androidx.test.espresso.Espresso
 import com.example.vinilos.data.model.AlbumNuevo
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.AlbumRepository
+import com.example.vinilos.data.repository.AlbumRepositoryImpl
 import com.example.vinilos.data.repository.CollectorRepository
+import com.example.vinilos.data.repository.CollectorRepositoryImpl
 import com.example.vinilos.e2e.EvidenciaE2E
 import com.example.vinilos.ui.catalogo.TagContadorCatalogo
 import com.example.vinilos.ui.catalogo.TagCrearAlbumCatalogo
@@ -85,13 +87,15 @@ class CrearAlbumE2ETest {
     val rule = createEmptyComposeRule()
 
     /** El repositorio real de la app, que además registra cuántas veces se crea y qué ids devolvió. */
-    private class AlbumesReales : AlbumRepository(ServiceAdapter(BuildConfig.BASE_URL)) {
+    private class AlbumesReales(
+        private val real: AlbumRepository = AlbumRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL))
+    ) : AlbumRepository by real {
         @Volatile var envios = 0
         val creados = mutableListOf<Int>()
 
         override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> {
             envios++
-            return super.crearAlbum(album).also { resultado ->
+            return real.crearAlbum(album).also { resultado ->
                 resultado.onSuccess { id -> synchronized(creados) { creados += id } }
             }
         }
@@ -175,7 +179,7 @@ class CrearAlbumE2ETest {
     }
 
     private fun primerColeccionistaReal(): Int = runBlocking {
-        CollectorRepository(ServiceAdapter(BuildConfig.BASE_URL)).obtenerColeccionistas().getOrThrow().first().id
+        CollectorRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL)).obtenerColeccionistas().getOrThrow().first().id
     }
 
     private fun abrirFormulario(evidencia: String) {
@@ -250,7 +254,7 @@ class CrearAlbumE2ETest {
     }
 
     private fun albumesEnElBackend(): Int = runBlocking {
-        AlbumRepository(ServiceAdapter(BuildConfig.BASE_URL)).obtenerAlbumes().getOrThrow().size
+        AlbumRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL)).obtenerAlbumes().getOrThrow().size
     }
 
     private fun albumDelBackend(id: Int): JSONObject {

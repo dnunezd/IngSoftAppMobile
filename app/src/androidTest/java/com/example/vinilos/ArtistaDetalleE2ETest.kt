@@ -26,6 +26,7 @@ import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.ArtistaDetalle
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.ArtistRepository
+import com.example.vinilos.data.repository.ArtistRepositoryImpl
 import com.example.vinilos.e2e.EvidenciaE2E
 import com.example.vinilos.ui.artistas.TagArtistas
 import com.example.vinilos.ui.artistas.TagContadorAlbumes
@@ -82,12 +83,15 @@ class ArtistaDetalleE2ETest {
     val rule = createEmptyComposeRule()
 
     /** El repositorio real de la app, que además cuenta cuántas veces se consulta cada detalle. */
-    private class ArtistasReales(baseUrl: String = BuildConfig.BASE_URL) : ArtistRepository(ServiceAdapter(baseUrl)) {
+    private class ArtistasReales(
+        baseUrl: String = BuildConfig.BASE_URL,
+        private val real: ArtistRepository = ArtistRepositoryImpl(ServiceAdapter(baseUrl))
+    ) : ArtistRepository by real {
         val consultasDetalle = mutableListOf<Pair<ArtistType, Int>>()
 
         override suspend fun obtenerDetalle(tipo: ArtistType, id: Int): Result<ArtistaDetalle> {
             synchronized(consultasDetalle) { consultasDetalle += tipo to id }
-            return super.obtenerDetalle(tipo, id)
+            return real.obtenerDetalle(tipo, id)
         }
 
         fun consultasDe(artista: Artist) =
@@ -116,7 +120,7 @@ class ArtistaDetalleE2ETest {
 
     /** Consulta, con un repositorio aparte (no cuenta), el listado y el detalle de cada artista real. */
     private fun candidatosReales(): List<Candidato> = runBlocking {
-        val consulta = ArtistRepository(ServiceAdapter(BuildConfig.BASE_URL))
+        val consulta = ArtistRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL))
         consulta.obtenerArtistas().getOrThrow().mapNotNull { artista ->
             consulta.obtenerDetalle(artista.type, artista.id).getOrNull()?.let { Candidato(artista, it) }
         }

@@ -52,7 +52,7 @@ class AlbumRepositoryCacheTest {
     fun preparar() {
         servidor = MockWebServer().apply { start() }
         dao = AlbumDaoFalso()
-        repositorio = AlbumRepository(ServiceAdapter(servidor.url("/").toString()), albumDao = dao)
+        repositorio = AlbumRepositoryImpl(ServiceAdapter(servidor.url("/").toString()), albumDao = dao)
     }
 
     @After
@@ -136,7 +136,7 @@ class AlbumRepositoryCacheTest {
 
     @Test
     fun sinDaoNoHayNadaGuardadoYElCatalogoSeConsultaComoAntes() = runTest {
-        val sinCache = AlbumRepository(ServiceAdapter(servidor.url("/").toString()))
+        val sinCache = AlbumRepositoryImpl(ServiceAdapter(servidor.url("/").toString()))
         servidor.enqueue(MockResponse().setBody(catalogo))
 
         assertTrue(sinCache.obtenerAlbumesGuardados().isEmpty())

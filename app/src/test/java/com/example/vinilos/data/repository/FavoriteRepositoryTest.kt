@@ -31,7 +31,7 @@ class FavoriteRepositoryTest {
     fun preparar() {
         servidor = MockWebServer()
         servidor.start()
-        repositorio = FavoriteRepository(ServiceAdapter(servidor.url("/").toString()))
+        repositorio = FavoriteRepositoryImpl(ServiceAdapter(servidor.url("/").toString()))
     }
 
     @After
@@ -125,7 +125,7 @@ class FavoriteRepositoryTest {
             override suspend fun addFavoriteBand(collectorId: Int, bandId: Int) = awaitCancellation()
             override suspend fun addFavoriteMusician(collectorId: Int, musicianId: Int) = awaitCancellation()
         }
-        val repositorio = FavoriteRepository(ServiceAdapter(servidor.url("/").toString()), api)
+        val repositorio = FavoriteRepositoryImpl(ServiceAdapter(servidor.url("/").toString()), api)
         var devolvioResultado = false
         val consulta = async(start = CoroutineStart.UNDISPATCHED) {
             val resultado = repositorio.esFavorito(100, 8)

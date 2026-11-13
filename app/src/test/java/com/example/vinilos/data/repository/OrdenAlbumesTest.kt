@@ -9,7 +9,7 @@ class OrdenAlbumesTest {
     private fun album(id: Int, nombre: String) =
         AlbumResumen(id = id, nombre = nombre, portada = null, genero = "Rock", artista = "", anio = null)
 
-    private fun ordenar(vararg albumes: AlbumResumen) = albumes.sortedWith(ordenCatalogo)
+    private fun ordenar(vararg albumes: AlbumResumen) = albumes.sortedWith(ordenCatalogo())
 
     @Test
     fun losAlbumesDeEjemploQuedanEnOrdenAlfabetico() {

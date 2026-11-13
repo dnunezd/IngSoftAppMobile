@@ -3,9 +3,15 @@ package com.example.vinilos
 import com.example.vinilos.data.local.AlbumDao
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.AlbumRepository
+import com.example.vinilos.data.repository.AlbumRepositoryImpl
 import com.example.vinilos.data.repository.ArtistRepository
+import com.example.vinilos.data.repository.ArtistRepositoryImpl
 import com.example.vinilos.data.repository.CollectorRepository
+import com.example.vinilos.data.repository.CollectorRepositoryImpl
 import com.example.vinilos.data.repository.FavoriteRepository
+import com.example.vinilos.data.repository.FavoriteRepositoryImpl
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 
 /**
  * Contenedor de dependencias manual: crea una sola vez el [ServiceAdapter] y los repositorios
@@ -18,22 +24,24 @@ class AppContainer(
     albumesRepositorio: AlbumRepository? = null,
     favoritosRepositorio: FavoriteRepository? = null,
     /** Caché del catálogo (add-cache-catalogo). Sin él, el catálogo solo usa la red, como antes. */
-    albumDao: AlbumDao? = null
+    albumDao: AlbumDao? = null,
+    /** Dónde convierten y ordenan los repositorios, fuera del hilo principal. Retrofit y Room usan sus hilos. */
+    dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) {
 
     val serviceAdapter: ServiceAdapter = ServiceAdapter(baseUrl)
 
     /** Se puede reemplazar con [colectoresRepositorio] en las pruebas instrumentadas. */
     val collectorRepository: CollectorRepository =
-        colectoresRepositorio ?: CollectorRepository(serviceAdapter)
+        colectoresRepositorio ?: CollectorRepositoryImpl(serviceAdapter, dispatcher = dispatcher)
 
     /** Se puede reemplazar con [albumesRepositorio] en las pruebas instrumentadas. */
     val albumRepository: AlbumRepository =
-        albumesRepositorio ?: AlbumRepository(serviceAdapter, albumDao = albumDao)
+        albumesRepositorio ?: AlbumRepositoryImpl(serviceAdapter, albumDao = albumDao, dispatcher = dispatcher)
 
     /** Se puede reemplazar con [artistasRepositorio] en las pruebas instrumentadas. */
     val artistRepository: ArtistRepository =
-        artistasRepositorio ?: ArtistRepository(serviceAdapter)
+        artistasRepositorio ?: ArtistRepositoryImpl(serviceAdapter, dispatcher = dispatcher)
 
     /**
      * Se puede reemplazar con [favoritosRepositorio] en las pruebas instrumentadas (p. ej. con
@@ -42,5 +50,5 @@ class AppContainer(
      * (@lorennossauniandes).
      */
     val favoriteRepository: FavoriteRepository =
-        favoritosRepositorio ?: FavoriteRepository(serviceAdapter)
+        favoritosRepositorio ?: FavoriteRepositoryImpl(serviceAdapter, dispatcher = dispatcher)
 }

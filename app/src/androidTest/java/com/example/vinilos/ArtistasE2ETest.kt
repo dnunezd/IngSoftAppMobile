@@ -26,6 +26,7 @@ import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.ArtistRepository
+import com.example.vinilos.data.repository.ArtistRepositoryImpl
 import com.example.vinilos.e2e.EvidenciaE2E
 import com.example.vinilos.ui.artistas.TagArtistas
 import com.example.vinilos.ui.artistas.TagBuscadorArtistas
@@ -80,13 +81,15 @@ class ArtistasE2ETest {
     val rule = createEmptyComposeRule()
 
     /** El repositorio real de la app: cuenta las consultas y guarda el último listado recibido. */
-    private class ArtistasReales : ArtistRepository(ServiceAdapter(BuildConfig.BASE_URL)) {
+    private class ArtistasReales(
+        private val real: ArtistRepository = ArtistRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL))
+    ) : ArtistRepository by real {
         @Volatile var consultas = 0
         @Volatile var lista: List<Artist>? = null
 
         override suspend fun obtenerArtistas(): Result<List<Artist>> {
             consultas++
-            return super.obtenerArtistas().also { resultado -> resultado.onSuccess { lista = it } }
+            return real.obtenerArtistas().also { resultado -> resultado.onSuccess { lista = it } }
         }
     }
 

@@ -20,7 +20,9 @@ import com.example.vinilos.data.model.AlbumResumen
 import com.example.vinilos.data.model.Collector
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.AlbumRepository
+import com.example.vinilos.data.repository.AlbumRepositoryImpl
 import com.example.vinilos.data.repository.CollectorRepository
+import com.example.vinilos.data.repository.CollectorRepositoryImpl
 import com.example.vinilos.e2e.EvidenciaE2E
 import com.example.vinilos.ui.artistas.TagArtistas
 import com.example.vinilos.ui.catalogo.TagCatalogo
@@ -64,19 +66,23 @@ class IngresoE2ETest {
     val rule = createEmptyComposeRule()
 
     /** El repositorio real de coleccionistas: guarda el último listado recibido del backend. */
-    private class ColeccionistasRealesContados : CollectorRepository(ServiceAdapter(BuildConfig.BASE_URL)) {
+    private class ColeccionistasRealesContados(
+        private val real: CollectorRepository = CollectorRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL))
+    ) : CollectorRepository by real {
         @Volatile var coleccionistas: List<Collector>? = null
 
         override suspend fun obtenerColeccionistas(): Result<List<Collector>> =
-            super.obtenerColeccionistas().also { resultado -> resultado.onSuccess { coleccionistas = it } }
+            real.obtenerColeccionistas().also { resultado -> resultado.onSuccess { coleccionistas = it } }
     }
 
     /** El repositorio real de álbumes: solo para saber cuál es el primer álbum real del catálogo. */
-    private class AlbumesRealesContados : AlbumRepository(ServiceAdapter(BuildConfig.BASE_URL)) {
+    private class AlbumesRealesContados(
+        private val real: AlbumRepository = AlbumRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL))
+    ) : AlbumRepository by real {
         @Volatile var catalogo: List<AlbumResumen>? = null
 
         override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> =
-            super.obtenerAlbumes().also { resultado -> resultado.onSuccess { catalogo = it } }
+            real.obtenerAlbumes().also { resultado -> resultado.onSuccess { catalogo = it } }
     }
 
     private val coleccionistasRepo = ColeccionistasRealesContados()

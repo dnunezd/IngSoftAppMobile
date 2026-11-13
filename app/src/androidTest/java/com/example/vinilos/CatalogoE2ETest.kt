@@ -24,6 +24,7 @@ import androidx.test.espresso.Espresso
 import com.example.vinilos.data.model.AlbumResumen
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.AlbumRepository
+import com.example.vinilos.data.repository.AlbumRepositoryImpl
 import com.example.vinilos.e2e.EvidenciaE2E
 import com.example.vinilos.ui.catalogo.TagActualizandoCatalogo
 import com.example.vinilos.ui.catalogo.TagContadorCatalogo
@@ -72,13 +73,15 @@ class CatalogoE2ETest {
     val rule = createEmptyComposeRule()
 
     /** El repositorio real de la app: cuenta las consultas y guarda el último catálogo recibido. */
-    private class AlbumesRealesContados : AlbumRepository(ServiceAdapter(BuildConfig.BASE_URL)) {
+    private class AlbumesRealesContados(
+        private val real: AlbumRepository = AlbumRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL))
+    ) : AlbumRepository by real {
         @Volatile var consultasCatalogo = 0
         @Volatile var catalogo: List<AlbumResumen>? = null
 
         override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> {
             consultasCatalogo++
-            return super.obtenerAlbumes().also { resultado -> resultado.onSuccess { catalogo = it } }
+            return real.obtenerAlbumes().also { resultado -> resultado.onSuccess { catalogo = it } }
         }
     }
 

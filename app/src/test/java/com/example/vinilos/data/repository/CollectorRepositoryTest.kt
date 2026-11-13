@@ -33,7 +33,7 @@ class CollectorRepositoryTest {
             .readTimeout(300, TimeUnit.MILLISECONDS)
             .connectTimeout(300, TimeUnit.MILLISECONDS)
             .build()
-        repositorio = CollectorRepository(ServiceAdapter(servidor.url("/").toString(), cliente))
+        repositorio = CollectorRepositoryImpl(ServiceAdapter(servidor.url("/").toString(), cliente))
     }
 
     @After
@@ -154,7 +154,7 @@ class CollectorRepositoryTest {
 
         var relanzada = false
         try {
-            CollectorRepository(ServiceAdapter(servidor.url("/").toString()), api)
+            CollectorRepositoryImpl(ServiceAdapter(servidor.url("/").toString()), api)
                 .obtenerColeccionistas()
         } catch (e: CancellationException) {
             relanzada = true

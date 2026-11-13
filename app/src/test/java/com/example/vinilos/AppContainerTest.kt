@@ -3,6 +3,8 @@ package com.example.vinilos
 import com.example.vinilos.data.local.AlbumDao
 import com.example.vinilos.data.local.AlbumEntity
 import com.example.vinilos.data.model.Album
+import com.example.vinilos.data.model.AlbumNuevo
+import com.example.vinilos.data.model.AlbumResumen
 import com.example.vinilos.data.model.Collector
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.AlbumNoDisponible
@@ -18,8 +20,12 @@ import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.TimeUnit
 
-private class AlbumRepositoryFalso : AlbumRepository(ServiceAdapter("http://localhost/")) {
+private class AlbumRepositoryFalso : AlbumRepository {
     override suspend fun obtenerAlbum(id: Int): Result<Album> = Result.failure(AlbumNoDisponible())
+
+    override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> = error("No se usa en esta prueba")
+    override suspend fun obtenerAlbumesGuardados(): List<AlbumResumen> = error("No se usa en esta prueba")
+    override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> = error("No se usa en esta prueba")
 }
 
 class AppContainerTest {

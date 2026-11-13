@@ -1,4 +1,4 @@
-package com.example.vinilos.ui.detalle
+package com.example.vinilos.data.model
 
 import org.junit.Assert.assertEquals
 import org.junit.Test
