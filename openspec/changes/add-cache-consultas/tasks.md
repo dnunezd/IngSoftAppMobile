@@ -38,9 +38,9 @@ Cada comportamiento se prueba primero y se comprueba que la prueba falla antes d
 
 ## 6. Integración, evidencia y documentación
 
-- [ ] 6.1 Ampliar `RepositoriosDispatcherTest` con las lecturas nuevas y ejecutar `testDebugUnitTest`, `lintDebug` y la suite instrumentada completa, incluidas las E2E contra BackVynils local, en el Samsung y en el emulador API 23. Verificar `BUILD SUCCESSFUL`, sin fallos y sin avisos de lint nuevos en código Kotlin frente a `develop`.
+- [ ] 6.1 Ampliar `RepositoriosDispatcherTest` con las lecturas nuevas y ejecutar `testDebugUnitTest`, `lintDebug` y la suite instrumentada completa, incluidas las E2E contra BackVynils local, en el Samsung y en el emulador API 23. Verificar `BUILD SUCCESSFUL`, sin fallos y sin avisos de lint nuevos en código Kotlin frente a `develop`. Avance (2026-11-13): `RepositoriosDispatcherTest` cubre las cinco lecturas nuevas; 341/341 unitarias; lint con 0 errores y los mismos 61 avisos, ninguno en código Kotlin; en el Samsung SM-S938B, contra BackVynils local, 212 instrumentadas sin fallos y 1 omitida por datos (`ArtistaDetalleE2ETest.unArtistaSinAlbumesNiPremiosMuestraLosMensajesDeVacio`). Falta la corrida en el emulador API 23.
 - [ ] 6.2 Comprobar a mano en el Samsung, con la app cerrada y el modo avión activado, las cinco pantallas: coleccionistas, detalle de álbum, listado de artistas, detalle de un artista ya visto y favorito confirmado. Guardar las capturas y el resultado de cada una en `docs/pruebas/sprint-2/cache-consultas/README.md`, con dispositivo y fecha. Verificar que el archivo tiene las cinco.
-- [ ] 6.3 Actualizar el README (fila del cambio y descripción de la caché) y `docs/arquitectura/plan-adopcion-room.md` (tablas de la versión 2 y estado de las HU). Verificar revisando el diff.
+- [x] 6.3 Actualizar el README (fila del cambio y descripción de la caché) y `docs/arquitectura/plan-adopcion-room.md` (tablas de la versión 2 y estado de las HU). Verificar revisando el diff.
 - [ ] 6.4 Redactar para el equipo el texto de la wiki y la respuesta al comentario de revisión sobre la caché, a partir de este cambio y la evidencia de 6.2. Publicarlos requiere la confirmación del usuario y queda verificado cuando la página o el comentario lo reflejen.
 
 ## Workflow follow-up

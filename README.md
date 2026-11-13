@@ -39,6 +39,7 @@ Va del 2 al 15 de noviembre de 2026. Su primer release será **`v2.0.0` – Spri
 | HU07 · Crear un álbum (Jeffrey Díaz) | Parte 1: formulario solo para el Coleccionista, validación, selector de fecha, envío con reintento y álbum nuevo marcado en el catálogo ([#83](https://github.com/dnunezd/IngSoftAppMobile/pull/83)) | E2E `FN07-ESC01` a `ESC07` ([#85](https://github.com/dnunezd/IngSoftAppMobile/pull/85)) | Wiki y mockups (T07-7) y parte 2 de desempeño |
 | HU10 · Agregar artistas favoritos (Lorena Nossa) | — | Botón de favorito en el detalle del artista, con confirmación y errores ([#86](https://github.com/dnunezd/IngSoftAppMobile/pull/86)) | E2E (T10-5), wiki y mockups (T10-7) |
 
+- **Caché sin conexión** (rama `feature/cache-consultas`, cambio `add-cache-consultas`): extiende la caché del catálogo a coleccionistas, detalle de álbum, listado y detalle de artistas y favoritos, en respuesta a la revisión "si se quedan sin internet, no van a mostrar nada".
 - **Regresión:** el equipo decidió no hacer pruebas de regresión en este sprint (T07-6 y T10-6).
 - **Pruebas que fallaban en API 23:** se corrigieron dos.
   - En `FN03-ESC07`, el buscador quedaba enfocado al girar y el teclado reenviaba el texto (`ru` → `ruru`); ahora la prueba quita el foco antes de girar.
@@ -81,7 +82,7 @@ Antes de generarlo, comprueba que el backend desplegado responda (ver [opción A
 | Docker | Docker Desktop o Docker Engine con Compose, solo para el backend local |
 | Dispositivo | Físico o emulador con Android 6.0 (API 23) o superior |
 
-Stack: Kotlin 1.9, Jetpack Compose con Material 3, MVVM + Repository, Retrofit + OkHttp, Coil, Navigation Compose y corrutinas. Gradle 8.7 viene con el wrapper.
+Stack: Kotlin 1.9, Jetpack Compose con Material 3, MVVM + Repository, Retrofit + OkHttp, Room, Coil, Navigation Compose y corrutinas. Gradle 8.7 viene con el wrapper.
 
 ## Puesta en marcha
 
@@ -208,7 +209,7 @@ Debe terminar en `OK (41 tests)`. En Git Bash antepone `MSYS_NO_PATHCONV=1` a lo
 
 ```
 app/src/main/java/com/example/vinilos/
-  data/        model, remote (ServiceAdapter, interfaces Retrofit y DTO), repository
+  data/        model, remote (ServiceAdapter, interfaces Retrofit y DTO), local (Room: caché sin conexión), repository
   viewmodel/   SessionViewModel y un ViewModel con su estado por pantalla
   ui/          pantallas Compose por funcionalidad y tema
   navigation/  VinilosNavHost: grafo de navegación
@@ -217,7 +218,11 @@ docs/pruebas/  evidencia de pruebas por sprint e historia
 openspec/      specs vigentes (specs/), cambios en curso (changes/) y archivados (changes/archive/)
 ```
 
-**MVVM** con capa de datos por **Repository**: la vista dibuja el estado que expone el `ViewModel` y le envía los eventos; los repositorios hablan con el backend solo a través del `ServiceAdapter`, que construye una sola vez el cliente de red y traduce los errores de red y del servidor a `ErrorDeCarga`. Los diagramas están en la página de cada sprint en la wiki.
+**MVVM** con capa de datos por **Repository**: la vista dibuja el estado que expone el `ViewModel` y le envía los eventos; los repositorios son interfaces con su implementación (`*RepositoryImpl`) y hablan con el backend solo a través del `ServiceAdapter`, que construye una sola vez el cliente de red y traduce los errores de red y del servidor a `ErrorDeCarga` (un 404, a `RecursoNoEncontrado`). Cada repositorio convierte y ordena en un dispatcher inyectado (`Dispatchers.Default`), fuera del hilo principal.
+
+**Sin conexión:** los repositorios guardan en Room la última respuesta de cada consulta de lectura: catálogo y detalle de álbumes, coleccionistas, listado de artistas, detalle de cada artista abierto y favoritos confirmados. Al abrir una de esas pantallas se muestra lo guardado mientras se consulta el backend; si la consulta falla, se conserva con un aviso breve, y la pantalla de error queda solo para cuando no hay nada guardado. Las escrituras (crear un álbum, agregar un favorito) siguen necesitando conexión. El detalle está en [`plan-adopcion-room.md`](docs/arquitectura/plan-adopcion-room.md) y en los cambios OpenSpec `add-cache-catalogo` y `add-cache-consultas`.
+
+Los diagramas están en la página de cada sprint en la wiki.
 
 ## Flujo de trabajo
 
