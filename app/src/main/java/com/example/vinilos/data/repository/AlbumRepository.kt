@@ -19,6 +19,9 @@ interface AlbumRepository {
     /** Último catálogo guardado en el dispositivo; vacío si no hay caché o no se pudo leer. */
     suspend fun obtenerAlbumesGuardados(): List<AlbumResumen>
 
+    /** Detalle guardado en el dispositivo (add-cache-consultas); `null` si no hay o no se pudo leer. */
+    suspend fun obtenerAlbumGuardado(id: Int): Album?
+
     /** Crea el álbum (HU07) y devuelve su id. */
     suspend fun crearAlbum(album: AlbumNuevo): Result<Int>
 }

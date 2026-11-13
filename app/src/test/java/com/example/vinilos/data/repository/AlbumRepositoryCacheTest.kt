@@ -4,7 +4,11 @@ import android.database.sqlite.SQLiteException
 import com.example.vinilos.data.local.AlbumDao
 import com.example.vinilos.data.local.AlbumDetalleEntity
 import com.example.vinilos.data.local.AlbumEntity
+import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.AlbumResumen
+import com.example.vinilos.data.model.Artista
+import com.example.vinilos.data.model.Cancion
+import com.example.vinilos.data.model.Comentario
 import com.example.vinilos.data.remote.ErrorDeCarga
 import com.example.vinilos.data.remote.ServiceAdapter
 import kotlinx.coroutines.CancellationException
@@ -13,6 +17,7 @@ import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
@@ -218,5 +223,118 @@ class AlbumRepositoryCacheTest {
         } catch (e: CancellationException) {
             assertEquals("cancelada", e.message)
         }
+    }
+
+    // ---- Detalle guardado (add-cache-consultas, D4) ----
+
+    private val albumCompletoJson = """
+        {"id": 200, "name": "Buscando América", "cover": "https://example.com/200.jpg",
+         "description": "Salsa urbana", "genre": "Salsa", "recordLabel": "Elektra",
+         "releaseDate": "1984-08-01T00:00:00.000Z",
+         "tracks": [{"id": 1, "name": "Decisiones", "duration": "5:05"}],
+         "performers": [{"id": 1, "name": "Rubén Blades"}],
+         "comments": [{"id": 1, "description": "Excelente", "rating": 5}]}
+    """.trimIndent()
+
+    private val albumCompleto = Album(
+        id = 200, nombre = "Buscando América", portada = "https://example.com/200.jpg",
+        descripcion = "Salsa urbana", genero = "Salsa", disquera = "Elektra",
+        fechaLanzamiento = "1984-08-01T00:00:00.000Z",
+        canciones = listOf(Cancion("Decisiones", "5:05")),
+        artistas = listOf(Artista("Rubén Blades", null)),
+        comentarios = listOf(Comentario("Excelente", 5))
+    )
+
+    private fun detalleGuardado(album: Album = albumCompleto) = AlbumDetalleEntity(
+        album.id, album.nombre, album.portada, album.descripcion, album.genero, album.disquera,
+        album.fechaLanzamiento, album.canciones, album.artistas, album.comentarios
+    )
+
+    @Test
+    fun elCatalogoGuardaElDetalleDeLosAlbumesCompletosSinPeticionesNuevas() = runTest {
+        // El 102 no tiene descripción, disquera ni fecha: queda en el catálogo, pero sin detalle.
+        servidor.enqueue(MockResponse().setBody("[$albumCompletoJson, {\"id\": 102, \"name\": \"A Night at the Opera\", \"genre\": \"Rock\"}]"))
+
+        repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals(setOf(200, 102), dao.filas.map { it.id }.toSet())
+        assertEquals(mapOf(200 to detalleGuardado()), dao.detalles)
+        assertEquals(1, servidor.requestCount)
+    }
+
+    @Test
+    fun elCatalogoBorraElDetalleDeLosAlbumesQueYaNoVienen() = runTest {
+        dao.detalles = mapOf(999 to detalleGuardado(albumCompleto.copy(id = 999)))
+        servidor.enqueue(MockResponse().setBody("[$albumCompletoJson]"))
+
+        repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals(setOf(200), dao.detalles.keys)
+    }
+
+    @Test
+    fun obtenerAlbumGuardadoDevuelveElDetalleGuardado() = runTest {
+        dao.detalles = mapOf(200 to detalleGuardado())
+
+        assertEquals(albumCompleto, repositorio.obtenerAlbumGuardado(200))
+        assertNull(repositorio.obtenerAlbumGuardado(201))
+    }
+
+    @Test
+    fun abrirElDetalleConConexionGuardaOReemplazaSuDetalle() = runTest {
+        dao.detalles = mapOf(200 to detalleGuardado(albumCompleto.copy(nombre = "Nombre viejo")))
+        servidor.enqueue(MockResponse().setBody(albumCompletoJson))
+
+        assertEquals(albumCompleto, repositorio.obtenerAlbum(200).getOrThrow())
+        assertEquals(detalleGuardado(), dao.detalles[200])
+    }
+
+    @Test
+    fun un404BorraElAlbumDelCatalogoYDelDetalleGuardados() = runTest {
+        dao.filas = listOf(AlbumEntity(200, "Buscando América", null, "Salsa", "", null))
+        dao.detalles = mapOf(200 to detalleGuardado())
+        servidor.enqueue(MockResponse().setResponseCode(404))
+
+        val error = repositorio.obtenerAlbum(200).exceptionOrNull()
+
+        assertTrue(error is AlbumNoDisponible)
+        assertTrue(dao.filas.isEmpty())
+        assertTrue(dao.detalles.isEmpty())
+    }
+
+    @Test
+    fun unFalloDeRedNoTocaElDetalleGuardado() = runTest {
+        dao.detalles = mapOf(200 to detalleGuardado())
+        servidor.enqueue(MockResponse().setResponseCode(500))
+
+        assertTrue(repositorio.obtenerAlbum(200).exceptionOrNull() is ErrorDeCarga)
+        assertEquals(mapOf(200 to detalleGuardado()), dao.detalles)
+    }
+
+    @Test
+    fun sinDaoNoHayDetalleGuardadoYElDetalleSeConsultaComoAntes() = runTest {
+        val sinCache = AlbumRepositoryImpl(ServiceAdapter(servidor.url("/").toString()))
+        servidor.enqueue(MockResponse().setBody(albumCompletoJson))
+
+        assertNull(sinCache.obtenerAlbumGuardado(200))
+        assertEquals(albumCompleto, sinCache.obtenerAlbum(200).getOrThrow())
+    }
+
+    @Test
+    fun siNoSePuedeLeerElDetalleNoHayNadaGuardado() = runTest {
+        dao.detalles = mapOf(200 to detalleGuardado())
+        dao.fallaAlLeer = SQLiteException("disco no disponible")
+
+        assertNull(repositorio.obtenerAlbumGuardado(200))
+    }
+
+    @Test
+    fun siNoSePuedeEscribirElDetalleSeDevuelveIgualElAlbum() = runTest {
+        dao.fallaAlEscribir = SQLiteException("disco lleno")
+        servidor.enqueue(MockResponse().setBody(albumCompletoJson))
+        servidor.enqueue(MockResponse().setResponseCode(404))
+
+        assertEquals(albumCompleto, repositorio.obtenerAlbum(200).getOrThrow())
+        assertTrue(repositorio.obtenerAlbum(200).exceptionOrNull() is AlbumNoDisponible)
     }
 }

@@ -22,6 +22,7 @@ private class CatalogoConCacheFalso : AlbumRepository {
 
     override suspend fun obtenerAlbumesGuardados(): List<AlbumResumen> =
         CompletableDeferred<List<AlbumResumen>>().also { lecturas += it }.await()
+    override suspend fun obtenerAlbumGuardado(id: Int): Album? = error("No se usa en esta prueba")
 
     override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> =
         CompletableDeferred<Result<List<AlbumResumen>>>().also { consultas += it }.await()

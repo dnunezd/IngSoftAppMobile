@@ -2,6 +2,7 @@ package com.example.vinilos.data.repository
 
 import android.database.sqlite.SQLiteException
 import com.example.vinilos.data.local.AlbumDao
+import com.example.vinilos.data.local.AlbumDetalleEntity
 import com.example.vinilos.data.local.AlbumEntity
 import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.AlbumNuevo
@@ -24,9 +25,9 @@ import kotlinx.coroutines.withContext
 import java.text.ParseException
 
 /**
- * Álbumes del backend. Con [albumDao], el catálogo además se guarda en el dispositivo
- * (add-cache-catalogo); sin él, se comporta como antes, que es lo que usan las pruebas que no
- * tienen `Context`.
+ * Álbumes del backend. Con [albumDao], el catálogo (add-cache-catalogo) y el detalle de cada álbum
+ * (add-cache-consultas) además se guardan en el dispositivo; sin él, se comporta como antes, que es lo
+ * que usan las pruebas que no tienen `Context`.
  *
  * Retrofit y Room hacen su I/O en sus propios hilos; lo que corre en [dispatcher] (`Dispatchers.Default`
  * por defecto) es el trabajo de CPU: convertir, ordenar y validar fechas. Así se puede llamar desde el
@@ -39,41 +40,64 @@ class AlbumRepositoryImpl(
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : AlbumRepository {
 
+    /**
+     * Detalle del álbum (HU02). Si sale bien, guarda o reemplaza su detalle; si el backend confirma con
+     * un 404 que ya no existe, lo borra de lo guardado (add-cache-consultas, D4).
+     */
     override suspend fun obtenerAlbum(id: Int): Result<Album> = withContext(dispatcher) {
         val respuesta = adaptador.llamar { api.obtenerAlbum(id).aModelo() }
         val error = respuesta.exceptionOrNull()
-        if (error is RecursoNoEncontrado) Result.failure(AlbumNoDisponible(error.cause)) else respuesta
+        if (error is RecursoNoEncontrado) {
+            escribir { borrarAlbum(id) }
+            Result.failure(AlbumNoDisponible(error.cause))
+        } else {
+            respuesta.onSuccess { album -> escribir { guardarDetalle(album.aEntidad()) } }
+        }
     }
 
     /**
      * Catálogo (HU01) ordenado por nombre. A diferencia del detalle, la conversión es tolerante:
      * un álbum sin id, nombre o género se descarta sin afectar a los demás. Si la consulta sale bien,
-     * la respuesta reemplaza el catálogo guardado.
+     * la respuesta reemplaza el catálogo guardado y, con la misma respuesta, los detalles guardados:
+     * `GET /albums` ya trae canciones, intérpretes y comentarios (add-cache-consultas, D4).
      */
     override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> = withContext(dispatcher) {
         adaptador.llamar {
-            api.obtenerAlbumes().mapNotNull { it.aResumen() }.sortedWith(ordenCatalogo())
-        }.onSuccess { guardar(it) }
+            val respuesta = api.obtenerAlbumes()
+            val albumes = respuesta.mapNotNull { it.aResumen() }.sortedWith(ordenCatalogo())
+            albumes to respuesta.mapNotNull { it.aDetalleSiEsValido() }
+        }.onSuccess { (albumes, detalles) ->
+            escribir { reemplazarCatalogo(albumes.map { it.aEntidad() }, detalles.map { it.aEntidad() }) }
+        }.map { (albumes, _) -> albumes }
     }
 
     /**
      * Último catálogo guardado en el dispositivo, en el mismo orden que la consulta. Vacío si no hay
-     * caché o si no se pudo leer: la caché es una mejora, nunca una condición (design.md, D7).
+     * caché o si no se pudo leer: la caché es una mejora, nunca una condición (add-cache-catalogo, D7).
      */
     override suspend fun obtenerAlbumesGuardados(): List<AlbumResumen> = withContext(dispatcher) {
-        val dao = albumDao ?: return@withContext emptyList()
-        try {
-            dao.todos().map { it.aResumen() }.sortedWith(ordenCatalogo())
+        leer(siNoHay = emptyList()) { todos().map { it.aResumen() }.sortedWith(ordenCatalogo()) }
+    }
+
+    override suspend fun obtenerAlbumGuardado(id: Int): Album? = withContext(dispatcher) {
+        leer(siNoHay = null) { detalle(id)?.aModelo() }
+    }
+
+    /** Lectura de lo guardado: sin DAO o si falla el almacenamiento, es como si no hubiera nada. */
+    private suspend fun <T> leer(siNoHay: T, bloque: suspend AlbumDao.() -> T): T {
+        val dao = albumDao ?: return siNoHay
+        return try {
+            dao.bloque()
         } catch (e: SQLiteException) {
-            emptyList()
+            siNoHay
         }
     }
 
-    /** Un fallo al escribir no cambia el resultado de la consulta, que ya llegó bien. */
-    private suspend fun guardar(albumes: List<AlbumResumen>) {
+    /** Un fallo al escribir no cambia el resultado de la consulta, que ya llegó del backend. */
+    private suspend fun escribir(bloque: suspend AlbumDao.() -> Unit) {
         val dao = albumDao ?: return
         try {
-            dao.reemplazar(albumes.map { it.aEntidad() })
+            dao.bloque()
         } catch (e: SQLiteException) {
             // Se sigue mostrando la respuesta; la siguiente consulta exitosa vuelve a intentarlo.
         }
@@ -82,6 +106,22 @@ class AlbumRepositoryImpl(
     private fun AlbumResumen.aEntidad() = AlbumEntity(id, nombre, portada, genero, artista, anio)
 
     private fun AlbumEntity.aResumen() = AlbumResumen(id, nombre, portada, genero, artista, anio)
+
+    private fun Album.aEntidad() = AlbumDetalleEntity(
+        id, nombre, portada, descripcion, genero, disquera, fechaLanzamiento, canciones, artistas, comentarios
+    )
+
+    private fun AlbumDetalleEntity.aModelo() = Album(
+        id, nombre, portada, descripcion, genero, disquera, fechaLanzamiento, canciones, artistas, comentarios
+    )
+
+    /** Detalle para guardar desde el catálogo: un álbum que no pasa la validación estricta no se guarda. */
+    private fun AlbumDto.aDetalleSiEsValido(): Album? =
+        try {
+            aModelo()
+        } catch (e: JsonParseException) {
+            null
+        }
 
     /** Crea el álbum (HU07) y devuelve su id, que el catálogo usa para marcarlo como nuevo. */
     override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> = withContext(dispatcher) {

@@ -26,6 +26,7 @@ private class AlbumRepositoryFalso : AlbumRepository {
 
     override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> = error("No se usa en esta prueba")
     override suspend fun obtenerAlbumesGuardados(): List<AlbumResumen> = error("No se usa en esta prueba")
+    override suspend fun obtenerAlbumGuardado(id: Int): Album? = error("No se usa en esta prueba")
     override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> = error("No se usa en esta prueba")
 }
 

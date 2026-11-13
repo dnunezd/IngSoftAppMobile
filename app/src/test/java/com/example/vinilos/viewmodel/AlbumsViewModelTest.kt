@@ -35,6 +35,7 @@ private class CatalogoFalso(
 
     override suspend fun obtenerAlbum(id: Int): Result<Album> = error("No se usa en esta prueba")
     override suspend fun obtenerAlbumesGuardados(): List<AlbumResumen> = emptyList()
+    override suspend fun obtenerAlbumGuardado(id: Int): Album? = error("No se usa en esta prueba")
     override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> = error("No se usa en esta prueba")
 }
 
@@ -232,6 +233,7 @@ class AlbumsViewModelTest {
             override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> = Result.failure(esperado)
             override suspend fun obtenerAlbum(id: Int): Result<Album> = error("No se usa en esta prueba")
             override suspend fun obtenerAlbumesGuardados(): List<AlbumResumen> = emptyList()
+            override suspend fun obtenerAlbumGuardado(id: Int): Album? = error("No se usa en esta prueba")
             override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> = error("No se usa en esta prueba")
         }
         var estadoFinal: AlbumsUiState? = null

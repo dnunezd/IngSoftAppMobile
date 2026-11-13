@@ -32,6 +32,7 @@ private class CreacionFalsa : AlbumRepository {
     override suspend fun obtenerAlbum(id: Int): Result<Album> = error("No se usa en esta prueba")
     override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> = error("No se usa en esta prueba")
     override suspend fun obtenerAlbumesGuardados(): List<AlbumResumen> = error("No se usa en esta prueba")
+    override suspend fun obtenerAlbumGuardado(id: Int): Album? = error("No se usa en esta prueba")
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)

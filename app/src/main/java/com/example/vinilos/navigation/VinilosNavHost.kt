@@ -307,7 +307,8 @@ fun VinilosNavHost(
             PantallaDetalleAlbum(
                 estado = estado,
                 onAtras = { navController.popBackStack() },
-                onReintentar = viewModel::reintentar
+                onReintentar = viewModel::reintentar,
+                onAvisoMostrado = viewModel::avisoMostrado
             )
         }
     }

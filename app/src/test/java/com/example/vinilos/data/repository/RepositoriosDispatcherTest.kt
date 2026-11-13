@@ -137,7 +137,7 @@ class RepositoriosDispatcherTest {
     @Test
     fun obtenerAlbumesYGuardarlosCorreEnElDispatcher() = runTest {
         assertTrue(albumes().obtenerAlbumes().isSuccess)
-        assertEquals("Consulta, borrado e inserción de la caché", 3, hilos.size)
+        assertEquals("Consulta y reemplazo del catálogo y de los detalles guardados", 5, hilos.size)
         assertTodoEnElDispatcher()
     }
 
