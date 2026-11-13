@@ -1,6 +1,7 @@
 package com.example.vinilos.data.repository
 
 import com.example.vinilos.data.local.AlbumDao
+import com.example.vinilos.data.local.AlbumDetalleEntity
 import com.example.vinilos.data.local.AlbumEntity
 import com.example.vinilos.data.model.AlbumNuevo
 import com.example.vinilos.data.model.ArtistType
@@ -86,6 +87,12 @@ class RepositoriosDispatcherTest {
         override suspend fun todos(): List<AlbumEntity> = emptyList<AlbumEntity>().also { anotarHilo() }
         override suspend fun borrarTodos() = anotarHilo()
         override suspend fun insertar(albumes: List<AlbumEntity>) = anotarHilo()
+        override suspend fun detalle(id: Int): AlbumDetalleEntity? = null.also { anotarHilo() }
+        override suspend fun guardarDetalle(detalle: AlbumDetalleEntity) = anotarHilo()
+        override suspend fun borrarDetalles() = anotarHilo()
+        override suspend fun insertarDetalles(detalles: List<AlbumDetalleEntity>) = anotarHilo()
+        override suspend fun borrarDelCatalogo(id: Int) = anotarHilo()
+        override suspend fun borrarDetalle(id: Int) = anotarHilo()
     }
 
     private val detalleDto = ArtistaDetalleDto(

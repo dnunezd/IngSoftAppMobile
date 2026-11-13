@@ -2,6 +2,7 @@ package com.example.vinilos.data.repository
 
 import android.database.sqlite.SQLiteException
 import com.example.vinilos.data.local.AlbumDao
+import com.example.vinilos.data.local.AlbumDetalleEntity
 import com.example.vinilos.data.local.AlbumEntity
 import com.example.vinilos.data.model.AlbumResumen
 import com.example.vinilos.data.remote.ErrorDeCarga
@@ -41,6 +42,39 @@ class AlbumRepositoryCacheTest {
             fallaAlEscribir?.let { throw it }
             filas = filas + albumes
             escrituras++
+        }
+
+        /** Detalles guardados por id (add-cache-consultas). */
+        var detalles: Map<Int, AlbumDetalleEntity> = emptyMap()
+
+        override suspend fun detalle(id: Int): AlbumDetalleEntity? {
+            fallaAlLeer?.let { throw it }
+            return detalles[id]
+        }
+
+        override suspend fun guardarDetalle(detalle: AlbumDetalleEntity) {
+            fallaAlEscribir?.let { throw it }
+            detalles = detalles + (detalle.id to detalle)
+        }
+
+        override suspend fun borrarDetalles() {
+            fallaAlEscribir?.let { throw it }
+            detalles = emptyMap()
+        }
+
+        override suspend fun insertarDetalles(detalles: List<AlbumDetalleEntity>) {
+            fallaAlEscribir?.let { throw it }
+            this.detalles = this.detalles + detalles.associateBy { it.id }
+        }
+
+        override suspend fun borrarDelCatalogo(id: Int) {
+            fallaAlEscribir?.let { throw it }
+            filas = filas.filterNot { it.id == id }
+        }
+
+        override suspend fun borrarDetalle(id: Int) {
+            fallaAlEscribir?.let { throw it }
+            detalles = detalles - id
         }
     }
 

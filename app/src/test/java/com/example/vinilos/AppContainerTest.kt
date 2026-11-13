@@ -1,6 +1,7 @@
 package com.example.vinilos
 
 import com.example.vinilos.data.local.AlbumDao
+import com.example.vinilos.data.local.AlbumDetalleEntity
 import com.example.vinilos.data.local.AlbumEntity
 import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.AlbumNuevo
@@ -96,4 +97,10 @@ private class AlbumDaoEnMemoria : AlbumDao() {
     override suspend fun todos() = filas
     override suspend fun borrarTodos() { filas = emptyList() }
     override suspend fun insertar(albumes: List<AlbumEntity>) { filas = filas + albumes }
+    override suspend fun detalle(id: Int): AlbumDetalleEntity? = null
+    override suspend fun guardarDetalle(detalle: AlbumDetalleEntity) = Unit
+    override suspend fun borrarDetalles() = Unit
+    override suspend fun insertarDetalles(detalles: List<AlbumDetalleEntity>) = Unit
+    override suspend fun borrarDelCatalogo(id: Int) { filas = filas.filterNot { it.id == id } }
+    override suspend fun borrarDetalle(id: Int) = Unit
 }
