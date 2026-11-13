@@ -16,6 +16,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.AlbumResumen
+import com.example.vinilos.data.model.formatearFechaLanzamiento
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.AlbumRepository
 import com.example.vinilos.data.repository.AlbumRepositoryImpl
@@ -23,7 +24,6 @@ import com.example.vinilos.e2e.EvidenciaE2E
 import com.example.vinilos.ui.catalogo.TagCatalogo
 import com.example.vinilos.ui.catalogo.TagCuadriculaCatalogo
 import com.example.vinilos.ui.catalogo.tagAlbum
-import com.example.vinilos.ui.detalle.formatearFechaLanzamiento
 import com.example.vinilos.ui.ingreso.TagAtras
 import com.example.vinilos.ui.ingreso.TagEntrarVisitante
 import com.example.vinilos.ui.inicio.TagInicio

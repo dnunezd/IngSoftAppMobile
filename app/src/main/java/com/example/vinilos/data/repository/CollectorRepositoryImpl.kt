@@ -8,11 +8,16 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** Coleccionistas del backend. La consulta y la conversión corren en [dispatcher], fuera del hilo principal. */
+/**
+ * Coleccionistas del backend.
+ * Retrofit y Room hacen su I/O en sus propios hilos; lo que corre en [dispatcher] (`Dispatchers.Default`
+ * por defecto) es el trabajo de CPU: convertir la respuesta. Así se puede llamar desde el hilo principal sin
+ * bloquearlo.
+ */
 class CollectorRepositoryImpl(
     private val adaptador: ServiceAdapter,
     private val api: CollectorApi = adaptador.api(),
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : CollectorRepository {
 
     override suspend fun obtenerColeccionistas(): Result<List<Collector>> = withContext(dispatcher) {

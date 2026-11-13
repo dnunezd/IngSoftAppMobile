@@ -3,6 +3,7 @@ package com.example.vinilos.ui.detalle
 import androidx.annotation.StringRes
 import com.example.vinilos.R
 import com.example.vinilos.data.model.Album
+import com.example.vinilos.data.model.formatearFechaLanzamiento
 
 data class AlbumPresentacion(
     val album: Album,

@@ -230,9 +230,9 @@ class AlbumsViewModelTest {
         val esperado = IllegalStateException("Error de programación")
         val repositorio = object : AlbumRepository {
             override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> = Result.failure(esperado)
-        override suspend fun obtenerAlbum(id: Int): Result<Album> = error("No se usa en esta prueba")
-        override suspend fun obtenerAlbumesGuardados(): List<AlbumResumen> = emptyList()
-        override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> = error("No se usa en esta prueba")
+            override suspend fun obtenerAlbum(id: Int): Result<Album> = error("No se usa en esta prueba")
+            override suspend fun obtenerAlbumesGuardados(): List<AlbumResumen> = emptyList()
+            override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> = error("No se usa en esta prueba")
         }
         var estadoFinal: AlbumsUiState? = null
 

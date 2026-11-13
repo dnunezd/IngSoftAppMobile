@@ -10,13 +10,13 @@ import com.example.vinilos.data.model.Artista
 import com.example.vinilos.data.model.Cancion
 import com.example.vinilos.data.model.Comentario
 import com.example.vinilos.data.model.fechaIsoUtc
+import com.example.vinilos.data.model.formatearFechaLanzamiento
 import com.example.vinilos.data.remote.AlbumApi
 import com.example.vinilos.data.remote.AlbumDto
 import com.example.vinilos.data.remote.ArtistaDto
 import com.example.vinilos.data.remote.CrearAlbumDto
 import com.example.vinilos.data.remote.RecursoNoEncontrado
 import com.example.vinilos.data.remote.ServiceAdapter
-import com.example.vinilos.ui.detalle.formatearFechaLanzamiento
 import com.google.gson.JsonParseException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -28,14 +28,15 @@ import java.text.ParseException
  * (add-cache-catalogo); sin él, se comporta como antes, que es lo que usan las pruebas que no
  * tienen `Context`.
  *
- * Todo el trabajo (red, conversión, orden y caché) corre en [dispatcher], así que se puede llamar
- * desde el hilo principal sin bloquearlo.
+ * Retrofit y Room hacen su I/O en sus propios hilos; lo que corre en [dispatcher] (`Dispatchers.Default`
+ * por defecto) es el trabajo de CPU: convertir, ordenar y validar fechas. Así se puede llamar desde el
+ * hilo principal sin bloquearlo.
  */
 class AlbumRepositoryImpl(
     private val adaptador: ServiceAdapter,
     private val api: AlbumApi = adaptador.api(),
     private val albumDao: AlbumDao? = null,
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : AlbumRepository {
 
     override suspend fun obtenerAlbum(id: Int): Result<Album> = withContext(dispatcher) {
@@ -51,7 +52,7 @@ class AlbumRepositoryImpl(
      */
     override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> = withContext(dispatcher) {
         adaptador.llamar {
-            api.obtenerAlbumes().mapNotNull { it.aResumen() }.sortedWith(ordenCatalogo)
+            api.obtenerAlbumes().mapNotNull { it.aResumen() }.sortedWith(ordenCatalogo())
         }.onSuccess { guardar(it) }
     }
 
@@ -62,7 +63,7 @@ class AlbumRepositoryImpl(
     override suspend fun obtenerAlbumesGuardados(): List<AlbumResumen> = withContext(dispatcher) {
         val dao = albumDao ?: return@withContext emptyList()
         try {
-            dao.todos().map { it.aResumen() }.sortedWith(ordenCatalogo)
+            dao.todos().map { it.aResumen() }.sortedWith(ordenCatalogo())
         } catch (e: SQLiteException) {
             emptyList()
         }

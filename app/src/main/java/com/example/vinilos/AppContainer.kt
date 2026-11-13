@@ -25,23 +25,23 @@ class AppContainer(
     favoritosRepositorio: FavoriteRepository? = null,
     /** Caché del catálogo (add-cache-catalogo). Sin él, el catálogo solo usa la red, como antes. */
     albumDao: AlbumDao? = null,
-    /** Dónde corren los repositorios (red, conversión y caché): fuera del hilo principal. */
-    dispatcherIO: CoroutineDispatcher = Dispatchers.IO
+    /** Dónde convierten y ordenan los repositorios, fuera del hilo principal. Retrofit y Room usan sus hilos. */
+    dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) {
 
     val serviceAdapter: ServiceAdapter = ServiceAdapter(baseUrl)
 
     /** Se puede reemplazar con [colectoresRepositorio] en las pruebas instrumentadas. */
     val collectorRepository: CollectorRepository =
-        colectoresRepositorio ?: CollectorRepositoryImpl(serviceAdapter, dispatcher = dispatcherIO)
+        colectoresRepositorio ?: CollectorRepositoryImpl(serviceAdapter, dispatcher = dispatcher)
 
     /** Se puede reemplazar con [albumesRepositorio] en las pruebas instrumentadas. */
     val albumRepository: AlbumRepository =
-        albumesRepositorio ?: AlbumRepositoryImpl(serviceAdapter, albumDao = albumDao, dispatcher = dispatcherIO)
+        albumesRepositorio ?: AlbumRepositoryImpl(serviceAdapter, albumDao = albumDao, dispatcher = dispatcher)
 
     /** Se puede reemplazar con [artistasRepositorio] en las pruebas instrumentadas. */
     val artistRepository: ArtistRepository =
-        artistasRepositorio ?: ArtistRepositoryImpl(serviceAdapter, dispatcherIO)
+        artistasRepositorio ?: ArtistRepositoryImpl(serviceAdapter, dispatcher = dispatcher)
 
     /**
      * Se puede reemplazar con [favoritosRepositorio] en las pruebas instrumentadas (p. ej. con
@@ -50,5 +50,5 @@ class AppContainer(
      * (@lorennossauniandes).
      */
     val favoriteRepository: FavoriteRepository =
-        favoritosRepositorio ?: FavoriteRepositoryImpl(serviceAdapter, dispatcher = dispatcherIO)
+        favoritosRepositorio ?: FavoriteRepositoryImpl(serviceAdapter, dispatcher = dispatcher)
 }

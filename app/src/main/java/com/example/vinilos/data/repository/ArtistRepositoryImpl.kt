@@ -6,32 +6,31 @@ import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.ArtistaDetalle
 import com.example.vinilos.data.model.IntegranteArtista
 import com.example.vinilos.data.model.PremioArtista
+import com.example.vinilos.data.model.formatearFechaLanzamiento
 import com.example.vinilos.data.remote.ArtistApi
 import com.example.vinilos.data.remote.ArtistaDetalleDto
 import com.example.vinilos.data.remote.PremiacionArtistaDto
 import com.example.vinilos.data.remote.PremiacionDto
 import com.example.vinilos.data.remote.ServiceAdapter
-import com.example.vinilos.ui.detalle.formatearFechaLanzamiento
 import com.google.gson.JsonParseException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import java.text.Collator
 import java.text.ParseException
-import java.util.Locale
 
 /**
- * Artistas del backend. Todo el trabajo (red, conversión y orden) corre en [dispatcher], así que se
- * puede llamar desde el hilo principal sin bloquearlo.
+ * Artistas del backend.
+ * Retrofit y Room hacen su I/O en sus propios hilos; lo que corre en [dispatcher] (`Dispatchers.Default`
+ * por defecto) es el trabajo de CPU: convertir, ordenar y validar fechas. Así se puede llamar desde el
+ * hilo principal sin bloquearlo.
  */
 class ArtistRepositoryImpl(
     private val adaptador: ServiceAdapter,
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val api: ArtistApi = adaptador.api(),
+    private val dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ArtistRepository {
-
-    private val api: ArtistApi = adaptador.api()
 
     /**
      * Músicos y bandas en un solo listado ordenado por nombre. Las dos consultas van en paralelo
@@ -46,7 +45,7 @@ class ArtistRepositoryImpl(
                 musicos.await().mapNotNull { artista(it.id, it.name, it.image, ArtistType.MUSICO) } +
                     bandas.await().mapNotNull { artista(it.id, it.name, it.image, ArtistType.BANDA) }
             }
-        }.map { artistas -> artistas.sortedWith(compareBy(ordenAlfabetico) { it.name }) }
+        }.map { artistas -> artistas.sortedWith(compareBy(ordenAlfabetico()) { it.name }) }
     }
 
     /**
@@ -140,10 +139,5 @@ class ArtistRepositoryImpl(
 
     private companion object {
         const val LARGO_DIA_ISO = 10 // "yyyy-MM-dd"
-
-        // Fuerza primaria: no distingue mayúsculas ni tildes ("Ástor" junto a "Alberto").
-        val ordenAlfabetico: Collator = Collator.getInstance(Locale("es")).apply {
-            strength = Collator.PRIMARY
-        }
     }
 }

@@ -10,12 +10,14 @@ import kotlinx.coroutines.withContext
 
 /**
  * Favoritos de artista del coleccionista (HU10): comprobar y guardar, sobre /collectors/{id}/...
- * Las consultas corren en [dispatcher], fuera del hilo principal.
+ * Retrofit y Room hacen su I/O en sus propios hilos; lo que corre en [dispatcher] (`Dispatchers.Default`
+ * por defecto) es el trabajo de CPU: revisar la respuesta. Así se puede llamar desde el hilo principal sin
+ * bloquearlo.
  */
 class FavoriteRepositoryImpl(
     private val adaptador: ServiceAdapter,
     private val api: CollectorApi = adaptador.api(),
-    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
+    private val dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : FavoriteRepository {
 
     /** Compara solo por id: en el backend los ids de músico y banda son globalmente únicos. */
