@@ -123,7 +123,7 @@ class RepositoriosDispatcherTest {
 
     private fun albumes() = AlbumRepositoryImpl(adaptador, albumApi, albumDao, dispatcher)
     private fun artistas() = ArtistRepositoryImpl(adaptador, artistApi, dispatcher)
-    private fun coleccionistas() = CollectorRepositoryImpl(adaptador, collectorApi, dispatcher)
+    private fun coleccionistas() = CollectorRepositoryImpl(adaptador, collectorApi, dispatcher = dispatcher)
     private fun favoritos() = FavoriteRepositoryImpl(adaptador, collectorApi, dispatcher)
 
     // ---------- Álbumes ----------

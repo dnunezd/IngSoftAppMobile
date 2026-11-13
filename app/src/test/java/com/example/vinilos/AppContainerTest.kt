@@ -3,6 +3,8 @@ package com.example.vinilos
 import com.example.vinilos.data.local.AlbumDao
 import com.example.vinilos.data.local.AlbumDetalleEntity
 import com.example.vinilos.data.local.AlbumEntity
+import com.example.vinilos.data.local.ColeccionistaDao
+import com.example.vinilos.data.local.ColeccionistaEntity
 import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.AlbumNuevo
 import com.example.vinilos.data.model.AlbumResumen
@@ -91,6 +93,17 @@ class AppContainerTest {
 
         assertTrue(contenedor.albumRepository.obtenerAlbumesGuardados().isEmpty())
     }
+    @Test
+    fun elDaoDeColeccionistasLlegaAlRepositorio() = runTest {
+        val dao = ColeccionistaDaoEnMemoria()
+        servidor.enqueue(MockResponse().setBody("""[{"id": 100, "name": "Manolo Bellon", "email": "m@a.com"}]"""))
+        val contenedor = AppContainer(baseUrl = servidor.url("/").toString(), coleccionistaDao = dao)
+
+        contenedor.collectorRepository.obtenerColeccionistas().getOrThrow()
+
+        assertEquals(listOf(100), dao.filas.map { it.id })
+        assertEquals(listOf(100), contenedor.collectorRepository.obtenerColeccionistasGuardados().map { it.id })
+    }
 }
 
 private class AlbumDaoEnMemoria : AlbumDao() {
@@ -104,4 +117,12 @@ private class AlbumDaoEnMemoria : AlbumDao() {
     override suspend fun insertarDetalles(detalles: List<AlbumDetalleEntity>) = Unit
     override suspend fun borrarDelCatalogo(id: Int) { filas = filas.filterNot { it.id == id } }
     override suspend fun borrarDetalle(id: Int) = Unit
+
+}
+
+private class ColeccionistaDaoEnMemoria : ColeccionistaDao() {
+    var filas: List<ColeccionistaEntity> = emptyList()
+    override suspend fun todos() = filas
+    override suspend fun borrarTodos() { filas = emptyList() }
+    override suspend fun insertar(coleccionistas: List<ColeccionistaEntity>) { filas = filas + coleccionistas }
 }

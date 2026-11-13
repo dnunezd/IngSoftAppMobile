@@ -125,7 +125,8 @@ fun VinilosNavHost(
                     sessionViewModel.enterAsVisitor()
                     irAlInicio()
                 },
-                onAtras = { navController.popBackStack() }
+                onAtras = { navController.popBackStack() },
+                onAvisoMostrado = viewModel::avisoMostrado
             )
         }
         composable(Rutas.Inicio) {

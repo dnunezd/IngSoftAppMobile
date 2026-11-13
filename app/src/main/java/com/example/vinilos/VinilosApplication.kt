@@ -18,7 +18,8 @@ class VinilosApplication : Application(), ImageLoaderFactory {
 
     override fun onCreate() {
         super.onCreate()
-        container = AppContainer(albumDao = VinilosDb.crear(this).albumDao())
+        val db = VinilosDb.crear(this)
+        container = AppContainer(albumDao = db.albumDao(), coleccionistaDao = db.coleccionistaDao())
     }
 
     /**

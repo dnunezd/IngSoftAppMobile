@@ -19,9 +19,9 @@ Cada comportamiento se prueba primero y se comprueba que la prueba falla antes d
 
 ## 3. HU00: coleccionistas guardados
 
-- [ ] 3.1 Escribir `CollectorRepositoryCacheTest` con los casos de D4 (guardar tras el éxito en el orden del backend, no tocar lo guardado si falla, lista vacía sin DAO, tolerar `SQLiteException`) y los casos de D5 en `CollectorsViewModelTest`, incluida la búsqueda sobre el listado guardado sin perder los indicadores. Verificar que fallan.
-- [ ] 3.2 Agregar `obtenerColeccionistasGuardados()` a `CollectorRepository`, implementarlo con `ColeccionistaDao` en `CollectorRepositoryImpl`, agregarlo a los repositorios falsos y cambiar `CollectorsUiState` y `CollectorsViewModel`. Verificar con `testDebugUnitTest` y `compileDebugAndroidTestKotlin`.
-- [ ] 3.3 Mostrar en `PantallaColeccionistas` el indicador y el aviso "No pudimos actualizar los coleccionistas", con su prueba de UI. Pasar `coleccionistaDao` por `AppContainer` (con su caso en `AppContainerTest`) y `VinilosApplication`. Escribir `ColeccionistasSinConexionE2ETest`: ver el selector con el servidor sano, volver, apagarlo, entrar de nuevo, buscar y entrar como coleccionista. Verificar en dispositivo y hacer el commit de HU00.
+- [x] 3.1 Escribir `CollectorRepositoryCacheTest` con los casos de D4 (guardar tras el éxito en el orden del backend, no tocar lo guardado si falla, lista vacía sin DAO, tolerar `SQLiteException`) y los casos de D5 en `CollectorsViewModelTest`, incluida la búsqueda sobre el listado guardado sin perder los indicadores. Verificar que fallan.
+- [x] 3.2 Agregar `obtenerColeccionistasGuardados()` a `CollectorRepository`, implementarlo con `ColeccionistaDao` en `CollectorRepositoryImpl`, agregarlo a los repositorios falsos y cambiar `CollectorsUiState` y `CollectorsViewModel`. Verificar con `testDebugUnitTest` y `compileDebugAndroidTestKotlin`.
+- [x] 3.3 Mostrar en `PantallaColeccionistas` el indicador y el aviso "No pudimos actualizar los coleccionistas", con su prueba de UI. Pasar `coleccionistaDao` por `AppContainer` (con su caso en `AppContainerTest`) y `VinilosApplication`. Escribir `ColeccionistasSinConexionE2ETest`: ver el selector con el servidor sano, volver, apagarlo, entrar de nuevo, buscar y entrar como coleccionista. Verificar en dispositivo y hacer el commit de HU00. Resultado (2026-11-13, Samsung SM-S938B): 42/42 entre `ColeccionistasSinConexionE2ETest` (2, incluido un coleccionista que deja de venir), `PantallaColeccionistasTest` y `VinilosNavHostTest`; 304/304 unitarias.
 
 ## 4. HU03 y HU04: artistas guardados
 

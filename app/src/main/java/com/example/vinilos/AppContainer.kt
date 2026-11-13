@@ -1,6 +1,7 @@
 package com.example.vinilos
 
 import com.example.vinilos.data.local.AlbumDao
+import com.example.vinilos.data.local.ColeccionistaDao
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.AlbumRepository
 import com.example.vinilos.data.repository.AlbumRepositoryImpl
@@ -23,8 +24,10 @@ class AppContainer(
     artistasRepositorio: ArtistRepository? = null,
     albumesRepositorio: AlbumRepository? = null,
     favoritosRepositorio: FavoriteRepository? = null,
-    /** Caché del catálogo (add-cache-catalogo). Sin él, el catálogo solo usa la red, como antes. */
+    /** Caché del catálogo y del detalle de álbum. Sin él, solo se usa la red, como antes. */
     albumDao: AlbumDao? = null,
+    /** Caché del selector de coleccionistas (add-cache-consultas). */
+    coleccionistaDao: ColeccionistaDao? = null,
     /** Dónde convierten y ordenan los repositorios, fuera del hilo principal. Retrofit y Room usan sus hilos. */
     dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) {
@@ -33,7 +36,7 @@ class AppContainer(
 
     /** Se puede reemplazar con [colectoresRepositorio] en las pruebas instrumentadas. */
     val collectorRepository: CollectorRepository =
-        colectoresRepositorio ?: CollectorRepositoryImpl(serviceAdapter, dispatcher = dispatcher)
+        colectoresRepositorio ?: CollectorRepositoryImpl(serviceAdapter, coleccionistaDao = coleccionistaDao, dispatcher = dispatcher)
 
     /** Se puede reemplazar con [albumesRepositorio] en las pruebas instrumentadas. */
     val albumRepository: AlbumRepository =

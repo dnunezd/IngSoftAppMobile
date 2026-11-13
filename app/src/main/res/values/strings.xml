@@ -32,6 +32,8 @@
     <string name="coleccionistas_buscar" tools:ignore="TypographyEllipsis">Buscar coleccionista...</string>
     <string name="coleccionistas_sin_resultados">No encontramos coleccionistas con esa búsqueda</string>
     <string name="coleccionistas_error">No pudimos cargar los coleccionistas</string>
+    <string name="coleccionistas_error_actualizar">No pudimos actualizar los coleccionistas</string>
+    <string name="coleccionistas_actualizando">Actualizando coleccionistas</string>
     <string name="coleccionistas_reintentar">Reintentar</string>
     <string name="coleccionistas_ingresar_visitante">Ingresar como Visitante</string>
     <string name="coleccionistas_vacio">Aún no hay coleccionistas registrados</string>

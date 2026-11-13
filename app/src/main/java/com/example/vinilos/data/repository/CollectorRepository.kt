@@ -6,4 +6,10 @@ import com.example.vinilos.data.model.Collector
 interface CollectorRepository {
 
     suspend fun obtenerColeccionistas(): Result<List<Collector>>
+
+    /**
+     * Último listado guardado en el dispositivo (add-cache-consultas), en el orden en que llegó del
+     * backend; vacío si no hay caché o no se pudo leer.
+     */
+    suspend fun obtenerColeccionistasGuardados(): List<Collector>
 }
