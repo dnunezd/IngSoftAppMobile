@@ -13,13 +13,23 @@ import com.example.vinilos.data.remote.PremiacionDto
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.ui.detalle.formatearFechaLanzamiento
 import com.google.gson.JsonParseException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import java.text.Collator
 import java.text.ParseException
 import java.util.Locale
 
-class ArtistRepositoryImpl(private val adaptador: ServiceAdapter) : ArtistRepository {
+/**
+ * Artistas del backend. Todo el trabajo (red, conversión y orden) corre en [dispatcher], así que se
+ * puede llamar desde el hilo principal sin bloquearlo.
+ */
+class ArtistRepositoryImpl(
+    private val adaptador: ServiceAdapter,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
+) : ArtistRepository {
 
     private val api: ArtistApi = adaptador.api()
 
@@ -28,7 +38,7 @@ class ArtistRepositoryImpl(private val adaptador: ServiceAdapter) : ArtistReposi
      * dentro de una sola llamada al adaptador: si cualquiera falla, el resultado es el error de carga,
      * porque un listado parcial no cumpliría con mostrar ambos.
      */
-    override suspend fun obtenerArtistas(): Result<List<Artist>> =
+    override suspend fun obtenerArtistas(): Result<List<Artist>> = withContext(dispatcher) {
         adaptador.llamar {
             coroutineScope {
                 val musicos = async { api.getMusicians() }
@@ -37,6 +47,7 @@ class ArtistRepositoryImpl(private val adaptador: ServiceAdapter) : ArtistReposi
                     bandas.await().mapNotNull { artista(it.id, it.name, it.image, ArtistType.BANDA) }
             }
         }.map { artistas -> artistas.sortedWith(compareBy(ordenAlfabetico) { it.name }) }
+    }
 
     /**
      * Detalle del artista según su tipo. Las premiaciones solo se consultan si el artista tiene alguna,
@@ -44,14 +55,16 @@ class ArtistRepositoryImpl(private val adaptador: ServiceAdapter) : ArtistReposi
      * fallo es el error de carga, incluido el de las premiaciones, porque "Sin premios" sería falso.
      */
     override suspend fun obtenerDetalle(tipo: ArtistType, id: Int): Result<ArtistaDetalle> =
-        adaptador.llamar {
-            val respuesta = when (tipo) {
-                ArtistType.MUSICO -> api.getMusician(id)
-                ArtistType.BANDA -> api.getBand(id)
+        withContext(dispatcher) {
+            adaptador.llamar {
+                val respuesta = when (tipo) {
+                    ArtistType.MUSICO -> api.getMusician(id)
+                    ArtistType.BANDA -> api.getBand(id)
+                }
+                val premiaciones =
+                    if (respuesta.performerPrizes.isNullOrEmpty()) emptyList() else api.getPerformerPrizes()
+                respuesta.aDetalle(tipo, premiaciones)
             }
-            val premiaciones =
-                if (respuesta.performerPrizes.isNullOrEmpty()) emptyList() else api.getPerformerPrizes()
-            respuesta.aDetalle(tipo, premiaciones)
         }
 
     /**

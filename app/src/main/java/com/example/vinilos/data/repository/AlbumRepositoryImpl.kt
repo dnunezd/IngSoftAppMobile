@@ -18,6 +18,9 @@ import com.example.vinilos.data.remote.ErrorDeCarga
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.ui.detalle.formatearFechaLanzamiento
 import com.google.gson.JsonParseException
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 import java.text.ParseException
 
@@ -25,27 +28,25 @@ import java.text.ParseException
  * Álbumes del backend. Con [albumDao], el catálogo además se guarda en el dispositivo
  * (add-cache-catalogo); sin él, se comporta como antes, que es lo que usan las pruebas que no
  * tienen `Context`.
+ *
+ * Todo el trabajo (red, conversión, orden y caché) corre en [dispatcher], así que se puede llamar
+ * desde el hilo principal sin bloquearlo.
  */
 class AlbumRepositoryImpl(
     private val adaptador: ServiceAdapter,
     private val api: AlbumApi = adaptador.api(),
-    private val albumDao: AlbumDao? = null
+    private val albumDao: AlbumDao? = null,
+    private val dispatcher: CoroutineDispatcher = Dispatchers.IO
 ) : AlbumRepository {
 
-    override suspend fun obtenerAlbum(id: Int): Result<Album> {
+    override suspend fun obtenerAlbum(id: Int): Result<Album> = withContext(dispatcher) {
         val respuesta = adaptador.llamar {
             val respuestaHttp = api.obtenerAlbum(id)
             if (!respuestaHttp.isSuccessful) throw HttpException(respuestaHttp)
             requerido(respuestaHttp.body(), "album").aModelo()
         }
-        val error = respuesta.exceptionOrNull()
-        if (error is ErrorDeCarga) {
-            val causa = error.cause
-            if (causa is HttpException && causa.code() == 404) {
-                return Result.failure(AlbumNoDisponible(causa))
-            }
-        }
-        return respuesta
+        val causa = (respuesta.exceptionOrNull() as? ErrorDeCarga)?.cause
+        if (causa is HttpException && causa.code() == 404) Result.failure(AlbumNoDisponible(causa)) else respuesta
     }
 
     /**
@@ -53,18 +54,19 @@ class AlbumRepositoryImpl(
      * un álbum sin id, nombre o género se descarta sin afectar a los demás. Si la consulta sale bien,
      * la respuesta reemplaza el catálogo guardado.
      */
-    override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> =
+    override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> = withContext(dispatcher) {
         adaptador.llamar {
             api.obtenerAlbumes().mapNotNull { it.aResumen() }.sortedWith(ordenCatalogo)
         }.onSuccess { guardar(it) }
+    }
 
     /**
      * Último catálogo guardado en el dispositivo, en el mismo orden que la consulta. Vacío si no hay
      * caché o si no se pudo leer: la caché es una mejora, nunca una condición (design.md, D7).
      */
-    override suspend fun obtenerAlbumesGuardados(): List<AlbumResumen> {
-        val dao = albumDao ?: return emptyList()
-        return try {
+    override suspend fun obtenerAlbumesGuardados(): List<AlbumResumen> = withContext(dispatcher) {
+        val dao = albumDao ?: return@withContext emptyList()
+        try {
             dao.todos().map { it.aResumen() }.sortedWith(ordenCatalogo)
         } catch (e: SQLiteException) {
             emptyList()
@@ -86,8 +88,9 @@ class AlbumRepositoryImpl(
     private fun AlbumEntity.aResumen() = AlbumResumen(id, nombre, portada, genero, artista, anio)
 
     /** Crea el álbum (HU07) y devuelve su id, que el catálogo usa para marcarlo como nuevo. */
-    override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> =
+    override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> = withContext(dispatcher) {
         adaptador.llamar { requerido(api.crearAlbum(album.aDto()).id, "id") }
+    }
 
     private fun AlbumNuevo.aDto() = CrearAlbumDto(
         name = nombre,

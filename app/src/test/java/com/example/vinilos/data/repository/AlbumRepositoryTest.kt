@@ -26,7 +26,6 @@ import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
-import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
@@ -219,7 +218,8 @@ class AlbumRepositoryTest {
             repositorio.obtenerAlbum(101)
             fail("El error inesperado debe propagarse")
         } catch (error: IllegalStateException) {
-            assertSame(esperado, error)
+            // Al volver de otro dispatcher, kotlinx puede entregar una copia con el original como causa.
+            assertTrue(generateSequence<Throwable>(error) { it.cause }.any { it === esperado })
         }
     }
 

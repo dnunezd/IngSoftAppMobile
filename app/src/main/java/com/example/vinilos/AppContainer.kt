@@ -10,6 +10,8 @@ import com.example.vinilos.data.repository.CollectorRepository
 import com.example.vinilos.data.repository.CollectorRepositoryImpl
 import com.example.vinilos.data.repository.FavoriteRepository
 import com.example.vinilos.data.repository.FavoriteRepositoryImpl
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 
 /**
  * Contenedor de dependencias manual: crea una sola vez el [ServiceAdapter] y los repositorios
@@ -22,22 +24,24 @@ class AppContainer(
     albumesRepositorio: AlbumRepository? = null,
     favoritosRepositorio: FavoriteRepository? = null,
     /** Caché del catálogo (add-cache-catalogo). Sin él, el catálogo solo usa la red, como antes. */
-    albumDao: AlbumDao? = null
+    albumDao: AlbumDao? = null,
+    /** Dónde corren los repositorios (red, conversión y caché): fuera del hilo principal. */
+    dispatcherIO: CoroutineDispatcher = Dispatchers.IO
 ) {
 
     val serviceAdapter: ServiceAdapter = ServiceAdapter(baseUrl)
 
     /** Se puede reemplazar con [colectoresRepositorio] en las pruebas instrumentadas. */
     val collectorRepository: CollectorRepository =
-        colectoresRepositorio ?: CollectorRepositoryImpl(serviceAdapter)
+        colectoresRepositorio ?: CollectorRepositoryImpl(serviceAdapter, dispatcher = dispatcherIO)
 
     /** Se puede reemplazar con [albumesRepositorio] en las pruebas instrumentadas. */
     val albumRepository: AlbumRepository =
-        albumesRepositorio ?: AlbumRepositoryImpl(serviceAdapter, albumDao = albumDao)
+        albumesRepositorio ?: AlbumRepositoryImpl(serviceAdapter, albumDao = albumDao, dispatcher = dispatcherIO)
 
     /** Se puede reemplazar con [artistasRepositorio] en las pruebas instrumentadas. */
     val artistRepository: ArtistRepository =
-        artistasRepositorio ?: ArtistRepositoryImpl(serviceAdapter)
+        artistasRepositorio ?: ArtistRepositoryImpl(serviceAdapter, dispatcherIO)
 
     /**
      * Se puede reemplazar con [favoritosRepositorio] en las pruebas instrumentadas (p. ej. con
@@ -46,5 +50,5 @@ class AppContainer(
      * (@lorennossauniandes).
      */
     val favoriteRepository: FavoriteRepository =
-        favoritosRepositorio ?: FavoriteRepositoryImpl(serviceAdapter)
+        favoritosRepositorio ?: FavoriteRepositoryImpl(serviceAdapter, dispatcher = dispatcherIO)
 }
