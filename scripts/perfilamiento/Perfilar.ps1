@@ -514,6 +514,7 @@ function Ejecutar {
                     'En la pestaña "View Live Telemetry" pulsa el botón de alejar (círculo con el signo menos, a la derecha de "Recording").',
                     'Repite hasta que la línea de tiempo (abajo) empiece en 00:00: así se ve la grabación completa, incluido el recorrido.',
                     'Verifica que se vean las gráficas LIVE_CPU y MEMORY.',
+                    'Aparta el ratón de las gráficas para que no salga el indicador de tiempo en la captura.',
                     'No minimices la ventana de Android Studio.'
                 ) "Presiona Enter y tomaré la captura como $($def.Carpeta)\live-telemetry.png."
                 if ($lista) { Capturar-Studio (Join-Path $carpeta 'live-telemetry.png') }
@@ -541,7 +542,7 @@ function Ejecutar {
                     'La app queda como está. NO toques el teléfono.'
                 ) @(
                     'Vuelve a la pestaña Home del Profiler.',
-                    "Haz clic de nuevo en el proceso ${Paquete}: al volver a Home, Studio suele saltar a com.example.vinilos (Not running).",
+                    "IMPORTANTE: haz clic en el proceso ${Paquete}. Al volver a Home, Studio salta solo a com.example.vinilos (Not running) y el botón de iniciar queda deshabilitado.",
                     'En la lista de tareas selecciona "Capture System Activities (System Trace)".',
                     'Abajo, en "Start profiler task from", elige "Now (attaches to selected process)".',
                     'Pulsa "Start profiler task".',
@@ -556,7 +557,7 @@ function Ejecutar {
                 $lista = Pausa "$($def.Titulo): detener System Trace (duró $($fila.Segundos) s)" @() @(
                     'Pulsa "Stop Recording" (botón azul, arriba a la derecha).',
                     'Espera a que la traza termine de cargar (puede tardar hasta 30 s).',
-                    "Deja visible la fila del hilo principal (main) de $Paquete.",
+                    'Deja visibles "Janky frames" y la primera fila de Threads, rotulada "le.vinilos.perf": es el hilo principal (Studio muestra el final del nombre del paquete, no "main").',
                     'No minimices ni tapes la ventana de Android Studio.'
                 ) "Presiona Enter y tomaré la captura como $($def.Carpeta)\system-trace.png."
                 if ($lista) { Capturar-Studio (Join-Path $carpeta 'system-trace.png') }
@@ -626,7 +627,7 @@ function Ejecutar {
                     'La app queda como está. NO toques el teléfono.'
                 ) @(
                     'En el Profiler, vuelve a la pestaña Home.',
-                    "Haz clic de nuevo en el proceso ${Paquete}: al volver a Home, Studio suele saltar a com.example.vinilos (Not running).",
+                    "IMPORTANTE: haz clic en el proceso ${Paquete}. Al volver a Home, Studio salta solo a com.example.vinilos (Not running) y el botón de iniciar queda deshabilitado.",
                     'En la lista de tareas selecciona "Track Memory Consumption (Java/Kotlin Allocations)".',
                     'Abajo, en "Start profiler task from", elige "Now (attaches to selected process)".',
                     'Pulsa "Start profiler task".',
@@ -669,7 +670,7 @@ function Ejecutar {
         $def = @{ Titulo = 'Navegación y memoria' }
         $pasosHeap = @(
             'Vuelve a la pestaña Home del Profiler.',
-            "Haz clic de nuevo en el proceso ${Paquete}: al volver a Home, Studio suele saltar a com.example.vinilos (Not running).",
+            "IMPORTANTE: haz clic en el proceso ${Paquete}. Al volver a Home, Studio salta solo a com.example.vinilos (Not running) y el botón de iniciar queda deshabilitado.",
             'En la lista de tareas selecciona "Analyze Memory Usage (Heap Dump)".',
             'Abajo, en "Start profiler task from", elige "Now (attaches to selected process)".',
             'Pulsa "Start profiler task" y espera a que aparezca la tabla de clases.',
