@@ -46,16 +46,27 @@ class AppBajoPrueba {
     fun esperarA(tag: String, milis: Long = 20_000): UiObject2 = esperarA(tag(tag), milis)
 
     /** Toca el elemento; si no está a la vista, lo busca desplazando la pantalla hacia abajo. */
-    fun tocar(tag: String, milis: Long = 20_000) {
+    fun tocar(tag: String, milis: Long = 20_000) = conReintento {
         val elemento = dispositivo.wait(Until.findObject(tag(tag)), 3_000)
             ?: buscarDesplazando(tag(tag), maximo = 6)
             ?: esperarA(tag, milis)
-        try {
-            elemento.click()
-        } catch (e: StaleObjectException) {
-            // La pantalla se redibujó entre encontrarlo y tocarlo: se busca de nuevo.
-            esperarA(tag, milis).click()
+        elemento.click()
+    }
+
+    /**
+     * Busca un elemento y actúa sobre él. Si la pantalla se redibuja entre encontrarlo y usarlo
+     * (carga de datos o de imágenes), el elemento deja de existir (StaleObjectException): se vuelve
+     * a buscar en vez de fallar el recorrido.
+     */
+    fun <T> conReintento(intentos: Int = 4, bloque: () -> T): T {
+        repeat(intentos - 1) {
+            try {
+                return bloque()
+            } catch (e: StaleObjectException) {
+                SystemClock.sleep(250)
+            }
         }
+        return bloque()
     }
 
     // ---------- Arranque y navegación ----------
@@ -89,7 +100,7 @@ class AppBajoPrueba {
     fun entrarComoColeccionista() {
         llevarAlIngreso()
         tocar("entrar_coleccionista")
-        esperarA(tagQueCumple("coleccionista_\\d+")).click()
+        conReintento { esperarA(tagQueCumple("coleccionista_\\d+")).click() }
         esperarA("inicio")
     }
 
@@ -105,8 +116,10 @@ class AppBajoPrueba {
 
     /** El botón "atrás" de la barra de la app; si la pantalla no lo tiene, el del sistema. */
     fun atras() {
-        val boton = dispositivo.findObject(tag("atras"))
-        if (boton != null) boton.click() else dispositivo.pressBack()
+        conReintento {
+            val boton = dispositivo.findObject(tag("atras"))
+            if (boton != null) boton.click() else dispositivo.pressBack()
+        }
         dispositivo.waitForIdle(2_000)
     }
 
