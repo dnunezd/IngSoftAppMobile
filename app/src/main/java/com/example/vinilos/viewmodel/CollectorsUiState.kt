@@ -9,10 +9,14 @@ sealed interface CollectorsUiState {
     /**
      * [coleccionistas] es la lista completa del backend; [visibles] es la que resulta de
      * aplicar la búsqueda [consulta] (nombre o correo, sin distinguir mayúsculas ni tildes).
+     * [actualizando]: se muestra el listado guardado mientras se consulta el backend.
+     * [errorAlActualizar]: esa consulta falló y la pantalla debe avisarlo una vez (add-cache-consultas, D5).
      */
     data class Exito(
         val coleccionistas: List<Collector>,
-        val consulta: String = ""
+        val consulta: String = "",
+        val actualizando: Boolean = false,
+        val errorAlActualizar: Boolean = false
     ) : CollectorsUiState {
         val visibles: List<Collector> = filtrar(coleccionistas, consulta)
     }

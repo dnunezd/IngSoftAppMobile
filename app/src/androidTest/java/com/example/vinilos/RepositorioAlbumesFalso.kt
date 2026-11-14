@@ -34,5 +34,6 @@ class RepositorioAlbumesFalso(
 
     /** Sin caché ni red, como cuando este falso heredaba del repositorio real sin DAO. */
     override suspend fun obtenerAlbumesGuardados(): List<AlbumResumen> = emptyList()
+    override suspend fun obtenerAlbumGuardado(id: Int): Album? = null
     override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> = Result.failure(ErrorDeCarga())
 }

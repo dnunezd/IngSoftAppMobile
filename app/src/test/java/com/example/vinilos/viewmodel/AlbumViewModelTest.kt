@@ -29,6 +29,17 @@ private class AlbumRepositoryFalso(
         else respuesta.await()
     }
 
+    /** Detalles guardados en el dispositivo (add-cache-consultas). */
+    val guardados = mutableMapOf<Int, Album>()
+
+    /** Si no es null, la lectura de lo guardado espera a que la prueba lo complete. */
+    var lecturaEnEspera: CompletableDeferred<Unit>? = null
+
+    override suspend fun obtenerAlbumGuardado(id: Int): Album? {
+        lecturaEnEspera?.await()
+        return guardados[id]
+    }
+
     override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> = error("No se usa en esta prueba")
     override suspend fun obtenerAlbumesGuardados(): List<AlbumResumen> = error("No se usa en esta prueba")
     override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> = error("No se usa en esta prueba")
@@ -143,5 +154,81 @@ class AlbumViewModelTest {
 
         assertEquals(AlbumUiState.NoDisponible, viewModel.uiState.value)
         assertEquals(1, repositorio.consultas.size)
+    }
+
+    // ---------- Detalle guardado (add-cache-consultas, D5) ----------
+
+    private val actualizado = album.copy(nombre = "Buscando América (remasterizado)")
+
+    @Test
+    fun conDetalleGuardadoSeMuestraDeInmediatoYLuegoLaRespuesta() = runTest {
+        val repositorio = AlbumRepositoryFalso().apply { guardados[101] = album }
+        val viewModel = AlbumViewModel(101, repositorio)
+        advanceUntilIdle()
+
+        assertEquals(AlbumUiState.Exito(album, actualizando = true), viewModel.uiState.value)
+
+        repositorio.consultas.single().second.complete(Result.success(actualizado))
+        advanceUntilIdle()
+
+        assertEquals(AlbumUiState.Exito(actualizado), viewModel.uiState.value)
+    }
+
+    @Test
+    fun conDetalleGuardadoYRedMalSeConservaConElAviso() = runTest {
+        val repositorio = AlbumRepositoryFalso().apply { guardados[101] = album }
+        val viewModel = AlbumViewModel(101, repositorio)
+        advanceUntilIdle()
+
+        repositorio.consultas.single().second.complete(Result.failure(ErrorDeCarga()))
+        advanceUntilIdle()
+
+        assertEquals(AlbumUiState.Exito(album, errorAlActualizar = true), viewModel.uiState.value)
+    }
+
+    @Test
+    fun avisoMostradoApagaElAvisoSinQuitarElDetalle() = runTest {
+        val repositorio = AlbumRepositoryFalso().apply { guardados[101] = album }
+        val viewModel = AlbumViewModel(101, repositorio)
+        advanceUntilIdle()
+        repositorio.consultas.single().second.complete(Result.failure(ErrorDeCarga()))
+        advanceUntilIdle()
+
+        viewModel.avisoMostrado()
+
+        assertEquals(AlbumUiState.Exito(album), viewModel.uiState.value)
+    }
+
+    @Test
+    fun un404TerminaEnNoDisponibleAunqueHayaDetalleGuardado() = runTest {
+        val repositorio = AlbumRepositoryFalso().apply { guardados[101] = album }
+        val viewModel = AlbumViewModel(101, repositorio)
+        advanceUntilIdle()
+
+        repositorio.consultas.single().second.complete(Result.failure(AlbumNoDisponible()))
+        advanceUntilIdle()
+
+        assertEquals(AlbumUiState.NoDisponible, viewModel.uiState.value)
+    }
+
+    @Test
+    fun otroAlbumPedidoDuranteLaLecturaDeLoGuardadoGana() = runTest {
+        val otro = album.copy(id = 102, nombre = "Otro álbum")
+        val repositorio = AlbumRepositoryFalso().apply {
+            guardados[101] = album
+            guardados[102] = otro
+            lecturaEnEspera = CompletableDeferred()
+        }
+        val viewModel = AlbumViewModel(101, repositorio)
+        advanceUntilIdle()
+
+        viewModel.cargarAlbum(102)
+        repositorio.lecturaEnEspera!!.complete(Unit)
+        advanceUntilIdle()
+
+        assertEquals(AlbumUiState.Exito(otro, actualizando = true), viewModel.uiState.value)
+        assertEquals(listOf(102), repositorio.consultas.map { it.first })
+        repositorio.consultas.single().second.complete(Result.success(otro))
+        advanceUntilIdle()
     }
 }

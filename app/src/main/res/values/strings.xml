@@ -32,6 +32,8 @@
     <string name="coleccionistas_buscar" tools:ignore="TypographyEllipsis">Buscar coleccionista...</string>
     <string name="coleccionistas_sin_resultados">No encontramos coleccionistas con esa búsqueda</string>
     <string name="coleccionistas_error">No pudimos cargar los coleccionistas</string>
+    <string name="coleccionistas_error_actualizar">No pudimos actualizar los coleccionistas</string>
+    <string name="coleccionistas_actualizando">Actualizando coleccionistas</string>
     <string name="coleccionistas_reintentar">Reintentar</string>
     <string name="coleccionistas_ingresar_visitante">Ingresar como Visitante</string>
     <string name="coleccionistas_vacio">Aún no hay coleccionistas registrados</string>
@@ -71,6 +73,8 @@
     <string name="artistas_tipo_banda">Banda</string>
     <string name="artistas_vacio">No se encontraron artistas</string>
     <string name="artistas_error">No se pudo cargar el listado de artistas</string>
+    <string name="artistas_error_actualizar">No se pudo actualizar el listado de artistas</string>
+    <string name="artistas_actualizando">Actualizando artistas</string>
     <string name="artistas_reintentar">Reintentar</string>
     <!-- Los tres puntos son el texto exacto del mockup. -->
     <string name="artistas_cargando" tools:ignore="TypographyEllipsis">Cargando artistas...</string>
@@ -83,6 +87,8 @@
     <!-- Los tres puntos son el texto exacto del mockup. -->
     <string name="artista_cargando" tools:ignore="TypographyEllipsis">Cargando artista...</string>
     <string name="artista_error">No se pudo cargar el artista</string>
+    <string name="artista_error_actualizar">No se pudo actualizar el artista</string>
+    <string name="artista_actualizando">Actualizando artista</string>
     <string name="artista_fecha_nacimiento">FECHA DE NACIMIENTO</string>
     <string name="artista_fecha_creacion">FECHA DE CREACIÓN</string>
     <string name="artista_integrantes">Integrantes</string>
@@ -194,5 +200,7 @@
     <string name="detalle_no_disponible">El álbum ya no está disponible</string>
     <string name="detalle_volver_catalogo">Volver al catálogo</string>
     <string name="detalle_error">No pudimos cargar el álbum</string>
+    <string name="detalle_error_actualizar">No pudimos actualizar el álbum</string>
+    <string name="detalle_actualizando">Actualizando álbum</string>
     <string name="detalle_reintentar">Reintentar</string>
 </resources>

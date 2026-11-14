@@ -1,5 +1,9 @@
 package com.example.vinilos.data.repository
 
+import android.database.sqlite.SQLiteException
+import com.example.vinilos.data.local.ArtistaDao
+import com.example.vinilos.data.local.ArtistaDetalleEntity
+import com.example.vinilos.data.local.ArtistaEntity
 import com.example.vinilos.data.model.AlbumArtista
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
@@ -11,6 +15,7 @@ import com.example.vinilos.data.remote.ArtistApi
 import com.example.vinilos.data.remote.ArtistaDetalleDto
 import com.example.vinilos.data.remote.PremiacionArtistaDto
 import com.example.vinilos.data.remote.PremiacionDto
+import com.example.vinilos.data.remote.RecursoNoEncontrado
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.google.gson.JsonParseException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -21,7 +26,8 @@ import kotlinx.coroutines.withContext
 import java.text.ParseException
 
 /**
- * Artistas del backend.
+ * Artistas del backend. Con [artistaDao], el listado y cada detalle abierto además se guardan en el
+ * dispositivo (add-cache-consultas); sin él, se comporta como antes.
  * Retrofit y Room hacen su I/O en sus propios hilos; lo que corre en [dispatcher] (`Dispatchers.Default`
  * por defecto) es el trabajo de CPU: convertir, ordenar y validar fechas. Así se puede llamar desde el
  * hilo principal sin bloquearlo.
@@ -29,13 +35,14 @@ import java.text.ParseException
 class ArtistRepositoryImpl(
     private val adaptador: ServiceAdapter,
     private val api: ArtistApi = adaptador.api(),
+    private val artistaDao: ArtistaDao? = null,
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ArtistRepository {
 
     /**
      * Músicos y bandas en un solo listado ordenado por nombre. Las dos consultas van en paralelo
      * dentro de una sola llamada al adaptador: si cualquiera falla, el resultado es el error de carga,
-     * porque un listado parcial no cumpliría con mostrar ambos.
+     * porque un listado parcial no cumpliría con mostrar ambos. Si sale bien, reemplaza lo guardado (D4).
      */
     override suspend fun obtenerArtistas(): Result<List<Artist>> = withContext(dispatcher) {
         adaptador.llamar {
@@ -46,12 +53,51 @@ class ArtistRepositoryImpl(
                     bandas.await().mapNotNull { artista(it.id, it.name, it.image, ArtistType.BANDA) }
             }
         }.map { artistas -> artistas.sortedWith(compareBy(ordenAlfabetico()) { it.name }) }
+            .onSuccess { artistas -> escribir { reemplazar(artistas.map { ArtistaEntity(it.type, it.id, it.name, it.image) }) } }
     }
+
+    override suspend fun obtenerArtistasGuardados(): List<Artist> = withContext(dispatcher) {
+        leer(siNoHay = emptyList()) {
+            todos().map { Artist(it.id, it.nombre, it.imagen, it.tipo) }.sortedWith(compareBy(ordenAlfabetico()) { it.name })
+        }
+    }
+
+    override suspend fun obtenerDetalleGuardado(tipo: ArtistType, id: Int): ArtistaDetalle? = withContext(dispatcher) {
+        leer(siNoHay = null) { detalle(tipo, id)?.aModelo() }
+    }
+
+    /** Lectura de lo guardado: sin DAO o si falla el almacenamiento, es como si no hubiera nada. */
+    private suspend fun <T> leer(siNoHay: T, bloque: suspend ArtistaDao.() -> T): T {
+        val dao = artistaDao ?: return siNoHay
+        return try {
+            dao.bloque()
+        } catch (e: SQLiteException) {
+            siNoHay
+        }
+    }
+
+    /** Un fallo al escribir no cambia el resultado de la consulta, que ya llegó del backend. */
+    private suspend fun escribir(bloque: suspend ArtistaDao.() -> Unit) {
+        val dao = artistaDao ?: return
+        try {
+            dao.bloque()
+        } catch (e: SQLiteException) {
+            // Se sigue mostrando la respuesta; la siguiente consulta exitosa vuelve a intentarlo.
+        }
+    }
+
+    private fun ArtistaDetalle.aEntidad() =
+        ArtistaDetalleEntity(tipo, id, nombre, imagen, descripcion, fecha, integrantes, albumes, premios)
+
+    private fun ArtistaDetalleEntity.aModelo() =
+        ArtistaDetalle(id, nombre, imagen, descripcion, tipo, fecha, integrantes, albumes, premios)
 
     /**
      * Detalle del artista según su tipo. Las premiaciones solo se consultan si el artista tiene alguna,
      * porque el recurso del artista no trae el premio. Todo va en una sola llamada al adaptador: cualquier
      * fallo es el error de carga, incluido el de las premiaciones, porque "Sin premios" sería falso.
+     * Si sale bien, guarda el detalle; si el backend confirma con un 404 que ya no existe, lo borra de lo
+     * guardado y sigue devolviendo el mismo error (D4).
      */
     override suspend fun obtenerDetalle(tipo: ArtistType, id: Int): Result<ArtistaDetalle> =
         withContext(dispatcher) {
@@ -63,7 +109,8 @@ class ArtistRepositoryImpl(
                 val premiaciones =
                     if (respuesta.performerPrizes.isNullOrEmpty()) emptyList() else api.getPerformerPrizes()
                 respuesta.aDetalle(tipo, premiaciones)
-            }
+            }.onSuccess { detalle -> escribir { guardarDetalle(detalle.aEntidad()) } }
+                .onFailure { if (it is RecursoNoEncontrado) escribir { borrarDetalle(tipo, id) } }
         }
 
     /**

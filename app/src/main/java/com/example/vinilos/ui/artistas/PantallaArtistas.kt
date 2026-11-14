@@ -34,10 +34,13 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -61,7 +64,9 @@ import coil.compose.AsyncImage
 import com.example.vinilos.R
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
+import com.example.vinilos.ui.ingreso.AvisoUnaVez
 import com.example.vinilos.ui.ingreso.ChipEtiqueta
+import com.example.vinilos.ui.ingreso.IndicadorActualizando
 import com.example.vinilos.ui.ingreso.TagAtras
 import com.example.vinilos.ui.theme.EtiquetaBandaFondo
 import com.example.vinilos.ui.theme.EtiquetaBandaTexto
@@ -77,6 +82,7 @@ const val TagVacioArtistas = "artistas_vacio"
 const val TagErrorArtistas = "artistas_error"
 const val TagReintentarArtistas = "artistas_reintentar"
 const val TagListaArtistas = "artistas_lista"
+const val TagActualizandoArtistas = "artistas_actualizando"
 
 fun tagArtista(artista: Artist) = "artista_${artista.type.name.lowercase()}_${artista.id}"
 
@@ -88,56 +94,77 @@ fun PantallaArtistas(
     onReintentar: () -> Unit,
     onSeleccionar: (Artist) -> Unit,
     onAtras: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onAvisoMostrado: () -> Unit = {}
 ) {
-    Column(
+    val exito = estado as? ArtistsUiState.Exito
+    val avisos = remember { SnackbarHostState() }
+    AvisoUnaVez(
+        mostrar = exito?.errorAlActualizar == true,
+        mensaje = stringResource(R.string.artistas_error_actualizar),
+        avisos = avisos,
+        onMostrado = onAvisoMostrado
+    )
+    val descripcionActualizando = stringResource(R.string.artistas_actualizando)
+    Box(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.safeDrawing)
             .testTag(TagArtistas)
     ) {
-        EncabezadoArtistas(stringResource(R.string.artistas_titulo), onAtras)
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .testTag(TagListaArtistas),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            item { Titular() }
-            item {
-                Buscador(
-                    consultaInicial = (estado as? ArtistsUiState.Exito)?.consulta.orEmpty(),
-                    habilitado = estado is ArtistsUiState.Exito,
-                    onBuscar = onBuscar
-                )
-            }
-            when (estado) {
-                ArtistsUiState.Cargando -> {
-                    item { Cargando() }
-                    items(5) { FilaEsqueleto() }
+        Column(modifier = Modifier.fillMaxSize()) {
+            EncabezadoArtistas(
+                stringResource(R.string.artistas_titulo),
+                onAtras,
+                accion = if (exito?.actualizando == true) {
+                    { IndicadorActualizando(descripcionActualizando, TagActualizandoArtistas) }
+                } else {
+                    null
                 }
-                ArtistsUiState.Error -> item { ErrorArtistas(stringResource(R.string.artistas_error), onReintentar) }
-                ArtistsUiState.Vacio -> item { Vacio(conBusqueda = false) }
-                is ArtistsUiState.Exito -> {
-                    if (estado.visibles.isEmpty()) {
-                        item { Vacio(conBusqueda = true) }
-                    } else {
-                        item { EncabezadoLista(estado.visibles.size) }
-                        items(estado.visibles, key = { tagArtista(it) }) { artista ->
-                            FilaArtista(artista, onSeleccionar)
+            )
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .testTag(TagListaArtistas),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                item { Titular() }
+                item {
+                    Buscador(
+                        consultaInicial = (estado as? ArtistsUiState.Exito)?.consulta.orEmpty(),
+                        habilitado = estado is ArtistsUiState.Exito,
+                        onBuscar = onBuscar
+                    )
+                }
+                when (estado) {
+                    ArtistsUiState.Cargando -> {
+                        item { Cargando() }
+                        items(5) { FilaEsqueleto() }
+                    }
+                    ArtistsUiState.Error -> item { ErrorArtistas(stringResource(R.string.artistas_error), onReintentar) }
+                    ArtistsUiState.Vacio -> item { Vacio(conBusqueda = false) }
+                    is ArtistsUiState.Exito -> {
+                        if (estado.visibles.isEmpty()) {
+                            item { Vacio(conBusqueda = true) }
+                        } else {
+                            item { EncabezadoLista(estado.visibles.size) }
+                            items(estado.visibles, key = { tagArtista(it) }) { artista ->
+                                FilaArtista(artista, onSeleccionar)
+                            }
                         }
                     }
                 }
             }
         }
+        SnackbarHost(avisos, Modifier.align(Alignment.BottomCenter))
     }
 }
 
-/** Encabezado del listado y del detalle del artista: flecha de atrás y título. */
+/** Encabezado del listado y del detalle del artista: flecha de atrás, título y una acción opcional al final. */
 @Composable
-internal fun EncabezadoArtistas(titulo: String, onAtras: () -> Unit) {
+internal fun EncabezadoArtistas(titulo: String, onAtras: () -> Unit, accion: (@Composable () -> Unit)? = null) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -164,6 +191,10 @@ internal fun EncabezadoArtistas(titulo: String, onAtras: () -> Unit) {
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground
         )
+        if (accion != null) {
+            Spacer(Modifier.weight(1f))
+            accion()
+        }
     }
 }
 

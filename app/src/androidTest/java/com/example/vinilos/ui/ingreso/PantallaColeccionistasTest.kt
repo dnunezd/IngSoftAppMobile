@@ -2,6 +2,7 @@ package com.example.vinilos.ui.ingreso
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -26,6 +27,7 @@ class PantallaColeccionistasTest {
     private var seleccionado: Collector? = null
     private var visitante = 0
     private var atras = 0
+    private var avisos = 0
 
     private fun mostrar(estado: CollectorsUiState) {
         rule.setContent {
@@ -36,7 +38,8 @@ class PantallaColeccionistasTest {
                     onReintentar = { reintentos++ },
                     onSeleccionar = { seleccionado = it },
                     onVisitante = { visitante++ },
-                    onAtras = { atras++ }
+                    onAtras = { atras++ },
+                    onAvisoMostrado = { avisos++ }
                 )
             }
         }
@@ -161,5 +164,27 @@ class PantallaColeccionistasTest {
         rule.onNodeWithTag(TagAtras).performClick()
 
         assertEquals(1, atras)
+    }
+
+    // ---------- Listado guardado (add-cache-consultas, D6) ----------
+
+    @Test
+    fun conElListadoGuardadoActualizandoseMuestraElIndicadorPequenoYLaLista() {
+        mostrar(CollectorsUiState.Exito(listOf(manolo, jaime), actualizando = true))
+
+        rule.onNodeWithTag(TagActualizandoColeccionistas).assertIsDisplayed()
+        rule.onNodeWithContentDescription("Actualizando coleccionistas").assertIsDisplayed()
+        rule.onNodeWithText("Manolo Bellon").assertIsDisplayed()
+        rule.onNodeWithTag(TagProgreso).assertDoesNotExist()
+    }
+
+    @Test
+    fun siNoSePudoActualizarAvisaUnaVezSinQuitarLaLista() {
+        mostrar(CollectorsUiState.Exito(listOf(manolo, jaime), errorAlActualizar = true))
+
+        rule.onNodeWithText("No pudimos actualizar los coleccionistas").assertIsDisplayed()
+        rule.onNodeWithText("Jaime Monsalve").assertIsDisplayed()
+        rule.onNodeWithTag(TagMensajeError).assertDoesNotExist()
+        rule.waitUntil(10_000) { avisos == 1 }
     }
 }

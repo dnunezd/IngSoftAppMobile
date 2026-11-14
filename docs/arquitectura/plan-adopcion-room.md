@@ -12,6 +12,28 @@ El backend sigue siendo la fuente de verdad: Room nunca recibe escrituras propia
 
 Las portadas no se guardan en Room: la tabla guarda su URL y la imagen queda a cargo de la caché de Coil que la app ya tiene. Sin conexión se ven las portadas ya vistas, y las demás muestran la ilustración por defecto.
 
+## Ampliación: versión 2 (`add-cache-consultas`, 13 de noviembre de 2026)
+
+Este plan describe la primera versión, que solo guardaba el catálogo. Una revisión observó que sin internet las demás pantallas no muestran nada, así que el cambio `add-cache-consultas` extendió el mismo patrón a las HU de consulta. La tabla "Dónde no se adopta" de más abajo queda como registro de la decisión inicial.
+
+| HU | Qué se guarda | Tabla (`VinilosDb` versión 2) | Cuándo se guarda |
+|---|---|---|---|
+| HU01 · Catálogo | Resumen de cada álbum | `albumes` (versión 1) | Cada consulta exitosa del catálogo |
+| HU02 · Detalle de álbum | Álbum completo, con canciones, intérpretes y comentarios como JSON | `album_detalle` | Con la misma consulta del catálogo (`GET /albums` ya trae esos datos) y al abrir un detalle con conexión; un 404 lo borra |
+| HU00 · Coleccionistas | Id, nombre, correo y posición en la respuesta | `coleccionistas` | Cada consulta exitosa del selector |
+| HU03 · Listado de artistas | Tipo, id, nombre e imagen | `artistas` (clave `tipo` + `id`) | Cada consulta exitosa del listado |
+| HU04 · Detalle de artista | Artista completo, con integrantes, álbumes y premios como JSON | `artista_detalle` (clave `tipo` + `id`) | Al abrir el detalle con conexión, sin precarga; un 404 lo borra |
+| HU10 · Favoritos | Pares coleccionista y artista confirmados por el backend | `favoritos` | Cada comprobación exitosa y cada favorito agregado |
+| HU07 · Crear álbum | Nada | — | La consulta del catálogo que sigue a crear un álbum ya actualiza lo guardado |
+
+Decisiones principales (detalle en `openspec/changes/add-cache-consultas/design.md`):
+
+- La versión sube de 1 a 2 con migración destructiva: al actualizar la app, lo guardado se borra una vez y la siguiente consulta lo llena.
+- Las listas anidadas se guardan como JSON con un conversor de Gson. Cualquier cambio en esas clases del modelo sube la versión de la base.
+- Cada interfaz de repositorio suma solo funciones para leer lo guardado; las consultas al backend no cambian de firma y escriben al salir bien.
+- Los ViewModel repiten el patrón del catálogo: muestran lo guardado con el indicador de actualización y, si la consulta falla, lo conservan con un aviso.
+- Sin conexión, el botón de favorito muestra "Favorito" solo si el backend ya lo había confirmado; agregar un favorito o crear un álbum siguen necesitando conexión.
+
 ## Por qué el catálogo de álbumes
 
 | Motivo | Evidencia en el proyecto |

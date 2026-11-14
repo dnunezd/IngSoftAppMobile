@@ -17,6 +17,15 @@ private class FavoriteRepositoryFalso : FavoriteRepository {
     val comprobaciones = mutableListOf<CompletableDeferred<Result<Boolean>>>()
     val guardados = mutableListOf<CompletableDeferred<Result<Unit>>>()
 
+    /** Favoritos confirmados guardados en el dispositivo (add-cache-consultas). */
+    var favoritosGuardados: Set<Pair<Int, Int>> = emptySet()
+    var lecturasGuardadas = 0
+
+    override suspend fun esFavoritoGuardado(collectorId: Int, artistId: Int): Boolean {
+        lecturasGuardadas++
+        return (collectorId to artistId) in favoritosGuardados
+    }
+
     override suspend fun esFavorito(collectorId: Int, artistId: Int): Result<Boolean> {
         val respuesta = CompletableDeferred<Result<Boolean>>()
         comprobaciones += respuesta
@@ -202,5 +211,45 @@ class FavoritoViewModelTest {
         viewModel.confirmacionMostrada()
 
         assertEquals(FavoritoUiState.Favorito(mostrarConfirmacion = false), viewModel.uiState.value)
+    }
+
+    // ---------- Favorito confirmado guardado (add-cache-consultas, D5) ----------
+
+    @Test
+    fun comprobacionFallidaConFavoritoGuardadoMuestraFavoritoSinError() = runTest {
+        val repositorio = FavoriteRepositoryFalso().apply { favoritosGuardados = setOf(100 to 8) }
+        val viewModel = FavoritoViewModel(100, 8, ArtistType.BANDA, repositorio)
+        advanceUntilIdle()
+
+        repositorio.comprobaciones.single().complete(Result.failure(ErrorDeCarga()))
+        advanceUntilIdle()
+
+        assertEquals(FavoritoUiState.Favorito(mostrarConfirmacion = false), viewModel.uiState.value)
+    }
+
+    @Test
+    fun comprobacionFallidaSinFavoritoGuardadoSigueEnErrorComprobacion() = runTest {
+        // El 8 es favorito guardado de otro coleccionista, no del 100.
+        val repositorio = FavoriteRepositoryFalso().apply { favoritosGuardados = setOf(101 to 8) }
+        val viewModel = FavoritoViewModel(100, 8, ArtistType.BANDA, repositorio)
+        advanceUntilIdle()
+
+        repositorio.comprobaciones.single().complete(Result.failure(ErrorDeCarga()))
+        advanceUntilIdle()
+
+        assertEquals(FavoritoUiState.ErrorComprobacion, viewModel.uiState.value)
+    }
+
+    @Test
+    fun conComprobacionExitosaNoSeLeeLoGuardado() = runTest {
+        val repositorio = FavoriteRepositoryFalso().apply { favoritosGuardados = setOf(100 to 8) }
+        val viewModel = FavoritoViewModel(100, 8, ArtistType.BANDA, repositorio)
+        advanceUntilIdle()
+
+        repositorio.comprobaciones.single().complete(Result.success(false))
+        advanceUntilIdle()
+
+        assertEquals(FavoritoUiState.NoFavorito, viewModel.uiState.value)
+        assertEquals(0, repositorio.lecturasGuardadas)
     }
 }

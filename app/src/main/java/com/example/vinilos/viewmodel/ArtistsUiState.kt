@@ -9,10 +9,14 @@ sealed interface ArtistsUiState {
     /**
      * [artistas] es el listado completo ya ordenado; [visibles] es el que resulta de aplicar la
      * búsqueda [consulta] por nombre (sin distinguir mayúsculas ni tildes).
+     * [actualizando]: se muestra el listado guardado mientras se consulta el backend.
+     * [errorAlActualizar]: esa consulta falló y la pantalla debe avisarlo una vez (add-cache-consultas, D5).
      */
     data class Exito(
         val artistas: List<Artist>,
-        val consulta: String = ""
+        val consulta: String = "",
+        val actualizando: Boolean = false,
+        val errorAlActualizar: Boolean = false
     ) : ArtistsUiState {
         val visibles: List<Artist> = filtrar(artistas, consulta)
     }

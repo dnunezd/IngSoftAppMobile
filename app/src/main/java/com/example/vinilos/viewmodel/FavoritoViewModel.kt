@@ -76,7 +76,14 @@ class FavoritoViewModel(
                 },
                 onFailure = {
                     when (it) {
-                        is ErrorDeCarga -> FavoritoUiState.ErrorComprobacion
+                        // Sin conexión, un favorito ya confirmado se muestra como tal: el botón queda
+                        // desactivado igual y no hay riesgo de agregarlo dos veces (add-cache-consultas, D5).
+                        is ErrorDeCarga ->
+                            if (repositorio.esFavoritoGuardado(collectorId, artistId)) {
+                                FavoritoUiState.Favorito(mostrarConfirmacion = false)
+                            } else {
+                                FavoritoUiState.ErrorComprobacion
+                            }
                         else -> throw it
                     }
                 }

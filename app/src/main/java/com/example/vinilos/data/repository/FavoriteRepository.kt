@@ -12,4 +12,10 @@ interface FavoriteRepository {
 
     /** Falla con [ArtistaNoDisponible] si el backend ya no tiene el artista. */
     suspend fun agregarFavorito(collectorId: Int, artistId: Int, tipo: ArtistType): Result<Unit>
+
+    /**
+     * Si el backend ya confirmó antes que el artista es favorito de ese coleccionista, según lo guardado
+     * en el dispositivo (add-cache-consultas); `false` si no hay nada guardado o no se pudo leer.
+     */
+    suspend fun esFavoritoGuardado(collectorId: Int, artistId: Int): Boolean
 }

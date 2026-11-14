@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -24,19 +26,36 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.example.vinilos.R
+import com.example.vinilos.ui.ingreso.AvisoUnaVez
 import com.example.vinilos.ui.ingreso.EncabezadoVinilo
 import com.example.vinilos.viewmodel.AlbumUiState
+
+const val TagActualizandoDetalle = "detalle_actualizando"
 
 @Composable
 fun PantallaDetalleAlbum(
     estado: AlbumUiState,
     onAtras: () -> Unit,
     onReintentar: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onAvisoMostrado: () -> Unit = {}
 ) {
     if (estado is AlbumUiState.Exito) {
         val presentacion = remember(estado.album) { presentarAlbum(estado.album) }
-        ContenidoAlbum(presentacion, onAtras, modifier)
+        val avisos = remember { SnackbarHostState() }
+        AvisoUnaVez(
+            mostrar = estado.errorAlActualizar,
+            mensaje = stringResource(R.string.detalle_error_actualizar),
+            avisos = avisos,
+            onMostrado = onAvisoMostrado
+        )
+        Box(modifier.fillMaxSize()) {
+            ContenidoAlbum(presentacion, onAtras, actualizando = estado.actualizando)
+            SnackbarHost(
+                avisos,
+                Modifier.align(Alignment.BottomCenter).windowInsetsPadding(WindowInsets.safeDrawing)
+            )
+        }
         return
     }
     Column(

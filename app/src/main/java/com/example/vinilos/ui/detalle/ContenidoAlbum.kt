@@ -37,13 +37,16 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.vinilos.R
 import com.example.vinilos.ui.ingreso.EncabezadoVinilo
+import com.example.vinilos.ui.ingreso.IndicadorActualizando
 
 @Composable
 fun ContenidoAlbum(
     presentacion: AlbumPresentacion,
     onAtras: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    actualizando: Boolean = false
 ) {
+    val descripcionActualizando = stringResource(R.string.detalle_actualizando)
     LazyColumn(
         modifier = modifier.fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
@@ -51,7 +54,16 @@ fun ContenidoAlbum(
         contentPadding = PaddingValues(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        item { EncabezadoVinilo(onAtras = onAtras) }
+        item {
+            EncabezadoVinilo(
+                onAtras = onAtras,
+                accion = if (actualizando) {
+                    { IndicadorActualizando(descripcionActualizando, TagActualizandoDetalle) }
+                } else {
+                    null
+                }
+            )
+        }
         item {
             PortadaAlbum(
                 url = presentacion.album.portada,
