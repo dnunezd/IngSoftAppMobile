@@ -1,156 +1,173 @@
 package com.example.vinilos.perfilamiento
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
-import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
 /**
- * Recorridos del plan de pruebas de rendimiento (docs/performance/plan-pruebas-performance.md).
- * Cada método es un escenario con los mismos pasos y pausas en todos los dispositivos.
+ * Recorridos de la guía manual de perfilamiento (docs/performance/guia-manual.md), uno por HU, con
+ * los mismos pasos: cada paso es una acción y luego esperar 5 s. Antes del paso 1 hay 5 s de reposo
+ * con la app abierta en el ingreso, como línea base.
  *
- * Los lanza `scripts/perfilamiento/Perfilar.ps1`, uno por uno:
- * `adb shell am instrument -w -e class com.example.vinilos.perfilamiento.Recorridos#hu01
+ * Cada paso se avisa con [AppBajoPrueba.marcarPaso] para que el script anote el segundo de la
+ * grabación en que ocurrió. Si un paso abre otra pantalla, los 5 s cuentan desde que esa pantalla
+ * aparece.
+ *
+ * Los lanza `scripts/perfilamiento/Perfilar.ps1`, uno por grabación y con la app recién abierta:
+ * `adb shell am instrument -w -r -e class com.example.vinilos.perfilamiento.Recorridos#hu01
  *  com.example.vinilos.perfilamiento/androidx.test.runner.AndroidJUnitRunner`
  *
- * Suponen BackVynils local con los datos de ejemplo (`sql/data.sql`, ids desde 100).
+ * Suponen BackVynils local con los datos de ejemplo (`sql/data.sql`): álbum 100 Buscando América,
+ * músico 100 Rubén Blades Bellido de Luna, banda 101 Queen y coleccionista 100 Manolo Bellon.
  */
 @RunWith(AndroidJUnit4::class)
 class Recorridos {
 
     private val app = AppBajoPrueba()
+    private val argumentos = InstrumentationRegistry.getArguments()
 
-    private val cualquierAlbum = app.tagQueCumple("album_\\d+")
-    private val cualquierArtista = app.tagQueCumple("artista_(musico|banda)_\\d+")
+    /** Una acción y luego los 5 s de la guía. */
+    private fun paso(numero: Int, accion: String, bloque: () -> Unit) {
+        app.marcarPaso(numero, accion)
+        bloque()
+        app.esperar(PAUSA)
+    }
 
-    /** El álbum 100 tiene artistas, canciones y comentarios; si no está, el primero visible. */
-    private fun abrirAlbumCompleto() {
-        app.conReintento { (app.dispositivo.findObject(app.tag("album_100")) ?: app.esperarA(cualquierAlbum)).click() }
+    /** La app ya está abierta en el ingreso (la abre el script): 5 s quieta antes del primer paso. */
+    private fun reposoInicial() {
+        app.llevarAlIngreso()
+        app.marcarPaso(0, "Reposo inicial en el ingreso")
+        app.esperar(PAUSA)
+    }
+
+    private fun entrarComoVisitante() {
+        app.tocar("entrar_visitante")
+        app.esperarA("inicio")
+    }
+
+    private fun entrarComoManoloBellon() {
+        app.tocar("entrar_coleccionista")
+        app.conReintento { app.esperarA("coleccionista_$COLECCIONISTA").click() }
+        app.esperarA("inicio")
+    }
+
+    private fun abrirBuscandoAmerica() {
+        app.conReintento { app.esperarA("album_$ALBUM").click() }
         app.esperarA("atras")
     }
 
-    /** El músico 100 tiene discografía; si no está, el primer artista visible. */
-    private fun abrirArtistaConDiscografia() {
-        app.conReintento {
-            (app.dispositivo.findObject(app.tag("artista_musico_100")) ?: app.esperarA(cualquierArtista)).click()
-        }
+    private fun abrirArtista(tag: String) {
+        app.conReintento { app.esperarA(tag).click() }
         app.esperarA("detalle_artista_nombre")
     }
 
-    // ---------- Comprobación previa (no hace parte del plan) ----------
-
-    /** Abre la app y llega al inicio como visitante: confirma que los recorridos pueden manejarla. */
-    @Test
-    fun comprobarManejo() {
-        app.entrarComoVisitante()
-        assertTrue("No se ve el acceso al catálogo", app.existe(app.tag("ver_albumes")))
-        assertTrue("No se ve el acceso a los artistas", app.buscarDesplazando(app.tag("ver_artistas"), maximo = 6) != null)
-        app.llevarAlIngreso()
-    }
-
-    // ---------- §05 HU01: consultar catálogo de álbumes ----------
+    // ---------- HU01 · Catálogo de álbumes ----------
 
     @Test
     fun hu01() {
-        app.entrarComoVisitante()
-        app.abrirCatalogo()                       // 1. Abrir la app y entrar al catálogo
-        app.esperar(5.0)                          // 2. Esperar 5 s
-        val hastaElFinal = medirLargoDelCatalogo()
-        app.esperar(3.0)                          // 3. Mitad de la lista; esperar 3 s
-        app.desplazarAbajo(hastaElFinal - hastaElFinal / 2)   // 4. Hasta el final...
-        app.desplazarArriba(hastaElFinal + 1)     //    ...y regresar al inicio
-        app.esperar(5.0)                          // 5. Esperar 5 s
+        reposoInicial()
+        paso(1, "Visitante > Entrar") { entrarComoVisitante() }
+        paso(2, "Ver álbumes") { app.abrirCatalogo() }
+        paso(3, "Bajar hasta el final de la lista") { app.desplazarHastaElFinal() }
+        paso(4, "Subir hasta el inicio, sin pasar del tope") { app.subirHastaVer(app.tag("catalogo_contador")) }
     }
 
-    /** Baja hasta el final para contar los pasos, vuelve arriba y deja la lista en la mitad. */
-    private fun medirLargoDelCatalogo(): Int {
-        val pasos = app.desplazarHastaElFinal()
-        app.desplazarArriba(pasos + 1)
-        app.desplazarAbajo(pasos / 2)
-        return pasos
-    }
-
-    // ---------- §06 HU02: consultar detalle de álbum ----------
+    // ---------- HU02 · Detalle de álbum ----------
 
     @Test
     fun hu02() {
-        app.entrarComoVisitante()
-        app.abrirCatalogo()
-        abrirAlbumCompleto()                      // 1. Álbum con artistas, canciones y comentarios
-        app.esperar(5.0)                          // 2. Esperar 5 s
-        app.desplazarHastaElFinal()               // 3. Desplazarse por el contenido
-        app.esperar(3.0)
-        app.atras()                               // 4. Volver al catálogo y abrir el mismo álbum
-        app.esperarA("catalogo_contador")
-        abrirAlbumCompleto()
-        app.esperar(5.0)                          // 5. Esperar 5 s
+        reposoInicial()
+        paso(1, "Visitante > Entrar") { entrarComoVisitante() }
+        paso(2, "Ver álbumes") { app.abrirCatalogo() }
+        paso(3, "Abrir Buscando América") { abrirBuscandoAmerica() }
+        paso(4, "Bajar hasta el final (canciones y comentarios)") { app.desplazarHastaElFinal() }
+        paso(5, "Atrás, al catálogo") {
+            app.atras()
+            app.esperarA("catalogo_contador")
+        }
+        paso(6, "Abrir Buscando América otra vez") { abrirBuscandoAmerica() }
     }
 
-    // ---------- §07 HU03: listado y búsqueda de artistas ----------
+    // ---------- HU03 · Listado y búsqueda de artistas ----------
 
     @Test
     fun hu03() {
-        app.entrarComoVisitante()
-        app.abrirArtistas()                       // 1. Entrar al listado y esperar 5 s
-        app.esperar(5.0)
-        app.tocar("artistas_buscador")
-        app.teclear("Juan")                       // 2. Escribir "Juan"; esperar 3 s
-        app.esperar(3.0)
-        app.borrarTecleando(4)                    // 3. Borrar y escribir "Rock"; esperar 3 s
-        app.teclear("Rock")
-        app.esperar(3.0)
-        app.borrarTecleando(4)                    // 4. Borrar y desplazarse por la lista
-        app.cerrarTeclado()
-        val pasos = app.desplazarHastaElFinal()
-        app.desplazarArriba(pasos + 1)
-        app.esperar(3.0)                          // 5. Esperar 3 s
+        reposoInicial()
+        paso(1, "Visitante > Entrar") { entrarComoVisitante() }
+        paso(2, "Ver artistas") { app.abrirArtistas() }
+        paso(3, "Tocar el buscador y escribir Queen") {
+            app.tocar(BUSCADOR)
+            app.escribirLetraPorLetra(BUSCADOR, "Queen")
+        }
+        paso(4, "Borrar y escribir Juan (sin coincidencias)") {
+            app.borrarLetraPorLetra(BUSCADOR, "Queen")
+            app.escribirLetraPorLetra(BUSCADOR, "Juan")
+            app.esperarA(By.text("No se encontraron artistas"), 5_000)
+        }
+        paso(5, "Borrar el texto y cerrar el teclado") {
+            app.borrarLetraPorLetra(BUSCADOR, "Juan")
+            app.cerrarTeclado()
+        }
     }
 
-    // ---------- §08 HU04: detalle de artista ----------
+    // ---------- HU04 · Detalle de artista ----------
 
     @Test
     fun hu04() {
-        app.entrarComoVisitante()
-        app.abrirArtistas()
-        abrirArtistaConDiscografia()              // 1. Abrir un artista con discografía
-        app.esperar(5.0)                          // 2. Esperar 5 s
-        app.desplazarAbajo(2)                     // 3. Biografía y estadísticas
-        app.conReintento {                        // 4. Abrir un álbum de la discografía; esperar 5 s
-            val album = app.buscarDesplazando(app.tagQueCumple("detalle_artista_album_\\d+"))
-            checkNotNull(album) { "El artista abierto no muestra álbumes en su discografía" }
-            album.click()
+        reposoInicial()
+        paso(1, "Visitante > Entrar") { entrarComoVisitante() }
+        paso(2, "Ver artistas") { app.abrirArtistas() }
+        paso(3, "Abrir Rubén Blades Bellido de Luna") { abrirArtista("artista_musico_$MUSICO") }
+        paso(4, "Bajar hasta los álbumes de su discografía") {
+            checkNotNull(app.buscarDesplazando(app.tag("detalle_artista_album_$ALBUM"))) {
+                "La discografía de Rubén Blades no muestra Buscando América"
+            }
         }
-        app.esperar(5.0)
-        app.atras()                               // 5. Regresar al artista; esperar 3 s
-        app.esperarA("detalle_artista_nombre")
-        app.esperar(3.0)
-        app.atras()                               // 6. Volver al listado
-        app.esperarA("artistas_lista")
+        paso(5, "Abrir Buscando América") {
+            app.conReintento { app.esperarA("detalle_artista_album_$ALBUM").click() }
+            app.esperarA("atras")
+        }
+        paso(6, "Atrás, al artista") {
+            app.atras()
+            app.esperarA("detalle_artista_nombre")
+        }
+        paso(7, "Atrás, al listado") {
+            app.atras()
+            app.esperarA("artistas_lista")
+        }
     }
 
-    // ---------- §09 HU07: crear un álbum ----------
+    // ---------- HU07 · Crear un álbum ----------
 
+    /**
+     * El nombre lleva el número de grabación (`-e grabacion 1` o `2`): "Perf 1" y "Perf 2", como en
+     * la guía. Los campos de texto se escriben letra por letra, para medir lo que cuesta cada cambio.
+     */
     @Test
     fun hu07() {
-        app.entrarComoColeccionista()             // 1. Coleccionista -> creación de álbum
-        app.abrirCatalogo()
-        app.tocar("catalogo_crear_album")
-        app.esperarA("crear_formulario")
-        app.esperar(3.0)                          // 2. Esperar 3 s
-
-        // 3. Campos válidos; el nombre lleva la hora para no duplicar álbumes.
-        escribirEnCampo("crear_nombre", "Perf ${System.currentTimeMillis()}")
-        escribirEnCampo("crear_portada", "https://upload.wikimedia.org/wikipedia/en/4/42/Beatles_-_Abbey_Road.jpg")
-        elegirPrimerDiaDelMes()
-        elegirOpcion("crear_genero", "Rock")
-        elegirOpcion("crear_disquera", "EMI")
-        escribirEnCampo("crear_descripcion", "Album creado por el recorrido de perfilamiento.")
-        app.esperar(2.0)                          //    Esperar 2 s antes de enviar
-
-        app.conReintento { campo("crear_enviar").click() }   // 4. Enviar y observar la respuesta (máximo 10 s)
-        app.esperarA(app.tag("catalogo_contador"), 10_000)   // 5. De vuelta en el catálogo: se creó
-        app.esperar(2.0)
+        val nombre = "Perf ${argumentos.getString("grabacion") ?: "1"}"
+        reposoInicial()
+        paso(1, "Coleccionista > Entrar > Manolo Bellon") { entrarComoManoloBellon() }
+        paso(2, "Ver álbumes") { app.abrirCatalogo() }
+        paso(3, "Crear álbum") {
+            app.tocar("catalogo_crear_album")
+            app.esperarA("crear_formulario")
+        }
+        paso(4, "Llenar el formulario") {
+            escribirEnCampo("crear_nombre", nombre)
+            escribirEnCampo("crear_portada", PORTADA)
+            elegirPrimerDiaDelMes()
+            elegirOpcion("crear_genero", "Rock")
+            elegirOpcion("crear_disquera", "EMI")
+            escribirEnCampo("crear_descripcion", DESCRIPCION)
+        }
+        paso(5, "Tocar Crear álbum (vuelve al catálogo)") {
+            app.conReintento { campo("crear_enviar").click() }
+            // El catálogo se desplaza hasta el álbum nuevo: se espera su tarjeta, no el contador.
+            app.esperarA(app.tagQueCumple("album_nuevo_\\d+"), 15_000)
+        }
     }
 
     /** Busca el campo desplazando el formulario si hace falta. */
@@ -158,7 +175,8 @@ class Recorridos {
         app.buscarDesplazando(app.tag(tag), maximo = 6) ?: error("No se encontró el campo $tag en el formulario")
 
     private fun escribirEnCampo(tag: String, texto: String) {
-        app.conReintento { campo(tag).text = texto }
+        app.conReintento { campo(tag).click() }
+        app.escribirLetraPorLetra(tag, texto)
         app.cerrarTeclado()
     }
 
@@ -183,99 +201,50 @@ class Recorridos {
         app.dispositivo.waitForIdle(1_500)
     }
 
-    // ---------- §10 HU10: agregar artistas a favoritos ----------
+    // ---------- HU10 · Agregar artistas a favoritos ----------
 
-    /**
-     * La app solo permite agregar favoritos (no quitarlos), así que los pasos 4 y 5 del plan
-     * ("quitar" y "marcar nuevamente") no aplican: se agrega una vez y se comprueba que persiste.
-     * Requiere un artista que aún no sea favorito: el script recrea el backend antes de este escenario.
-     */
+    /** Queen no debe ser favorito al empezar: el script quita los favoritos por la API antes. */
     @Test
     fun hu10() {
-        app.entrarComoColeccionista()             // 1. Coleccionista -> artista no favorito
-        app.abrirArtistas()
-        val tagDelArtista = app.conReintento {
-            val artista = app.esperarA(cualquierArtista)
-            val nombre = artista.resourceName
-            artista.click()
-            nombre
+        reposoInicial()
+        paso(1, "Coleccionista > Entrar > Manolo Bellon") { entrarComoManoloBellon() }
+        paso(2, "Ver artistas") { app.abrirArtistas() }
+        paso(3, "Abrir Queen") {
+            abrirArtista("artista_banda_$BANDA")
+            botonFavorito()
         }
-        app.esperarA("detalle_artista_nombre")
-        app.esperar(3.0)                          // 2. Esperar 3 s y presionar favorito una vez
-        app.conReintento { botonFavorito().click() }
-        app.esperar(3.0)                          // 3. Esperar 3 s y verificar el estado
-        app.atras()                               // 5. Salir y volver a abrir el artista
-        app.esperarA("artistas_lista")
-        app.conReintento { app.esperarA(tagDelArtista).click() }
-        app.esperarA("detalle_artista_nombre")
-        botonFavorito()                           // 6. El botón sigue ahí con el estado guardado
-        app.esperar(3.0)
+        paso(4, "Agregar Favorito (el botón cambia a Favorito)") {
+            app.conReintento {
+                checkNotNull(app.dispositivo.findObject(By.text("Agregar Favorito"))) {
+                    "Queen ya es favorito: quita los favoritos del coleccionista 100 antes de grabar"
+                }.click()
+            }
+            app.esperarA(By.text("Favorito"), 10_000)
+        }
+        paso(5, "Atrás, al listado") {
+            app.atras()
+            app.esperarA("artistas_lista")
+        }
+        paso(6, "Abrir Queen otra vez (sigue en Favorito)") {
+            abrirArtista("artista_banda_$BANDA")
+            botonFavorito()
+            app.esperarA(By.text("Favorito"), 10_000)
+        }
     }
 
+    /** El botón está debajo de la cabecera del artista: se baja hasta verlo si hace falta. */
     private fun botonFavorito() =
         app.buscarDesplazando(app.tag("detalle_artista_boton_favorito"), maximo = 6)
             ?: error("No aparece el botón de favorito: ¿se ingresó como coleccionista?")
 
-    // ---------- §11 Caída y recuperación del backend (tres fases; el script apaga y enciende) ----------
-
-    /** Fase 1, con el backend activo: cargar el catálogo. */
-    @Test
-    fun caidaFase1CargarCatalogo() {
-        app.entrarComoVisitante()
-        app.abrirCatalogo()
-        app.esperar(3.0)
-    }
-
-    /** Fase 2, con el backend detenido: volver a entrar al catálogo y esperar la respuesta de la UI. */
-    @Test
-    fun caidaFase2ConsultarSinBackend() {
-        // Desde el ingreso: el script puede haber borrado los datos de la app (variante sin caché).
-        app.entrarComoVisitante()
-        app.tocar("ver_albumes")
-        // Con consultas guardadas la app muestra la lista; sin ellas, el error con "Reintentar".
-        app.esperarA(app.tagQueCumple("catalogo_(error|contador)"), 30_000)
-        app.conReintento { app.dispositivo.findObject(app.tag("catalogo_reintentar"))?.click() }
-        app.esperar(12.0)
-    }
-
-    /** Fase 3, con el backend otra vez activo: reintentar y confirmar que se recupera. */
-    @Test
-    fun caidaFase3Recuperar() {
-        val reintento = app.conReintento {
-            val reintentar = app.dispositivo.findObject(app.tag("catalogo_reintentar"))
-            reintentar?.click()
-            reintentar != null
-        }
-        if (!reintento) {
-            app.entrarComoVisitante()
-            app.tocar("ver_albumes")
-        }
-        app.esperar(5.0)
-        app.esperarA("catalogo_contador")
-    }
-
-    // ---------- §12 Navegación y memoria ----------
-
-    /** Tres vueltas catálogo -> álbum -> artistas -> artista. El Heap Dump lo toma el script. */
-    @Test
-    fun memoriaNavegacion() {
-        app.entrarComoVisitante()
-        repeat(3) {
-            app.abrirCatalogo()                   // 1. Catálogo y detalle de álbum
-            abrirAlbumCompleto()
-            app.esperar(2.0)
-            app.atras()                           // 2. Regresar; listado y detalle de artista
-            app.esperarA("catalogo_contador")
-            app.atras()
-            app.esperarA("inicio")
-            app.abrirArtistas()
-            abrirArtistaConDiscografia()
-            app.esperar(2.0)
-            app.atras()                           // 3. Regresar al listado y repetir
-            app.esperarA("artistas_lista")
-            app.atras()
-            app.esperarA("inicio")
-        }
-        app.esperar(5.0)                          // 4. Esperar 5 s al terminar
+    private companion object {
+        const val PAUSA = 5.0
+        const val BUSCADOR = "artistas_buscador"
+        const val ALBUM = 100
+        const val MUSICO = 100
+        const val BANDA = 101
+        const val COLECCIONISTA = 100
+        const val PORTADA = "https://upload.wikimedia.org/wikipedia/en/4/42/Beatles_-_Abbey_Road.jpg"
+        const val DESCRIPCION = "Album creado por el recorrido de perfilamiento."
     }
 }

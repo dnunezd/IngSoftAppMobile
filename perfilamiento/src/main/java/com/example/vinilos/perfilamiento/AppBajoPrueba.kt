@@ -1,8 +1,8 @@
 package com.example.vinilos.perfilamiento
 
+import android.graphics.Point
+import android.os.Bundle
 import android.os.SystemClock
-import android.view.KeyCharacterMap
-import android.view.KeyEvent
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.StaleObjectException
@@ -28,10 +28,20 @@ class AppBajoPrueba {
     private val ancho get() = dispositivo.displayWidth
     private val alto get() = dispositivo.displayHeight
 
-    // ---------- Esperas ----------
+    // ---------- Esperas y pasos ----------
 
-    /** Pausa fija del plan de pruebas (los "esperar 5 s" de cada escenario). */
+    /** Pausa fija de la guía (docs/performance/guia-manual.md): cada paso es una acción y luego 5 s. */
     fun esperar(segundos: Double) = SystemClock.sleep((segundos * 1000).toLong())
+
+    /**
+     * Avisa al script que empieza un paso, con la hora del dispositivo en milisegundos. El script la
+     * convierte en el segundo de la grabación del Profiler (la columna "Seg." de la guía).
+     * Sale en la salida de `am instrument -r` como `INSTRUMENTATION_STATUS: paso=<n>|<milis>|<acción>`.
+     */
+    fun marcarPaso(numero: Int, accion: String) {
+        val datos = Bundle().apply { putString("paso", "$numero|${System.currentTimeMillis()}|$accion") }
+        InstrumentationRegistry.getInstrumentation().sendStatus(CODIGO_PASO, datos)
+    }
 
     fun tag(tag: String): BySelector = By.res(tag)
 
@@ -47,7 +57,8 @@ class AppBajoPrueba {
 
     /** Toca el elemento; si no está a la vista, lo busca desplazando la pantalla hacia abajo. */
     fun tocar(tag: String, milis: Long = 20_000) = conReintento {
-        val elemento = dispositivo.wait(Until.findObject(tag(tag)), 3_000)
+        // Espera corta: si no está a la vista se baja a buscarlo, como lo haría una persona.
+        val elemento = dispositivo.wait(Until.findObject(tag(tag)), 1_000)
             ?: buscarDesplazando(tag(tag), maximo = 6)
             ?: esperarA(tag, milis)
         elemento.click()
@@ -131,9 +142,22 @@ class AppBajoPrueba {
         SystemClock.sleep(350)
     }
 
-    fun desplazarArriba(veces: Int = 1) = repeat(veces) {
-        dispositivo.swipe(ancho / 2, (alto * 0.32).toInt(), ancho / 2, (alto * 0.72).toInt(), 28)
-        SystemClock.sleep(350)
+    /**
+     * Sube con arrastres cortos y sin impulso hasta que se vea [tope] (el primer elemento de la lista).
+     * Así no se arrastra más allá del inicio, que en el catálogo dispararía "deslizar para actualizar"
+     * y otra consulta: cada arrastre recorre menos que lo que mide la cabecera visible del catálogo,
+     * y el último tramo se sostiene quieto para que la lista no siga deslizándose sola.
+     */
+    fun subirHastaVer(tope: BySelector, maximo: Int = 40) {
+        val x = ancho / 2
+        val desde = Point(x, (alto * 0.40).toInt())
+        val hasta = Point(x, (alto * 0.52).toInt())
+        repeat(maximo) {
+            if (dispositivo.hasObject(tope)) return
+            dispositivo.swipe(arrayOf(desde, hasta, hasta), 20)
+            SystemClock.sleep(300)
+        }
+        esperarA(tope, 2_000)
     }
 
     /** Desplaza hasta el final: se detiene cuando dos pantallas seguidas ya no cambian. */
@@ -177,19 +201,24 @@ class AppBajoPrueba {
 
     // ---------- Texto ----------
 
-    /** Escribe tecla por tecla, como una persona, para que se vea el costo de cada cambio de texto. */
-    fun teclear(texto: String, pausaMilis: Long = 120) {
-        val mapa = KeyCharacterMap.load(KeyCharacterMap.VIRTUAL_KEYBOARD)
-        val eventos = mapa.getEvents(texto.toCharArray()) ?: error("No se puede teclear \"$texto\" con el teclado virtual")
-        eventos.filter { it.action == KeyEvent.ACTION_DOWN }.forEach { evento ->
-            dispositivo.pressKeyCode(evento.keyCode, evento.metaState)
+    /**
+     * Escribe [texto] en el campo letra por letra: cada letra es un cambio de texto, como al teclear,
+     * para que se vea lo que cuesta cada uno. No pasa por el teclado del teléfono, que autocorregiría
+     * las teclas simuladas ("perfilamiento" → "Perfila miento") y las haría muy lentas.
+     */
+    fun escribirLetraPorLetra(tag: String, texto: String, pausaMilis: Long = 60) {
+        for (largo in 1..texto.length) {
+            conReintento { esperarA(tag, 5_000).text = texto.take(largo) }
             SystemClock.sleep(pausaMilis)
         }
     }
 
-    fun borrarTecleando(caracteres: Int, pausaMilis: Long = 80) = repeat(caracteres) {
-        dispositivo.pressKeyCode(KeyEvent.KEYCODE_DEL)
-        SystemClock.sleep(pausaMilis)
+    /** Borra el [texto] que tiene el campo letra por letra, como con la tecla de borrar. */
+    fun borrarLetraPorLetra(tag: String, texto: String, pausaMilis: Long = 60) {
+        for (largo in texto.length - 1 downTo 0) {
+            conReintento { esperarA(tag, 5_000).text = texto.take(largo) }
+            SystemClock.sleep(pausaMilis)
+        }
     }
 
     /** Cierra el teclado si está abierto (el "atrás" con teclado abierto no navega). */
@@ -199,5 +228,10 @@ class AppBajoPrueba {
             dispositivo.pressBack()
             dispositivo.waitForIdle(1_500)
         }
+    }
+
+    private companion object {
+        /** Código de estado propio para los pasos; no choca con los del AndroidJUnitRunner (-4 a 2). */
+        const val CODIGO_PASO = 100
     }
 }
