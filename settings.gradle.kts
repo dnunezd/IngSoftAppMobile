@@ -23,4 +23,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "Vinilos"
 include(":app")
+include(":perfilamiento")
  
