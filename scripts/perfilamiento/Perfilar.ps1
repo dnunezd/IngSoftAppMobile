@@ -57,13 +57,12 @@ param(
     # Carpeta del repositorio BackVynils (donde está su docker-compose.yml).
     [string]$RutaBackend,
 
-    # HU a perfilar, en orden. Por defecto, las seis de la guía.
-    [ValidateSet('hu01', 'hu02', 'hu03', 'hu04', 'hu07', 'hu10')]
+    # HU a perfilar, en orden (hu01, hu02, hu03, hu04, hu07, hu10). Por defecto, las seis de la guía.
+    # Se validan más abajo: con pwsh -File la lista "hu01,hu02" llega como un solo texto.
     [string[]]$Escenarios = @('hu01', 'hu02', 'hu03', 'hu04', 'hu07', 'hu10'),
 
     # Grabaciones de cada HU: telemetria = 1 (Live Telemetry + Network Inspector);
     # asignaciones = 2 (Java/Kotlin Allocations).
-    [ValidateSet('telemetria', 'asignaciones')]
     [string[]]$Grabaciones = @('telemetria', 'asignaciones'),
 
     # Ejecutar: sin pausas de Android Studio; solo maneja la app y anota los pasos (para probar).
@@ -74,6 +73,17 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+
+function Separar-Lista([string[]]$Valores, [string[]]$Permitidos, [string]$Nombre) {
+    # Acepta "hu01,hu02" como un solo texto (pwsh -File) o como lista, y rechaza lo que no exista.
+    $lista = @($Valores | ForEach-Object { $_ -split '[,\s]+' } | Where-Object { $_ } | ForEach-Object { $_.ToLower() })
+    $invalidos = @($lista | Where-Object { $Permitidos -notcontains $_ })
+    if ($invalidos.Count) { throw "-$Nombre no admite: $($invalidos -join ', '). Valores posibles: $($Permitidos -join ', ')." }
+    $lista
+}
+$Escenarios = Separar-Lista $Escenarios @('hu01', 'hu02', 'hu03', 'hu04', 'hu07', 'hu10') 'Escenarios'
+$Grabaciones = Separar-Lista $Grabaciones @('telemetria', 'asignaciones') 'Grabaciones'
+
 # La salida de adb llega en UTF-8: sin esto, una consola con otra página de códigos la lee mal
 # ("Ver álbumes" quedaba "Ver ├ílbumes" en el análisis).
 [Console]::OutputEncoding = New-Object Text.UTF8Encoding $false
