@@ -13,7 +13,9 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import retrofit2.HttpException
 import retrofit2.http.GET
 import java.io.IOException
@@ -324,5 +326,94 @@ class ServiceAdapterTest {
 
         assertTrue(primero.exceptionOrNull() is ErrorDeCarga)
         assertEquals(1, segundo.getOrThrow().size)
+    }
+
+    // ---------- Caché HTTP (optimizar-cache-e-imagenes, D2) ----------
+
+    @get:Rule
+    val carpeta = TemporaryFolder()
+
+    /** Ejecuta [bloque] con un adaptador que usa la caché HTTP en una carpeta temporal y la cierra al final. */
+    private suspend fun conCache(bloque: suspend (ServiceAdapter, ApiDePrueba) -> Unit) {
+        val cliente = ServiceAdapter.clientePorDefecto(carpeta.newFolder("http"))
+        try {
+            val adaptador = ServiceAdapter(servidor.url("/").toString(), cliente)
+            bloque(adaptador, adaptador.api())
+        } finally {
+            cliente.cache?.close()
+        }
+    }
+
+    private fun respuestaConVersion(version: String, nombre: String = "Vinilo") =
+        MockResponse().setHeader("ETag", version).setBody("""{"nombre":"$nombre"}""")
+
+    @Test
+    fun conCacheLaConsultaRepetidaEnviaLaVersionYUsaLoGuardadoAnteUn304() = runTest {
+        servidor.enqueue(respuestaConVersion("W/\"abc\""))
+        servidor.enqueue(MockResponse().setResponseCode(304).setHeader("ETag", "W/\"abc\""))
+
+        conCache { adaptador, api ->
+            assertEquals("Vinilo", adaptador.llamar { api.obtenerPrueba() }.getOrThrow().nombre)
+            val repetida = adaptador.llamar { api.obtenerPrueba() }
+
+            assertEquals("Vinilo", repetida.getOrThrow().nombre)
+        }
+        assertEquals(null, servidor.takeRequest().getHeader("If-None-Match"))
+        assertEquals("W/\"abc\"", servidor.takeRequest().getHeader("If-None-Match"))
+    }
+
+    @Test
+    fun conCacheUnaRespuestaNuevaReemplazaLaGuardadaYSuVersion() = runTest {
+        servidor.enqueue(respuestaConVersion("W/\"v1\"", "Antes"))
+        servidor.enqueue(respuestaConVersion("W/\"v2\"", "Despues"))
+        servidor.enqueue(MockResponse().setResponseCode(304).setHeader("ETag", "W/\"v2\""))
+
+        conCache { adaptador, api ->
+            adaptador.llamar { api.obtenerPrueba() }
+            assertEquals("Despues", adaptador.llamar { api.obtenerPrueba() }.getOrThrow().nombre)
+            assertEquals("Despues", adaptador.llamar { api.obtenerPrueba() }.getOrThrow().nombre)
+        }
+        servidor.takeRequest()
+        servidor.takeRequest()
+        assertEquals("W/\"v2\"", servidor.takeRequest().getHeader("If-None-Match"))
+    }
+
+    @Test
+    fun conCacheUnMaxAgeDelBackendNoEvitaPreguntarle() = runTest {
+        servidor.enqueue(respuestaConVersion("W/\"abc\"").setHeader("Cache-Control", "max-age=600"))
+        servidor.enqueue(MockResponse().setResponseCode(304).setHeader("ETag", "W/\"abc\""))
+
+        conCache { adaptador, api ->
+            adaptador.llamar { api.obtenerPrueba() }
+            assertEquals("Vinilo", adaptador.llamar { api.obtenerPrueba() }.getOrThrow().nombre)
+        }
+        assertEquals(2, servidor.requestCount)
+    }
+
+    @Test
+    fun conCacheSinConexionSeReportaElErrorDeCargaAunqueHayaRespuestaGuardada() = runTest {
+        servidor.enqueue(respuestaConVersion("W/\"abc\""))
+        // OkHttp reintenta una conexión fallida: se encolan varias desconexiones.
+        repeat(3) { servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START)) }
+
+        conCache { adaptador, api ->
+            adaptador.llamar { api.obtenerPrueba() }
+
+            assertTrue(adaptador.llamar { api.obtenerPrueba() }.exceptionOrNull() is ErrorDeCarga)
+        }
+    }
+
+    @Test
+    fun sinCarpetaDeCacheNoSeEnviaLaVersion() = runTest {
+        servidor.enqueue(respuestaConVersion("W/\"abc\""))
+        servidor.enqueue(respuestaConVersion("W/\"abc\""))
+        val adaptador = ServiceAdapter(servidor.url("/").toString(), ServiceAdapter.clientePorDefecto())
+        val api = adaptador.api<ApiDePrueba>()
+
+        adaptador.llamar { api.obtenerPrueba() }
+        adaptador.llamar { api.obtenerPrueba() }
+
+        servidor.takeRequest()
+        assertEquals(null, servidor.takeRequest().getHeader("If-None-Match"))
     }
 }

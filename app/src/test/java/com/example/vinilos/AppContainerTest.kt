@@ -26,7 +26,9 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import java.util.concurrent.TimeUnit
 
 private class AlbumRepositoryFalso : AlbumRepository {
@@ -137,6 +139,23 @@ class AppContainerTest {
         assertTrue(contenedor.favoriteRepository.esFavorito(100, 5).getOrThrow())
 
         assertTrue(contenedor.favoriteRepository.esFavoritoGuardado(100, 5))
+    }
+
+    @get:Rule
+    val carpeta = TemporaryFolder()
+
+    @Test
+    fun conCarpetaDeCacheLaConsultaRepetidaEnviaLaVersionGuardada() = runTest {
+        servidor.enqueue(MockResponse().setHeader("ETag", "W/\"c1\"").setBody("""[{"id": 1, "name": "A", "email": "a@a.com"}]"""))
+        servidor.enqueue(MockResponse().setResponseCode(304).setHeader("ETag", "W/\"c1\""))
+        val contenedor = AppContainer(baseUrl = servidor.url("/").toString(), carpetaCacheHttp = carpeta.newFolder("http"))
+
+        contenedor.collectorRepository.obtenerColeccionistas().getOrThrow()
+        val repetida = contenedor.collectorRepository.obtenerColeccionistas().getOrThrow()
+
+        assertEquals(listOf(1), repetida.map { it.id })
+        servidor.takeRequest(1, TimeUnit.SECONDS)
+        assertEquals("W/\"c1\"", servidor.takeRequest(1, TimeUnit.SECONDS)?.getHeader("If-None-Match"))
     }
 }
 

@@ -25,14 +25,14 @@
 
 ## 3. Caché HTTP siempre revalidada (D2)
 
-- [ ] 3.1 En `ServiceAdapter`, hacer pública `clientePorDefecto(carpetaCache: File? = null)`. Con carpeta, agregar `Cache(carpetaCache, 10 MiB)` y un interceptor de aplicación que ponga `Cache-Control: max-age=0` en las peticiones `GET`. Agregar a `ServiceAdapterTest` pruebas con `MockWebServer` y `TemporaryFolder`:
+- [x] 3.1 En `ServiceAdapter`, hacer pública `clientePorDefecto(carpetaCache: File? = null)`. Con carpeta, agregar `Cache(carpetaCache, 10 MiB)` y un interceptor de aplicación que ponga `Cache-Control: max-age=0` en las peticiones `GET`. Agregar a `ServiceAdapterTest` pruebas con `MockWebServer` y `TemporaryFolder`:
   - la segunda consulta lleva `If-None-Match` con la `ETag` de la primera;
   - un 304 entrega los mismos datos como éxito;
   - con `Cache-Control: max-age=600`, la segunda consulta igual llega al servidor;
   - sin conexión, con una respuesta guardada, devuelve `ErrorDeCarga`;
   - sin carpeta, no se envía `If-None-Match`.
-- [ ] 3.2 Agregar `carpetaCacheHttp: File? = null` a `AppContainer`, que construye `ServiceAdapter(baseUrl, ServiceAdapter.clientePorDefecto(carpetaCacheHttp))`. `VinilosApplication` le pasa `cacheDir.resolve("http")`, separada de `image_cache`. Agregar a `AppContainerTest` que, con carpeta, una consulta repetida envía `If-None-Match`. Verificar que los demás casos de `AppContainerTest` siguen pasando sin carpeta.
-- [ ] 3.3 Documentar en el KDoc de `clientePorDefecto` y de `VinilosApplication` por qué la caché se revalida siempre y por qué va en una carpeta aparte. Verificar el texto en la revisión del commit.
+- [x] 3.2 Agregar `carpetaCacheHttp: File? = null` a `AppContainer`, que construye `ServiceAdapter(baseUrl, ServiceAdapter.clientePorDefecto(carpetaCacheHttp))`. `VinilosApplication` le pasa `cacheDir.resolve("http")`, separada de `image_cache`. Agregar a `AppContainerTest` que, con carpeta, una consulta repetida envía `If-None-Match`. Verificar que los demás casos de `AppContainerTest` siguen pasando sin carpeta.
+- [x] 3.3 Documentar en el KDoc de `clientePorDefecto` y de `VinilosApplication` por qué la caché se revalida siempre y por qué va en una carpeta aparte. Verificar el texto en la revisión del commit.
 
 ## 4. Versión de las respuestas (D3)
 
