@@ -184,7 +184,9 @@ private fun TextoEstrellas(llenas: Int, modifier: Modifier = Modifier) {
 
 @Composable
 private fun FilaArtista(artista: com.example.vinilos.data.model.Artista) {
-    val porDefecto = painterResource(R.drawable.inicio_artistas)
+    // Silueta vectorial de HU03 (optimizar-cache-e-imagenes, D1). El artista del álbum no trae su tipo, así
+    // que no se distingue la banda.
+    val porDefecto = painterResource(R.drawable.ic_artista_por_defecto)
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,

@@ -59,7 +59,7 @@ class ContenidoAlbumTest {
     }
 
     @Test
-    fun muestraUnaIlustracionLocalProvisionalAntesDeLosMetadatos() {
+    fun muestraLaPortadaAntesDeLosMetadatos() {
         val presentacion = presentarAlbum(album)
         rule.setContent {
             VinilosTheme { ContenidoAlbum(presentacion, onAtras = {}) }
