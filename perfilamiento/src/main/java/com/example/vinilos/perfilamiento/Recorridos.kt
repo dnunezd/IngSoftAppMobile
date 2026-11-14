@@ -26,13 +26,15 @@ class Recorridos {
 
     /** El álbum 100 tiene artistas, canciones y comentarios; si no está, el primero visible. */
     private fun abrirAlbumCompleto() {
-        (app.dispositivo.findObject(app.tag("album_100")) ?: app.esperarA(cualquierAlbum)).click()
+        app.conReintento { (app.dispositivo.findObject(app.tag("album_100")) ?: app.esperarA(cualquierAlbum)).click() }
         app.esperarA("atras")
     }
 
     /** El músico 100 tiene discografía; si no está, el primer artista visible. */
     private fun abrirArtistaConDiscografia() {
-        (app.dispositivo.findObject(app.tag("artista_musico_100")) ?: app.esperarA(cualquierArtista)).click()
+        app.conReintento {
+            (app.dispositivo.findObject(app.tag("artista_musico_100")) ?: app.esperarA(cualquierArtista)).click()
+        }
         app.esperarA("detalle_artista_nombre")
     }
 
@@ -114,9 +116,11 @@ class Recorridos {
         abrirArtistaConDiscografia()              // 1. Abrir un artista con discografía
         app.esperar(5.0)                          // 2. Esperar 5 s
         app.desplazarAbajo(2)                     // 3. Biografía y estadísticas
-        val album = app.buscarDesplazando(app.tagQueCumple("detalle_artista_album_\\d+"))
-        checkNotNull(album) { "El artista abierto no muestra álbumes en su discografía" }
-        album.click()                             // 4. Abrir un álbum de la discografía; esperar 5 s
+        app.conReintento {                        // 4. Abrir un álbum de la discografía; esperar 5 s
+            val album = app.buscarDesplazando(app.tagQueCumple("detalle_artista_album_\\d+"))
+            checkNotNull(album) { "El artista abierto no muestra álbumes en su discografía" }
+            album.click()
+        }
         app.esperar(5.0)
         app.atras()                               // 5. Regresar al artista; esperar 3 s
         app.esperarA("detalle_artista_nombre")
@@ -144,7 +148,7 @@ class Recorridos {
         escribirEnCampo("crear_descripcion", "Album creado por el recorrido de perfilamiento.")
         app.esperar(2.0)                          //    Esperar 2 s antes de enviar
 
-        campo("crear_enviar").click()             // 4. Enviar y observar la respuesta (máximo 10 s)
+        app.conReintento { campo("crear_enviar").click() }   // 4. Enviar y observar la respuesta (máximo 10 s)
         app.esperarA(app.tag("catalogo_contador"), 10_000)   // 5. De vuelta en el catálogo: se creó
         app.esperar(2.0)
     }
@@ -154,26 +158,28 @@ class Recorridos {
         app.buscarDesplazando(app.tag(tag), maximo = 6) ?: error("No se encontró el campo $tag en el formulario")
 
     private fun escribirEnCampo(tag: String, texto: String) {
-        campo(tag).text = texto
+        app.conReintento { campo(tag).text = texto }
         app.cerrarTeclado()
     }
 
     private fun elegirOpcion(tag: String, opcion: String) {
-        campo(tag).click()
-        app.esperarA(By.text(opcion), 5_000).click()
+        app.conReintento { campo(tag).click() }
+        app.conReintento { app.esperarA(By.text(opcion), 5_000).click() }
         app.dispositivo.waitForIdle(1_500)
     }
 
     /** Abre el selector de fecha, toca el día 1 del mes que muestra y acepta. */
     private fun elegirPrimerDiaDelMes() {
-        campo("crear_fecha").click()
+        app.conReintento { campo("crear_fecha").click() }
         app.esperarA(By.text("Aceptar"), 5_000)
         // Cada día se expone con su fecha completa ("domingo, 1 de noviembre de 2026").
-        val dia = app.dispositivo.findObject(By.textContains(", 1 de "))
-            ?: app.dispositivo.findObject(By.descContains(", 1 de "))
-            ?: error("No se encontró el día 1 en el selector de fecha")
-        dia.click()
-        app.esperarA(By.text("Aceptar"), 5_000).click()
+        app.conReintento {
+            val dia = app.dispositivo.findObject(By.textContains(", 1 de "))
+                ?: app.dispositivo.findObject(By.descContains(", 1 de "))
+                ?: error("No se encontró el día 1 en el selector de fecha")
+            dia.click()
+        }
+        app.conReintento { app.esperarA(By.text("Aceptar"), 5_000).click() }
         app.dispositivo.waitForIdle(1_500)
     }
 
@@ -188,16 +194,19 @@ class Recorridos {
     fun hu10() {
         app.entrarComoColeccionista()             // 1. Coleccionista -> artista no favorito
         app.abrirArtistas()
-        val artista = app.esperarA(cualquierArtista)
-        val tagDelArtista = artista.resourceName
-        artista.click()
+        val tagDelArtista = app.conReintento {
+            val artista = app.esperarA(cualquierArtista)
+            val nombre = artista.resourceName
+            artista.click()
+            nombre
+        }
         app.esperarA("detalle_artista_nombre")
         app.esperar(3.0)                          // 2. Esperar 3 s y presionar favorito una vez
-        botonFavorito().click()
+        app.conReintento { botonFavorito().click() }
         app.esperar(3.0)                          // 3. Esperar 3 s y verificar el estado
         app.atras()                               // 5. Salir y volver a abrir el artista
         app.esperarA("artistas_lista")
-        app.esperarA(tagDelArtista).click()
+        app.conReintento { app.esperarA(tagDelArtista).click() }
         app.esperarA("detalle_artista_nombre")
         botonFavorito()                           // 6. El botón sigue ahí con el estado guardado
         app.esperar(3.0)
@@ -225,17 +234,19 @@ class Recorridos {
         app.tocar("ver_albumes")
         // Con consultas guardadas la app muestra la lista; sin ellas, el error con "Reintentar".
         app.esperarA(app.tagQueCumple("catalogo_(error|contador)"), 30_000)
-        app.dispositivo.findObject(app.tag("catalogo_reintentar"))?.click()
+        app.conReintento { app.dispositivo.findObject(app.tag("catalogo_reintentar"))?.click() }
         app.esperar(12.0)
     }
 
     /** Fase 3, con el backend otra vez activo: reintentar y confirmar que se recupera. */
     @Test
     fun caidaFase3Recuperar() {
-        val reintentar = app.dispositivo.findObject(app.tag("catalogo_reintentar"))
-        if (reintentar != null) {
-            reintentar.click()
-        } else {
+        val reintento = app.conReintento {
+            val reintentar = app.dispositivo.findObject(app.tag("catalogo_reintentar"))
+            reintentar?.click()
+            reintentar != null
+        }
+        if (!reintento) {
             app.entrarComoVisitante()
             app.tocar("ver_albumes")
         }
