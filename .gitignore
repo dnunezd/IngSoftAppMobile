@@ -18,6 +18,8 @@ captures/
 local.properties
 *.log
 *.hprof
+# Trazas del sistema del perfilamiento (decenas de MB cada una): se guardan fuera de Git.
+*.perfetto-trace
 hs_err_pid*
 replay_pid*
 
