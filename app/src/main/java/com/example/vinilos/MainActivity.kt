@@ -7,6 +7,10 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.compose.ui.ExperimentalComposeUiApi
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.navigation.compose.rememberNavController
 import com.example.vinilos.navigation.VinilosNavHost
 import com.example.vinilos.ui.theme.VinilosTheme
@@ -17,6 +21,7 @@ class MainActivity : ComponentActivity() {
     // Atado a la Activity: la sesión es la misma para todas las pantallas y sobrevive a la rotación.
     private val sessionViewModel: SessionViewModel by viewModels()
 
+    @OptIn(ExperimentalComposeUiApi::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // El tema es siempre claro: los íconos de las barras del sistema deben ser oscuros
@@ -34,7 +39,10 @@ class MainActivity : ComponentActivity() {
                     collectorRepository = container.collectorRepository,
                     artistRepository = container.artistRepository,
                     albumRepository = container.albumRepository,
-                    favoriteRepository = container.favoriteRepository
+                    favoriteRepository = container.favoriteRepository,
+                    // Expone cada testTag como resource-id de accesibilidad: así UI Automator
+                    // (módulo :perfilamiento) encuentra los elementos desde otro proceso.
+                    modifier = Modifier.semantics { testTagsAsResourceId = true }
                 )
             }
         }
