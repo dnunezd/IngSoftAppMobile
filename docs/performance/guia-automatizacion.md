@@ -1,70 +1,113 @@
 # Guía: perfilamiento automatizado
 
-Cómo correr el plan de pruebas de rendimiento en un dispositivo con `scripts/perfilamiento/Perfilar.ps1`.
-El script maneja la app, captura los datos y las pantallas, y se detiene con instrucciones exactas
-cuando hay que hacer algo a mano en el Profiler de Android Studio.
+`scripts/perfilamiento/Perfilar.ps1` hace la [guía manual](guia-manual.md) sin tocar el teléfono:
+maneja la app con los mismos pasos de cada HU (una acción y 5 s), reinicia la app sin datos antes de
+cada grabación, anota el segundo de la grabación en que ocurre cada paso, toma la captura de Live
+Telemetry y arma `analisis.md`. Lo manual es iniciar y detener las tareas del Profiler y exportar lo
+grabado: el script se detiene con instrucciones exactas cuando toca, copia la carpeta de destino en
+el portapapeles y comprueba que cada archivo quedó guardado.
 
 ## Qué se necesita
 
-- Windows con PowerShell, `adb` en el `PATH` y `JAVA_HOME` apuntando a un JDK 17 o 21.
-- Docker Desktop corriendo y el repositorio BackVynils clonado junto a este (`..\BackVynils`);
-  si está en otra carpeta, pasar `-RutaBackend <carpeta>`.
-- El teléfono conectado (mejor por USB), desbloqueado y con la pantalla encendida.
-- Android Studio abierto con este proyecto.
+- Windows con PowerShell 7, `adb` (el script lo busca en el SDK si no está en el `PATH`) y un JDK 17 o 21
+  en `JAVA_HOME` (si está vacío, usa `%USERPROFILE%\.jdks\jbr-21.0.11` cuando existe).
+- Docker Desktop corriendo y BackVynils arriba (`docker compose up -d` en su carpeta, que se espera en
+  `..\BackVynils`; si está en otra, `-RutaBackend <carpeta>`).
+- El teléfono por USB, desbloqueado, en vertical y con la pantalla encendida. Con varios dispositivos,
+  `-Serial <serial>`.
+- Android Studio abierto con este proyecto, en esta rama.
 
 ## Pasos
 
-1. Levantar el backend, en la carpeta de BackVynils: `docker compose up -d --build`.
-2. Compilar e instalar: `.\scripts\perfilamiento\Perfilar.ps1 -Accion Preparar`.
-   Compila las dos variantes del APK (profileable y depurable); `Ejecutar` instala sola la que
-   necesita cada pasada.
-3. Revisar que todo esté listo: `.\scripts\perfilamiento\Perfilar.ps1 -Accion Validar`.
-4. Ejecutar el plan: `.\scripts\perfilamiento\Perfilar.ps1 -Accion Ejecutar`.
-   Para un solo escenario: `-Escenarios hu01`. Para elegir pasadas: `-Pasadas telemetria,asignaciones`.
-   Sin pausas de Android Studio: `-SinStudio`.
+```powershell
+.\scripts\perfilamiento\Perfilar.ps1 -Accion Preparar -Version v2.1.0   # compila e instala
+.\scripts\perfilamiento\Perfilar.ps1 -Accion Validar  -Version v2.1.0   # revisa que todo esté listo
+.\scripts\perfilamiento\Perfilar.ps1 -Accion Ejecutar -Version v2.1.0 -Fase starter -Escenarios hu01
+```
 
-Con varios dispositivos conectados, elegir uno con `-Serial <serial>` (el de `adb devices`).
+El script hace pausas que esperan respuesta: hay que correrlo en una terminal interactiva (PowerShell
+o la terminal de Android Studio), no en segundo plano.
 
-## Pasadas de cada HU
+- `-Version` es el tag o commit que se perfila. Sin ella, se perfila el código de la rama actual.
+- `-Fase` es la subcarpeta de resultados: `starter` (por defecto) para la primera fase, la línea base
+  sin micro-optimizaciones. La segunda fase se corre con su propio nombre y la versión que la contenga.
+- `-Propietario` es quien perfila (primera parte de la carpeta). Por defecto, el primer nombre de
+  `git config user.name` en minúsculas y sin tildes.
+- `-Escenarios hu01,hu02,...` elige las HU (por defecto las seis) y `-Grabaciones telemetria` o
+  `asignaciones` una sola de las dos grabaciones.
+- `-SinStudio` corre los recorridos sin pausas de Android Studio: sirve para probar que la app se deja
+  manejar antes de grabar.
 
-| Pasada | Qué se captura en Android Studio | APK |
-|---|---|---|
-| `telemetria` | View Live Telemetry (CPU, hilos y memoria en vivo) | profileable |
-| `traza` | System Trace: en Studio para HU03, HU07 y HU10; por línea de comandos en las demás | profileable |
-| `asignaciones` | Java/Kotlin Allocations (objetos creados) y Network Inspector (peticiones al backend) | depurable |
+## Qué hace `Preparar`
 
-El APK profileable da cifras representativas de CPU, memoria y fluidez. Java/Kotlin Allocations,
-Network Inspector y Heap Dump exigen el depurable, que es más lento: sus cifras no se comparan con
-las de las otras pasadas.
+1. Para un tag, saca su código en `build\perfilamiento\fuente-<versión>` (un `git worktree` aparte; la
+   rama actual no cambia) y, si le faltan, le aplica los parches de `scripts\perfilamiento\parches`:
+   - `compilacion-perf.patch`: el tipo de compilación `perf` (como `release`, firmado con la llave de
+     depuración, paquete `com.example.vinilos.perf`, depurable).
+   - `tags-ui-automator.patch`: `testTagsAsResourceId` en `MainActivity`, para que UI Automator
+     encuentre los elementos por su `testTag`.
 
-## Qué instala
+   Ninguno cambia la lógica de la app.
+2. Compila la app apuntando a `http://localhost:3000/` en
+   `build\perfilamiento\vinilos-<versión>-perf-depurable.apk`, y los recorridos (`:perfilamiento`,
+   siempre de esta rama) en `build\perfilamiento\vinilos-recorridos.apk`.
+3. Instala los dos y deja `adb reverse tcp:3000 tcp:3000`.
 
-| Paquete | Qué es |
-|---|---|
-| `com.example.vinilos.perf` | La app, compilada como `release` y firmada con la llave de depuración, en dos variantes (*profileable* y depurable) que se reemplazan entre sí. Convive con la app normal. |
-| `com.example.vinilos.perfilamiento` | Los recorridos (UI Automator). Corren en su propio proceso para no alterar la medición. |
+## Qué hace `Ejecutar` por cada HU
 
-## Qué deja en `docs/performance/resultados/<dispositivo>/`
+| Grabación | Antes | En Android Studio (pausa guiada) | Archivos |
+|---|---|---|---|
+| 1 | Reinicio sin datos (`force-stop`, `pm clear`, `am start`) | View Live Telemetry con **Now** y Network Inspector en App Inspection | `live-telemetry.png` (captura del script), `connections.json` (Network Inspector > **Export Connections**, antes de detener), `live-view.asdb` (tras **Stop Recording**: **Past Recordings** > **Export recording**) |
+| 2 | Reinicio sin datos | Track Memory Consumption (Java/Kotlin Allocations), **Full** | `memory.asdb` (tras **Stop Recording**: **Past Recordings** > **Export recording**) |
 
-- `HUxx/live-telemetry.png`, `HUxx/system-trace.png`, `HUxx/allocations.png` y
-  `HUxx/network-inspector.png`: capturas de la ventana de Android Studio.
-- `HUxx/system-trace.perfetto-trace`: traza del sistema grabada por línea de comandos; se abre en el
-  Profiler (pestaña *Past Recordings* > importar) para verla igual que una grabada desde Studio.
-- `HUxx/<pasada>-gfxinfo.txt` y `HUxx/<pasada>-telefono.png`: fluidez y pantalla final del teléfono.
-- `caida-backend/` y `memoria-navegacion/`: las dos pruebas transversales.
-- `registro-<fecha>.md`: la tabla del plan (§13) con memoria y cuadros lentos ya diligenciados.
-  CPU, hilo principal y hallazgos se completan a mano a partir de las capturas.
+En cada grabación:
 
-Los `.hprof` no se versionan (están en `.gitignore`).
+1. Cuando la tarea ya graba, el script pide escribir lo que marca el cronómetro **Recording**
+   (`mm:ss`). Con eso convierte la hora de cada paso en el segundo de la grabación (±2 s).
+2. Corre el recorrido de la HU (`perfilamiento/.../Recorridos.kt`): 5 s de reposo en el ingreso y
+   luego los pasos de la guía, cada uno seguido de 5 s. Si el paso abre otra pantalla, los 5 s cuentan
+   desde que aparece.
+3. Guía las exportaciones: deja la carpeta de destino en el portapapeles, dice el nombre del archivo y
+   no sigue hasta encontrarlo (o hasta que se salte con `s`).
+4. Escribe en `analisis.md` el bloque de esa grabación: la tabla de pasos con la columna **Seg.**, la
+   duración y lo medido por línea de comandos (memoria PSS al empezar y al terminar, cuadros
+   dibujados y lentos, percentil 90).
 
-## Diferencias con el plan
+Los `.asdb` se vuelven a abrir en Android Studio con **Past Recordings** > **Import recording**.
 
-- **HU10:** la app solo permite agregar favoritos, no quitarlos. El recorrido agrega una vez y
-  comprueba que el estado persiste al volver a abrir el artista; el script quita los favoritos por la
-  API antes de cada pasada.
-- **HU07:** se envía una vez por pasada. El álbum creado (`Perf <hora>`) se borra por la API al terminar, para que todos los
-  dispositivos vean los mismos datos.
-- **Caída del backend:** se corre dos veces, con las consultas guardadas y sin ellas, porque la app
-  responde distinto en cada caso.
-- **Caché:** al empezar se borran los datos de la app (caché fría). Con `-CacheCaliente` no se borran;
-  queda anotado en el registro.
+Datos del backend:
+
+- Antes de cada grabación de la HU10 quita los favoritos del coleccionista 100, para que Queen empiece
+  sin serlo. Lo hace en la base del Docker local (`docker compose ps -q db` + `psql`), porque el
+  `DELETE` de favoritos de BackVynils responde 204 sin borrar nada.
+- Después de cada grabación de la HU07 borra por la API solo los álbumes `Perf*` ("Perf 1" en la
+  grabación 1, "Perf 2" en la 2), para que ambas grabaciones vean el mismo catálogo. Si el filtro
+  abarcara todo el catálogo, no borra nada.
+
+## Qué deja en `docs/performance/resultados/`
+
+```
+<propietario>-<dispositivo>/        p. ej. jeffrey-motorola-edge-30
+└── HU01/ … HU10/
+    └── <fase>/                      starter en la primera fase
+        ├── live-telemetry.png
+        ├── live-view.asdb
+        ├── connections.json
+        ├── memory.asdb
+        └── analisis.md
+```
+
+`analisis.md` trae el dispositivo y la versión, un bloque por grabación, la lista de "Qué analizar"
+de la guía para esa HU y las secciones de hallazgos y pasos con más carga, que se completan a mano
+cruzando los segundos con lo grabado. Repetir una grabación reemplaza solo su bloque: lo escrito a
+mano se conserva.
+
+## A tener en cuenta
+
+- Los recorridos usan los datos de ejemplo de BackVynils: álbum 100 (Buscando América), músico 100
+  (Rubén Blades Bellido de Luna), banda 101 (Queen) y coleccionista 100 (Manolo Bellon).
+- UI Automator corre en su propio proceso, pero para encontrar los elementos la app arma su árbol de
+  accesibilidad: en Allocations pueden aparecer objetos `AccessibilityNodeInfo` que no son de la app.
+- En la HU03 y la HU07 el texto se escribe letra por letra (un cambio de texto por letra), para que se
+  vea lo que cuesta cada cambio. Se pone directo en el campo y no con teclas simuladas, porque el
+  teclado del teléfono las autocorrige ("perfilamiento" quedaba "Perfila miento") y las vuelve muy lentas.
