@@ -1,22 +1,15 @@
 package com.example.vinilos.data.repository
 
 import com.example.vinilos.data.model.Collector
-import com.example.vinilos.data.remote.CollectorApi
-import com.example.vinilos.data.remote.CollectorDto
-import com.example.vinilos.data.remote.ServiceAdapter
 
-open class CollectorRepository(
-    private val adaptador: ServiceAdapter,
-    private val api: CollectorApi = adaptador.api()
-) {
+/** Coleccionistas de la app. La implementación es [CollectorRepositoryImpl]. */
+interface CollectorRepository {
 
-    open suspend fun obtenerColeccionistas(): Result<List<Collector>> =
-        adaptador.llamar { api.getCollectors() }.map { lista -> lista.mapNotNull { it.aModelo() } }
+    suspend fun obtenerColeccionistas(): Result<List<Collector>>
 
-    private fun CollectorDto.aModelo(): Collector? {
-        val id = id ?: return null
-        val nombre = name ?: return null
-        val correo = email ?: return null
-        return Collector(id, nombre, correo)
-    }
+    /**
+     * Último listado guardado en el dispositivo (add-cache-consultas), en el orden en que llegó del
+     * backend; vacío si no hay caché o no se pudo leer.
+     */
+    suspend fun obtenerColeccionistasGuardados(): List<Collector>
 }

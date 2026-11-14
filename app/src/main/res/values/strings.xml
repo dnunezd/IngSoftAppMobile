@@ -32,6 +32,8 @@
     <string name="coleccionistas_buscar" tools:ignore="TypographyEllipsis">Buscar coleccionista...</string>
     <string name="coleccionistas_sin_resultados">No encontramos coleccionistas con esa búsqueda</string>
     <string name="coleccionistas_error">No pudimos cargar los coleccionistas</string>
+    <string name="coleccionistas_error_actualizar">No pudimos actualizar los coleccionistas</string>
+    <string name="coleccionistas_actualizando">Actualizando coleccionistas</string>
     <string name="coleccionistas_reintentar">Reintentar</string>
     <string name="coleccionistas_ingresar_visitante">Ingresar como Visitante</string>
     <string name="coleccionistas_vacio">Aún no hay coleccionistas registrados</string>
@@ -71,6 +73,8 @@
     <string name="artistas_tipo_banda">Banda</string>
     <string name="artistas_vacio">No se encontraron artistas</string>
     <string name="artistas_error">No se pudo cargar el listado de artistas</string>
+    <string name="artistas_error_actualizar">No se pudo actualizar el listado de artistas</string>
+    <string name="artistas_actualizando">Actualizando artistas</string>
     <string name="artistas_reintentar">Reintentar</string>
     <!-- Los tres puntos son el texto exacto del mockup. -->
     <string name="artistas_cargando" tools:ignore="TypographyEllipsis">Cargando artistas...</string>
@@ -83,6 +87,8 @@
     <!-- Los tres puntos son el texto exacto del mockup. -->
     <string name="artista_cargando" tools:ignore="TypographyEllipsis">Cargando artista...</string>
     <string name="artista_error">No se pudo cargar el artista</string>
+    <string name="artista_error_actualizar">No se pudo actualizar el artista</string>
+    <string name="artista_actualizando">Actualizando artista</string>
     <string name="artista_fecha_nacimiento">FECHA DE NACIMIENTO</string>
     <string name="artista_fecha_creacion">FECHA DE CREACIÓN</string>
     <string name="artista_integrantes">Integrantes</string>
@@ -103,6 +109,23 @@
         <item quantity="one">%d premio</item>
         <item quantity="other">%d premios</item>
     </plurals>
+
+    <!-- Botón de favorito en el detalle del artista (HU10), solo para el Coleccionista. Textos
+         alineados a los criterios 1 y 2 de la HU10 ("Agregar Favorito" / "Favorito"), que
+         prevalecen sobre el mockup de Figma ("Agregar a Favoritos" / "En tus favoritos"), igual
+         que se decidió en HU07. -->
+    <string name="favoritos_agregar">Agregar Favorito</string>
+    <string name="favoritos_guardando" tools:ignore="TypographyEllipsis">Guardando...</string>
+    <string name="favoritos_favorito">Favorito</string>
+    <string name="favoritos_bloqueado_nota">Este artista ya está en tus favoritos.</string>
+    <string name="favoritos_reintentar">Reintentar</string>
+    <string name="favoritos_reintentar_guardado">Reintentar guardar</string>
+    <string name="favoritos_error_comprobacion">No pudimos comprobar si es tu favorito</string>
+    <string name="favoritos_error_guardado">No se pudo guardar el favorito, intenta de nuevo</string>
+    <string name="favoritos_no_disponible">El artista ya no está disponible</string>
+    <string name="favoritos_no_disponible_descripcion">El artista seleccionado ya no se encuentra en el catálogo o fue retirado de la colección.</string>
+    <string name="favoritos_volver_artistas">Volver al listado de artistas</string>
+    <string name="favoritos_confirmacion">%1$s se agregó a tus favoritos</string>
 
     <!-- Catálogo de álbumes (HU01): los mensajes de estado son los de la HU; el resto, del mockup. -->
     <string name="catalogo_encabezado">Álbumes</string>
@@ -177,5 +200,7 @@
     <string name="detalle_no_disponible">El álbum ya no está disponible</string>
     <string name="detalle_volver_catalogo">Volver al catálogo</string>
     <string name="detalle_error">No pudimos cargar el álbum</string>
+    <string name="detalle_error_actualizar">No pudimos actualizar el álbum</string>
+    <string name="detalle_actualizando">Actualizando álbum</string>
     <string name="detalle_reintentar">Reintentar</string>
 </resources>

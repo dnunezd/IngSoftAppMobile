@@ -1,9 +1,10 @@
 package com.example.vinilos.viewmodel
 
 import com.example.vinilos.MainDispatcherRule
+import com.example.vinilos.data.model.Album
+import com.example.vinilos.data.model.AlbumNuevo
 import com.example.vinilos.data.model.AlbumResumen
 import com.example.vinilos.data.remote.ErrorDeCarga
-import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.AlbumRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -20,7 +21,7 @@ import org.junit.Test
 /** Cada consulta queda pendiente hasta que la prueba la completa. */
 private class CatalogoFalso(
     private val ignoraCancelacion: Boolean = false
-) : AlbumRepository(ServiceAdapter("http://localhost/")) {
+) : AlbumRepository {
     val consultas = mutableListOf<CompletableDeferred<Result<List<AlbumResumen>>>>()
 
     override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> {
@@ -31,6 +32,11 @@ private class CatalogoFalso(
     }
 
     fun responder(resultado: Result<List<AlbumResumen>>) = consultas.last().complete(resultado)
+
+    override suspend fun obtenerAlbum(id: Int): Result<Album> = error("No se usa en esta prueba")
+    override suspend fun obtenerAlbumesGuardados(): List<AlbumResumen> = emptyList()
+    override suspend fun obtenerAlbumGuardado(id: Int): Album? = error("No se usa en esta prueba")
+    override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> = error("No se usa en esta prueba")
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -223,8 +229,12 @@ class AlbumsViewModelTest {
     @Test
     fun unErrorInesperadoNoSeDisfrazaDeErrorDeCarga() {
         val esperado = IllegalStateException("Error de programación")
-        val repositorio = object : AlbumRepository(ServiceAdapter("http://localhost/")) {
+        val repositorio = object : AlbumRepository {
             override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> = Result.failure(esperado)
+            override suspend fun obtenerAlbum(id: Int): Result<Album> = error("No se usa en esta prueba")
+            override suspend fun obtenerAlbumesGuardados(): List<AlbumResumen> = emptyList()
+            override suspend fun obtenerAlbumGuardado(id: Int): Album? = error("No se usa en esta prueba")
+            override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> = error("No se usa en esta prueba")
         }
         var estadoFinal: AlbumsUiState? = null
 

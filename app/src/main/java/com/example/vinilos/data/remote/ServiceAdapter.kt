@@ -14,7 +14,13 @@ import java.lang.reflect.Type
 import java.util.concurrent.TimeUnit
 
 /** Error único de carga: sin conexión, tiempo agotado, error del servidor o respuesta ilegible. */
-class ErrorDeCarga(causa: Throwable? = null) : Exception("No se pudo cargar la información", causa)
+open class ErrorDeCarga(causa: Throwable? = null) : Exception("No se pudo cargar la información", causa)
+
+/**
+ * El backend respondió 404: lo consultado no existe. Sigue siendo un [ErrorDeCarga] para quien no necesite
+ * distinguirlo; los repositorios que sí, lo traducen a su propio error sin conocer el protocolo HTTP.
+ */
+class RecursoNoEncontrado(causa: Throwable? = null) : ErrorDeCarga(causa)
 
 /**
  * Único punto de acceso al backend BackVynils: construye el cliente de red una sola vez,
@@ -37,7 +43,8 @@ class ServiceAdapter(
 
     /**
      * Ejecuta una consulta al backend y devuelve su resultado. Los fallos de red, del servidor o de
-     * lectura de la respuesta se reportan como [ErrorDeCarga]; la cancelación se relanza.
+     * lectura de la respuesta se reportan como [ErrorDeCarga] (un 404, como [RecursoNoEncontrado]); la
+     * cancelación se relanza.
      */
     suspend fun <T> llamar(bloque: suspend () -> T): Result<T> =
         try {
@@ -47,7 +54,7 @@ class ServiceAdapter(
         } catch (e: IOException) {
             Result.failure(ErrorDeCarga(e))
         } catch (e: HttpException) {
-            Result.failure(ErrorDeCarga(e))
+            Result.failure(if (e.code() == HTTP_NO_ENCONTRADO) RecursoNoEncontrado(e) else ErrorDeCarga(e))
         } catch (e: JsonParseException) {
             Result.failure(ErrorDeCarga(e))
         } catch (e: KotlinNullPointerException) {
@@ -88,6 +95,7 @@ class ServiceAdapter(
 
     private companion object {
         const val TIMEOUT_SEGUNDOS = 10L
+        const val HTTP_NO_ENCONTRADO = 404
 
         fun clientePorDefecto(): OkHttpClient = OkHttpClient.Builder()
             .connectTimeout(TIMEOUT_SEGUNDOS, TimeUnit.SECONDS)

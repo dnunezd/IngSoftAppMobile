@@ -1,8 +1,9 @@
 package com.example.vinilos
 
 import com.example.vinilos.data.model.Album
+import com.example.vinilos.data.model.AlbumNuevo
 import com.example.vinilos.data.model.AlbumResumen
-import com.example.vinilos.data.remote.ServiceAdapter
+import com.example.vinilos.data.remote.ErrorDeCarga
 import com.example.vinilos.data.repository.AlbumRepository
 
 /**
@@ -13,7 +14,7 @@ import com.example.vinilos.data.repository.AlbumRepository
 class RepositorioAlbumesFalso(
     private val resultados: Map<Int, Result<Album>> = emptyMap(),
     catalogo: List<Result<List<AlbumResumen>>> = listOf(Result.success(emptyList()))
-) : AlbumRepository(ServiceAdapter("http://localhost/")) {
+) : AlbumRepository {
     var consultas = 0
     var ultimoId: Int? = null
     var consultasCatalogo = 0
@@ -30,4 +31,9 @@ class RepositorioAlbumesFalso(
         consultasCatalogo++
         return if (respuestasCatalogo.size > 1) respuestasCatalogo.removeFirst() else respuestasCatalogo.first()
     }
+
+    /** Sin caché ni red, como cuando este falso heredaba del repositorio real sin DAO. */
+    override suspend fun obtenerAlbumesGuardados(): List<AlbumResumen> = emptyList()
+    override suspend fun obtenerAlbumGuardado(id: Int): Album? = null
+    override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> = Result.failure(ErrorDeCarga())
 }

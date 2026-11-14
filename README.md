@@ -39,6 +39,7 @@ Va del 2 al 15 de noviembre de 2026. Su primer release será **`v2.0.0` – Spri
 | HU07 · Crear un álbum (Jeffrey Díaz) | Parte 1: formulario solo para el Coleccionista, validación, selector de fecha, envío con reintento y álbum nuevo marcado en el catálogo ([#83](https://github.com/dnunezd/IngSoftAppMobile/pull/83)) | E2E `FN07-ESC01` a `ESC07` ([#85](https://github.com/dnunezd/IngSoftAppMobile/pull/85)) | Wiki y mockups (T07-7) y parte 2 de desempeño |
 | HU10 · Agregar artistas favoritos (Lorena Nossa) | — | Botón de favorito en el detalle del artista, con confirmación y errores ([#86](https://github.com/dnunezd/IngSoftAppMobile/pull/86)) | E2E (T10-5), wiki y mockups (T10-7) |
 
+- **Caché sin conexión** (rama `feature/cache-consultas`, cambio `add-cache-consultas`): extiende la caché del catálogo a coleccionistas, detalle de álbum, listado y detalle de artistas y favoritos, en respuesta a la revisión "si se quedan sin internet, no van a mostrar nada".
 - **Regresión:** el equipo decidió no hacer pruebas de regresión en este sprint (T07-6 y T10-6).
 - **Pruebas que fallaban en API 23:** se corrigieron dos.
   - En `FN03-ESC07`, el buscador quedaba enfocado al girar y el teclado reenviaba el texto (`ru` → `ruru`); ahora la prueba quita el foco antes de girar.
@@ -61,7 +62,7 @@ Va del 2 al 15 de noviembre de 2026. Su primer release será **`v2.0.0` – Spri
 
 La versión publicada es `1.1.0` (`versionCode` 2), en el release [`v1.1.0`](https://github.com/dnunezd/IngSoftAppMobile/releases/tag/v1.1.0) sobre `main`, con el APK `vinilos-v1.1.0.apk` adjunto. El identificador de la app es `com.example.vinilos` y funciona desde Android 6.0 (API 23). Para instalarla sin compilar, descarga el APK del release en el teléfono y ábrelo.
 
-El primer release del Sprint 2 será **`v2.0.0` – Sprint 2**. `app/build.gradle.kts` ya tiene `versionName` `2.0.0` y `versionCode` 3. Los releases siguen el formato `v<versión> – Sprint <n>`, como `v1.1.0 – Sprint 1`.
+El primer release del Sprint 2 fue **`v2.0.0` – Sprint 2**; el segundo será **`v2.1.0` – Sprint 2**. `app/build.gradle.kts` ya tiene `versionName` `2.1.0` y `versionCode` 4. Los releases siguen el formato `v<versión> – Sprint <n>`, como `v1.1.0 – Sprint 1`.
 
 Para cada release:
 
@@ -81,7 +82,7 @@ Antes de generarlo, comprueba que el backend desplegado responda (ver [opción A
 | Docker | Docker Desktop o Docker Engine con Compose, solo para el backend local |
 | Dispositivo | Físico o emulador con Android 6.0 (API 23) o superior |
 
-Stack: Kotlin 1.9, Jetpack Compose con Material 3, MVVM + Repository, Retrofit + OkHttp, Coil, Navigation Compose y corrutinas. Gradle 8.7 viene con el wrapper.
+Stack: Kotlin 1.9, Jetpack Compose con Material 3, MVVM + Repository, Retrofit + OkHttp, Room, Coil, Navigation Compose y corrutinas. Gradle 8.7 viene con el wrapper.
 
 ## Puesta en marcha
 
@@ -155,7 +156,7 @@ Agrega `-PbaseUrl=...` para usar el backend local. Si hay varios dispositivos co
 | Tipo | Comando | Cantidad | Necesita |
 |---|---|---|---|
 | Lint y unitarias (lo que corre la CI) | `./gradlew lint testDebugUnitTest --continue` | 220 unitarias | Nada |
-| Instrumentadas sin E2E | `./gradlew connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.notClass=com.example.vinilos.IngresoE2ETest,com.example.vinilos.CatalogoE2ETest,com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest,com.example.vinilos.ArtistasE2ETest"` | 112 | Dispositivo |
+| Instrumentadas sin E2E | `./gradlew connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.notClass=com.example.vinilos.IngresoE2ETest,com.example.vinilos.CatalogoE2ETest,com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest,com.example.vinilos.ArtistasE2ETest,com.example.vinilos.ArtistaDetalleE2ETest,com.example.vinilos.CrearAlbumE2ETest,com.example.vinilos.ArtistasFavoritosE2ETest"` | 112 | Dispositivo |
 | Todas las instrumentadas (con E2E) | `./gradlew connectedDebugAndroidTest -PbaseUrl=http://localhost:3000/` | 131 (112 + 19 E2E) | Dispositivo, backend local con datos y `adb reverse` en un teléfono |
 
 - El dispositivo debe estar **desbloqueado y con la pantalla encendida** durante toda la corrida.
@@ -175,18 +176,21 @@ Las E2E recorren la app contra el backend real. Cada escenario se nombra con el 
 | `AlbumDetalleE2ETest` | HU02 | `FN02-ESC01` |
 | `AlbumDetalleBackendRealTest` | HU02 | `FN02-ESC02` y `ESC03` |
 | `ArtistasE2ETest` | HU03 | `FN03-ESC01` a `ESC07` |
+| `ArtistaDetalleE2ETest` | HU04 | `FN04-ESC01` a `ESC07` |
+| `CrearAlbumE2ETest` | HU07 | `FN07-ESC01` a `ESC07` (crea y borra álbumes: correr contra BackVynils local) |
+| `ArtistasFavoritosE2ETest` | HU10 | `FN10-ESC01` a `ESC08` (agrega favoritos: correr contra BackVynils local) |
 
-Total: **19 pruebas E2E**. Para correrlas y traer la evidencia (con `connectedDebugAndroidTest` la app se desinstala al terminar y la evidencia se pierde):
+Total: **41 pruebas E2E**. Para correrlas y traer la evidencia (con `connectedDebugAndroidTest` la app se desinstala al terminar y la evidencia se pierde):
 
 ```bash
 ./gradlew installDebug installDebugAndroidTest -PbaseUrl=http://localhost:3000/
 adb reverse tcp:3000 tcp:3000                    # solo en un teléfono
 adb shell rm -rf /storage/emulated/0/Android/data/com.example.vinilos/files/e2e-evidencia
-adb shell am instrument -w -e class com.example.vinilos.IngresoE2ETest,com.example.vinilos.CatalogoE2ETest,com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest,com.example.vinilos.ArtistasE2ETest com.example.vinilos.test/androidx.test.runner.AndroidJUnitRunner
+adb shell am instrument -w -e class com.example.vinilos.IngresoE2ETest,com.example.vinilos.CatalogoE2ETest,com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest,com.example.vinilos.ArtistasE2ETest,com.example.vinilos.ArtistaDetalleE2ETest,com.example.vinilos.CrearAlbumE2ETest,com.example.vinilos.ArtistasFavoritosE2ETest com.example.vinilos.test/androidx.test.runner.AndroidJUnitRunner
 adb pull /storage/emulated/0/Android/data/com.example.vinilos/files/e2e-evidencia ./e2e-evidencia
 ```
 
-Debe terminar en `OK (19 tests)`. En Git Bash antepone `MSYS_NO_PATHCONV=1` a los `adb` que llevan rutas del dispositivo.
+Debe terminar en `OK (41 tests)`. En Git Bash antepone `MSYS_NO_PATHCONV=1` a los `adb` que llevan rutas del dispositivo.
 
 ## Problemas frecuentes
 
@@ -205,7 +209,7 @@ Debe terminar en `OK (19 tests)`. En Git Bash antepone `MSYS_NO_PATHCONV=1` a lo
 
 ```
 app/src/main/java/com/example/vinilos/
-  data/        model, remote (ServiceAdapter, interfaces Retrofit y DTO), repository
+  data/        model, remote (ServiceAdapter, interfaces Retrofit y DTO), local (Room: caché sin conexión), repository
   viewmodel/   SessionViewModel y un ViewModel con su estado por pantalla
   ui/          pantallas Compose por funcionalidad y tema
   navigation/  VinilosNavHost: grafo de navegación
@@ -214,7 +218,11 @@ docs/pruebas/  evidencia de pruebas por sprint e historia
 openspec/      specs vigentes (specs/), cambios en curso (changes/) y archivados (changes/archive/)
 ```
 
-**MVVM** con capa de datos por **Repository**: la vista dibuja el estado que expone el `ViewModel` y le envía los eventos; los repositorios hablan con el backend solo a través del `ServiceAdapter`, que construye una sola vez el cliente de red y traduce los errores de red y del servidor a `ErrorDeCarga`. Los diagramas están en la página de cada sprint en la wiki.
+**MVVM** con capa de datos por **Repository**: la vista dibuja el estado que expone el `ViewModel` y le envía los eventos; los repositorios son interfaces con su implementación (`*RepositoryImpl`) y hablan con el backend solo a través del `ServiceAdapter`, que construye una sola vez el cliente de red y traduce los errores de red y del servidor a `ErrorDeCarga` (un 404, a `RecursoNoEncontrado`). Cada repositorio convierte y ordena en un dispatcher inyectado (`Dispatchers.Default`), fuera del hilo principal.
+
+**Sin conexión:** los repositorios guardan en Room la última respuesta de cada consulta de lectura: catálogo y detalle de álbumes, coleccionistas, listado de artistas, detalle de cada artista abierto y favoritos confirmados. Al abrir una de esas pantallas se muestra lo guardado mientras se consulta el backend; si la consulta falla, se conserva con un aviso breve, y la pantalla de error queda solo para cuando no hay nada guardado. Las escrituras (crear un álbum, agregar un favorito) siguen necesitando conexión. El detalle está en [`plan-adopcion-room.md`](docs/arquitectura/plan-adopcion-room.md) y en los cambios OpenSpec `add-cache-catalogo` y `add-cache-consultas`.
+
+Los diagramas están en la página de cada sprint en la wiki.
 
 ## Flujo de trabajo
 

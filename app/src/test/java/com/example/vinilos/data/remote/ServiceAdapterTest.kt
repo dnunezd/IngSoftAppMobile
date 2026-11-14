@@ -94,6 +94,33 @@ class ServiceAdapterTest {
     }
 
     @Test
+    fun respuesta404SeReportaComoRecursoNoEncontrado() = runTest {
+        servidor.enqueue(MockResponse().setResponseCode(404))
+        val adaptador = ServiceAdapter(servidor.url("/").toString())
+        val api = adaptador.api<ApiDePrueba>()
+
+        val error = adaptador.llamar { api.obtenerPrueba() }.exceptionOrNull()
+
+        // Los repositorios lo distinguen sin conocer HTTP; para los demás sigue siendo un error de carga.
+        assertTrue(error is RecursoNoEncontrado)
+        assertTrue(error is ErrorDeCarga)
+    }
+
+    @Test
+    fun otrosErroresHttpNoSonRecursoNoEncontrado() = runTest {
+        servidor.enqueue(MockResponse().setResponseCode(500))
+        servidor.enqueue(MockResponse().setResponseCode(400))
+        val adaptador = ServiceAdapter(servidor.url("/").toString())
+        val api = adaptador.api<ApiDePrueba>()
+
+        repeat(2) {
+            val error = adaptador.llamar { api.obtenerPrueba() }.exceptionOrNull()
+            assertTrue(error is ErrorDeCarga)
+            assertTrue(error !is RecursoNoEncontrado)
+        }
+    }
+
+    @Test
     fun respuesta500ConservaElCodigoHttp() = runTest {
         servidor.enqueue(MockResponse().setResponseCode(500))
         val adaptador = ServiceAdapter(servidor.url("/").toString())

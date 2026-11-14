@@ -1,6 +1,5 @@
 package com.example.vinilos.data.remote
 
-import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
@@ -11,7 +10,7 @@ interface AlbumApi {
     suspend fun obtenerAlbumes(): List<AlbumDto>
 
     @GET("albums/{id}")
-    suspend fun obtenerAlbum(@Path("id") id: Int): Response<AlbumDto>
+    suspend fun obtenerAlbum(@Path("id") id: Int): AlbumDto
 
     @POST("albums")
     suspend fun crearAlbum(@Body album: CrearAlbumDto): AlbumDto

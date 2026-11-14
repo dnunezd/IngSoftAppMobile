@@ -19,3 +19,12 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
+# add-cache-consultas (design.md, D2): la base local guarda como JSON, con Gson, las listas de los
+# detalles. Hoy isMinifyEnabled = false; si se activa, R8 renombraría sus campos y lo guardado no se
+# podría leer. En ese caso, descomentar:
+#-keep class com.example.vinilos.data.model.Cancion { *; }
+#-keep class com.example.vinilos.data.model.Artista { *; }
+#-keep class com.example.vinilos.data.model.Comentario { *; }
+#-keep class com.example.vinilos.data.model.IntegranteArtista { *; }
+#-keep class com.example.vinilos.data.model.AlbumArtista { *; }
+#-keep class com.example.vinilos.data.model.PremioArtista { *; }

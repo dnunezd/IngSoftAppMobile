@@ -3,8 +3,8 @@ package com.example.vinilos.viewmodel
 import com.example.vinilos.MainDispatcherRule
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
+import com.example.vinilos.data.model.ArtistaDetalle
 import com.example.vinilos.data.remote.ErrorDeCarga
-import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.ArtistRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -15,7 +15,7 @@ import org.junit.Rule
 import org.junit.Test
 
 /** Repositorio falso: cada llamada devuelve el resultado que se complete a mano. */
-private class RepositorioArtistasFalso : ArtistRepository(ServiceAdapter("http://localhost/")) {
+private class RepositorioArtistasFalso : ArtistRepository {
     val llamadas = mutableListOf<CompletableDeferred<Result<List<Artist>>>>()
 
     override suspend fun obtenerArtistas(): Result<List<Artist>> {
@@ -23,6 +23,14 @@ private class RepositorioArtistasFalso : ArtistRepository(ServiceAdapter("http:/
         llamadas += respuesta
         return respuesta.await()
     }
+
+    /** Listado guardado en el dispositivo (add-cache-consultas). */
+    var guardados: List<Artist> = emptyList()
+
+    override suspend fun obtenerArtistasGuardados(): List<Artist> = guardados
+
+    override suspend fun obtenerDetalle(tipo: ArtistType, id: Int): Result<ArtistaDetalle> = error("No se usa en esta prueba")
+    override suspend fun obtenerDetalleGuardado(tipo: ArtistType, id: Int): ArtistaDetalle? = error("No se usa en esta prueba")
 }
 
 class ArtistsViewModelTest {
@@ -214,5 +222,62 @@ class ArtistsViewModelTest {
         advanceUntilIdle()
         vm.buscar("que")
         assertEquals(ArtistsUiState.Error, vm.uiState.value)
+    }
+
+    // ---------- Listado guardado (add-cache-consultas, D5) ----------
+
+    private fun repoConGuardados() = RepositorioArtistasFalso().apply { guardados = listOf(queen) }
+
+    @Test
+    fun conListadoGuardadoSeMuestraDeInmediatoYLuegoLaRespuesta() = runTest {
+        val repo = repoConGuardados()
+        val vm = ArtistsViewModel(repo)
+        advanceUntilIdle()
+
+        assertEquals(ArtistsUiState.Exito(listOf(queen), actualizando = true), vm.uiState.value)
+
+        cargado(repo)
+        advanceUntilIdle()
+        assertEquals(ArtistsUiState.Exito(todos), vm.uiState.value)
+    }
+
+    @Test
+    fun conListadoGuardadoYRedMalSeConservaConElAviso() = runTest {
+        val repo = repoConGuardados()
+        val vm = ArtistsViewModel(repo)
+        advanceUntilIdle()
+
+        repo.llamadas.single().complete(error)
+        advanceUntilIdle()
+
+        assertEquals(ArtistsUiState.Exito(listOf(queen), errorAlActualizar = true), vm.uiState.value)
+    }
+
+    @Test
+    fun laBusquedaSobreElListadoGuardadoSeConservaAlLlegarLaRespuesta() = runTest {
+        val repo = repoConGuardados()
+        val vm = ArtistsViewModel(repo)
+        advanceUntilIdle()
+
+        vm.buscar("rub")
+        cargado(repo)
+        advanceUntilIdle()
+
+        val estado = vm.uiState.value as ArtistsUiState.Exito
+        assertEquals("rub", estado.consulta)
+        assertEquals(listOf(ruben), estado.visibles)
+    }
+
+    @Test
+    fun avisoMostradoApagaElAvisoSinQuitarElListado() = runTest {
+        val repo = repoConGuardados()
+        val vm = ArtistsViewModel(repo)
+        advanceUntilIdle()
+        repo.llamadas.single().complete(error)
+        advanceUntilIdle()
+
+        vm.avisoMostrado()
+
+        assertEquals(ArtistsUiState.Exito(listOf(queen)), vm.uiState.value)
     }
 }

@@ -3,7 +3,6 @@ package com.example.vinilos.viewmodel
 import com.example.vinilos.MainDispatcherRule
 import com.example.vinilos.data.model.Collector
 import com.example.vinilos.data.remote.ErrorDeCarga
-import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.CollectorRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -14,8 +13,13 @@ import org.junit.Rule
 import org.junit.Test
 
 /** Repositorio falso: cada llamada devuelve el resultado que se complete a mano. */
-private class RepositorioFalso : CollectorRepository(ServiceAdapter("http://localhost/")) {
+private class RepositorioFalso : CollectorRepository {
     val llamadas = mutableListOf<CompletableDeferred<Result<List<Collector>>>>()
+
+    /** Listado guardado en el dispositivo (add-cache-consultas). */
+    var guardados: List<Collector> = emptyList()
+
+    override suspend fun obtenerColeccionistasGuardados(): List<Collector> = guardados
 
     override suspend fun obtenerColeccionistas(): Result<List<Collector>> {
         val respuesta = CompletableDeferred<Result<List<Collector>>>()
@@ -263,5 +267,76 @@ class CollectorsViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, repo.llamadas.size)
+    }
+
+    // ---------- Listado guardado (add-cache-consultas, D5) ----------
+
+    private fun repoConGuardados() = RepositorioFalso().apply { guardados = listOf(manolo, jaime) }
+
+    @Test
+    fun conListadoGuardadoSeMuestraDeInmediatoYLuegoLaRespuesta() = runTest {
+        val repo = repoConGuardados()
+        val vm = CollectorsViewModel(repo)
+        advanceUntilIdle()
+
+        assertEquals(CollectorsUiState.Exito(listOf(manolo, jaime), actualizando = true), vm.uiState.value)
+
+        repo.llamadas.single().complete(Result.success(todos))
+        advanceUntilIdle()
+
+        assertEquals(CollectorsUiState.Exito(todos), vm.uiState.value)
+    }
+
+    @Test
+    fun conListadoGuardadoYRedMalSeConservaConElAviso() = runTest {
+        val repo = repoConGuardados()
+        val vm = CollectorsViewModel(repo)
+        advanceUntilIdle()
+
+        repo.llamadas.single().complete(error)
+        advanceUntilIdle()
+
+        assertEquals(CollectorsUiState.Exito(listOf(manolo, jaime), errorAlActualizar = true), vm.uiState.value)
+    }
+
+    @Test
+    fun conListadoGuardadoYRespuestaVaciaTerminaEnVacio() = runTest {
+        val repo = repoConGuardados()
+        val vm = CollectorsViewModel(repo)
+        advanceUntilIdle()
+
+        repo.llamadas.single().complete(Result.success(emptyList()))
+        advanceUntilIdle()
+
+        assertEquals(CollectorsUiState.Vacio, vm.uiState.value)
+    }
+
+    @Test
+    fun laBusquedaFuncionaSobreElListadoGuardadoSinPerderElAviso() = runTest {
+        val repo = repoConGuardados()
+        val vm = CollectorsViewModel(repo)
+        advanceUntilIdle()
+        repo.llamadas.single().complete(error)
+        advanceUntilIdle()
+
+        vm.buscar("jaime")
+
+        val estado = vm.uiState.value as CollectorsUiState.Exito
+        assertEquals(listOf(jaime), estado.visibles)
+        assertTrue(estado.errorAlActualizar)
+    }
+
+    @Test
+    fun avisoMostradoApagaElAvisoSinQuitarElListadoNiLaBusqueda() = runTest {
+        val repo = repoConGuardados()
+        val vm = CollectorsViewModel(repo)
+        advanceUntilIdle()
+        repo.llamadas.single().complete(error)
+        advanceUntilIdle()
+        vm.buscar("jaime")
+
+        vm.avisoMostrado()
+
+        assertEquals(CollectorsUiState.Exito(listOf(manolo, jaime), consulta = "jaime"), vm.uiState.value)
     }
 }

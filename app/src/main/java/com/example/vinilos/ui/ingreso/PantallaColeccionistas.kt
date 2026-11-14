@@ -29,11 +29,14 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -68,6 +71,7 @@ const val TagVolver = "boton_volver"
 const val TagBuscador = "campo_busqueda"
 const val TagSinResultados = "sin_resultados"
 const val TagListaColeccionistas = "lista_coleccionistas"
+const val TagActualizandoColeccionistas = "coleccionistas_actualizando"
 
 fun tagColeccionista(id: Int) = "coleccionista_$id"
 
@@ -80,44 +84,65 @@ fun PantallaColeccionistas(
     onSeleccionar: (Collector) -> Unit,
     onVisitante: () -> Unit,
     onAtras: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onAvisoMostrado: () -> Unit = {}
 ) {
-    Column(
+    val exito = estado as? CollectorsUiState.Exito
+    val avisos = remember { SnackbarHostState() }
+    AvisoUnaVez(
+        mostrar = exito?.errorAlActualizar == true,
+        mensaje = stringResource(R.string.coleccionistas_error_actualizar),
+        avisos = avisos,
+        onMostrado = onAvisoMostrado
+    )
+    val descripcionActualizando = stringResource(R.string.coleccionistas_actualizando)
+    Box(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.safeDrawing)
     ) {
-        EncabezadoVinilo(modifier = Modifier.padding(horizontal = 12.dp), onAtras = onAtras)
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .testTag(TagListaColeccionistas),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            item { TitularColeccionistas() }
-            when (estado) {
-                CollectorsUiState.Cargando -> item { Cargando() }
-                CollectorsUiState.Error -> item { Error(onReintentar, onVisitante) }
-                CollectorsUiState.Vacio -> item { Vacio(onAtras) }
-                is CollectorsUiState.Exito -> {
-                    item {
-                        Box {
-                            Buscador(consultaInicial = estado.consulta, onBuscar = onBuscar)
-                            NotasDelBuscador(modifier = Modifier.align(Alignment.TopEnd))
+        Column(modifier = Modifier.fillMaxSize()) {
+            EncabezadoVinilo(
+                modifier = Modifier.padding(horizontal = 12.dp),
+                onAtras = onAtras,
+                accion = if (exito?.actualizando == true) {
+                    { IndicadorActualizando(descripcionActualizando, TagActualizandoColeccionistas) }
+                } else {
+                    null
+                }
+            )
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .testTag(TagListaColeccionistas),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                item { TitularColeccionistas() }
+                when (estado) {
+                    CollectorsUiState.Cargando -> item { Cargando() }
+                    CollectorsUiState.Error -> item { Error(onReintentar, onVisitante) }
+                    CollectorsUiState.Vacio -> item { Vacio(onAtras) }
+                    is CollectorsUiState.Exito -> {
+                        item {
+                            Box {
+                                Buscador(consultaInicial = estado.consulta, onBuscar = onBuscar)
+                                NotasDelBuscador(modifier = Modifier.align(Alignment.TopEnd))
+                            }
                         }
-                    }
-                    if (estado.visibles.isEmpty()) {
-                        item { SinResultados() }
-                    } else {
-                        items(estado.visibles, key = { it.id }) { coleccionista ->
-                            FilaColeccionista(coleccionista, onSeleccionar)
+                        if (estado.visibles.isEmpty()) {
+                            item { SinResultados() }
+                        } else {
+                            items(estado.visibles, key = { it.id }) { coleccionista ->
+                                FilaColeccionista(coleccionista, onSeleccionar)
+                            }
                         }
                     }
                 }
             }
         }
+        SnackbarHost(avisos, Modifier.align(Alignment.BottomCenter))
     }
 }
 

@@ -1,10 +1,11 @@
 package com.example.vinilos.viewmodel
 
 import com.example.vinilos.MainDispatcherRule
+import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.ArtistaDetalle
 import com.example.vinilos.data.remote.ErrorDeCarga
-import com.example.vinilos.data.remote.ServiceAdapter
+import com.example.vinilos.data.remote.RecursoNoEncontrado
 import com.example.vinilos.data.repository.ArtistRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -14,7 +15,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
-private class ArtistRepositoryFalso : ArtistRepository(ServiceAdapter("http://localhost/")) {
+private class ArtistRepositoryFalso : ArtistRepository {
     val consultas = mutableListOf<Triple<ArtistType, Int, CompletableDeferred<Result<ArtistaDetalle>>>>()
 
     override suspend fun obtenerDetalle(tipo: ArtistType, id: Int): Result<ArtistaDetalle> {
@@ -22,6 +23,14 @@ private class ArtistRepositoryFalso : ArtistRepository(ServiceAdapter("http://lo
         consultas += Triple(tipo, id, respuesta)
         return respuesta.await()
     }
+
+    /** Detalles guardados en el dispositivo (add-cache-consultas). */
+    val guardados = mutableMapOf<Pair<ArtistType, Int>, ArtistaDetalle>()
+
+    override suspend fun obtenerDetalleGuardado(tipo: ArtistType, id: Int): ArtistaDetalle? = guardados[tipo to id]
+
+    override suspend fun obtenerArtistas(): Result<List<Artist>> = error("No se usa en esta prueba")
+    override suspend fun obtenerArtistasGuardados(): List<Artist> = error("No se usa en esta prueba")
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -117,5 +126,63 @@ class ArtistaDetalleViewModelTest {
         advanceUntilIdle()
 
         assertEquals(2, repositorio.consultas.size)
+    }
+
+    // ---------- Detalle guardado (add-cache-consultas, D5) ----------
+
+    private fun repoConGuardado() = ArtistRepositoryFalso().apply { guardados[ArtistType.BANDA to 101] = detalle }
+    private val actualizado = detalle.copy(descripcion = "Banda británica de rock")
+
+    @Test
+    fun conDetalleGuardadoSeMuestraDeInmediatoYLuegoLaRespuesta() = runTest {
+        val repositorio = repoConGuardado()
+        val viewModel = ArtistaDetalleViewModel(ArtistType.BANDA, 101, repositorio)
+        advanceUntilIdle()
+
+        assertEquals(ArtistaDetalleUiState.Exito(detalle, actualizando = true), viewModel.uiState.value)
+
+        repositorio.consultas.single().third.complete(Result.success(actualizado))
+        advanceUntilIdle()
+
+        assertEquals(ArtistaDetalleUiState.Exito(actualizado), viewModel.uiState.value)
+    }
+
+    @Test
+    fun conDetalleGuardadoYRedMalSeConservaConElAviso() = runTest {
+        val repositorio = repoConGuardado()
+        val viewModel = ArtistaDetalleViewModel(ArtistType.BANDA, 101, repositorio)
+        advanceUntilIdle()
+
+        repositorio.consultas.single().third.complete(Result.failure(ErrorDeCarga()))
+        advanceUntilIdle()
+
+        assertEquals(ArtistaDetalleUiState.Exito(detalle, errorAlActualizar = true), viewModel.uiState.value)
+
+        viewModel.avisoMostrado()
+        assertEquals(ArtistaDetalleUiState.Exito(detalle), viewModel.uiState.value)
+    }
+
+    @Test
+    fun un404TerminaEnErrorAunqueHayaDetalleGuardado() = runTest {
+        val repositorio = repoConGuardado()
+        val viewModel = ArtistaDetalleViewModel(ArtistType.BANDA, 101, repositorio)
+        advanceUntilIdle()
+
+        repositorio.consultas.single().third.complete(Result.failure(RecursoNoEncontrado()))
+        advanceUntilIdle()
+
+        assertEquals(ArtistaDetalleUiState.Error, viewModel.uiState.value)
+    }
+
+    @Test
+    fun elDetalleGuardadoDeOtroTipoNoSeUsa() = runTest {
+        val repositorio = repoConGuardado()
+        val viewModel = ArtistaDetalleViewModel(ArtistType.MUSICO, 101, repositorio)
+        advanceUntilIdle()
+
+        assertEquals(ArtistaDetalleUiState.Cargando, viewModel.uiState.value)
+        repositorio.consultas.single().third.complete(Result.failure(ErrorDeCarga()))
+        advanceUntilIdle()
+        assertEquals(ArtistaDetalleUiState.Error, viewModel.uiState.value)
     }
 }

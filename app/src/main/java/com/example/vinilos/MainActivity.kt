@@ -33,7 +33,8 @@ class MainActivity : ComponentActivity() {
                     sessionViewModel = sessionViewModel,
                     collectorRepository = container.collectorRepository,
                     artistRepository = container.artistRepository,
-                    albumRepository = container.albumRepository
+                    albumRepository = container.albumRepository,
+                    favoriteRepository = container.favoriteRepository
                 )
             }
         }

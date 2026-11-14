@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,14 +27,28 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.DateRange
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -59,8 +74,12 @@ import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.ArtistaDetalle
 import com.example.vinilos.data.model.IntegranteArtista
 import com.example.vinilos.data.model.PremioArtista
+import com.example.vinilos.ui.ingreso.AvisoUnaVez
+import com.example.vinilos.ui.ingreso.IndicadorActualizando
 import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.ArtistaDetalleUiState
+import com.example.vinilos.viewmodel.FavoritoUiState
+import kotlinx.coroutines.delay
 
 const val TagDetalleArtista = "detalle_artista"
 const val TagListaDetalleArtista = "detalle_artista_lista"
@@ -72,6 +91,15 @@ const val TagDescripcionDetalleArtista = "detalle_artista_descripcion"
 const val TagContadorIntegrantes = "detalle_artista_contador_integrantes"
 const val TagContadorAlbumes = "detalle_artista_contador_albumes"
 const val TagContadorPremios = "detalle_artista_contador_premios"
+const val TagBotonFavorito = "detalle_artista_boton_favorito"
+const val TagReintentarFavorito = "detalle_artista_reintentar_favorito"
+const val TagErrorFavorito = "detalle_artista_error_favorito"
+const val TagConfirmacionFavorito = "detalle_artista_confirmacion_favorito"
+const val TagNoDisponibleFavorito = "detalle_artista_no_disponible_favorito"
+const val TagActualizandoDetalleArtista = "detalle_artista_actualizando"
+
+/** Milisegundos que permanece visible la confirmación de favorito antes de ocultarse sola. */
+private const val DuracionConfirmacionFavoritoMs = 2500L
 
 fun tagAlbumArtista(id: Int) = "detalle_artista_album_$id"
 fun tagRespaldoAlbum(id: Int) = "detalle_artista_album_respaldo_$id"
@@ -81,48 +109,112 @@ private val EsquinaTarjeta = RoundedCornerShape(24.dp)
 private val EsquinaFila = RoundedCornerShape(20.dp)
 private val EsquinaMiniatura = RoundedCornerShape(12.dp)
 
-/** Detalle de un músico o una banda con sus integrantes, álbumes y premios (HU04). */
+/**
+ * Detalle de un músico o una banda con sus integrantes, álbumes y premios (HU04). [estadoFavorito]
+ * nulo oculta por completo la sección de favorito (HU10): así se mantiene oculta para el Visitante
+ * sin que esta pantalla necesite conocer la sesión.
+ */
 @Composable
 fun PantallaDetalleArtista(
     estado: ArtistaDetalleUiState,
     onSeleccionarAlbum: (Int) -> Unit,
     onReintentar: () -> Unit,
     onAtras: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    estadoFavorito: FavoritoUiState? = null,
+    onAgregarFavorito: () -> Unit = {},
+    onReintentarFavorito: () -> Unit = {},
+    onConfirmacionFavoritoMostrada: () -> Unit = {},
+    // Volver al listado tras "artista ya no disponible": por defecto es igual a onAtras, pero
+    // VinilosNavHost pasa uno propio para marcar el listado y forzar una nueva consulta (sin
+    // eso, popBackStack por sí solo no recarga el listado; ver bug corregido en HU10).
+    onVolverAlListado: () -> Unit = onAtras,
+    onAvisoMostrado: () -> Unit = {}
 ) {
-    Column(
+    // Se maneja aquí arriba (fuera del LazyColumn) y no dentro de la tarjeta: esa tarjeta se
+    // compone en un "item" sin key explícita, y un LaunchedEffect allí puede reiniciarse si el
+    // item se recompone/recicla, lo que impedía que la espera de 2.5s llegara a completarse.
+    if (estadoFavorito is FavoritoUiState.Favorito && estadoFavorito.mostrarConfirmacion) {
+        LaunchedEffect(estadoFavorito) {
+            delay(DuracionConfirmacionFavoritoMs)
+            onConfirmacionFavoritoMostrada()
+        }
+    }
+    val exito = estado as? ArtistaDetalleUiState.Exito
+    val avisos = remember { SnackbarHostState() }
+    AvisoUnaVez(
+        mostrar = exito?.errorAlActualizar == true,
+        mensaje = stringResource(R.string.artista_error_actualizar),
+        avisos = avisos,
+        onMostrado = onAvisoMostrado
+    )
+    val descripcionActualizando = stringResource(R.string.artista_actualizando)
+    Box(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.safeDrawing)
             .testTag(TagDetalleArtista)
     ) {
-        EncabezadoArtistas(stringResource(R.string.artista_titulo), onAtras)
-        // Una sola columna perezosa: un artista puede tener muchos álbumes y premios.
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .testTag(TagListaDetalleArtista),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            when (estado) {
-                ArtistaDetalleUiState.Cargando -> {
-                    item { Cargando() }
-                    item { TarjetaEsqueleto() }
-                    items(FILAS_DE_RELLENO) { FilaEsqueleto() }
+        Column(modifier = Modifier.fillMaxSize()) {
+            EncabezadoArtistas(
+                stringResource(R.string.artista_titulo),
+                onAtras,
+                accion = if (exito?.actualizando == true) {
+                    { IndicadorActualizando(descripcionActualizando, TagActualizandoDetalleArtista) }
+                } else {
+                    null
                 }
-                ArtistaDetalleUiState.Error -> item {
-                    ErrorArtistas(stringResource(R.string.artista_error), onReintentar)
+            )
+            // Una sola columna perezosa: un artista puede tener muchos álbumes y premios.
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .testTag(TagListaDetalleArtista),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                when (estado) {
+                    ArtistaDetalleUiState.Cargando -> {
+                        item { Cargando() }
+                        item { TarjetaEsqueleto() }
+                        items(FILAS_DE_RELLENO) { FilaEsqueleto() }
+                    }
+                    ArtistaDetalleUiState.Error -> item {
+                        ErrorArtistas(stringResource(R.string.artista_error), onReintentar)
+                    }
+                    is ArtistaDetalleUiState.Exito -> contenido(
+                        detalle = estado.detalle,
+                        onSeleccionarAlbum = onSeleccionarAlbum,
+                        estadoFavorito = estadoFavorito,
+                        onAgregarFavorito = onAgregarFavorito,
+                        onReintentarFavorito = onReintentarFavorito,
+                        onVolverAlListado = onVolverAlListado
+                    )
                 }
-                is ArtistaDetalleUiState.Exito -> contenido(estado.detalle, onSeleccionarAlbum)
             }
         }
+        SnackbarHost(avisos, Modifier.align(Alignment.BottomCenter))
     }
 }
 
-private fun LazyListScope.contenido(detalle: ArtistaDetalle, onSeleccionarAlbum: (Int) -> Unit) {
-    item { TarjetaPrincipal(detalle) }
+private fun LazyListScope.contenido(
+    detalle: ArtistaDetalle,
+    onSeleccionarAlbum: (Int) -> Unit,
+    estadoFavorito: FavoritoUiState?,
+    onAgregarFavorito: () -> Unit,
+    onReintentarFavorito: () -> Unit,
+    onVolverAlListado: () -> Unit
+) {
+    item(key = "tarjeta_principal") {
+        TarjetaPrincipal(
+            detalle = detalle,
+            estadoFavorito = estadoFavorito,
+            onAgregarFavorito = onAgregarFavorito,
+            onReintentarFavorito = onReintentarFavorito,
+            onVolverAlListado = onVolverAlListado
+        )
+    }
     if (detalle.tipo == ArtistType.BANDA) {
         item {
             TituloSeccion(
@@ -169,7 +261,13 @@ private fun LazyListScope.contenido(detalle: ArtistaDetalle, onSeleccionarAlbum:
 }
 
 @Composable
-private fun TarjetaPrincipal(detalle: ArtistaDetalle) {
+private fun TarjetaPrincipal(
+    detalle: ArtistaDetalle,
+    estadoFavorito: FavoritoUiState?,
+    onAgregarFavorito: () -> Unit,
+    onReintentarFavorito: () -> Unit,
+    onVolverAlListado: () -> Unit
+) {
     val porDefecto = painterResource(porDefectoDe(detalle.tipo))
     Column(
         modifier = Modifier
@@ -211,6 +309,206 @@ private fun TarjetaPrincipal(detalle: ArtistaDetalle) {
                     .fillMaxWidth()
                     .testTag(TagDescripcionDetalleArtista)
             )
+        }
+        if (estadoFavorito != null) {
+            SeccionFavorito(
+                nombre = detalle.nombre,
+                estado = estadoFavorito,
+                onAgregar = onAgregarFavorito,
+                onReintentar = onReintentarFavorito,
+                onVolverAlListado = onVolverAlListado
+            )
+        }
+    }
+}
+
+/** Botón de favorito y sus mensajes asociados (HU10); oculto por completo para el Visitante. */
+@Composable
+private fun SeccionFavorito(
+    nombre: String,
+    estado: FavoritoUiState,
+    onAgregar: () -> Unit,
+    onReintentar: () -> Unit,
+    onVolverAlListado: () -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        when (estado) {
+            FavoritoUiState.NoDisponible -> TarjetaFavoritoNoDisponible(onVolverAlListado)
+            // El guardado reintenta con la misma acción de agregar (onAgregar); la tarjeta de
+            // error reemplaza al botón principal en vez de mostrarse junto a él.
+            FavoritoUiState.ErrorGuardado -> TarjetaErrorGuardado(
+                onReintentar = onAgregar,
+                modifier = Modifier.testTag(TagErrorFavorito)
+            )
+            else -> {
+                val esFavorito = estado is FavoritoUiState.Favorito
+                val botonActivo = estado == FavoritoUiState.NoFavorito
+                val textoBoton = when (estado) {
+                    FavoritoUiState.Guardando -> stringResource(R.string.favoritos_guardando)
+                    is FavoritoUiState.Favorito -> stringResource(R.string.favoritos_favorito)
+                    else -> stringResource(R.string.favoritos_agregar)
+                }
+                Button(
+                    onClick = onAgregar,
+                    enabled = botonActivo,
+                    shape = RoundedCornerShape(50),
+                    colors = ButtonDefaults.buttonColors(
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(TagBotonFavorito)
+                ) {
+                    Icon(
+                        imageVector = if (esFavorito) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                        contentDescription = null,
+                        tint = if (esFavorito) MaterialTheme.colorScheme.error else LocalContentColor.current
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(textoBoton)
+                }
+
+                if (esFavorito) {
+                    NotaBloqueoTemporalFavorito()
+                }
+
+                if (estado == FavoritoUiState.ErrorComprobacion) {
+                    Text(
+                        text = stringResource(R.string.favoritos_error_comprobacion),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.testTag(TagErrorFavorito)
+                    )
+                    TextButton(onClick = onReintentar, modifier = Modifier.testTag(TagReintentarFavorito)) {
+                        Text(stringResource(R.string.favoritos_reintentar))
+                    }
+                }
+
+                if (estado is FavoritoUiState.Favorito && estado.mostrarConfirmacion) {
+                    Text(
+                        text = stringResource(R.string.favoritos_confirmacion, nombre),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.testTag(TagConfirmacionFavorito)
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** Nota bajo el botón ya marcado como favorito: confirma que ya es favorito (HU10). */
+@Composable
+private fun NotaBloqueoTemporalFavorito() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Lock,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(18.dp)
+        )
+        Text(
+            text = stringResource(R.string.favoritos_bloqueado_nota),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/**
+ * Tarjeta de error al guardar el favorito (HU10), con el mismo lenguaje visual que [TarjetaError]
+ * en la creación de álbum (HU07): fondo errorContainer, ícono de advertencia y botón de reintento.
+ */
+@Composable
+private fun TarjetaErrorGuardado(onReintentar: () -> Unit, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(MaterialTheme.colorScheme.errorContainer)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Icon(
+                imageVector = Icons.Filled.Warning,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error
+            )
+            Text(
+                text = stringResource(R.string.favoritos_error_guardado),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+        }
+        Button(
+            onClick = onReintentar,
+            shape = RoundedCornerShape(50),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(imageVector = Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.favoritos_reintentar_guardado))
+        }
+    }
+}
+
+/** Tarjeta cuando el artista ya no existe en el backend (HU10): mensaje y regreso al listado. */
+@Composable
+private fun TarjetaFavoritoNoDisponible(onVolverAlListado: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Warning,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.error
+        )
+        Text(
+            text = stringResource(R.string.favoritos_no_disponible),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.testTag(TagNoDisponibleFavorito)
+        )
+        Text(
+            text = stringResource(R.string.favoritos_no_disponible_descripcion),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+        Button(
+            onClick = onVolverAlListado,
+            shape = RoundedCornerShape(50),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.favoritos_volver_artistas))
         }
     }
 }

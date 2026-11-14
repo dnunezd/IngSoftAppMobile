@@ -16,13 +16,14 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.AlbumResumen
+import com.example.vinilos.data.model.formatearFechaLanzamiento
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.AlbumRepository
+import com.example.vinilos.data.repository.AlbumRepositoryImpl
 import com.example.vinilos.e2e.EvidenciaE2E
 import com.example.vinilos.ui.catalogo.TagCatalogo
 import com.example.vinilos.ui.catalogo.TagCuadriculaCatalogo
 import com.example.vinilos.ui.catalogo.tagAlbum
-import com.example.vinilos.ui.detalle.formatearFechaLanzamiento
 import com.example.vinilos.ui.ingreso.TagAtras
 import com.example.vinilos.ui.ingreso.TagEntrarVisitante
 import com.example.vinilos.ui.inicio.TagInicio
@@ -55,15 +56,17 @@ class AlbumDetalleE2ETest {
     private val carpetaEvidencia = "FN02_ESC01"
 
     /** Repositorio real que además guarda el catálogo y el detalle que el backend devolvió. */
-    private class AlbumRepositorioQueCaptura : AlbumRepository(ServiceAdapter(BuildConfig.BASE_URL)) {
+    private class AlbumRepositorioQueCaptura(
+        private val real: AlbumRepository = AlbumRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL))
+    ) : AlbumRepository by real {
         @Volatile var catalogo: List<AlbumResumen>? = null
         @Volatile var detalle: Album? = null
 
         override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> =
-            super.obtenerAlbumes().also { resultado -> resultado.onSuccess { catalogo = it } }
+            real.obtenerAlbumes().also { resultado -> resultado.onSuccess { catalogo = it } }
 
         override suspend fun obtenerAlbum(id: Int): Result<Album> =
-            super.obtenerAlbum(id).also { resultado -> resultado.onSuccess { detalle = it } }
+            real.obtenerAlbum(id).also { resultado -> resultado.onSuccess { detalle = it } }
     }
 
     private val repositorio = AlbumRepositorioQueCaptura()

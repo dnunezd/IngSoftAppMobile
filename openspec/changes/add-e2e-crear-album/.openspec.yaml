@@ -1,0 +1,4 @@
+schema: spec-driven
+created: 2026-11-07
+# Solo agrega pruebas E2E y su evidencia: el comportamiento de la app no cambia.
+skip_specs: true

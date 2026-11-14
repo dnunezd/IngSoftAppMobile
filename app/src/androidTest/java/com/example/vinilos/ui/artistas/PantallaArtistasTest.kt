@@ -38,6 +38,7 @@ class PantallaArtistasTest {
     private val todos = listOf(queen, ruben)
 
     private var estado by mutableStateOf<ArtistsUiState>(ArtistsUiState.Cargando)
+    private var avisos = 0
     private var buscado: String? = null
     private var reintentos = 0
     private var seleccionado: Artist? = null
@@ -56,7 +57,8 @@ class PantallaArtistasTest {
                     },
                     onReintentar = { reintentos++ },
                     onSeleccionar = { seleccionado = it },
-                    onAtras = { atras++ }
+                    onAtras = { atras++ },
+                    onAvisoMostrado = { avisos++ }
                 )
             }
         }
@@ -188,5 +190,26 @@ class PantallaArtistasTest {
         rule.onNodeWithTag(TagAtras).performClick()
 
         assertEquals(1, atras)
+    }
+
+    // ---------- Listado guardado (add-cache-consultas, D6) ----------
+
+    @Test
+    fun conElListadoGuardadoActualizandoseMuestraElIndicadorPequenoYLaLista() {
+        mostrar(ArtistsUiState.Exito(todos, actualizando = true))
+
+        rule.onNodeWithTag(TagActualizandoArtistas).assertIsDisplayed()
+        rule.onNodeWithText("Queen").assertIsDisplayed()
+        rule.onNodeWithTag(TagProgresoArtistas).assertDoesNotExist()
+    }
+
+    @Test
+    fun siNoSePudoActualizarAvisaUnaVezSinQuitarLaLista() {
+        mostrar(ArtistsUiState.Exito(todos, errorAlActualizar = true))
+
+        rule.onNodeWithText("No se pudo actualizar el listado de artistas").assertIsDisplayed()
+        rule.onNodeWithText("Queen").assertIsDisplayed()
+        rule.onNodeWithTag(TagErrorArtistas).assertDoesNotExist()
+        rule.waitUntil(10_000) { avisos == 1 }
     }
 }
