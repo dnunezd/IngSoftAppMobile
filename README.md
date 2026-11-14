@@ -62,7 +62,7 @@ Va del 2 al 15 de noviembre de 2026. Su primer release será **`v2.0.0` – Spri
 
 La versión publicada es `1.1.0` (`versionCode` 2), en el release [`v1.1.0`](https://github.com/dnunezd/IngSoftAppMobile/releases/tag/v1.1.0) sobre `main`, con el APK `vinilos-v1.1.0.apk` adjunto. El identificador de la app es `com.example.vinilos` y funciona desde Android 6.0 (API 23). Para instalarla sin compilar, descarga el APK del release en el teléfono y ábrelo.
 
-El primer release del Sprint 2 será **`v2.0.0` – Sprint 2**. `app/build.gradle.kts` ya tiene `versionName` `2.0.0` y `versionCode` 3. Los releases siguen el formato `v<versión> – Sprint <n>`, como `v1.1.0 – Sprint 1`.
+El primer release del Sprint 2 fue **`v2.0.0` – Sprint 2**; el segundo será **`v2.1.0` – Sprint 2**. `app/build.gradle.kts` ya tiene `versionName` `2.1.0` y `versionCode` 4. Los releases siguen el formato `v<versión> – Sprint <n>`, como `v1.1.0 – Sprint 1`.
 
 Para cada release:
 
