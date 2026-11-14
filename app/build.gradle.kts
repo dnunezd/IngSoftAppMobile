@@ -39,6 +39,20 @@ android {
                 "proguard-rules.pro"
             )
         }
+        // Compilación para perfilar (docs/performance): como release, pero firmada con la llave de
+        // depuración e instalable junto a la app normal (com.example.vinilos.perf).
+        // Por defecto es "profileable" (poco costo, sirve para CPU, hilos y fluidez). Con
+        // -PperfDepurable queda depurable, que es lo que exigen Heap Dump y Allocation Tracking.
+        create("perf") {
+            initWith(getByName("release"))
+            val depurable = project.hasProperty("perfDepurable")
+            isDebuggable = depurable
+            isProfileable = !depurable
+            applicationIdSuffix = ".perf"
+            versionNameSuffix = if (depurable) "-perf-depurable" else "-perf"
+            signingConfig = signingConfigs.getByName("debug")
+            matchingFallbacks += "release"
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
