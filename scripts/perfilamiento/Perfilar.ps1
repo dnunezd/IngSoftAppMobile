@@ -64,12 +64,19 @@ param(
     [string[]]$Grabaciones = @('telemetria', 'asignaciones'),
 
     # Ejecutar: sin pausas de Android Studio; solo maneja la app y anota los pasos (para probar).
-    [switch]$SinStudio
+    [switch]$SinStudio,
+
+    # Ejecutar: carpeta raíz de los resultados. Por defecto, docs\performance\resultados de este repositorio.
+    [string]$CarpetaResultados
 )
 
 $ErrorActionPreference = 'Stop'
+# La salida de adb llega en UTF-8: sin esto, una consola con otra página de códigos la lee mal
+# ("Ver álbumes" quedaba "Ver ├ílbumes" en analisis.md).
+[Console]::OutputEncoding = New-Object Text.UTF8Encoding $false
 
 $Raiz = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
+if (-not $CarpetaResultados) { $CarpetaResultados = Join-Path $Raiz 'docs\performance\resultados' }
 $Paquete = 'com.example.vinilos.perf'
 $PaqueteRecorridos = 'com.example.vinilos.perfilamiento'
 $UrlBackend = 'http://localhost:3000'
@@ -492,6 +499,14 @@ function Tabla-Pasos($Pasos, $Ancla) {
     $lineas
 }
 
+function Tramo-Pasos($Pasos, $Ancla) {
+    # Tramo de la grabación que cubre el recorrido, con margen, como "01:42 a 02:20".
+    $base = $Ancla.Milis - $Ancla.Segundos * 1000
+    $desde = [math]::Max(0, [math]::Floor((($Pasos | Select-Object -First 1).Milis - $base) / 1000) - 5)
+    $hasta = [math]::Ceiling((($Pasos | Select-Object -Last 1).Milis - $base) / 1000) + $Pausa + 5
+    '{0:mm\:ss} a {1:mm\:ss}' -f [timespan]::FromSeconds($desde), [timespan]::FromSeconds($hasta)
+}
+
 function Pedir-Archivo([string]$Titulo, [string[]]$Pasos, [string]$Destino) {
     # Guía una exportación de Studio y comprueba que el archivo quedó donde va.
     $carpeta = Split-Path $Destino
@@ -581,13 +596,14 @@ function Grabar($Definicion, [string]$Id, [string]$Carpeta, [string]$Grabacion, 
         if ($numero -eq 1) {
             $listo = Pausa "$($Definicion.Titulo): iniciar Live Telemetry y Network Inspector" @() ($PasosElegirProceso + @(
                     'Selecciona "View Live Telemetry", en "Start profiler task from" elige "Now" y pulsa "Start profiler task".',
+                    'Si Studio avisa "This task recommends the process to be profileable", pulsa "Start anyway": la guía usa la app depurable a propósito (Network Inspector y Allocations la exigen).',
                     'Abre App Inspection (View > Tool Windows > App Inspection), elige el mismo proceso y la pestaña "Network Inspector".',
                     'Vuelve a la pestaña "View Live Telemetry" y espera a ver "Recording: ..." con las gráficas corriendo.'
                 )) 'Cuando las dos herramientas estén grabando, presiona Enter.'
         } else {
             $listo = Pausa "$($Definicion.Titulo): iniciar Java/Kotlin Allocations" @() ($PasosElegirProceso + @(
                     'Selecciona "Track Memory Consumption (Java/Kotlin Allocations)", con "Now". Si pregunta el modo, elige "Full".',
-                    'Pulsa "Start profiler task" y espera a ver "Recording: ..." con el cronómetro.'
+                    'Pulsa "Start profiler task" (o "Start anyway" si avisa que la app debería ser profileable) y espera a ver "Recording: ..." con el cronómetro.'
                 )) 'Cuando el cronómetro esté corriendo, presiona Enter.'
         }
         if ($listo) { $ancla = Leer-Cronometro }
@@ -612,8 +628,13 @@ function Grabar($Definicion, [string]$Id, [string]$Carpeta, [string]$Grabacion, 
         Escribir-Resultado 'FALLA' "El recorrido NO terminó: esta grabación no sirve. Detén la grabación en Studio, corrige la causa y repite con -Escenarios $Id -Grabaciones $Grabacion."
     } elseif ($conStudio -and $ancla) {
         if ($numero -eq 1) {
-            if (Pausa 'Capturar Live Telemetry' @('El recorrido terminó. La grabación sigue; no la detengas todavía.') @(
-                    'En "View Live Telemetry" aleja la vista (lupa con el signo menos) hasta que se vea la grabación completa desde 00:00.',
+            $tramo = Tramo-Pasos $resultado.Pasos $ancla
+            if (Pausa 'Capturar Live Telemetry' @(
+                    'El recorrido terminó. La grabación sigue; no la detengas todavía.',
+                    "El recorrido está entre $tramo de la grabación: ese tramo debe quedar en la captura."
+                ) @(
+                    'En "View Live Telemetry" pulsa el botón de pausar el seguimiento en vivo (a la derecha de las lupas) para que la vista no se siga moviendo.',
+                    "Aleja con la lupa (-) y mueve la barra de desplazamiento de abajo hasta que la línea de tiempo muestre de $tramo completo.",
                     'Verifica que se vean las gráficas de CPU y de memoria, y aparta el ratón de ellas.'
                 ) 'Presiona Enter y tomaré la captura como live-telemetry.png.') {
                 Capturar-Studio (Join-Path $Carpeta 'live-telemetry.png')
@@ -661,7 +682,7 @@ function Grabar($Definicion, [string]$Id, [string]$Carpeta, [string]$Grabacion, 
 function Ejecutar {
     if ((Validar) -gt 0) { throw 'Resuelve los puntos marcados como FALLA y vuelve a ejecutar.' }
     $d = Leer-Dispositivo
-    $destino = Join-Path $Raiz ("docs\performance\resultados\" + (Nombre-Carpeta $d))
+    $destino = Join-Path $CarpetaResultados (Nombre-Carpeta $d)
     Adb reverse tcp:3000 tcp:3000 | Out-Null
     $contexto = [pscustomobject]@{
         Dispositivo = "$($d.Fabricante) $($d.Modelo) · $($d.Procesador) ($($d.Abi)) · $($d.RamGb) GB de RAM · Android $($d.Android) (API $($d.Api)) · $($d.Pantalla)"

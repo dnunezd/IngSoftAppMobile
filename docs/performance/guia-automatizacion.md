@@ -33,6 +33,8 @@ o la terminal de Android Studio), no en segundo plano.
   sin micro-optimizaciones. La segunda fase se corre con su propio nombre y la versión que la contenga.
 - `-Propietario` es quien perfila (primera parte de la carpeta). Por defecto, el primer nombre de
   `git config user.name` en minúsculas y sin tildes.
+- `-CarpetaResultados` cambia la carpeta raíz de los resultados (por defecto `docs/performance/resultados`
+  de este repositorio); sirve para correr el script desde otra copia de la rama.
 - `-Escenarios hu01,hu02,...` elige las HU (por defecto las seis) y `-Grabaciones telemetria` o
   `asignaciones` una sola de las dos grabaciones.
 - `-SinStudio` corre los recorridos sin pausas de Android Studio: sirve para probar que la app se deja
