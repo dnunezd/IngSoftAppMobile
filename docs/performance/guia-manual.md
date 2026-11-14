@@ -40,31 +40,35 @@ correrla. Para dejarlo permanente, correr esto una vez y abrir otra consola:
    1. En el Profiler, iniciar **View Live Telemetry** (con **Now**) sobre `com.example.vinilos.perf`.
    2. En App Inspection, abrir **Network Inspector** sobre el mismo proceso.
    3. Hacer los pasos y anotar el segundo de la grabación en que haces cada uno.
-   4. Capturar Live Telemetry (CPU y memoria) como `live-telemetry.png`.
-   5. En Network Inspector, **Export Connections** como `connections.json`.
+   4. Capturar Live Telemetry (CPU y memoria, con el tramo de los pasos a la vista) como
+      `live-telemetry.png`.
+   5. En Network Inspector, seleccionar el tramo de los pasos y capturar la Connection View como
+      `connections.png`; luego **Export Connections** como `connections.json`.
    6. Detener la grabación (**Stop Recording**) y, en **Past Recordings**, **Export recording** como
-      `live-view.asdb`.
+      `live-telemetry.asdb`.
 3. Reiniciar la app con el mismo comando.
 4. **Grabación 2:**
    1. En el Profiler, iniciar **Track Memory Consumption (Java/Kotlin Allocations)**.
    2. Repetir los pasos.
-   3. Detener, revisar la tabla ordenada por **Allocations** y, en **Past Recordings**, **Export
-      recording** como `memory.asdb`.
-5. Guardar todo en `docs/performance/resultados/<propietario>-<dispositivo>/HUxx/<fase>/` (p. ej.
-   `jeffrey-motorola-edge-30/HU01/starter/`) y escribir ahí `analisis.md` con los segundos anotados
-   y lo encontrado.
+   3. Detener, seleccionar el tramo de los pasos, filtrar por `com.example.vinilos`, ordenar por
+      **Allocations** y capturar la tabla como `track-memory.png`.
+   4. En **Past Recordings**, **Export recording** como `track-memory.asdb`.
+5. Guardar todo en `docs/performance/resultados/<propietario>-<dispositivo>/<fase>/HUxx/` (p. ej.
+   `jeffrey-motorola-edge-30/Before/HU01/`, donde `Before` es la primera fase):
 
    ```
-   <propietario>-<dispositivo>/HU01/starter/
-   ├── live-telemetry.png
-   ├── live-view.asdb
+   <propietario>-<dispositivo>/Before/HU01/
    ├── connections.json
-   ├── memory.asdb
-   └── analisis.md
+   ├── connections.png
+   ├── live-telemetry.asdb
+   ├── live-telemetry.png
+   ├── track-memory.asdb
+   └── track-memory.png
    ```
 
-   El script automatizado ([guia-automatizacion.md](guia-automatizacion.md)) deja la misma
-   estructura y arma `analisis.md`.
+   Los segundos anotados y lo encontrado van aparte, en
+   `<propietario>-<dispositivo>/analisis/Before/HU01.md`. El script automatizado
+   ([guia-automatizacion.md](guia-automatizacion.md)) deja la misma estructura y arma ese análisis.
 
 ## Qué se analiza
 

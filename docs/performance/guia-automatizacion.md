@@ -2,8 +2,9 @@
 
 `scripts/perfilamiento/Perfilar.ps1` hace la [guía manual](guia-manual.md) sin tocar el teléfono:
 maneja la app con los mismos pasos de cada HU (una acción y 5 s), reinicia la app sin datos antes de
-cada grabación, anota el segundo de la grabación en que ocurre cada paso, toma la captura de Live
-Telemetry y arma `analisis.md`. Lo manual es iniciar y detener las tareas del Profiler y exportar lo
+cada grabación, anota el segundo de la grabación en que ocurre cada paso, toma las capturas de la
+ventana de Android Studio y arma el análisis de cada HU. Lo manual es iniciar y detener las tareas del
+Profiler, dejar a la vista lo que se captura y exportar lo
 grabado: el script se detiene con instrucciones exactas cuando toca, copia la carpeta de destino en
 el portapapeles y comprueba que cada archivo quedó guardado.
 
@@ -22,15 +23,16 @@ el portapapeles y comprueba que cada archivo quedó guardado.
 ```powershell
 .\scripts\perfilamiento\Perfilar.ps1 -Accion Preparar -Version v2.1.0   # compila e instala
 .\scripts\perfilamiento\Perfilar.ps1 -Accion Validar  -Version v2.1.0   # revisa que todo esté listo
-.\scripts\perfilamiento\Perfilar.ps1 -Accion Ejecutar -Version v2.1.0 -Fase starter -Escenarios hu01
+.\scripts\perfilamiento\Perfilar.ps1 -Accion Ejecutar -Version v2.1.0 -Fase Before -Escenarios hu01
 ```
 
 El script hace pausas que esperan respuesta: hay que correrlo en una terminal interactiva (PowerShell
 o la terminal de Android Studio), no en segundo plano.
 
 - `-Version` es el tag o commit que se perfila. Sin ella, se perfila el código de la rama actual.
-- `-Fase` es la subcarpeta de resultados: `starter` (por defecto) para la primera fase, la línea base
-  sin micro-optimizaciones. La segunda fase se corre con su propio nombre y la versión que la contenga.
+- `-Fase` es la carpeta de la fase dentro de los resultados: `Before` (por defecto) para la primera, la
+  línea base sin micro-optimizaciones. La segunda fase se corre con su propio nombre y la versión que
+  la contenga.
 - `-Propietario` es quien perfila (primera parte de la carpeta). Por defecto, el primer nombre de
   `git config user.name` en minúsculas y sin tildes.
 - `-CarpetaResultados` cambia la carpeta raíz de los resultados (por defecto `docs/performance/resultados`
@@ -59,8 +61,8 @@ o la terminal de Android Studio), no en segundo plano.
 
 | Grabación | Antes | En Android Studio (pausa guiada) | Archivos |
 |---|---|---|---|
-| 1 | Reinicio sin datos (`force-stop`, `pm clear`, `am start`) | View Live Telemetry con **Now** y Network Inspector en App Inspection | `live-telemetry.png` (captura del script), `connections.json` (Network Inspector > **Export Connections**, antes de detener), `live-view.asdb` (tras **Stop Recording**: **Past Recordings** > **Export recording**) |
-| 2 | Reinicio sin datos | Track Memory Consumption (Java/Kotlin Allocations), **Full** | `memory.asdb` (tras **Stop Recording**: **Past Recordings** > **Export recording**) |
+| 1 | Reinicio sin datos (`force-stop`, `pm clear`, `am start`) | View Live Telemetry con **Now** y Network Inspector en App Inspection | `live-telemetry.png` y `connections.png` (capturas del script, con el tramo de los pasos a la vista), `connections.json` (Network Inspector > **Export Connections**, antes de detener), `live-telemetry.asdb` (tras **Stop Recording**: **Past Recordings** > **Export recording**) |
+| 2 | Reinicio sin datos | Track Memory Consumption (Java/Kotlin Allocations), **Full** | `track-memory.png` (captura del script de la tabla filtrada por `com.example.vinilos` y ordenada por Allocations), `track-memory.asdb` (**Past Recordings** > **Export recording**) |
 
 En cada grabación:
 
@@ -71,7 +73,7 @@ En cada grabación:
    desde que aparece.
 3. Guía las exportaciones: deja la carpeta de destino en el portapapeles, dice el nombre del archivo y
    no sigue hasta encontrarlo (o hasta que se salte con `s`).
-4. Escribe en `analisis.md` el bloque de esa grabación: la tabla de pasos con la columna **Seg.**, la
+4. Escribe en el análisis de la HU el bloque de esa grabación: la tabla de pasos con la columna **Seg.**, la
    duración y lo medido por línea de comandos (memoria PSS al empezar y al terminar, cuadros
    dibujados y lentos, percentil 90).
 
@@ -90,16 +92,20 @@ Datos del backend:
 
 ```
 <propietario>-<dispositivo>/        p. ej. jeffrey-motorola-edge-30
-└── HU01/ … HU10/
-    └── <fase>/                      starter en la primera fase
-        ├── live-telemetry.png
-        ├── live-view.asdb
-        ├── connections.json
-        ├── memory.asdb
-        └── analisis.md
+├── Before/                         la fase (-Fase); Before es la primera
+│   └── HU01/ … HU10/
+│       ├── connections.json
+│       ├── connections.png
+│       ├── live-telemetry.asdb
+│       ├── live-telemetry.png
+│       ├── track-memory.asdb
+│       └── track-memory.png
+└── analisis/
+    └── Before/
+        └── HU01.md … HU10.md
 ```
 
-`analisis.md` trae el dispositivo y la versión, un bloque por grabación, la lista de "Qué analizar"
+Cada `analisis/<fase>/HUxx.md` trae el dispositivo y la versión, un bloque por grabación, la lista de "Qué analizar"
 de la guía para esa HU y las secciones de hallazgos y pasos con más carga, que se completan a mano
 cruzando los segundos con lo grabado. Repetir una grabación reemplaza solo su bloque: lo escrito a
 mano se conserva.

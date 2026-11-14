@@ -17,17 +17,20 @@
   dos parches de scripts\perfilamiento\parches: la compilación "perf" y los testTag visibles para
   UI Automator. No cambian la lógica de la app.
 
-  Los resultados quedan en docs/performance/resultados/<propietario>-<dispositivo>/HUxx/<fase>/:
+  Los resultados quedan en docs/performance/resultados/<propietario>-<dispositivo>/<fase>/HUxx/:
     live-telemetry.png  captura de View Live Telemetry (la toma el script)
-    live-view.asdb      grabación de Live Telemetry (Past Recordings > Export recording)
+    live-telemetry.asdb grabación de Live Telemetry (Past Recordings > Export recording)
+    connections.png     captura de la Connection View del Network Inspector (la toma el script)
     connections.json    peticiones del Network Inspector (Export Connections)
-    memory.asdb         grabación de Java/Kotlin Allocations (Past Recordings > Export recording)
-    analisis.md         pasos con su segundo, mediciones y lo que hay que analizar (lo arma el script)
+    track-memory.png    captura de la tabla de Java/Kotlin Allocations (la toma el script)
+    track-memory.asdb   grabación de Java/Kotlin Allocations (Past Recordings > Export recording)
+  Aparte, en <propietario>-<dispositivo>/analisis/<fase>/HUxx.md, el script deja los pasos con su
+  segundo de la grabación, lo medido y lo que hay que analizar.
 
 .EXAMPLE
   .\scripts\perfilamiento\Perfilar.ps1 -Accion Preparar -Version v2.1.0
   .\scripts\perfilamiento\Perfilar.ps1 -Accion Validar -Version v2.1.0
-  .\scripts\perfilamiento\Perfilar.ps1 -Accion Ejecutar -Version v2.1.0 -Fase starter -Escenarios hu01
+  .\scripts\perfilamiento\Perfilar.ps1 -Accion Ejecutar -Version v2.1.0 -Fase Before -Escenarios hu01
   .\scripts\perfilamiento\Perfilar.ps1 -Accion Ejecutar -Version v2.1.0 -Escenarios hu03 -Grabaciones asignaciones
 #>
 [CmdletBinding()]
@@ -39,9 +42,9 @@ param(
     # Tag o commit a perfilar (p. ej. v2.1.0). Sin él, el código de la rama actual.
     [string]$Version,
 
-    # Fase del perfilamiento: "starter" es la primera (línea base, sin micro-optimizaciones).
-    [ValidatePattern('^[a-z0-9-]+$')]
-    [string]$Fase = 'starter',
+    # Fase del perfilamiento: "Before" es la primera (línea base, sin micro-optimizaciones).
+    [ValidatePattern('^[A-Za-z0-9-]+$')]
+    [string]$Fase = 'Before',
 
     # Quién perfila: primera parte del nombre de la carpeta de resultados. Por defecto, el primer
     # nombre de git config user.name, en minúsculas y sin tildes.
@@ -72,7 +75,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 # La salida de adb llega en UTF-8: sin esto, una consola con otra página de códigos la lee mal
-# ("Ver álbumes" quedaba "Ver ├ílbumes" en analisis.md).
+# ("Ver álbumes" quedaba "Ver ├ílbumes" en el análisis).
 [Console]::OutputEncoding = New-Object Text.UTF8Encoding $false
 
 $Raiz = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
@@ -453,7 +456,7 @@ function Borrar-AlbumesDePrueba {
 
 # ------------------------------------------------------------------ ejecutar
 
-# Lo que la guía pide revisar en cada HU: queda como lista en analisis.md.
+# Lo que la guía pide revisar en cada HU: queda como lista en el análisis de la HU.
 $Definiciones = [ordered]@{
     hu01 = @{ Carpeta = 'HU01'; Titulo = 'HU01 · Catálogo de álbumes'; Revisar = @(
             'Red: `GET /albums` y la descarga de cada portada; su tamaño y duración.',
@@ -481,6 +484,8 @@ $Definiciones = [ordered]@{
             'CPU y memoria: en el cambio de estado del botón.',
             'Asignaciones: las clases de favorito y de coleccionista.') }
 }
+
+$ArchivosPorHu = @('connections.json', 'connections.png', 'live-telemetry.asdb', 'live-telemetry.png', 'track-memory.asdb', 'track-memory.png')
 
 $PasosElegirProceso = @(
     'Abre la ventana Profiler (View > Tool Windows > Profiler) y cierra con su X las pestañas de grabaciones anteriores.',
@@ -523,9 +528,11 @@ function Pedir-Archivo([string]$Titulo, [string[]]$Pasos, [string]$Destino) {
     }
 }
 
-function Escribir-Analisis($Definicion, [string]$Carpeta, [int]$Numero, [string[]]$Bloque, $Contexto) {
-    # analisis.md se arma una vez y cada grabación reemplaza solo su bloque: lo escrito a mano se conserva.
-    $archivo = Join-Path $Carpeta 'analisis.md'
+function Escribir-Analisis($Definicion, [string]$Archivo, [int]$Numero, [string[]]$Bloque, $Contexto) {
+    # El análisis de cada HU se arma una vez y cada grabación reemplaza solo su bloque: lo escrito a
+    # mano se conserva. Va fuera de la carpeta de la HU, que solo lleva lo grabado en Studio.
+    $archivo = $Archivo
+    New-Item -ItemType Directory -Force -Path (Split-Path $archivo) | Out-Null
     if (-not (Test-Path $archivo)) {
         $plantilla = @(
             "# $($Definicion.Titulo) · $Fase",
@@ -552,19 +559,19 @@ function Escribir-Analisis($Definicion, [string]$Carpeta, [int]$Numero, [string[
             '',
             '## Hallazgos',
             '',
-            '### CPU (live-telemetry.png, live-view.asdb)',
+            '### CPU (live-telemetry.png, live-telemetry.asdb)',
             '',
             '_Uso de la app frente al resto del sistema, hilo que lleva la carga (principal, `RenderThread`, `OkHttp`) y número de hilos._',
             '',
-            '### Memoria (live-telemetry.png, live-view.asdb)',
+            '### Memoria (live-telemetry.png, live-telemetry.asdb)',
             '',
             '_Cuánto sube y en qué paso, qué capa crece (Java, nativa, gráficos) y marcas de recolección de basura._',
             '',
-            '### Red (connections.json)',
+            '### Red (connections.png, connections.json)',
             '',
             '_Petición por paso: tamaño, tipo, código de respuesta y duración; peticiones repetidas o innecesarias._',
             '',
-            '### Asignaciones (memory.asdb)',
+            '### Asignaciones (track-memory.png, track-memory.asdb)',
             '',
             '_Clases que más se crean, en cantidad y tamaño (filtro `com.example.vinilos`), y el método que más asigna (agrupado por pila de llamadas)._',
             '',
@@ -583,7 +590,7 @@ function Escribir-Analisis($Definicion, [string]$Carpeta, [int]$Numero, [string[
     Set-Content -Path $archivo -Value $texto.TrimEnd() -Encoding UTF8
 }
 
-function Grabar($Definicion, [string]$Id, [string]$Carpeta, [string]$Grabacion, $Contexto) {
+function Grabar($Definicion, [string]$Id, [string]$Carpeta, [string]$Analisis, [string]$Grabacion, $Contexto) {
     $numero = if ($Grabacion -eq 'telemetria') { 1 } else { 2 }
     Escribir-Titulo "$($Definicion.Titulo) · grabación $numero de 2"
     if ($Id -eq 'hu10') { Quitar-Favoritos; Escribir-Resultado 'OK' 'Favoritos del coleccionista 100 quitados en la base local.' }
@@ -631,7 +638,7 @@ function Grabar($Definicion, [string]$Id, [string]$Carpeta, [string]$Grabacion, 
             $tramo = Tramo-Pasos $resultado.Pasos $ancla
             if (Pausa 'Capturar Live Telemetry' @(
                     'El recorrido terminó. La grabación sigue; no la detengas todavía.',
-                    "El recorrido está entre $tramo de la grabación: ese tramo debe quedar en la captura."
+                    "El recorrido está en el tramo $tramo de la grabación: ese tramo debe quedar en la captura."
                 ) @(
                     'En "View Live Telemetry" pulsa el botón de pausar el seguimiento en vivo (a la derecha de las lupas) para que la vista no se siga moviendo.',
                     "Aleja con la lupa (-) y mueve la barra de desplazamiento de abajo hasta que la línea de tiempo muestre de $tramo completo.",
@@ -639,31 +646,46 @@ function Grabar($Definicion, [string]$Id, [string]$Carpeta, [string]$Grabacion, 
                 ) 'Presiona Enter y tomaré la captura como live-telemetry.png.') {
                 Capturar-Studio (Join-Path $Carpeta 'live-telemetry.png')
             }
+            if (Pausa 'Capturar la Connection View' @("Las peticiones del recorrido están en el tramo $tramo de la grabación.") @(
+                    'Abre App Inspection > Network Inspector (la grabación del Profiler sigue).',
+                    "En su línea de tiempo arrastra para seleccionar el tramo $tramo (o todo lo grabado).",
+                    'Abajo, en "Connection View", verifica que se vean todas las peticiones con Name, Size, Type, Status y Time.',
+                    'Deja App Inspection a la vista y aparta el ratón de la tabla.'
+                ) 'Presiona Enter y tomaré la captura como connections.png.') {
+                Capturar-Studio (Join-Path $Carpeta 'connections.png')
+            }
             Pedir-Archivo 'Exportar las peticiones del Network Inspector' @(
-                'Abre App Inspection > Network Inspector (la grabación del Profiler sigue).',
-                'Pulsa el botón "Export Connections" de la barra del Network Inspector.'
+                'En App Inspection > Network Inspector pulsa el botón "Export Connections" de su barra.'
             ) (Join-Path $Carpeta 'connections.json')
             Pausa 'Detener la grabación 1' @() @('En el Profiler pulsa "Stop Recording" y espera a que termine.') 'Cuando se haya detenido, presiona Enter.' | Out-Null
             Pedir-Archivo 'Exportar la grabación de Live Telemetry' @(
                 'En el Profiler abre la pestaña "Past Recordings".',
                 'Selecciona la grabación de Live Telemetry que acabas de detener (la más reciente).',
                 'Pulsa "Export recording".'
-            ) (Join-Path $Carpeta 'live-view.asdb')
+            ) (Join-Path $Carpeta 'live-telemetry.asdb')
         } else {
+            $tramo = Tramo-Pasos $resultado.Pasos $ancla
             Pausa 'Detener Allocations' @() @(
-                'Pulsa "Stop Recording" y espera a que cargue la tabla de clases.',
-                'Revísala ahora si quieres: ordenada por "Allocations" y con el filtro com.example.vinilos.'
+                'Pulsa "Stop Recording" y espera a que cargue la tabla de clases.'
             ) 'Cuando se haya detenido, presiona Enter.' | Out-Null
+            if (Pausa 'Capturar la tabla de Allocations' @("El recorrido está en el tramo $tramo de la grabación.") @(
+                    "En la gráfica de memoria arrastra para seleccionar el tramo ${tramo}: la tabla muestra solo lo creado en lo seleccionado.",
+                    'En la tabla deja "Arrange by: Class" y escribe com.example.vinilos en el filtro (lupa).',
+                    'Haz clic en el encabezado "Allocations" para dejar arriba las clases con más objetos creados.',
+                    'Aparta el ratón de la tabla.'
+                ) 'Presiona Enter y tomaré la captura como track-memory.png.') {
+                Capturar-Studio (Join-Path $Carpeta 'track-memory.png')
+            }
             Pedir-Archivo 'Exportar la grabación de Allocations' @(
                 'En el Profiler abre la pestaña "Past Recordings".',
                 'Selecciona la grabación de Java/Kotlin Allocations que acabas de detener (la más reciente).',
                 'Pulsa "Export recording".'
-            ) (Join-Path $Carpeta 'memory.asdb')
+            ) (Join-Path $Carpeta 'track-memory.asdb')
         }
     }
     if ($Id -eq 'hu07') { Borrar-AlbumesDePrueba; Escribir-Resultado 'OK' 'Álbumes "Perf" borrados por la API.' }
 
-    $archivos = if ($numero -eq 1) { '`live-telemetry.png`, `live-view.asdb`, `connections.json`' } else { '`memory.asdb`' }
+    $archivos = if ($numero -eq 1) { '`live-telemetry.png`, `live-telemetry.asdb`, `connections.png`, `connections.json`' } else { '`track-memory.png`, `track-memory.asdb`' }
     $origen = if ($ancla) { 'segundos del cronómetro "Recording" de Studio (±2 s)' } else { 'segundos desde el reposo inicial; sin cronómetro de Studio' }
     $termino = if ($resultado.Exito) { 'terminó' } else { '**no terminó: repetir**' }
     $bloque = @(
@@ -675,7 +697,7 @@ function Grabar($Definicion, [string]$Id, [string]$Carpeta, [string]$Grabacion, 
         '',
         "Medido por línea de comandos: memoria de la app (PSS) $memoriaInicial MB al empezar y $memoriaFinal MB al terminar; $cuadros cuadros dibujados, $lentos lentos, percentil 90 de $p90."
     )
-    Escribir-Analisis $Definicion $Carpeta $numero $bloque $Contexto
+    Escribir-Analisis $Definicion $Analisis $numero $bloque $Contexto
     $resultado.Exito
 }
 
@@ -691,21 +713,23 @@ function Ejecutar {
     $fallidos = 0
     foreach ($id in $Escenarios) {
         $def = $Definiciones[$id]
-        $carpeta = Join-Path $destino "$($def.Carpeta)\$Fase"
+        $carpeta = Join-Path $destino "$Fase\$($def.Carpeta)"
+        $analisis = Join-Path $destino "analisis\$Fase\$($def.Carpeta).md"
         New-Item -ItemType Directory -Force -Path $carpeta | Out-Null
         foreach ($grabacion in (@('telemetria', 'asignaciones') | Where-Object { $Grabaciones -contains $_ })) {
-            if (-not (Grabar $def $id $carpeta $grabacion $contexto)) { $fallidos++ }
+            if (-not (Grabar $def $id $carpeta $analisis $grabacion $contexto)) { $fallidos++ }
         }
         Escribir-Titulo "$($def.Titulo) · archivos en $carpeta"
-        foreach ($nombre in @('live-telemetry.png', 'live-view.asdb', 'connections.json', 'memory.asdb', 'analisis.md')) {
+        foreach ($nombre in $ArchivosPorHu) {
             if (Test-Path (Join-Path $carpeta $nombre)) { Escribir-Resultado 'OK' $nombre } else { Escribir-Resultado 'AVISO' "falta $nombre" }
         }
+        if (Test-Path $analisis) { Escribir-Resultado 'OK' "análisis: $analisis" }
     }
 
     Escribir-Titulo 'Terminado'
-    Write-Host "Resultados: $destino"
+    Write-Host "Resultados: $(Join-Path $destino $Fase)"
     if ($fallidos) { Write-Host "$fallidos grabación(es) con el recorrido incompleto: revisa la salida de arriba." -ForegroundColor Red }
-    Write-Host 'Falta a mano: completar en cada analisis.md los hallazgos y los pasos con más carga.'
+    Write-Host "Falta a mano: completar en $(Join-Path $destino "analisis\$Fase") los hallazgos y los pasos con más carga."
 }
 
 # ------------------------------------------------------------------ entrada
