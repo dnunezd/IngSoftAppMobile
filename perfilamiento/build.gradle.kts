@@ -2,16 +2,22 @@
 // proceso aparte, para que el propio recorrido no altere lo que mide el Profiler.
 plugins {
     alias(libs.plugins.android.test)
-    alias(libs.plugins.kotlin.android)
+}
+
+// AGP 9 trae Kotlin integrado, como en :app: no hace falta el plugin kotlin-android.
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
 }
 
 android {
     namespace = "com.example.vinilos.perfilamiento"
-    compileSdk = 34
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 23
-        targetSdk = 34
+        targetSdk = 37
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -29,11 +35,8 @@ android {
     experimentalProperties["android.experimental.self-instrumenting"] = true
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_1_8
-        targetCompatibility = JavaVersion.VERSION_1_8
-    }
-    kotlinOptions {
-        jvmTarget = "1.8"
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 }
 
