@@ -9,7 +9,7 @@ import java.util.Locale
  * "album", "Ástor" junto a "Alberto"). Devuelve un `Collator` nuevo en cada llamada porque no es seguro
  * compartirlo entre hilos: cada ordenamiento usa el suyo y varios pueden correr a la vez.
  */
-internal fun ordenAlfabetico(): Collator = Collator.getInstance(Locale("es")).apply {
+internal fun ordenAlfabetico(): Collator = Collator.getInstance(Locale.forLanguageTag("es")).apply {
     strength = Collator.PRIMARY
 }
 

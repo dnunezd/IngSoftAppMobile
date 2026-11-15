@@ -40,7 +40,7 @@ abstract class VinilosDb : RoomDatabase() {
          */
         fun crear(context: Context): VinilosDb =
             Room.databaseBuilder(context, VinilosDb::class.java, NOMBRE)
-                .fallbackToDestructiveMigration()
+                .fallbackToDestructiveMigration(dropAllTables = false)
                 .build()
     }
 }

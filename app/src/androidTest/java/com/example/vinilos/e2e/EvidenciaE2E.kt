@@ -30,7 +30,7 @@ import java.util.Locale
 object EvidenciaE2E {
 
     private const val CARPETA_BASE = "e2e-evidencia"
-    private val formatoHora = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale("es"))
+    private val formatoHora = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.forLanguageTag("es"))
 
     private class Paso(val nombre: String, val estado: String, val captura: File?, val hora: String)
 

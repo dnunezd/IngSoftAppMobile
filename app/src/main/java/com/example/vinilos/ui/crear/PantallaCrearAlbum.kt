@@ -40,6 +40,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -300,7 +301,7 @@ private fun TarjetaCampos(estado: CrearAlbumUiState, acciones: AccionesCrearAlbu
                     habilitado = habilitado,
                     // Sin autocorrección: el teclado cambiaba letras de la URL y dejaba otra dirección.
                     teclado = KeyboardOptions(
-                        autoCorrect = false,
+                        autoCorrectEnabled = false,
                         keyboardType = KeyboardType.Uri,
                         imeAction = ImeAction.Next
                     ),
@@ -584,9 +585,18 @@ private fun CampoFecha(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * El estado del calendario toma el idioma al crearse (Material 3 1.4), así que todo el selector,
+ * estado incluido, queda dentro de [EnEspanol].
+ */
 @Composable
 private fun SelectorFecha(fechaMillis: Long?, onAceptar: (Long) -> Unit, onCerrar: () -> Unit) {
+    EnEspanol { SelectorFechaEnEspanol(fechaMillis, onAceptar, onCerrar) }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SelectorFechaEnEspanol(fechaMillis: Long?, onAceptar: (Long) -> Unit, onCerrar: () -> Unit) {
     val hoy = remember { hoyEnUtc(System.currentTimeMillis(), TimeZone.getDefault()) }
     val selector = rememberDatePickerState(
         initialSelectedDateMillis = fechaMillis,
@@ -614,20 +624,18 @@ private fun SelectorFecha(fechaMillis: Long?, onAceptar: (Long) -> Unit, onCerra
                         .weight(1f, fill = false)
                         .verticalScroll(rememberScrollState())
                 ) {
-                    EnEspanol {
-                        // El modo por defecto permite escribir la fecha; el criterio exige elegirla.
-                        DatePicker(
-                            state = selector,
-                            showModeToggle = false,
-                            title = {
-                                Text(
-                                    text = stringResource(R.string.crear_fecha_titulo),
-                                    style = MaterialTheme.typography.labelLarge,
-                                    modifier = Modifier.padding(start = 24.dp, end = 12.dp, top = 16.dp)
-                                )
-                            }
-                        )
-                    }
+                    // El modo por defecto permite escribir la fecha; el criterio exige elegirla.
+                    DatePicker(
+                        state = selector,
+                        showModeToggle = false,
+                        title = {
+                            Text(
+                                text = stringResource(R.string.crear_fecha_titulo),
+                                style = MaterialTheme.typography.labelLarge,
+                                modifier = Modifier.padding(start = 24.dp, end = 12.dp, top = 16.dp)
+                            )
+                        }
+                    )
                 }
                 Row(
                     modifier = Modifier
@@ -664,7 +672,7 @@ private fun EnEspanol(contenido: @Composable () -> Unit) {
         contenido()
     } else {
         val espanol = remember(configuracion) {
-            Configuration(configuracion).apply { setLocale(Locale("es")) }
+            Configuration(configuracion).apply { setLocale(Locale.forLanguageTag("es")) }
         }
         CompositionLocalProvider(
             LocalConfiguration provides espanol,
@@ -694,7 +702,7 @@ private fun CampoOpciones(
         Pildora(
             conError = conError,
             modifier = Modifier
-                .menuAnchor()
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, habilitado)
                 .testTag(tag)
         ) {
             IconoCampo(icono)
