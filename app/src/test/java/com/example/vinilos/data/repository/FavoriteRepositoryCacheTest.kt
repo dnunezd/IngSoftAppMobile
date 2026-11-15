@@ -25,6 +25,14 @@ class FavoriteRepositoryCacheTest {
         var fallaAlLeer: Throwable? = null
         var fallaAlEscribir: Throwable? = null
 
+        /** Cada escritura que recibió, en orden, con las claves que tocó (optimizar-cache-e-imagenes). */
+        val operaciones = mutableListOf<String>()
+
+        private fun anotar(operacion: String, claves: List<Any> = emptyList()) {
+            fallaAlEscribir?.let { throw it }
+            operaciones += if (claves.isEmpty()) operacion else "$operacion$claves"
+        }
+
         override suspend fun existe(coleccionistaId: Int, artistaId: Int): Boolean {
             fallaAlLeer?.let { throw it }
             return FavoritoEntity(coleccionistaId, artistaId) in filas
@@ -36,13 +44,18 @@ class FavoriteRepositoryCacheTest {
         }
 
         override suspend fun borrarDe(coleccionistaId: Int) {
-            fallaAlEscribir?.let { throw it }
+            anotar("borrarDe", listOf(coleccionistaId))
             filas = filas.filterNot { it.coleccionistaId == coleccionistaId }.toSet()
         }
 
         override suspend fun insertar(favoritos: List<FavoritoEntity>) {
-            fallaAlEscribir?.let { throw it }
+            anotar("insertar", favoritos.map { it.artistaId })
             filas = filas + favoritos
+        }
+
+        override suspend fun borrarDeColeccionista(coleccionistaId: Int, artistaIds: List<Int>) {
+            anotar("borrarDeColeccionista", artistaIds)
+            filas = filas.filterNot { it.coleccionistaId == coleccionistaId && it.artistaId in artistaIds }.toSet()
         }
     }
 
@@ -135,5 +148,68 @@ class FavoriteRepositoryCacheTest {
 
         assertTrue(repositorio.esFavorito(100, 5).getOrThrow())
         assertTrue(repositorio.agregarFavorito(100, 8, ArtistType.BANDA).isSuccess)
+    }
+
+    // ---------- Escribir solo lo que cambió (optimizar-cache-e-imagenes, D4 y D5) ----------
+
+    private fun favoritos(vararg ids: Int, version: String? = null) = MockResponse()
+        .setBody(ids.joinToString(prefix = "[", postfix = "]") { """{"id": $it}""" })
+        .apply { if (version != null) setHeader("ETag", version) }
+
+    @Test
+    fun laComprobacionConLaMismaVersionNoEscribe() = runTest {
+        servidor.enqueue(favoritos(1, 2, version = "W/\"f1\""))
+        servidor.enqueue(favoritos(1, 2, version = "W/\"f1\""))
+        repositorio.esFavorito(100, 1).getOrThrow()
+        dao.operaciones.clear()
+
+        assertTrue(repositorio.esFavorito(100, 2).getOrThrow())
+
+        assertEquals(emptyList<String>(), dao.operaciones)
+    }
+
+    @Test
+    fun laComprobacionAgregaYQuitaSoloLasDiferencias() = runTest {
+        servidor.enqueue(favoritos(1, 2, version = "W/\"f1\""))
+        servidor.enqueue(favoritos(2, 3, version = "W/\"f2\""))
+        repositorio.esFavorito(100, 1).getOrThrow()
+        dao.operaciones.clear()
+
+        repositorio.esFavorito(100, 1).getOrThrow()
+
+        assertEquals(listOf("insertar[3]", "borrarDeColeccionista[1]"), dao.operaciones)
+        assertEquals(setOf(2, 3), dao.filas.filter { it.coleccionistaId == 100 }.map { it.artistaId }.toSet())
+    }
+
+    @Test
+    fun siElFavoritoSeQuitaEnElBackendYVuelveLaVersionAnteriorLoGuardadoSeCorrige() = runTest {
+        servidor.enqueue(favoritos(version = "W/\"f0\""))
+        servidor.enqueue(MockResponse().setBody("""{"id": 7}"""))
+        // Alguien quitó el favorito en el backend: vuelve a responder la versión de antes de agregarlo.
+        servidor.enqueue(favoritos(version = "W/\"f0\""))
+        repositorio.esFavorito(100, 7).getOrThrow()
+        repositorio.agregarFavorito(100, 7, ArtistType.BANDA).getOrThrow()
+        assertTrue(repositorio.esFavoritoGuardado(100, 7))
+
+        assertFalse(repositorio.esFavorito(100, 7).getOrThrow())
+
+        assertFalse(repositorio.esFavoritoGuardado(100, 7))
+    }
+
+    @Test
+    fun trasUnFalloAlGuardarLaSiguienteComprobacionReemplazaLosFavoritos() = runTest {
+        servidor.enqueue(favoritos(1, version = "W/\"f1\""))
+        servidor.enqueue(favoritos(2, version = "W/\"f2\""))
+        servidor.enqueue(favoritos(2, version = "W/\"f2\""))
+        repositorio.esFavorito(100, 1).getOrThrow()
+        dao.fallaAlEscribir = SQLiteException("disco lleno")
+        repositorio.esFavorito(100, 2).getOrThrow()
+        dao.fallaAlEscribir = null
+        dao.operaciones.clear()
+
+        repositorio.esFavorito(100, 2).getOrThrow()
+
+        assertEquals("borrarDe[100]", dao.operaciones.first())
+        assertEquals(setOf(2), dao.filas.map { it.artistaId }.toSet())
     }
 }

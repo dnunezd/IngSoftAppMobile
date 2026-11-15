@@ -20,6 +20,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
+import retrofit2.Response
 import java.util.concurrent.TimeUnit
 
 class FavoriteRepositoryTest {
@@ -121,7 +122,7 @@ class FavoriteRepositoryTest {
     fun cancelarLaComprobacionPropagaLaCancelacionSinErrorDeCarga() = runTest {
         val api = object : CollectorApi {
             override suspend fun getCollectors() = throw NotImplementedError()
-            override suspend fun getFavoritePerformers(collectorId: Int): List<PerformerDto> = awaitCancellation()
+            override suspend fun getFavoritePerformers(collectorId: Int): Response<List<PerformerDto>> = awaitCancellation()
             override suspend fun addFavoriteBand(collectorId: Int, bandId: Int) = awaitCancellation()
             override suspend fun addFavoriteMusician(collectorId: Int, musicianId: Int) = awaitCancellation()
         }

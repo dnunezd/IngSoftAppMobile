@@ -13,7 +13,9 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
+import org.junit.Rule
 import org.junit.Test
+import org.junit.rules.TemporaryFolder
 import retrofit2.HttpException
 import retrofit2.http.GET
 import java.io.IOException
@@ -231,7 +233,7 @@ class ServiceAdapterTest {
             )
         )
 
-        val resultado = adaptador.llamar { api.getCollectors() }
+        val resultado = adaptador.llamar { api.getCollectors().conVersion().valor }
 
         val lista = resultado.getOrThrow()
         assertEquals(1, lista.size)
@@ -244,42 +246,42 @@ class ServiceAdapterTest {
     fun respuestaVaciaEsUnExitoConListaVacia() = runTest {
         servidor.enqueue(MockResponse().setBody("[]"))
 
-        assertEquals(emptyList<CollectorDto>(), adaptador.llamar { api.getCollectors() }.getOrThrow())
+        assertEquals(emptyList<CollectorDto>(), adaptador.llamar { api.getCollectors().conVersion().valor }.getOrThrow())
     }
 
     @Test
     fun errorDelServidorSeTraduceAErrorDeCarga() = runTest {
         servidor.enqueue(MockResponse().setResponseCode(500))
 
-        assertTrue(adaptador.llamar { api.getCollectors() }.exceptionOrNull() is ErrorDeCarga)
+        assertTrue(adaptador.llamar { api.getCollectors().conVersion().valor }.exceptionOrNull() is ErrorDeCarga)
     }
 
     @Test
     fun errorDeCliente404SeTraduceAErrorDeCarga() = runTest {
         servidor.enqueue(MockResponse().setResponseCode(404))
 
-        assertTrue(adaptador.llamar { api.getCollectors() }.exceptionOrNull() is ErrorDeCarga)
+        assertTrue(adaptador.llamar { api.getCollectors().conVersion().valor }.exceptionOrNull() is ErrorDeCarga)
     }
 
     @Test
     fun sinConexionSeTraduceAErrorDeCarga() = runTest {
         servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
 
-        assertTrue(adaptador.llamar { api.getCollectors() }.exceptionOrNull() is ErrorDeCarga)
+        assertTrue(adaptador.llamar { api.getCollectors().conVersion().valor }.exceptionOrNull() is ErrorDeCarga)
     }
 
     @Test
     fun tiempoDeEsperaAgotadoSeTraduceAErrorDeCarga() = runTest {
         servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE))
 
-        assertTrue(adaptador.llamar { api.getCollectors() }.exceptionOrNull() is ErrorDeCarga)
+        assertTrue(adaptador.llamar { api.getCollectors().conVersion().valor }.exceptionOrNull() is ErrorDeCarga)
     }
 
     @Test
     fun jsonMalformadoSeTraduceAErrorDeCarga() = runTest {
         servidor.enqueue(MockResponse().setBody("esto no es json"))
 
-        assertTrue(adaptador.llamar { api.getCollectors() }.exceptionOrNull() is ErrorDeCarga)
+        assertTrue(adaptador.llamar { api.getCollectors().conVersion().valor }.exceptionOrNull() is ErrorDeCarga)
     }
 
     @Test
@@ -287,7 +289,7 @@ class ServiceAdapterTest {
         // Gson lanza IllegalStateException si llega un objeto donde se espera una lista.
         servidor.enqueue(MockResponse().setBody("""{"mensaje": "no es una lista"}"""))
 
-        assertTrue(adaptador.llamar { api.getCollectors() }.exceptionOrNull() is ErrorDeCarga)
+        assertTrue(adaptador.llamar { api.getCollectors().conVersion().valor }.exceptionOrNull() is ErrorDeCarga)
     }
 
     @Test
@@ -319,10 +321,173 @@ class ServiceAdapterTest {
         servidor.enqueue(MockResponse().setResponseCode(500))
         servidor.enqueue(MockResponse().setBody("""[{"id": 1, "name": "A", "email": "a@a.com"}]"""))
 
-        val primero = adaptador.llamar { api.getCollectors() }
-        val segundo = adaptador.llamar { api.getCollectors() }
+        val primero = adaptador.llamar { api.getCollectors().conVersion().valor }
+        val segundo = adaptador.llamar { api.getCollectors().conVersion().valor }
 
         assertTrue(primero.exceptionOrNull() is ErrorDeCarga)
         assertEquals(1, segundo.getOrThrow().size)
     }
+
+    // ---------- Caché HTTP (optimizar-cache-e-imagenes, D2) ----------
+
+    @get:Rule
+    val carpeta = TemporaryFolder()
+
+    /** Ejecuta [bloque] con un adaptador que usa la caché HTTP en una carpeta temporal y la cierra al final. */
+    private suspend fun conCache(bloque: suspend (ServiceAdapter, ApiDePrueba) -> Unit) {
+        val cliente = ServiceAdapter.clientePorDefecto(carpeta.newFolder("http"))
+        try {
+            val adaptador = ServiceAdapter(servidor.url("/").toString(), cliente)
+            bloque(adaptador, adaptador.api())
+        } finally {
+            cliente.cache?.close()
+        }
+    }
+
+    private fun respuestaConVersion(version: String, nombre: String = "Vinilo") =
+        MockResponse().setHeader("ETag", version).setBody("""{"nombre":"$nombre"}""")
+
+    @Test
+    fun conCacheLaConsultaRepetidaEnviaLaVersionYUsaLoGuardadoAnteUn304() = runTest {
+        servidor.enqueue(respuestaConVersion("W/\"abc\""))
+        servidor.enqueue(MockResponse().setResponseCode(304).setHeader("ETag", "W/\"abc\""))
+
+        conCache { adaptador, api ->
+            assertEquals("Vinilo", adaptador.llamar { api.obtenerPrueba() }.getOrThrow().nombre)
+            val repetida = adaptador.llamar { api.obtenerPrueba() }
+
+            assertEquals("Vinilo", repetida.getOrThrow().nombre)
+        }
+        assertEquals(null, servidor.takeRequest().getHeader("If-None-Match"))
+        assertEquals("W/\"abc\"", servidor.takeRequest().getHeader("If-None-Match"))
+    }
+
+    @Test
+    fun conCacheUnaRespuestaNuevaReemplazaLaGuardadaYSuVersion() = runTest {
+        servidor.enqueue(respuestaConVersion("W/\"v1\"", "Antes"))
+        servidor.enqueue(respuestaConVersion("W/\"v2\"", "Despues"))
+        servidor.enqueue(MockResponse().setResponseCode(304).setHeader("ETag", "W/\"v2\""))
+
+        conCache { adaptador, api ->
+            adaptador.llamar { api.obtenerPrueba() }
+            assertEquals("Despues", adaptador.llamar { api.obtenerPrueba() }.getOrThrow().nombre)
+            assertEquals("Despues", adaptador.llamar { api.obtenerPrueba() }.getOrThrow().nombre)
+        }
+        servidor.takeRequest()
+        servidor.takeRequest()
+        assertEquals("W/\"v2\"", servidor.takeRequest().getHeader("If-None-Match"))
+    }
+
+    @Test
+    fun conCacheUnMaxAgeDelBackendNoEvitaPreguntarle() = runTest {
+        servidor.enqueue(respuestaConVersion("W/\"abc\"").setHeader("Cache-Control", "max-age=600"))
+        servidor.enqueue(MockResponse().setResponseCode(304).setHeader("ETag", "W/\"abc\""))
+
+        conCache { adaptador, api ->
+            adaptador.llamar { api.obtenerPrueba() }
+            assertEquals("Vinilo", adaptador.llamar { api.obtenerPrueba() }.getOrThrow().nombre)
+        }
+        assertEquals(2, servidor.requestCount)
+    }
+
+    @Test
+    fun conCacheSinConexionSeReportaElErrorDeCargaAunqueHayaRespuestaGuardada() = runTest {
+        servidor.enqueue(respuestaConVersion("W/\"abc\""))
+        // OkHttp reintenta una conexión fallida: se encolan varias desconexiones.
+        repeat(3) { servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START)) }
+
+        conCache { adaptador, api ->
+            adaptador.llamar { api.obtenerPrueba() }
+
+            assertTrue(adaptador.llamar { api.obtenerPrueba() }.exceptionOrNull() is ErrorDeCarga)
+        }
+    }
+
+    @Test
+    fun sinCarpetaDeCacheNoSeEnviaLaVersion() = runTest {
+        servidor.enqueue(respuestaConVersion("W/\"abc\""))
+        servidor.enqueue(respuestaConVersion("W/\"abc\""))
+        val adaptador = ServiceAdapter(servidor.url("/").toString(), ServiceAdapter.clientePorDefecto())
+        val api = adaptador.api<ApiDePrueba>()
+
+        adaptador.llamar { api.obtenerPrueba() }
+        adaptador.llamar { api.obtenerPrueba() }
+
+        servidor.takeRequest()
+        assertEquals(null, servidor.takeRequest().getHeader("If-None-Match"))
+    }
+
+    // ---------- Versión de la respuesta (optimizar-cache-e-imagenes, D3) ----------
+
+    @Test
+    fun unaRespuestaExitosaEntregaSuVersion() = runTest {
+        servidor.enqueue(respuestaConVersion("W/\"abc\""))
+        val api = adaptador.api<ApiConVersion>()
+
+        val resultado = adaptador.llamar { api.obtenerPrueba().conVersion() }.getOrThrow()
+
+        assertEquals(ConVersion(DatosPrueba("Vinilo"), "W/\"abc\""), resultado)
+    }
+
+    @Test
+    fun unaRespuestaSinEtagEntregaVersionNula() = runTest {
+        servidor.enqueue(MockResponse().setBody("""{"nombre":"Vinilo"}"""))
+        val api = adaptador.api<ApiConVersion>()
+
+        assertEquals(null, adaptador.llamar { api.obtenerPrueba().conVersion() }.getOrThrow().version)
+    }
+
+    @Test
+    fun conVersionUn404SigueSiendoRecursoNoEncontrado() = runTest {
+        servidor.enqueue(MockResponse().setResponseCode(404))
+        val api = adaptador.api<ApiConVersion>()
+
+        val error = adaptador.llamar { api.obtenerPrueba().conVersion() }.exceptionOrNull()
+
+        assertTrue(error is RecursoNoEncontrado)
+        assertEquals(404, (error?.cause as HttpException).code())
+    }
+
+    @Test
+    fun conVersionUn500EsErrorDeCargaSinSerRecursoNoEncontrado() = runTest {
+        servidor.enqueue(MockResponse().setResponseCode(500))
+        val api = adaptador.api<ApiConVersion>()
+
+        val error = adaptador.llamar { api.obtenerPrueba().conVersion() }.exceptionOrNull()
+
+        assertTrue(error is ErrorDeCarga)
+        assertTrue(error !is RecursoNoEncontrado)
+    }
+
+    @Test
+    fun conVersionUnCuerpoNuloEsErrorDeCarga() = runTest {
+        servidor.enqueue(MockResponse().setBody("null"))
+        val api = adaptador.api<ApiConVersion>()
+
+        assertTrue(adaptador.llamar { api.obtenerPrueba().conVersion() }.exceptionOrNull() is ErrorDeCarga)
+    }
+
+    @Test
+    fun un304DeLaCacheEntregaLaVersionGuardada() = runTest {
+        servidor.enqueue(respuestaConVersion("W/\"abc\""))
+        servidor.enqueue(MockResponse().setResponseCode(304).setHeader("ETag", "W/\"abc\""))
+        val cliente = ServiceAdapter.clientePorDefecto(carpeta.newFolder("http"))
+        try {
+            val adaptador = ServiceAdapter(servidor.url("/").toString(), cliente)
+            val api = adaptador.api<ApiConVersion>()
+            adaptador.llamar { api.obtenerPrueba().conVersion() }
+
+            val repetida = adaptador.llamar { api.obtenerPrueba().conVersion() }.getOrThrow()
+
+            assertEquals(ConVersion(DatosPrueba("Vinilo"), "W/\"abc\""), repetida)
+        } finally {
+            cliente.cache?.close()
+        }
+    }
+}
+
+// API falsa que devuelve la respuesta completa de Retrofit, como los GET que se guardan en Room.
+interface ApiConVersion {
+    @GET("prueba")
+    suspend fun obtenerPrueba(): retrofit2.Response<DatosPrueba>
 }

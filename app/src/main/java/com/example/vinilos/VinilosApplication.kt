@@ -23,7 +23,9 @@ class VinilosApplication : Application(), ImageLoaderFactory {
             albumDao = db.albumDao(),
             coleccionistaDao = db.coleccionistaDao(),
             artistaDao = db.artistaDao(),
-            favoritoDao = db.favoritoDao()
+            favoritoDao = db.favoritoDao(),
+            // Separada de `image_cache`: OkHttp y Coil no pueden compartir la carpeta de su caché de disco.
+            carpetaCacheHttp = cacheDir.resolve("http")
         )
     }
 
