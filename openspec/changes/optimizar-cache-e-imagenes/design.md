@@ -21,7 +21,7 @@ Ver `proposal.md` (Why). El estado de partida es `origin/develop` con `add-cache
 
 **Non-Goals:**
 - Saltarse la conversión DTO → modelo cuando la respuesta no cambió: el repositorio sigue devolviendo modelos recién convertidos.
-- Evitar peticiones: la caché HTTP ahorra bytes, no peticiones. Evitarlas corresponde a los puntos 2, 4 y 5 del informe.
+- Evitar peticiones: la caché HTTP ahorra bytes, no peticiones. Evitarlas corresponde a otras mejoras identificadas en el perfilamiento, como no volver a consultar un detalle reciente.
 - Llenar la copia en memoria con lo leído de Room al abrir la app (ver D5).
 - Cambiar los estados, textos o indicadores de las pantallas, salvo cuándo aparece el álbum creado.
 
@@ -179,7 +179,7 @@ Pruebas:
 - **[Memoria de las copias]** → La copia del catálogo incluye los detalles: canciones, intérpretes y comentarios de cada álbum. Con los 274 álbumes medidos en `add-crear-album` (M4), son del orden de cientos de KB, y se comparten las mismas instancias que se escribieron.
 - **[La `ETag` del backend desplegado se comporta distinto o se pierde en un proxy]** → Sin `ETag` se compara el contenido y se descarga completo, que es lo que pasa hoy. Las `ETag` débiles de Express salen de un hash del cuerpo, así que una colisión es despreciable.
 - **[La fecha del álbum que devuelve el `POST` tiene otro formato que la de `GET /albums`]** → La comparación lo ve como un cambio y escribe esa fila una vez más. Es correcto, solo menos óptimo.
-- **[El punto 1 no se nota en memoria en el Samsung]** → `add-crear-album` midió que en Android 14 no cambia y que en API 23 baja 7,3 MB. En el perfilamiento «After» se revisan las asignaciones de `Bitmap` desde `PortadaAlbum`, no solo el total. Medir en API 23 queda a decisión del usuario.
+- **[La imagen genérica liviana no se nota en memoria en el Samsung]** → `add-crear-album` midió que en Android 14 no cambia y que en API 23 baja 7,3 MB. En el perfilamiento «After» se revisan las asignaciones de `Bitmap` desde `PortadaAlbum`, no solo el total. Medir en API 23 queda a decisión del usuario.
 - **[El ícono de respaldo se ve a través de una portada con transparencia]** → Las portadas del catálogo son JPG o PNG opacos. HU04 ya acepta este caso.
 - **[Doble almacenamiento en disco]** → La caché HTTP (hasta 10 MiB, en `cacheDir`, que el sistema puede vaciar) guarda los cuerpos además de Room. Es lo que permite el 304 sin cuerpo.
 - **[`Response<T>` con R8]** → Hoy `isMinifyEnabled = false`. Si se activa, las reglas `-keep` medidas en `add-crear-album` (M3) ya incluyen `retrofit2.Response`.
