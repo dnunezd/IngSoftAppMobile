@@ -20,21 +20,32 @@ el portapapeles y comprueba que cada archivo quedó guardado.
 
 ## Pasos
 
+Hay dos fases, cada una con el código que le corresponde:
+
+| Fase | Código | Comandos |
+|---|---|---|
+| `baseline` | La línea base, sin micro-optimizaciones: el release v2.1.0 | `-Accion Preparar -Version v2.1.0` y luego `-Accion Ejecutar -Version v2.1.0 -Fase baseline` |
+| `latest` | Con las micro-optimizaciones: el código de esta rama | `-Accion Preparar` y luego `-Accion Ejecutar -Fase latest` |
+
 ```powershell
-.\scripts\perfilamiento\Perfilar.ps1 -Accion Preparar -Version v2.1.0   # compila e instala
-.\scripts\perfilamiento\Perfilar.ps1 -Accion Validar  -Version v2.1.0   # revisa que todo esté listo
-.\scripts\perfilamiento\Perfilar.ps1 -Accion Ejecutar -Version v2.1.0 -Fase Before -Escenarios hu01
+.\scripts\perfilamiento\Perfilar.ps1 -Accion Preparar                        # compila e instala la rama
+.\scripts\perfilamiento\Perfilar.ps1 -Accion Validar                         # revisa que todo esté listo
+.\scripts\perfilamiento\Perfilar.ps1 -Accion Ejecutar -Fase latest -Escenarios hu01
 ```
 
 El script hace pausas que esperan respuesta: hay que correrlo en una terminal interactiva (PowerShell
 o la terminal de Android Studio), no en segundo plano.
 
 - `-Version` es el tag o commit que se perfila. Sin ella, se perfila el código de la rama actual.
-- `-Fase` es la carpeta de la fase dentro de los resultados: `Before` (por defecto) para la primera, la
-  línea base sin micro-optimizaciones. La segunda fase se corre con su propio nombre y la versión que
-  la contenga.
-- `-Propietario` es quien perfila (primera parte de la carpeta). Por defecto, el primer nombre de
-  `git config user.name` en minúsculas y sin tildes.
+  `Preparar` anota en `build\perfilamiento\instalada.txt` de qué código es la app que instaló, y
+  `Validar` no deja grabar si la app del teléfono es de otro (por ejemplo, la de baseline al grabar
+  latest).
+- `-Fase` es `baseline` o `latest` (por defecto `latest`) y es la última carpeta de los resultados.
+- `-Propietario` es quien perfila (p. ej. `jeffrey-diaz`). Por defecto, el primer nombre y el primer
+  apellido de `git config user.name`, en minúsculas y sin tildes. Con un nombre de tres palabras no se
+  sabe cuál es el apellido: conviene pasarlo.
+- `-Dispositivo` es el teléfono en la carpeta (p. ej. `motorola-edge-30`, `samsung-s25-ultra`). Por
+  defecto, el nombre comercial que informa el teléfono o, si no lo informa, su modelo.
 - `-CarpetaResultados` cambia la carpeta raíz de los resultados (por defecto `docs/performance/resultados`
   de este repositorio); sirve para correr el script desde otra copia de la rama.
 - `-Escenarios hu01,hu02,...` elige las HU (por defecto las seis) y `-Grabaciones telemetria` o
@@ -91,21 +102,24 @@ Datos del backend:
 ## Qué deja en `docs/performance/resultados/`
 
 ```
-<propietario>-<dispositivo>/        p. ej. jeffrey-motorola-edge-30
-├── Before/                         la fase (-Fase); Before es la primera
-│   └── HU01/ … HU10/
-│       ├── connections.json
-│       ├── connections.png
-│       ├── live-telemetry.asdb
-│       ├── live-telemetry.png
-│       ├── track-memory.asdb
-│       └── track-memory.png
-└── analisis/
-    └── Before/
-        └── HU01.md … HU10.md
+<propietario>--<dispositivo>/       p. ej. jeffrey-diaz--motorola-edge-30
+├── dispositivo.txt                 datos del teléfono (se escribe a mano, ver el de cada carpeta)
+└── HU01/ … HU10/
+    ├── baseline/                   la fase (-Fase)
+    │   ├── connections.json
+    │   ├── connections.png
+    │   ├── live-telemetry.asdb
+    │   ├── live-telemetry.png
+    │   ├── track-memory.asdb
+    │   └── track-memory.png
+    └── latest/                     los mismos 6 archivos
+analisis/<propietario>--<dispositivo>/
+├── baseline/HU01.md … HU10.md
+└── latest/HU01.md … HU10.md
 ```
 
-Cada `analisis/<fase>/HUxx.md` trae el dispositivo y la versión, un bloque por grabación, la lista de "Qué analizar"
+El análisis va aparte, en `analisis/`, para que cada carpeta de HU tenga solo lo grabado en Studio.
+Cada `analisis/<propietario>--<dispositivo>/<fase>/HUxx.md` trae el dispositivo y la versión, un bloque por grabación, la lista de "Qué analizar"
 de la guía para esa HU y las secciones de hallazgos y pasos con más carga, que se completan a mano
 cruzando los segundos con lo grabado. Repetir una grabación reemplaza solo su bloque: lo escrito a
 mano se conserva.

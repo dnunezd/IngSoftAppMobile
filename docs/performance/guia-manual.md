@@ -17,8 +17,9 @@ adb reverse tcp:3000 tcp:3000
 adb install -r build\perfilamiento\vinilos-v2.1.0-perf-depurable.apk
 ```
 
-Es la línea base v2.1.0 (adjunta también al release). Para otra versión, se genera con
-`.\scripts\perfilamiento\Perfilar.ps1 -Accion Preparar -Version <tag>`. Se usa el APK depurable
+Es la línea base v2.1.0 (fase `baseline`, adjunta también al release). La fase `latest`, con las
+micro-optimizaciones, usa la app de la rama actual: `.\scripts\perfilamiento\Perfilar.ps1 -Accion
+Preparar` la compila e instala (con `-Version <tag>`, la de otra versión). Se usa el APK depurable
 porque Network Inspector y la grabación de memoria lo exigen. Para hacer estos mismos pasos de forma
 automática, ver [guia-automatizacion.md](guia-automatizacion.md).
 
@@ -53,21 +54,26 @@ correrla. Para dejarlo permanente, correr esto una vez y abrir otra consola:
    3. Detener, seleccionar el tramo de los pasos, filtrar por `com.example.vinilos`, ordenar por
       **Allocations** y capturar la tabla como `track-memory.png`.
    4. En **Past Recordings**, **Export recording** como `track-memory.asdb`.
-5. Guardar todo en `docs/performance/resultados/<propietario>-<dispositivo>/<fase>/HUxx/` (p. ej.
-   `jeffrey-motorola-edge-30/Before/HU01/`, donde `Before` es la primera fase):
+5. Guardar todo en `docs/performance/resultados/<propietario>--<dispositivo>/HUxx/<fase>/` (p. ej.
+   `jeffrey-diaz--motorola-edge-30/HU01/baseline/`). La fase es `baseline` (sin micro-optimizaciones,
+   la app v2.1.0) o `latest` (con ellas, la app de la rama actual):
 
    ```
-   <propietario>-<dispositivo>/Before/HU01/
-   ├── connections.json
-   ├── connections.png
-   ├── live-telemetry.asdb
-   ├── live-telemetry.png
-   ├── track-memory.asdb
-   └── track-memory.png
+   <propietario>--<dispositivo>/
+   ├── dispositivo.txt
+   └── HU01/
+       ├── baseline/
+       │   ├── connections.json
+       │   ├── connections.png
+       │   ├── live-telemetry.asdb
+       │   ├── live-telemetry.png
+       │   ├── track-memory.asdb
+       │   └── track-memory.png
+       └── latest/   (los mismos 6 archivos)
    ```
 
    Los segundos anotados y lo encontrado van aparte, en
-   `<propietario>-<dispositivo>/analisis/Before/HU01.md`. El script automatizado
+   `analisis/<propietario>--<dispositivo>/<fase>/HU01.md`. El script automatizado
    ([guia-automatizacion.md](guia-automatizacion.md)) deja la misma estructura y arma ese análisis.
 
 ## Qué se analiza

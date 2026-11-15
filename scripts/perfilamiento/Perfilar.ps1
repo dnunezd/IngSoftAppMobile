@@ -17,21 +17,26 @@
   dos parches de scripts\perfilamiento\parches: la compilación "perf" y los testTag visibles para
   UI Automator. No cambian la lógica de la app.
 
-  Los resultados quedan en docs/performance/resultados/<propietario>-<dispositivo>/<fase>/HUxx/:
+  -Fase es baseline (la línea base, sin micro-optimizaciones: se perfiló con -Version v2.1.0) o
+  latest (con las micro-optimizaciones: el código de la rama actual, sin -Version).
+
+  Los resultados quedan en docs/performance/resultados/<propietario>--<dispositivo>/HUxx/<fase>/:
     live-telemetry.png  captura de View Live Telemetry (la toma el script)
     live-telemetry.asdb grabación de Live Telemetry (Past Recordings > Export recording)
     connections.png     captura de la Connection View del Network Inspector (la toma el script)
     connections.json    peticiones del Network Inspector (Export Connections)
     track-memory.png    captura de la tabla de Java/Kotlin Allocations (la toma el script)
     track-memory.asdb   grabación de Java/Kotlin Allocations (Past Recordings > Export recording)
-  Aparte, en <propietario>-<dispositivo>/analisis/<fase>/HUxx.md, el script deja los pasos con su
-  segundo de la grabación, lo medido y lo que hay que analizar.
+  Aparte, en docs/performance/resultados/analisis/<propietario>--<dispositivo>/<fase>/HUxx.md, el script
+  deja los pasos con su segundo de la grabación, lo medido y lo que hay que analizar.
 
 .EXAMPLE
-  .\scripts\perfilamiento\Perfilar.ps1 -Accion Preparar -Version v2.1.0
-  .\scripts\perfilamiento\Perfilar.ps1 -Accion Validar -Version v2.1.0
-  .\scripts\perfilamiento\Perfilar.ps1 -Accion Ejecutar -Version v2.1.0 -Fase Before -Escenarios hu01
-  .\scripts\perfilamiento\Perfilar.ps1 -Accion Ejecutar -Version v2.1.0 -Escenarios hu03 -Grabaciones asignaciones
+  .\scripts\perfilamiento\Perfilar.ps1 -Accion Preparar
+  .\scripts\perfilamiento\Perfilar.ps1 -Accion Validar
+  .\scripts\perfilamiento\Perfilar.ps1 -Accion Ejecutar -Fase latest -Escenarios hu01
+  .\scripts\perfilamiento\Perfilar.ps1 -Accion Ejecutar -Fase latest -Escenarios hu03 -Grabaciones asignaciones
+  .\scripts\perfilamiento\Perfilar.ps1 -Accion Preparar -Version v2.1.0      # para repetir la línea base
+  .\scripts\perfilamiento\Perfilar.ps1 -Accion Ejecutar -Version v2.1.0 -Fase baseline -Escenarios hu01
 #>
 [CmdletBinding()]
 param(
@@ -42,14 +47,19 @@ param(
     # Tag o commit a perfilar (p. ej. v2.1.0). Sin él, el código de la rama actual.
     [string]$Version,
 
-    # Fase del perfilamiento: "Before" es la primera (línea base, sin micro-optimizaciones).
-    [ValidatePattern('^[A-Za-z0-9-]+$')]
-    [string]$Fase = 'Before',
+    # Fase del perfilamiento: baseline (línea base, sin micro-optimizaciones) o latest (con ellas).
+    [ValidateSet('baseline', 'latest')]
+    [string]$Fase = 'latest',
 
-    # Quién perfila: primera parte del nombre de la carpeta de resultados. Por defecto, el primer
-    # nombre de git config user.name, en minúsculas y sin tildes.
+    # Quién perfila: primera parte de la carpeta de resultados (p. ej. jeffrey-diaz). Por defecto sale
+    # de git config user.name: primer nombre y primer apellido, en minúsculas y sin tildes.
     [ValidatePattern('^[a-z0-9-]+$')]
     [string]$Propietario,
+
+    # El dispositivo en la carpeta de resultados (p. ej. motorola-edge-30, samsung-s25-ultra). Por
+    # defecto sale del nombre comercial o del modelo que informa el teléfono.
+    [ValidatePattern('^[a-z0-9-]+$')]
+    [string]$Dispositivo,
 
     # Serial de adb (adb devices). Obligatorio solo si hay más de un dispositivo conectado.
     [string]$Serial,
@@ -108,9 +118,17 @@ function Como-Slug([string]$Texto) {
     ($sinTildes.ToLower() -replace '[^a-z0-9]+', '-').Trim('-')
 }
 
+function Nombre-Propietario([string]$Nombre) {
+    # Primer nombre y primer apellido: "Jeffrey Alexander Diaz Perez" -> "jeffrey-diaz",
+    # "Daniel Nuñez" -> "daniel-nunez". Con 4 o más palabras, el primer apellido es la penúltima.
+    $partes = @($Nombre -split '\s+' | Where-Object { $_ })
+    $apellido = switch ($partes.Count) { 0 { '' } 1 { '' } 2 { $partes[1] } 3 { $partes[1] } default { $partes[-2] } }
+    Como-Slug "$($partes[0]) $apellido"
+}
+
 if (-not $Propietario) {
     $usuario = (& git.exe -C $Raiz config user.name 2>$null)
-    $Propietario = if ($usuario) { Como-Slug (($usuario -split '\s+')[0]) } else { Como-Slug $env:USERNAME }
+    $Propietario = if ($usuario) { Nombre-Propietario $usuario } else { Como-Slug $env:USERNAME }
 }
 
 # ------------------------------------------------------------------ utilidades
@@ -175,6 +193,9 @@ function Leer-Dispositivo {
     [pscustomobject]@{
         Fabricante = Adb shell getprop ro.product.manufacturer
         Modelo     = Adb shell getprop ro.product.model
+        # Samsung informa el modelo como "SM-S938B"; el nombre comercial ("Galaxy S25 Ultra") va aparte.
+        NombreComercial = @('ro.product.marketname', 'ro.product.vendor.marketname', 'ro.config.marketing_name') |
+            ForEach-Object { Adb shell getprop $_ } | Where-Object { $_ } | Select-Object -First 1
         Procesador = $soc
         Abi        = Adb shell getprop ro.product.cpu.abi
         RamGb      = [math]::Round($memKb / 1MB, 1)
@@ -185,13 +206,18 @@ function Leer-Dispositivo {
     }
 }
 
-function Nombre-Carpeta($Dispositivo) {
-    # <propietario>-<dispositivo>: "jeffrey-motorola-edge-30", "ana-samsung-sm-s938b". El fabricante
-    # se agrega solo si el modelo no lo trae ya ("motorola edge 30").
-    $modelo = Como-Slug $Dispositivo.Modelo
-    $fabricante = Como-Slug $Dispositivo.Fabricante
-    $equipo = if ($modelo.StartsWith($fabricante)) { $modelo } else { "$fabricante-$modelo" }
-    "$Propietario-$equipo"
+function Nombre-Carpeta($Telefono) {
+    # <propietario>--<dispositivo>: "jeffrey-diaz--motorola-edge-30", "daniel-nunez--samsung-s25-ultra".
+    # Sin -Dispositivo se usa el nombre comercial que informa el teléfono o, si no hay, el modelo; el
+    # fabricante se agrega solo si no viene ya ("motorola edge 30").
+    $equipo = $Dispositivo
+    if (-not $equipo) {
+        $nombre = if ($Telefono.NombreComercial) { $Telefono.NombreComercial } else { $Telefono.Modelo }
+        $equipo = Como-Slug $nombre
+        $fabricante = Como-Slug $Telefono.Fabricante
+        if (-not $equipo.StartsWith($fabricante)) { $equipo = "$fabricante-$equipo" }
+    }
+    "$Propietario--$equipo"
 }
 
 function Probar-Backend {
@@ -202,10 +228,22 @@ function Probar-Backend {
 function Info-Paquete([string]$Nombre) {
     $volcado = Adb shell dumpsys package $Nombre
     if ($volcado -notmatch 'versionName=(\S+)') { return $null }
+    $version = $Matches[1]
     [pscustomobject]@{
-        Version   = $Matches[1]
-        Depurable = $volcado -match 'pkgFlags=\[[^\]]*DEBUGGABLE'
+        Version     = $version
+        Depurable   = $volcado -match 'pkgFlags=\[[^\]]*DEBUGGABLE'
+        Actualizada = if ($volcado -match 'lastUpdateTime=([^\r\n]+)') { $Matches[1].Trim() } else { '' }
     }
+}
+
+# Preparar anota aquí qué código instaló (rama o tag) y cuándo, para que Validar no deje grabar una
+# fase con la app de otra (p. ej. la fase latest con la app de baseline, v2.1.0, todavía instalada).
+$MarcaInstalacion = Join-Path $CarpetaApk 'instalada.txt'
+
+function Leer-Marca {
+    if (-not (Test-Path $MarcaInstalacion)) { return $null }
+    $c = (Get-Content $MarcaInstalacion -Raw).Trim() -split '\|'
+    [pscustomobject]@{ Etiqueta = $c[0]; Commit = $c[1]; Serial = $c[2]; Actualizada = $c[3] }
 }
 
 function Milis-Dispositivo { [long](Adb shell 'date +%s%3N') }
@@ -240,8 +278,22 @@ function Validar {
     if (-not $app) { Escribir-Resultado 'FALLA' "$Paquete no está instalado: corre -Accion Preparar$(if ($Version) { " -Version $Version" })."; $fallas++ }
     elseif (-not $app.Depurable) { Escribir-Resultado 'FALLA' "$Paquete $($app.Version) no es depurable: Network Inspector y Allocations lo exigen. Corre -Accion Preparar."; $fallas++ }
     else { Escribir-Resultado 'OK' "$Paquete $($app.Version) (depurable)." }
-    if ($app -and $Version -and $app.Version -notlike "$($Version.TrimStart('v'))*") {
-        Escribir-Resultado 'AVISO' "La app instalada es la $($app.Version), no la $Version. Corre -Accion Preparar -Version $Version."
+    $marca = Leer-Marca
+    $preparar = "-Accion Preparar$(if ($Version) { " -Version $Version" })"
+    if ($app -and (-not $marca -or $marca.Serial -ne $script:SerialActivo)) {
+        Escribir-Resultado 'FALLA' "No sé de qué código es la app instalada en este teléfono: corre $preparar."; $fallas++
+    } elseif ($app -and $marca.Etiqueta -ne $Etiqueta) {
+        Escribir-Resultado 'FALLA' "La app instalada se compiló de '$($marca.Etiqueta)', no de '$Etiqueta': corre $preparar."; $fallas++
+    } elseif ($app -and $marca.Actualizada -ne $app.Actualizada) {
+        Escribir-Resultado 'FALLA' "La app se reinstaló fuera del script después de Preparar: corre $preparar."; $fallas++
+    } elseif ($app) {
+        Escribir-Resultado 'OK' "Compilada de '$($marca.Etiqueta)' (commit $($marca.Commit))."
+    }
+    if ($Fase -eq 'latest' -and $Version) {
+        Escribir-Resultado 'AVISO' "Fase latest con -Version ${Version}: latest es el código con las micro-optimizaciones (la rama, sin -Version)."
+    }
+    if ($Fase -eq 'baseline' -and -not $Version) {
+        Escribir-Resultado 'AVISO' 'Fase baseline sin -Version: la línea base se perfiló con -Version v2.1.0.'
     }
     if (Info-Paquete $PaqueteRecorridos) { Escribir-Resultado 'OK' "$PaqueteRecorridos (recorridos) instalado." }
     else { Escribir-Resultado 'FALLA' "$PaqueteRecorridos no está instalado: corre -Accion Preparar."; $fallas++ }
@@ -321,12 +373,20 @@ function Preparar {
     Escribir-Titulo 'Instalar'
     foreach ($apk in @($ApkApp, $ApkRecorridos)) {
         $salida = Adb install -r $apk
+        if ($salida -match 'INSTALL_FAILED_VERSION_DOWNGRADE') {
+            # Pasar de baseline (v2.1.0, versionCode 4) a latest (develop, versionCode 3) es bajar de
+            # versión: -d lo permite porque la app es depurable. Los datos se borran antes de cada grabación.
+            $salida = Adb install -r -d $apk
+        }
         if ($salida -notmatch 'Success') { throw "No se pudo instalar ${apk}: $salida" }
         Escribir-Resultado 'OK' "$(Split-Path $apk -Leaf) instalado."
     }
     Adb reverse tcp:3000 tcp:3000 | Out-Null
     Escribir-Resultado 'OK' 'adb reverse tcp:3000 tcp:3000.'
-    Escribir-Resultado 'OK' "Versión instalada: $((Info-Paquete $Paquete).Version), commit $(Git -C $fuente rev-parse --short HEAD)."
+    $instalada = Info-Paquete $Paquete
+    $commit = Git -C $fuente rev-parse --short HEAD
+    Set-Content -Path $MarcaInstalacion -Value "$Etiqueta|$commit|$($script:SerialActivo)|$($instalada.Actualizada)" -Encoding UTF8
+    Escribir-Resultado 'OK' "Versión instalada: $($instalada.Version), compilada de '$Etiqueta' (commit $commit)."
 }
 
 # ------------------------------------------------------------------ pausas guiadas
@@ -723,8 +783,8 @@ function Ejecutar {
     $fallidos = 0
     foreach ($id in $Escenarios) {
         $def = $Definiciones[$id]
-        $carpeta = Join-Path $destino "$Fase\$($def.Carpeta)"
-        $analisis = Join-Path $destino "analisis\$Fase\$($def.Carpeta).md"
+        $carpeta = Join-Path $destino "$($def.Carpeta)\$Fase"
+        $analisis = Join-Path $CarpetaResultados "analisis\$(Split-Path $destino -Leaf)\$Fase\$($def.Carpeta).md"
         New-Item -ItemType Directory -Force -Path $carpeta | Out-Null
         foreach ($grabacion in (@('telemetria', 'asignaciones') | Where-Object { $Grabaciones -contains $_ })) {
             if (-not (Grabar $def $id $carpeta $analisis $grabacion $contexto)) { $fallidos++ }
@@ -737,9 +797,9 @@ function Ejecutar {
     }
 
     Escribir-Titulo 'Terminado'
-    Write-Host "Resultados: $(Join-Path $destino $Fase)"
+    Write-Host "Resultados: $destino\HUxx\$Fase"
     if ($fallidos) { Write-Host "$fallidos grabación(es) con el recorrido incompleto: revisa la salida de arriba." -ForegroundColor Red }
-    Write-Host "Falta a mano: completar en $(Join-Path $destino "analisis\$Fase") los hallazgos y los pasos con más carga."
+    Write-Host "Falta a mano: completar en $(Join-Path $CarpetaResultados "analisis\$(Split-Path $destino -Leaf)\$Fase") los hallazgos y los pasos con más carga."
 }
 
 # ------------------------------------------------------------------ entrada
