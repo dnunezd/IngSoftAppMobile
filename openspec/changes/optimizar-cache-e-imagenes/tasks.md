@@ -57,11 +57,11 @@
 
 ## 6. Copia en memoria y escritura solo de lo que cambió (D4, D5)
 
-- [ ] 6.1 Crear en `data.repository` el ayudante genérico de la copia de una tabla, con sus filas por clave, la marca de completa, parcial o desconocida y el cálculo de qué filas guardar y qué claves borrar, y el registro de versiones por consulta. Agregar pruebas unitarias para:
+- [x] 6.1 Crear en `data.repository` el ayudante genérico de la copia de una tabla, con sus filas por clave, la marca de completa, parcial o desconocida y el cálculo de qué filas guardar y qué claves borrar, y el registro de versiones por consulta. Agregar pruebas unitarias para:
   - filas nuevas, cambiadas, borradas y sin cambios;
   - la copia desconocida, que pide reemplazar la tabla;
   - la copia parcial, que compara una sola fila.
-- [ ] 6.2 En `AlbumRepositoryImpl`, pasar por un único punto de escritura con `Mutex` el catálogo, el detalle y el borrado por 404, con las reglas 1 a 4 de D4 y los pasos de D5. Agregar a `AlbumRepositoryCacheTest`:
+- [x] 6.2 En `AlbumRepositoryImpl`, pasar por un único punto de escritura con `Mutex` el catálogo, el detalle y el borrado por 404, con las reglas 1 a 4 de D4 y los pasos de D5. Agregar a `AlbumRepositoryCacheTest`:
   - con la misma `ETag`, cero escrituras;
   - con otra `ETag` y el mismo contenido, cero escrituras;
   - un álbum cambiado escribe solo su fila y su detalle;
@@ -71,10 +71,10 @@
   - una cancelación durante la escritura descarta la copia;
   - escribir un detalle o borrarlo por 404 descarta la versión del catálogo;
   - si el backend vuelve a una `ETag` anterior después de un 404, el catálogo se vuelve a escribir.
-- [ ] 6.3 En `ArtistRepositoryImpl`, hacer lo mismo para el listado, con la versión compuesta de músicos y bandas, y para el detalle, con la versión del artista y de `/performerprizes` («no pedida» si no hay premios), más el 404. Agregar a `ArtistRepositoryCacheTest` el escenario «Detalle armado con varias respuestas» de la spec `cache-consultas`, junto con los casos de misma versión y de mismo contenido.
-- [ ] 6.4 En `CollectorRepositoryImpl`, hacer lo mismo para el listado. Agregar a `CollectorRepositoryCacheTest` que un coleccionista nuevo al principio escribe solo las filas cuya posición cambió, y que la misma `ETag` no escribe.
-- [ ] 6.5 En `FavoriteRepositoryImpl`, hacer que `esFavorito` agregue y quite solo las diferencias por coleccionista, y que `agregarFavorito` pase por el punto de escritura y descarte la versión de ese coleccionista. Agregar a `FavoriteRepositoryCacheTest` que, si el favorito se quita en el backend y vuelve la `ETag` anterior, lo guardado se corrige.
-- [ ] 6.6 Actualizar el KDoc de los cuatro repositorios y de los DAO (qué escribe cada uno y cuándo no), y el párrafo «Sin conexión» del README. Verificar que la suite unitaria completa pasa.
+- [x] 6.3 En `ArtistRepositoryImpl`, hacer lo mismo para el listado, con la versión compuesta de músicos y bandas, y para el detalle, con la versión del artista y de `/performerprizes` («no pedida» si no hay premios), más el 404. Agregar a `ArtistRepositoryCacheTest` el escenario «Detalle armado con varias respuestas» de la spec `cache-consultas`, junto con los casos de misma versión y de mismo contenido.
+- [x] 6.4 En `CollectorRepositoryImpl`, hacer lo mismo para el listado. Agregar a `CollectorRepositoryCacheTest` que un coleccionista nuevo al principio escribe solo las filas cuya posición cambió, y que la misma `ETag` no escribe.
+- [x] 6.5 En `FavoriteRepositoryImpl`, hacer que `esFavorito` agregue y quite solo las diferencias por coleccionista, y que `agregarFavorito` pase por el punto de escritura y descarte la versión de ese coleccionista. Agregar a `FavoriteRepositoryCacheTest` que, si el favorito se quita en el backend y vuelve la `ETag` anterior, lo guardado se corrige.
+- [x] 6.6 Actualizar el KDoc de los cuatro repositorios y de los DAO (qué escribe cada uno y cuándo no), y el párrafo «Sin conexión» del README. Verificar que la suite unitaria completa pasa.
 
 ## 7. Álbum creado sin esperar la consulta (D7)
 

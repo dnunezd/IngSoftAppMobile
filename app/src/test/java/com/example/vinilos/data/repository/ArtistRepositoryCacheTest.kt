@@ -248,4 +248,156 @@ class ArtistRepositoryCacheTest {
         assertEquals(listOf(Artist(101, "Queen", null, ArtistType.BANDA)), repositorio.obtenerArtistas().getOrThrow())
         assertEquals(queen, repositorio.obtenerDetalle(ArtistType.BANDA, 101).getOrThrow())
     }
+
+    // ---------- Escribir solo lo que cambió (optimizar-cache-e-imagenes, D4 y D5) ----------
+
+    private fun conVersion(cuerpo: String, version: String? = null) =
+        MockResponse().setBody(cuerpo).apply { if (version != null) setHeader("ETag", version) }
+
+    private fun responderListado(musicosJson: String, bandasJson: String, versionMusicos: String?, versionBandas: String?) {
+        musicos = conVersion(musicosJson, versionMusicos)
+        bandas = conVersion(bandasJson, versionBandas)
+    }
+
+    private val freddieJson = """[{"id": 7, "name": "Freddie Mercury", "image": null}]"""
+    private val queenListadoJson = """[{"id": 7, "name": "Queen", "image": null}]"""
+
+    @Test
+    fun elListadoConLasMismasVersionesNoSeEscribe() = runTest {
+        responderListado(freddieJson, queenListadoJson, "W/\"m1\"", "W/\"b1\"")
+        repositorio.obtenerArtistas().getOrThrow()
+        dao.operaciones.clear()
+        responderListado(freddieJson, queenListadoJson, "W/\"m1\"", "W/\"b1\"")
+
+        assertEquals(2, repositorio.obtenerArtistas().getOrThrow().size)
+
+        assertEquals(emptyList<String>(), dao.operaciones)
+    }
+
+    @Test
+    fun elListadoSinVersionDeUnaParteYConElMismoContenidoNoSeEscribe() = runTest {
+        responderListado(freddieJson, queenListadoJson, "W/\"m1\"", null)
+        repositorio.obtenerArtistas().getOrThrow()
+        dao.operaciones.clear()
+        responderListado(freddieJson, queenListadoJson, "W/\"m1\"", null)
+
+        repositorio.obtenerArtistas().getOrThrow()
+
+        assertEquals(emptyList<String>(), dao.operaciones)
+    }
+
+    @Test
+    fun unArtistaNuevoEscribeSoloSuFila() = runTest {
+        responderListado(freddieJson, queenListadoJson, "W/\"m1\"", "W/\"b1\"")
+        repositorio.obtenerArtistas().getOrThrow()
+        dao.operaciones.clear()
+        responderListado(
+            freddieJson,
+            """[{"id": 7, "name": "Queen", "image": null}, {"id": 8, "name": "Seis del Solar", "image": null}]""",
+            "W/\"m1\"",
+            "W/\"b2\""
+        )
+
+        repositorio.obtenerArtistas().getOrThrow()
+
+        assertEquals(listOf("guardarArtistas[8]"), dao.operaciones)
+        assertEquals(3, dao.filas.size)
+    }
+
+    @Test
+    fun unArtistaQueYaNoLlegaSeBorraSoloConSuTipo() = runTest {
+        responderListado(freddieJson, queenListadoJson, "W/\"m1\"", "W/\"b1\"")
+        repositorio.obtenerArtistas().getOrThrow()
+        dao.operaciones.clear()
+        responderListado("[]", queenListadoJson, "W/\"m2\"", "W/\"b1\"")
+
+        repositorio.obtenerArtistas().getOrThrow()
+
+        assertEquals(listOf("borrarArtistas[7]"), dao.operaciones)
+        assertEquals(listOf(fila(ArtistType.BANDA, 7, "Queen")), dao.filas)
+    }
+
+    @Test
+    fun elDetalleConLaMismaVersionNoSeEscribeDosVeces() = runTest {
+        otrasRutas["/bands/101"] = conVersion(queenJson, "W/\"q1\"")
+        repositorio.obtenerDetalle(ArtistType.BANDA, 101).getOrThrow()
+        otrasRutas["/bands/101"] = conVersion(queenJson, "W/\"q1\"")
+
+        repositorio.obtenerDetalle(ArtistType.BANDA, 101).getOrThrow()
+
+        assertEquals(listOf("guardarDetalle[101]"), dao.operaciones)
+    }
+
+    private val queenConPremioJson = """
+        {"id": 101, "name": "Queen", "image": "https://img/queen.jpg", "description": "Banda británica",
+         "creationDate": "1970-01-01T00:00:00.000Z", "albums": [], "musicians": [],
+         "performerPrizes": [{"id": 100, "premiationDate": "1978-12-10T00:00:00.000Z"}]}
+    """.trimIndent()
+
+    private fun premiaciones(nombrePremio: String) =
+        """[{"id": 100, "prize": {"name": "$nombrePremio", "organization": "Academia"}}]"""
+
+    @Test
+    fun elDetalleSeGuardaSiSoloCambiaronLasPremiacionesDeEseArtista() = runTest {
+        otrasRutas["/bands/101"] = conVersion(queenConPremioJson, "W/\"q1\"")
+        otrasRutas["/performerprizes"] = conVersion(premiaciones("Grammy"), "W/\"p1\"")
+        repositorio.obtenerDetalle(ArtistType.BANDA, 101).getOrThrow()
+        dao.operaciones.clear()
+        otrasRutas["/bands/101"] = conVersion(queenConPremioJson, "W/\"q1\"")
+        otrasRutas["/performerprizes"] = conVersion(premiaciones("Grammy Award"), "W/\"p2\"")
+
+        repositorio.obtenerDetalle(ArtistType.BANDA, 101).getOrThrow()
+
+        assertEquals(listOf("guardarDetalle[101]"), dao.operaciones)
+        assertEquals(listOf("Grammy Award"), dao.detalles[ArtistType.BANDA to 101]?.premios?.map { it.nombre })
+    }
+
+    @Test
+    fun elDetalleNoSeGuardaSiCambioOtraPremiacionPeroNoLaDeEseArtista() = runTest {
+        otrasRutas["/bands/101"] = conVersion(queenConPremioJson, "W/\"q1\"")
+        otrasRutas["/performerprizes"] = conVersion(premiaciones("Grammy"), "W/\"p1\"")
+        repositorio.obtenerDetalle(ArtistType.BANDA, 101).getOrThrow()
+        dao.operaciones.clear()
+        otrasRutas["/bands/101"] = conVersion(queenConPremioJson, "W/\"q1\"")
+        otrasRutas["/performerprizes"] = conVersion(
+            """[{"id": 100, "prize": {"name": "Grammy", "organization": "Academia"}},
+                {"id": 200, "prize": {"name": "Otro premio", "organization": "Otra"}}]""",
+            "W/\"p2\""
+        )
+
+        repositorio.obtenerDetalle(ArtistType.BANDA, 101).getOrThrow()
+
+        assertEquals(emptyList<String>(), dao.operaciones)
+    }
+
+    @Test
+    fun trasUn404ElDetalleConLaVersionAnteriorVuelveAGuardarse() = runTest {
+        otrasRutas["/bands/101"] = conVersion(queenJson, "W/\"q1\"")
+        repositorio.obtenerDetalle(ArtistType.BANDA, 101).getOrThrow()
+        otrasRutas["/bands/101"] = MockResponse().setResponseCode(404)
+        repositorio.obtenerDetalle(ArtistType.BANDA, 101)
+        dao.operaciones.clear()
+        otrasRutas["/bands/101"] = conVersion(queenJson, "W/\"q1\"")
+
+        repositorio.obtenerDetalle(ArtistType.BANDA, 101).getOrThrow()
+
+        assertEquals(listOf("guardarDetalle[101]"), dao.operaciones)
+    }
+
+    @Test
+    fun trasUnFalloAlGuardarElListadoSinCambiosSeVuelveAGuardar() = runTest {
+        responderListado(freddieJson, queenListadoJson, "W/\"m1\"", "W/\"b1\"")
+        repositorio.obtenerArtistas().getOrThrow()
+        dao.fallaAlEscribir = SQLiteException("disco lleno")
+        responderListado("[]", queenListadoJson, "W/\"m2\"", "W/\"b1\"")
+        repositorio.obtenerArtistas().getOrThrow()
+        dao.fallaAlEscribir = null
+        dao.operaciones.clear()
+        responderListado("[]", queenListadoJson, "W/\"m2\"", "W/\"b1\"")
+
+        repositorio.obtenerArtistas().getOrThrow()
+
+        assertEquals("borrarTodos", dao.operaciones.first())
+        assertEquals(listOf(fila(ArtistType.BANDA, 7, "Queen")), dao.filas)
+    }
 }

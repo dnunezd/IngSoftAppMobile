@@ -365,4 +365,191 @@ class AlbumRepositoryCacheTest {
         assertEquals(albumCompleto, repositorio.obtenerAlbum(200).getOrThrow())
         assertTrue(repositorio.obtenerAlbum(200).exceptionOrNull() is AlbumNoDisponible)
     }
+
+    // ---- Escribir solo lo que cambió (optimizar-cache-e-imagenes, D4 y D5) ----
+
+    private fun albumJson(id: Int, nombre: String = "Álbum $id", descripcion: String = "Descripción $id") = """
+        {"id": $id, "name": "$nombre", "cover": "https://example.com/$id.jpg", "description": "$descripcion",
+         "genre": "Salsa", "recordLabel": "Elektra", "releaseDate": "1984-08-01T00:00:00.000Z",
+         "tracks": [], "performers": [{"id": 1, "name": "Rubén Blades"}], "comments": []}
+    """.trimIndent()
+
+    private fun respuesta(cuerpo: String, version: String? = null) =
+        MockResponse().setBody(cuerpo).apply { if (version != null) setHeader("ETag", version) }
+
+    private fun catalogo(vararg albumes: String, version: String? = null) =
+        respuesta(albumes.joinToString(prefix = "[", postfix = "]"), version)
+
+    /** Hace una consulta del catálogo que deja la copia completa y limpia el registro de escrituras. */
+    private suspend fun catalogoYaGuardado(vararg albumes: String, version: String? = null) {
+        servidor.enqueue(catalogo(*albumes, version = version))
+        repositorio.obtenerAlbumes().getOrThrow()
+        dao.operaciones.clear()
+    }
+
+    @Test
+    fun laPrimeraConsultaReemplazaTodoLoGuardado() = runTest {
+        servidor.enqueue(catalogo(albumJson(200), albumJson(201), version = "W/\"c1\""))
+
+        repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals("borrarTodos", dao.operaciones.first())
+        assertTrue("borrarDetalles" in dao.operaciones)
+    }
+
+    @Test
+    fun conLaMismaVersionNoSeEscribeNada() = runTest {
+        catalogoYaGuardado(albumJson(200), albumJson(201), version = "W/\"c1\"")
+        servidor.enqueue(catalogo(albumJson(200), albumJson(201), version = "W/\"c1\""))
+
+        val albumes = repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals(listOf(200, 201), albumes.map { it.id })
+        assertEquals(emptyList<String>(), dao.operaciones)
+    }
+
+    @Test
+    fun conOtraVersionYElMismoContenidoNoSeEscribeNada() = runTest {
+        catalogoYaGuardado(albumJson(200), version = "W/\"c1\"")
+        servidor.enqueue(catalogo(albumJson(200), version = "W/\"c2\""))
+
+        repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals(emptyList<String>(), dao.operaciones)
+    }
+
+    @Test
+    fun sinVersionYConElMismoContenidoNoSeEscribeNada() = runTest {
+        catalogoYaGuardado(albumJson(200))
+        servidor.enqueue(catalogo(albumJson(200)))
+
+        repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals(emptyList<String>(), dao.operaciones)
+    }
+
+    @Test
+    fun unAlbumCambiadoEscribeSoloSuFilaYSuDetalle() = runTest {
+        catalogoYaGuardado(albumJson(200), albumJson(201), version = "W/\"c1\"")
+        servidor.enqueue(catalogo(albumJson(200, "Nombre nuevo"), albumJson(201), version = "W/\"c2\""))
+
+        repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals(listOf("guardarAlbumes[200]", "guardarDetalles[200]"), dao.operaciones)
+        assertEquals(setOf("Nombre nuevo", "Álbum 201"), dao.filas.map { it.nombre }.toSet())
+        assertEquals("Nombre nuevo", dao.detalles[200]?.nombre)
+    }
+
+    @Test
+    fun unAlbumQueYaNoLlegaSeBorraSoloPorSuId() = runTest {
+        catalogoYaGuardado(albumJson(200), albumJson(201), version = "W/\"c1\"")
+        servidor.enqueue(catalogo(albumJson(200), version = "W/\"c2\""))
+
+        repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals(listOf("borrarAlbumesPorId[201]", "borrarDetallesPorId[201]"), dao.operaciones)
+        assertEquals(listOf(200), dao.filas.map { it.id })
+        assertEquals(setOf(200), dao.detalles.keys)
+    }
+
+    @Test
+    fun trasUnFalloAlGuardarLaSiguienteConsultaSinCambiosVuelveAGuardarTodo() = runTest {
+        catalogoYaGuardado(albumJson(200), version = "W/\"c1\"")
+        dao.fallaAlEscribir = SQLiteException("disco lleno")
+        servidor.enqueue(catalogo(albumJson(200, "Nombre nuevo"), version = "W/\"c2\""))
+        repositorio.obtenerAlbumes().getOrThrow()
+        dao.fallaAlEscribir = null
+        servidor.enqueue(catalogo(albumJson(200, "Nombre nuevo"), version = "W/\"c2\""))
+
+        repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals("borrarTodos", dao.operaciones.first())
+        assertEquals(listOf("Nombre nuevo"), dao.filas.map { it.nombre })
+    }
+
+    @Test
+    fun unaCancelacionAlGuardarHaceQueLaSiguienteConsultaGuardeTodo() = runTest {
+        catalogoYaGuardado(albumJson(200), version = "W/\"c1\"")
+        dao.fallaAlEscribir = CancellationException("cancelada")
+        servidor.enqueue(catalogo(albumJson(200, "Nombre nuevo"), version = "W/\"c2\""))
+        try {
+            repositorio.obtenerAlbumes()
+            fail("La cancelación debe relanzarse")
+        } catch (e: CancellationException) {
+            assertEquals("cancelada", e.message)
+        }
+        dao.fallaAlEscribir = null
+        // El backend vuelve a la versión anterior: sin descartar lo recordado, no se escribiría nada.
+        servidor.enqueue(catalogo(albumJson(200), version = "W/\"c1\""))
+
+        repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals("borrarTodos", dao.operaciones.first())
+    }
+
+    @Test
+    fun unDetalleIgualAlQueGuardoElCatalogoNoSeEscribe() = runTest {
+        catalogoYaGuardado(albumJson(200), version = "W/\"c1\"")
+        servidor.enqueue(respuesta(albumJson(200), "W/\"d1\""))
+
+        repositorio.obtenerAlbum(200).getOrThrow()
+
+        assertEquals(emptyList<String>(), dao.operaciones)
+    }
+
+    @Test
+    fun unDetalleConLaMismaVersionNoSeEscribeDosVeces() = runTest {
+        servidor.enqueue(respuesta(albumJson(200), "W/\"d1\""))
+        servidor.enqueue(respuesta(albumJson(200), "W/\"d1\""))
+
+        repositorio.obtenerAlbum(200).getOrThrow()
+        repositorio.obtenerAlbum(200).getOrThrow()
+
+        assertEquals(listOf("guardarDetalle[200]"), dao.operaciones)
+    }
+
+    @Test
+    fun escribirUnDetalleDescartaLaVersionDelCatalogo() = runTest {
+        catalogoYaGuardado(albumJson(200), version = "W/\"c1\"")
+        servidor.enqueue(respuesta(albumJson(200, descripcion = "Descripción nueva"), "W/\"d1\""))
+        repositorio.obtenerAlbum(200).getOrThrow()
+        dao.operaciones.clear()
+        // El backend vuelve a la versión anterior del catálogo.
+        servidor.enqueue(catalogo(albumJson(200), version = "W/\"c1\""))
+
+        repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals(listOf("guardarDetalles[200]"), dao.operaciones)
+        assertEquals("Descripción 200", dao.detalles[200]?.descripcion)
+    }
+
+    @Test
+    fun elCatalogoQueCambiaUnDetalleDescartaLaVersionDeEseDetalle() = runTest {
+        servidor.enqueue(respuesta(albumJson(200), "W/\"d1\""))
+        repositorio.obtenerAlbum(200).getOrThrow()
+        servidor.enqueue(catalogo(albumJson(200, descripcion = "Descripción nueva"), version = "W/\"c1\""))
+        repositorio.obtenerAlbumes().getOrThrow()
+        dao.operaciones.clear()
+        // El backend vuelve a la versión anterior del detalle.
+        servidor.enqueue(respuesta(albumJson(200), "W/\"d1\""))
+
+        repositorio.obtenerAlbum(200).getOrThrow()
+
+        assertEquals(listOf("guardarDetalle[200]"), dao.operaciones)
+        assertEquals("Descripción 200", dao.detalles[200]?.descripcion)
+    }
+
+    @Test
+    fun trasUn404ElCatalogoConLaVersionAnteriorVuelveAGuardarElAlbum() = runTest {
+        catalogoYaGuardado(albumJson(200), version = "W/\"c1\"")
+        servidor.enqueue(MockResponse().setResponseCode(404))
+        repositorio.obtenerAlbum(200)
+        dao.operaciones.clear()
+        servidor.enqueue(catalogo(albumJson(200), version = "W/\"c1\""))
+
+        repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals(listOf("guardarAlbumes[200]", "guardarDetalles[200]"), dao.operaciones)
+        assertEquals(listOf(200), dao.filas.map { it.id })
+    }
 }

@@ -23,6 +23,8 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.text.ParseException
 
@@ -40,21 +42,33 @@ class ArtistRepositoryImpl(
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ArtistRepository {
 
+    /** Protege la comparación, la escritura y la actualización de lo que sigue (optimizar-cache-e-imagenes, D4). */
+    private val escritura = Mutex()
+    private val copiaListado = CopiaTabla<Pair<ArtistType, Int>, ArtistaEntity> { it.tipo to it.id }
+    private val copiaDetalles = CopiaTabla<Pair<ArtistType, Int>, ArtistaDetalleEntity> { it.tipo to it.id }
+    private var versionListado: String? = null
+    private val versionesDetalle = Versiones<Pair<ArtistType, Int>>()
+
     /**
      * Músicos y bandas en un solo listado ordenado por nombre. Las dos consultas van en paralelo
      * dentro de una sola llamada al adaptador: si cualquiera falla, el resultado es el error de carga,
-     * porque un listado parcial no cumpliría con mostrar ambos. Si sale bien, reemplaza lo guardado (D4).
+     * porque un listado parcial no cumpliría con mostrar ambos. Si sale bien, lo guardado queda igual a la
+     * respuesta (D4); su versión combina la de músicos y la de bandas.
      */
     override suspend fun obtenerArtistas(): Result<List<Artist>> = withContext(dispatcher) {
         adaptador.llamar {
             coroutineScope {
-                val musicos = async { api.getMusicians().conVersion().valor }
-                val bandas = async { api.getBands().conVersion().valor }
-                musicos.await().mapNotNull { artista(it.id, it.name, it.image, ArtistType.MUSICO) } +
-                    bandas.await().mapNotNull { artista(it.id, it.name, it.image, ArtistType.BANDA) }
+                val musicos = async { api.getMusicians().conVersion() }
+                val bandas = async { api.getBands().conVersion() }
+                val deMusicos = musicos.await()
+                val deBandas = bandas.await()
+                val artistas = deMusicos.valor.mapNotNull { artista(it.id, it.name, it.image, ArtistType.MUSICO) } +
+                    deBandas.valor.mapNotNull { artista(it.id, it.name, it.image, ArtistType.BANDA) }
+                artistas to versionCompuesta(deMusicos.version, deBandas.version)
             }
-        }.map { artistas -> artistas.sortedWith(compareBy(ordenAlfabetico()) { it.name }) }
-            .onSuccess { artistas -> escribir { reemplazar(artistas.map { ArtistaEntity(it.type, it.id, it.name, it.image) }) } }
+        }.map { (artistas, version) -> artistas.sortedWith(compareBy(ordenAlfabetico()) { it.name }) to version }
+            .onSuccess { (artistas, version) -> guardarListado(artistas, version) }
+            .map { (artistas, _) -> artistas }
     }
 
     override suspend fun obtenerArtistasGuardados(): List<Artist> = withContext(dispatcher) {
@@ -77,13 +91,51 @@ class ArtistRepositoryImpl(
         }
     }
 
-    /** Un fallo al escribir no cambia el resultado de la consulta, que ya llegó del backend. */
+    // ---------- Punto único de escritura (optimizar-cache-e-imagenes, D4 y D5) ----------
+
+    private suspend fun guardarListado(artistas: List<Artist>, version: String?) = escribir {
+        if (version != null && version == versionListado) return@escribir
+        val cambios = copiaListado.cambiosPara(artistas.map { ArtistaEntity(it.type, it.id, it.name, it.image) })
+        if (!cambios.vacios) {
+            aplicarListado(cambios)
+            copiaListado.aplicar(cambios)
+        }
+        versionListado = version
+    }
+
+    private suspend fun guardarDetalleSiCambio(detalle: ArtistaDetalleEntity, version: String?) = escribir {
+        val clave = detalle.tipo to detalle.id
+        if (versionesDetalle.igual(clave, version)) return@escribir
+        if (copiaDetalles.fila(clave) != detalle) {
+            guardarDetalle(detalle)
+            copiaDetalles.guardada(detalle)
+        }
+        versionesDetalle.anotar(clave, version)
+    }
+
+    private suspend fun borrarDetalleGuardado(tipo: ArtistType, id: Int) = escribir {
+        borrarDetalle(tipo, id)
+        copiaDetalles.borrada(tipo to id)
+        versionesDetalle.descartar(tipo to id)
+    }
+
+    /**
+     * Ejecuta [bloque] con [escritura] tomado. Si el bloque no termina normalmente, no se sabe qué quedó en
+     * Room, así que se descarta lo que se recordaba (regla 2 de D4). Un fallo del almacenamiento no cambia el
+     * resultado de la consulta; la cancelación y los errores de programación se relanzan.
+     */
     private suspend fun escribir(bloque: suspend ArtistaDao.() -> Unit) {
         val dao = artistaDao ?: return
-        try {
-            dao.bloque()
-        } catch (e: SQLiteException) {
-            // Se sigue mostrando la respuesta; la siguiente consulta exitosa vuelve a intentarlo.
+        escritura.withLock {
+            try {
+                dao.bloque()
+            } catch (e: Throwable) {
+                copiaListado.descartar()
+                copiaDetalles.descartar()
+                versionListado = null
+                versionesDetalle.descartarTodas()
+                if (e !is SQLiteException) throw e
+            }
         }
     }
 
@@ -97,21 +149,28 @@ class ArtistRepositoryImpl(
      * Detalle del artista según su tipo. Las premiaciones solo se consultan si el artista tiene alguna,
      * porque el recurso del artista no trae el premio. Todo va en una sola llamada al adaptador: cualquier
      * fallo es el error de carga, incluido el de las premiaciones, porque "Sin premios" sería falso.
-     * Si sale bien, guarda el detalle; si el backend confirma con un 404 que ya no existe, lo borra de lo
-     * guardado y sigue devolviendo el mismo error (D4).
+     * Si sale bien, guarda el detalle si cambió; si el backend confirma con un 404 que ya no existe, lo borra
+     * de lo guardado y sigue devolviendo el mismo error (D4). La versión combina la del artista y la de las
+     * premiaciones, o marca que no se pidieron.
      */
     override suspend fun obtenerDetalle(tipo: ArtistType, id: Int): Result<ArtistaDetalle> =
         withContext(dispatcher) {
             adaptador.llamar {
                 val respuesta = when (tipo) {
-                    ArtistType.MUSICO -> api.getMusician(id).conVersion().valor
-                    ArtistType.BANDA -> api.getBand(id).conVersion().valor
+                    ArtistType.MUSICO -> api.getMusician(id).conVersion()
+                    ArtistType.BANDA -> api.getBand(id).conVersion()
                 }
-                val premiaciones =
-                    if (respuesta.performerPrizes.isNullOrEmpty()) emptyList() else api.getPerformerPrizes().conVersion().valor
-                respuesta.aDetalle(tipo, premiaciones)
-            }.onSuccess { detalle -> escribir { guardarDetalle(detalle.aEntidad()) } }
-                .onFailure { if (it is RecursoNoEncontrado) escribir { borrarDetalle(tipo, id) } }
+                val premiaciones = if (respuesta.valor.performerPrizes.isNullOrEmpty()) {
+                    null
+                } else {
+                    api.getPerformerPrizes().conVersion()
+                }
+                val versionPremiaciones = if (premiaciones == null) PREMIACIONES_NO_PEDIDAS else premiaciones.version
+                val version = versionCompuesta(respuesta.version, versionPremiaciones)
+                respuesta.valor.aDetalle(tipo, premiaciones?.valor.orEmpty()) to version
+            }.onSuccess { (detalle, version) -> guardarDetalleSiCambio(detalle.aEntidad(), version) }
+                .onFailure { if (it is RecursoNoEncontrado) borrarDetalleGuardado(tipo, id) }
+                .map { (detalle, _) -> detalle }
         }
 
     /**
@@ -187,5 +246,8 @@ class ArtistRepositoryImpl(
 
     private companion object {
         const val LARGO_DIA_ISO = 10 // "yyyy-MM-dd"
+
+        /** Parte de la versión del detalle cuando el artista no tiene premios y no se pidió `/performerprizes`. */
+        const val PREMIACIONES_NO_PEDIDAS = "sin-premiaciones"
     }
 }

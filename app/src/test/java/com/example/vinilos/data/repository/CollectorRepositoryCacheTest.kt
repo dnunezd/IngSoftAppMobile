@@ -167,4 +167,100 @@ class CollectorRepositoryCacheTest {
             assertEquals("cancelada", e.message)
         }
     }
+
+    // ---------- Escribir solo lo que cambió (optimizar-cache-e-imagenes, D4 y D5) ----------
+
+    private fun coleccionistas(vararg pares: Pair<Int, String>, version: String? = null) = MockResponse()
+        .setBody(pares.joinToString(prefix = "[", postfix = "]") { (id, nombre) ->
+            """{"id": $id, "name": "$nombre", "email": "c$id@a.com"}"""
+        })
+        .apply { if (version != null) setHeader("ETag", version) }
+
+    @Test
+    fun conLaMismaVersionNoSeEscribeNada() = runTest {
+        servidor.enqueue(coleccionistas(1 to "Ana", 2 to "Beto", version = "W/\"v1\""))
+        servidor.enqueue(coleccionistas(1 to "Ana", 2 to "Beto", version = "W/\"v1\""))
+        repositorio.obtenerColeccionistas().getOrThrow()
+        dao.operaciones.clear()
+
+        assertEquals(listOf(1, 2), repositorio.obtenerColeccionistas().getOrThrow().map { it.id })
+
+        assertEquals(emptyList<String>(), dao.operaciones)
+    }
+
+    @Test
+    fun conOtraVersionYElMismoContenidoNoSeEscribeNada() = runTest {
+        servidor.enqueue(coleccionistas(1 to "Ana", version = "W/\"v1\""))
+        servidor.enqueue(coleccionistas(1 to "Ana", version = "W/\"v2\""))
+        repositorio.obtenerColeccionistas().getOrThrow()
+        dao.operaciones.clear()
+
+        repositorio.obtenerColeccionistas().getOrThrow()
+
+        assertEquals(emptyList<String>(), dao.operaciones)
+    }
+
+    @Test
+    fun unColeccionistaNuevoAlPrincipioEscribeSoloLasFilasQueCambiaronDePosicion() = runTest {
+        servidor.enqueue(coleccionistas(1 to "Ana", 2 to "Beto", version = "W/\"v1\""))
+        servidor.enqueue(coleccionistas(3 to "Carla", 1 to "Ana", 2 to "Beto", version = "W/\"v2\""))
+        repositorio.obtenerColeccionistas().getOrThrow()
+        dao.operaciones.clear()
+
+        repositorio.obtenerColeccionistas().getOrThrow()
+
+        assertEquals(listOf("guardar[3, 1, 2]"), dao.operaciones)
+        assertEquals(listOf(3, 1, 2), dao.filas.sortedBy { it.posicion }.map { it.id })
+    }
+
+    @Test
+    fun unColeccionistaQueYaNoLlegaSeBorraSoloPorSuId() = runTest {
+        servidor.enqueue(coleccionistas(1 to "Ana", 2 to "Beto", version = "W/\"v1\""))
+        servidor.enqueue(coleccionistas(1 to "Ana", version = "W/\"v2\""))
+        repositorio.obtenerColeccionistas().getOrThrow()
+        dao.operaciones.clear()
+
+        repositorio.obtenerColeccionistas().getOrThrow()
+
+        assertEquals(listOf("borrarPorId[2]"), dao.operaciones)
+        assertEquals(listOf(1), dao.filas.map { it.id })
+    }
+
+    @Test
+    fun trasUnFalloAlGuardarLaSiguienteConsultaSinCambiosVuelveAGuardarTodo() = runTest {
+        servidor.enqueue(coleccionistas(1 to "Ana", version = "W/\"v1\""))
+        servidor.enqueue(coleccionistas(1 to "Ana Nueva", version = "W/\"v2\""))
+        servidor.enqueue(coleccionistas(1 to "Ana Nueva", version = "W/\"v2\""))
+        repositorio.obtenerColeccionistas().getOrThrow()
+        dao.fallaAlEscribir = SQLiteException("disco lleno")
+        repositorio.obtenerColeccionistas().getOrThrow()
+        dao.fallaAlEscribir = null
+        dao.operaciones.clear()
+
+        repositorio.obtenerColeccionistas().getOrThrow()
+
+        assertEquals("borrarTodos", dao.operaciones.first())
+        assertEquals(listOf("Ana Nueva"), dao.filas.map { it.nombre })
+    }
+
+    @Test
+    fun unaCancelacionAlGuardarSeRelanzaYLaSiguienteConsultaGuardaTodo() = runTest {
+        servidor.enqueue(coleccionistas(1 to "Ana", version = "W/\"v1\""))
+        servidor.enqueue(coleccionistas(1 to "Ana Nueva", version = "W/\"v2\""))
+        servidor.enqueue(coleccionistas(1 to "Ana", version = "W/\"v1\""))
+        repositorio.obtenerColeccionistas().getOrThrow()
+        dao.fallaAlEscribir = CancellationException("cancelada")
+        try {
+            repositorio.obtenerColeccionistas()
+            fail("La cancelación debe relanzarse")
+        } catch (e: CancellationException) {
+            assertEquals("cancelada", e.message)
+        }
+        dao.fallaAlEscribir = null
+        dao.operaciones.clear()
+
+        repositorio.obtenerColeccionistas().getOrThrow()
+
+        assertEquals("borrarTodos", dao.operaciones.first())
+    }
 }
