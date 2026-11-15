@@ -29,13 +29,15 @@ Ver `proposal.md` (Why). El estado de partida es `origin/develop` con `add-cache
 
 ### D1. Imagen genérica: ícono vectorial sobre fondo neutro, debajo de la imagen
 
-`PortadaAlbum` adopta el patrón de las miniaturas de HU04:
+`PortadaAlbum` queda como un solo `AsyncImage`:
 
-- **Contenedor:** un `Box` con el `modifier` del llamador, fondo `surfaceVariant` y contenido centrado.
-- **Debajo:** `Icon(painterResource(R.drawable.ic_cat_album))` teñido con `onSurfaceVariant`, sin descripción, con una etiqueta de prueba, a un 40 % del tamaño del contenedor (`fillMaxSize(0.4f)`). Así se ve proporcionado en la tarjeta del catálogo, en los 220 dp del detalle y en la vista previa de 56 dp.
-- **Encima:** `AsyncImage` con `Modifier.matchParentSize()` y sin `placeholder`, `error` ni `fallback`. Mientras carga, o si falla, no dibuja nada y se ve el ícono.
+- **Fondo:** el `modifier` del llamador más `background(surfaceVariant)`. Los llamadores ya no ponen su propio fondo.
+- **Respaldo:** un `Painter` propio (`IconoCentrado`) que dibuja `painterResource(R.drawable.ic_cat_album)` centrado, teñido con `onSurfaceVariant` y a un 40 % del lado menor. Así se ve proporcionado en la tarjeta del catálogo, en los 220 dp del detalle y en las miniaturas de 56 dp. No tiene tamaño propio, así que Coil le da todo el espacio de la imagen con cualquier `ContentScale`.
+- **Uso:** ese `Painter` va como `placeholder`, `error` y `fallback`. Coil lo dibuja sin URL, mientras carga y si falla, y deja de dibujarlo cuando la imagen carga.
 
-La firma de `PortadaAlbum` no cambia, así que el catálogo, el detalle y la vista previa de crear álbum no se tocan.
+La firma de `PortadaAlbum` no cambia. Las miniaturas de álbum del detalle de artista (`FilaAlbum`, HU04) pasan a usar `PortadaAlbum` en lugar de su propio `Box`. Las imágenes de artista e integrante ya son un solo `AsyncImage` con la silueta vectorial como respaldo, así que no cambian.
+
+*Primera versión, reemplazada:* el patrón de las miniaturas de HU04, con un `Box`, el `Icon` debajo y `AsyncImage` encima con `matchParentSize()`. Quitaba los `Bitmap` de respaldo, pero el ícono quedaba compuesto y se dibujaba debajo de cada imagen ya cargada. El perfilamiento de HU02 mostró que `PortadaAlbum` creaba de 14 a 59 % más objetos de Compose que antes. Con un solo `AsyncImage` desaparecen el `Box`, el `Icon` y la etiqueta de prueba. Las pruebas comprueban el respaldo por los píxeles de la imagen.
 
 En `FilaArtista`, la imagen de espera pasa a `painterResource(R.drawable.ic_artista_por_defecto)`, como en HU03. El modelo `Artista` del álbum no tiene tipo, así que no se usa `ic_banda_por_defecto`. Inicio no cambia.
 

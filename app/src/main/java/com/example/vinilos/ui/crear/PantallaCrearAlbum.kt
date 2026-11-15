@@ -316,7 +316,6 @@ private fun TarjetaCampos(estado: CrearAlbumUiState, acciones: AccionesCrearAlbu
                         modifier = Modifier
                             .size(56.dp)
                             .clip(RoundedCornerShape(12.dp))
-                            .background(MaterialTheme.colorScheme.surfaceVariant)
                     )
                 }
             }

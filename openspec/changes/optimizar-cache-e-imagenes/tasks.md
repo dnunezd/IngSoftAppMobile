@@ -22,6 +22,8 @@
   - un álbum con portada inválida muestra el disco sobre fondo neutro en el catálogo y en el detalle;
   - un artista sin imagen en el detalle de álbum muestra la silueta;
   - Inicio conserva sus ilustraciones.
+- [x] 2.5 Dejar `PortadaAlbum` como un solo `AsyncImage` (D1): `IconoCentrado` como `placeholder`, `error` y `fallback`, y fondo `surfaceVariant` en el `modifier`. Quitar el `background` duplicado del catálogo y de la vista previa de crear álbum. Hacer que `FilaAlbum` (detalle de artista) use `PortadaAlbum` y borrar `tagRespaldoAlbum`. En `PortadaAlbumTest`, comprobar el respaldo por los píxeles (`captureToImage`) en lugar de `TagRespaldoPortada`.
+- [x] 2.6 Verificar en el Samsung que `PortadaAlbumTest`, `ContenidoAlbumTest` y las E2E de HU01, HU02, HU04 y HU07 pasan, y que el disco se ve igual que antes en el catálogo, el detalle, la vista previa de crear álbum y los álbumes del artista.
 
 ## 3. Caché HTTP siempre revalidada (D2)
 

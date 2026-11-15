@@ -359,7 +359,6 @@ private fun TarjetaAlbum(album: AlbumResumen, esNuevo: Boolean, onSeleccionar: (
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
             )
             // El año sigue visible junto al género, así que la insignia ocupa su lugar.
             if (esNuevo) {
