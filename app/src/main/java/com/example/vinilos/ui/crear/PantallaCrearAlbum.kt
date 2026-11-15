@@ -541,7 +541,6 @@ private fun CampoDescripcion(
 }
 
 /** Campo de solo lectura: la fecha únicamente se elige en el selector. */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CampoFecha(
     fechaMillis: Long?,

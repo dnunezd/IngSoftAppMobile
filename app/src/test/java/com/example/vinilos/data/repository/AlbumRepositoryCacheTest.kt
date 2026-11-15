@@ -69,7 +69,7 @@ class AlbumRepositoryCacheTest {
 
         override suspend fun insertarDetalles(detalles: List<AlbumDetalleEntity>) {
             fallaAlEscribir?.let { throw it }
-            this.detalles = this.detalles + detalles.associateBy { it.id }
+            this.detalles += detalles.associateBy { it.id }
         }
 
         override suspend fun borrarDelCatalogo(id: Int) {

@@ -21,8 +21,9 @@ class FechaLanzamientoTest {
             set(anio, mes - 1, dia)
         }.timeInMillis
 
-    private fun instanteUtc(anio: Int, mes: Int, dia: Int, hora: Int, minuto: Int): Long =
-        medianocheUtc(anio, mes, dia) + (hora * 60L + minuto) * 60_000L
+    /** Instante en UTC de un día de noviembre de 2026, el mes de los casos de zona horaria. */
+    private fun instanteNoviembre2026Utc(dia: Int, hora: Int, minuto: Int): Long =
+        medianocheUtc(2026, 11, dia) + (hora * 60L + minuto) * 60_000L
 
     private val zonas = listOf("America/Bogota", "UTC", "Asia/Tokyo", "Pacific/Kiritimati", "Pacific/Honolulu")
 
@@ -44,7 +45,7 @@ class FechaLanzamientoTest {
 
     @Test
     fun enBogotaDeNocheHoySigueSiendoElDiaLocalAunqueEnUtcSeaManana() {
-        val ahora = instanteUtc(2026, 11, 6, 1, 0)
+        val ahora = instanteNoviembre2026Utc(6, 1, 0)
 
         assertEquals(
             medianocheUtc(2026, 11, 5),
@@ -54,7 +55,7 @@ class FechaLanzamientoTest {
 
     @Test
     fun enTokioDeMadrugadaHoyEsElDiaLocalAunqueEnUtcSeaAyer() {
-        val ahora = instanteUtc(2026, 11, 5, 16, 30)
+        val ahora = instanteNoviembre2026Utc(5, 16, 30)
 
         assertEquals(
             medianocheUtc(2026, 11, 6),

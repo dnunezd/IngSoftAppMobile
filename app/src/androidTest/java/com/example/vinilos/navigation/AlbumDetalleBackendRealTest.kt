@@ -14,7 +14,6 @@ import androidx.navigation.testing.TestNavHostController
 import com.example.vinilos.AppContainer
 import com.example.vinilos.RepositorioArtistasFalso
 import com.example.vinilos.RepositorioFalso
-import com.example.vinilos.data.model.Collector
 import com.example.vinilos.e2e.EvidenciaE2E
 import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.SessionViewModel
@@ -66,7 +65,7 @@ class AlbumDetalleBackendRealTest {
                 VinilosNavHost(
                     navController = nav,
                     sessionViewModel = SessionViewModel().apply { enterAsVisitor() },
-                    collectorRepository = RepositorioFalso(Result.success(emptyList<Collector>())),
+                    collectorRepository = RepositorioFalso(Result.success(emptyList())),
                     artistRepository = RepositorioArtistasFalso(Result.success(emptyList())),
                     albumRepository = contenedor.albumRepository,
                     favoriteRepository = contenedor.favoriteRepository

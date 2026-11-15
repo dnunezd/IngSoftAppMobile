@@ -8,8 +8,8 @@ import com.example.vinilos.data.model.formatearFechaLanzamiento
 data class AlbumPresentacion(
     val album: Album,
     val fechaLanzamiento: String,
-    @StringRes val mensajeCanciones: Int? = null,
-    @StringRes val mensajeComentarios: Int? = null,
+    @param:StringRes val mensajeCanciones: Int? = null,
+    @param:StringRes val mensajeComentarios: Int? = null,
     val promedio: String? = null
 )
 

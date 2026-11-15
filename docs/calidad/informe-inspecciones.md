@@ -10,11 +10,11 @@ total.
 
 ## Resumen ejecutivo
 
-| Categoría | Ítems | Tratamiento |
-|---|---|---|
-| **Spelling** (ortografía) | 31,643 | Ruido: el diccionario en inglés marca como error casi todo el texto en español (nombres de variables, strings, comentarios). No se desglosa. |
-| **Composable function call without Compose plugin** | 1,349 | Falso positivo: el perfil `Project Default` de IntelliJ no reconoce el plugin de Compose configurado en el proyecto para este tipo de análisis general. No representa 1,349 errores reales de Compose. Recomendación: volver a correr el análisis con el perfil "Android Lint" (o desde Android Studio con el contexto del proyecto cargado) para confirmar. |
-| **Resto (ítems accionables)** | **271** | Objeto de este informe. |
+| Categoría                                           | Ítems   | Tratamiento                                                                                                                                                                                                                                                                                                                                                  |
+|-----------------------------------------------------|---------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Spelling** (ortografía)                           | 31,643  | Ruido: el diccionario en inglés marca como error casi todo el texto en español (nombres de variables, strings, comentarios). No se desglosa.                                                                                                                                                                                                                 |
+| **Composable function call without Compose plugin** | 1,349   | Falso positivo: el perfil `Project Default` de IntelliJ no reconoce el plugin de Compose configurado en el proyecto para este tipo de análisis general. No representa 1,349 errores reales de Compose. Recomendación: volver a correr el análisis con el perfil "Android Lint" (o desde Android Studio con el contexto del proyecto cargado) para confirmar. |
+| **Resto (ítems accionables)**                       | **271** | Objeto de este informe.                                                                                                                                                                                                                                                                                                                                      |
 
 Este documento se enfoca únicamente en los 271 ítems accionables.
 
@@ -22,37 +22,37 @@ Este documento se enfoca únicamente en los 271 ítems accionables.
 
 Ordenadas por cantidad de ocurrencias.
 
-| Inspección | Ítems | Tipo | Ejemplos de ubicación |
-|---|---|---|---|
-| Incorrect table formatting | 86 | weak | Tablas Markdown en `docs/` |
-| Unused declaration | 40 | warning | Mayormente clases/métodos de prueba (`*Test.kt`, `*E2ETest.kt`) |
-| Grammar | 32 | grammar | Comentarios y documentación en Markdown/KDoc |
-| Style | 16 | style | Varios (Kotlin/Markdown) |
-| Obsolete Gradle Dependency | 12 | warning | `libs.versions.toml` / `build.gradle.kts` |
-| Method parameter always has the same value | 10 | warning | `FavoriteRepositoryImpl`, clases de prueba E2E |
-| Newer Library Versions Available | 8 | warning | `libs.versions.toml` |
-| Const property naming convention | 8 | weak | `Rutas` (navegación) |
-| Attribute unused on older versions | 7 | warning | `ic_launcher_foreground.xml` (atributos API 24+ con `minSdk 23`) |
-| Unused resources | 7 | warning | `colors.xml` |
-| Redundant nullable return type | 6 | warning | Repositorios/ViewModels falsos de prueba (`*Falso`, `*Test`) |
-| Unresolved file references | 5 | warning | Enlaces rotos en varios `README.md` |
-| Unresolved link in KDoc | 5 | warning | `AppContainer.kt`, `PantallaDetalleArtista.kt` |
-| Unused import directive | 5 | warning | `AppContainerTest.kt`, `ArtistasFavoritosE2ETest.kt`, `CrearAlbumE2ETest.kt`, `FavoritoEntity.kt`, `PantallaColeccionistas.kt` |
-| Unstable API Usage | 4 | warning | `settings.gradle.kts` |
-| Annotator | 4 | error | `plan-adopcion-room.md` (resaltado de error en Markdown, no en código Kotlin/Java) |
-| Unnecessary type argument | 2 | weak | Kotlin, varios |
-| Obsolete Android Gradle Plugin Version | 2 | warning | `build.gradle.kts` (raíz) |
-| Redundant interpolation prefix | 2 | weak | Kotlin, varios |
-| Target SDK attribute is not targeting latest version | 1 | warning | `AndroidManifest.xml` |
-| Java methods should be replaced with Kotlin analog | 1 | weak | — |
-| Redundant label on activity | 1 | warning | `AndroidManifest.xml` |
-| 'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9 | 1 | warning | Kotlin |
-| Redundant 'suspend' modifier | 1 | warning | Kotlin |
-| Long overload to Duration conversion | 1 | warning | Kotlin |
-| Latest Gradle minor version | 1 | warning | `gradle-wrapper.properties` |
-| Assignment can be replaced with operator assignment | 1 | weak | Kotlin |
-| Unused symbol | 1 | warning | Kotlin |
-| Unnecessary '@OptIn' annotation | 1 | weak | Kotlin |
+| Inspección                                                                | Ítems | Tipo    | Ejemplos de ubicación                                                                                                          |
+|---------------------------------------------------------------------------|-------|---------|--------------------------------------------------------------------------------------------------------------------------------|
+| Incorrect table formatting                                                | 86    | weak    | Tablas Markdown en `docs/`                                                                                                     |
+| Unused declaration                                                        | 40    | warning | Mayormente clases/métodos de prueba (`*Test.kt`, `*E2ETest.kt`)                                                                |
+| Grammar                                                                   | 32    | grammar | Comentarios y documentación en Markdown/KDoc                                                                                   |
+| Style                                                                     | 16    | style   | Varios (Kotlin/Markdown)                                                                                                       |
+| Obsolete Gradle Dependency                                                | 12    | warning | `libs.versions.toml` / `build.gradle.kts`                                                                                      |
+| Method parameter always has the same value                                | 10    | warning | `FavoriteRepositoryImpl`, clases de prueba E2E                                                                                 |
+| Newer Library Versions Available                                          | 8     | warning | `libs.versions.toml`                                                                                                           |
+| Const property naming convention                                          | 8     | weak    | `Rutas` (navegación)                                                                                                           |
+| Attribute unused on older versions                                        | 7     | warning | `ic_launcher_foreground.xml` (atributos API 24+ con `minSdk 23`)                                                               |
+| Unused resources                                                          | 7     | warning | `colors.xml`                                                                                                                   |
+| Redundant nullable return type                                            | 6     | warning | Repositorios/ViewModels falsos de prueba (`*Falso`, `*Test`)                                                                   |
+| Unresolved file references                                                | 5     | warning | Enlaces rotos en varios `README.md`                                                                                            |
+| Unresolved link in KDoc                                                   | 5     | warning | `AppContainer.kt`, `PantallaDetalleArtista.kt`                                                                                 |
+| Unused import directive                                                   | 5     | warning | `AppContainerTest.kt`, `ArtistasFavoritosE2ETest.kt`, `CrearAlbumE2ETest.kt`, `FavoritoEntity.kt`, `PantallaColeccionistas.kt` |
+| Unstable API Usage                                                        | 4     | warning | `settings.gradle.kts`                                                                                                          |
+| Annotator                                                                 | 4     | error   | `plan-adopcion-room.md` (resaltado de error en Markdown, no en código Kotlin/Java)                                             |
+| Unnecessary type argument                                                 | 2     | weak    | Kotlin, varios                                                                                                                 |
+| Obsolete Android Gradle Plugin Version                                    | 2     | warning | `build.gradle.kts` (raíz)                                                                                                      |
+| Redundant interpolation prefix                                            | 2     | weak    | Kotlin, varios                                                                                                                 |
+| Target SDK attribute is not targeting latest version                      | 1     | warning | `AndroidManifest.xml`                                                                                                          |
+| Java methods should be replaced with Kotlin analog                        | 1     | weak    | —                                                                                                                              |
+| Redundant label on activity                                               | 1     | warning | `AndroidManifest.xml`                                                                                                          |
+| 'Enum.values()' is recommended to be replaced by 'Enum.entries' since 1.9 | 1     | warning | Kotlin                                                                                                                         |
+| Redundant 'suspend' modifier                                              | 1     | warning | Kotlin                                                                                                                         |
+| Long overload to Duration conversion                                      | 1     | warning | Kotlin                                                                                                                         |
+| Latest Gradle minor version                                               | 1     | warning | `gradle-wrapper.properties`                                                                                                    |
+| Assignment can be replaced with operator assignment                       | 1     | weak    | Kotlin                                                                                                                         |
+| Unused symbol                                                             | 1     | warning | Kotlin                                                                                                                         |
+| Unnecessary '@OptIn' annotation                                           | 1     | weak    | Kotlin                                                                                                                         |
 
 ## Clasificación por prioridad
 

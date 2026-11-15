@@ -149,7 +149,7 @@ class VinilosNavHostTest {
     fun laAppAbreEnElIngresoSinSesionYSinPantallaAnterior() {
         mostrar(RepositorioFalso(Result.success(listOf(manolo))))
 
-        assertEquals(Rutas.Ingreso, ruta())
+        assertEquals(Rutas.INGRESO, ruta())
         assertEquals(Session.None, session.session.value)
         // Sin pantalla anterior, "Atrás" del sistema cierra la app.
         assertNull(nav.previousBackStackEntry)
@@ -161,7 +161,7 @@ class VinilosNavHostTest {
 
         entrarComoVisitante()
 
-        assertEquals(Rutas.Inicio, ruta())
+        assertEquals(Rutas.INICIO, ruta())
         assertEquals(Session.Visitor, session.session.value)
         rule.onNodeWithTag(TagInicio).assertIsDisplayed()
         rule.onNodeWithText("¡Hola, melómano!").assertIsDisplayed()
@@ -174,7 +174,7 @@ class VinilosNavHostTest {
 
         entrarComoVisitante()
 
-        assertEquals(Rutas.Inicio, ruta())
+        assertEquals(Rutas.INICIO, ruta())
         assertEquals(0, repositorio.consultas)
     }
 
@@ -184,7 +184,7 @@ class VinilosNavHostTest {
 
         entrarComoColeccionista()
 
-        assertEquals(Rutas.Coleccionistas, ruta())
+        assertEquals(Rutas.COLECCIONISTAS, ruta())
         assertEquals(Session.None, session.session.value)
         rule.onNodeWithText("Manolo Bellon").assertIsDisplayed()
     }
@@ -196,7 +196,7 @@ class VinilosNavHostTest {
 
         elegir(jaime)
 
-        assertEquals(Rutas.Inicio, ruta())
+        assertEquals(Rutas.INICIO, ruta())
         assertEquals(Session.Collector(jaime), session.session.value)
         assertEquals(true, session.session.value.collectorActionsEnabled)
         rule.onNodeWithText("¡Hola, Jaime Monsalve!").assertIsDisplayed()
@@ -211,7 +211,7 @@ class VinilosNavHostTest {
         rule.onNodeWithTag(TagAtras).performClick()
         rule.waitForIdle()
 
-        assertEquals(Rutas.Ingreso, ruta())
+        assertEquals(Rutas.INGRESO, ruta())
         assertEquals(Session.None, session.session.value)
     }
 
@@ -224,7 +224,7 @@ class VinilosNavHostTest {
         rule.onNodeWithTag(TagAtras).performClick()
         rule.waitForIdle()
 
-        assertEquals(Rutas.Ingreso, ruta())
+        assertEquals(Rutas.INGRESO, ruta())
     }
 
     @Test
@@ -234,11 +234,11 @@ class VinilosNavHostTest {
 
         rule.onNodeWithTag(TagVisitanteError).performClick()
         rule.waitForIdle()
-        assertEquals(Rutas.Inicio, ruta())
+        assertEquals(Rutas.INICIO, ruta())
         assertEquals(Session.Visitor, session.session.value)
 
         atrasDelSistema()
-        assertEquals(Rutas.Ingreso, ruta())
+        assertEquals(Rutas.INGRESO, ruta())
         assertEquals(Session.None, session.session.value)
     }
 
@@ -249,7 +249,7 @@ class VinilosNavHostTest {
 
         atrasDelSistema()
 
-        assertEquals(Rutas.Ingreso, ruta())
+        assertEquals(Rutas.INGRESO, ruta())
         assertEquals(Session.None, session.session.value)
     }
 
@@ -262,7 +262,7 @@ class VinilosNavHostTest {
 
         atrasDelSistema()
 
-        assertEquals(Rutas.Ingreso, ruta())
+        assertEquals(Rutas.INGRESO, ruta())
         assertEquals(Session.None, session.session.value)
         assertNull(nav.previousBackStackEntry)
     }
@@ -276,7 +276,7 @@ class VinilosNavHostTest {
 
         entrarComoVisitante()
 
-        assertEquals(Rutas.Inicio, ruta())
+        assertEquals(Rutas.INICIO, ruta())
         assertEquals(Session.Visitor, session.session.value)
         // El saludo cambia con el perfil.
         rule.onNodeWithText("¡Hola, melómano!").assertIsDisplayed()
@@ -295,7 +295,7 @@ class VinilosNavHostTest {
         elegir(jaime)
 
         assertEquals(Session.Collector(jaime), session.session.value)
-        assertEquals(Rutas.Inicio, ruta())
+        assertEquals(Rutas.INICIO, ruta())
     }
 
     @Test
@@ -306,14 +306,14 @@ class VinilosNavHostTest {
 
         rule.onNodeWithTag(TagVerAlbumes).performScrollTo().performClick()
         rule.waitForIdle()
-        assertEquals(Rutas.Catalogo, ruta())
+        assertEquals(Rutas.CATALOGO, ruta())
         rule.onNodeWithTag(TagCatalogo).assertIsDisplayed()
         rule.onNodeWithTag(TagRolActivo).assertTextEquals("COLECCIONISTA")
         rule.onNodeWithTag(tagAlbum(100)).assertIsDisplayed()
 
         rule.onNodeWithTag(TagAtras).performClick()
         rule.waitForIdle()
-        assertEquals(Rutas.Inicio, ruta())
+        assertEquals(Rutas.INICIO, ruta())
         assertEquals(Session.Collector(jaime), session.session.value)
     }
 
@@ -324,12 +324,12 @@ class VinilosNavHostTest {
 
         rule.onNodeWithTag(TagVerArtistas).performScrollTo().performClick()
         rule.waitForIdle()
-        assertEquals(Rutas.Artistas, ruta())
+        assertEquals(Rutas.ARTISTAS, ruta())
         rule.onNodeWithTag(TagArtistas).assertIsDisplayed()
 
         rule.onNodeWithTag(TagAtras).performClick()
         rule.waitForIdle()
-        assertEquals(Rutas.Inicio, ruta())
+        assertEquals(Rutas.INICIO, ruta())
         assertEquals(Session.Visitor, session.session.value)
     }
 
@@ -339,12 +339,12 @@ class VinilosNavHostTest {
         irAlCatalogoComoVisitante()
 
         atrasDelSistema()
-        assertEquals(Rutas.Inicio, ruta())
+        assertEquals(Rutas.INICIO, ruta())
 
         rule.onNodeWithTag(TagVerArtistas).performScrollTo().performClick()
         rule.waitForIdle()
         atrasDelSistema()
-        assertEquals(Rutas.Inicio, ruta())
+        assertEquals(Rutas.INICIO, ruta())
         assertEquals(Session.Visitor, session.session.value)
     }
 
@@ -359,7 +359,7 @@ class VinilosNavHostTest {
 
         rule.onNodeWithTag(tagArtista(queen)).performScrollTo().performClick()
         rule.waitForIdle()
-        assertEquals(Rutas.DetalleArtista, ruta())
+        assertEquals(Rutas.DETALLE_ARTISTA, ruta())
         rule.onNodeWithTag(TagDetalleArtista).assertIsDisplayed()
         rule.onNodeWithTag(TagNombreDetalleArtista).assertTextEquals("Queen")
         rule.onNodeWithTag(TagTipoDetalleArtista).assertTextEquals("Banda")
@@ -367,7 +367,7 @@ class VinilosNavHostTest {
 
         rule.onNodeWithTag(TagAtras).performClick()
         rule.waitForIdle()
-        assertEquals(Rutas.Artistas, ruta())
+        assertEquals(Rutas.ARTISTAS, ruta())
         rule.onNodeWithTag(TagBuscadorArtistas).assertTextEquals("que")
         assertEquals(1, artistas.consultas)
     }
@@ -384,12 +384,12 @@ class VinilosNavHostTest {
         rule.onNodeWithTag(TagListaDetalleArtista).performScrollToNode(hasTestTag(tagAlbumArtista(100)))
         rule.onNodeWithTag(tagAlbumArtista(100)).performClick()
         rule.waitForIdle()
-        assertEquals(Rutas.DetalleAlbum, ruta())
+        assertEquals(Rutas.DETALLE_ALBUM, ruta())
         assertEquals(100, albumes.ultimoId)
 
         rule.onNodeWithTag(TagAtras).performClick()
         rule.waitForIdle()
-        assertEquals(Rutas.DetalleArtista, ruta())
+        assertEquals(Rutas.DETALLE_ARTISTA, ruta())
         rule.onNodeWithTag(TagNombreDetalleArtista).assertTextEquals("Queen")
         assertEquals(listOf(ArtistType.BANDA to 101), artistas.consultasDetalle)
     }
@@ -422,7 +422,7 @@ class VinilosNavHostTest {
         rule.onNodeWithTag(TagTipoDetalleArtista).assertTextEquals("Músico")
 
         atrasDelSistema()
-        assertEquals(Rutas.Artistas, ruta())
+        assertEquals(Rutas.ARTISTAS, ruta())
         assertEquals(Session.Visitor, session.session.value)
     }
 
@@ -453,7 +453,7 @@ class VinilosNavHostTest {
         rule.onNodeWithText("Volver al listado de artistas").performClick()
         rule.waitForIdle()
 
-        assertEquals(Rutas.Artistas, ruta())
+        assertEquals(Rutas.ARTISTAS, ruta())
         assertEquals(2, artistas.consultas)
         rule.onNodeWithTag(tagArtista(queen)).assertIsDisplayed()
         rule.onAllNodesWithTag(tagArtista(ruben)).assertCountEquals(0)
@@ -476,7 +476,7 @@ class VinilosNavHostTest {
         mostrar(RepositorioFalso(Result.success(listOf(manolo))))
         irAlCatalogoComoVisitante()
 
-        assertEquals(Rutas.Catalogo, ruta())
+        assertEquals(Rutas.CATALOGO, ruta())
         rule.onNodeWithTag(TagRolActivo).assertTextEquals("VISITANTE")
         rule.onNodeWithTag(tagAlbum(100)).assertIsDisplayed()
         rule.onNodeWithTag(TagCuadriculaCatalogo).performScrollToNode(hasTestTag(tagAlbum(999)))
@@ -491,13 +491,13 @@ class VinilosNavHostTest {
 
         tocarAlbum(100)
 
-        assertEquals(Rutas.DetalleAlbum, ruta())
+        assertEquals(Rutas.DETALLE_ALBUM, ruta())
         assertEquals(100, albumes.ultimoId)
         rule.onNodeWithText("Bailando con lobos").assertIsDisplayed()
 
         rule.onNodeWithTag(TagAtras).performClick()
         rule.waitForIdle()
-        assertEquals(Rutas.Catalogo, ruta())
+        assertEquals(Rutas.CATALOGO, ruta())
         rule.onNodeWithTag(tagAlbum(100)).assertIsDisplayed()
         assertEquals(1, albumes.consultasCatalogo)
     }
@@ -510,7 +510,7 @@ class VinilosNavHostTest {
 
         atrasDelSistema()
 
-        assertEquals(Rutas.Catalogo, ruta())
+        assertEquals(Rutas.CATALOGO, ruta())
         assertEquals(1, albumes.consultasCatalogo)
         assertEquals(Session.Visitor, session.session.value)
     }
@@ -526,7 +526,7 @@ class VinilosNavHostTest {
         rule.onNodeWithText("El álbum ya no está disponible").assertIsDisplayed()
         rule.onNodeWithText("Volver al catálogo").performClick()
         rule.waitForIdle()
-        assertEquals(Rutas.Catalogo, ruta())
+        assertEquals(Rutas.CATALOGO, ruta())
         assertEquals(1, albumes.consultasCatalogo)
     }
 }

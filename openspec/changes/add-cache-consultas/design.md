@@ -30,14 +30,14 @@ Estado actual en `develop` (`b3a0aaf`, después de la PR #92):
 
 ### D1. `VinilosDb` versión 2 con cinco tablas nuevas y migración destructiva
 
-| Tabla | Clave | Columnas | DAO |
-|---|---|---|---|
-| `albumes` (existe) | `id` | igual que hoy | `AlbumDao` |
-| `album_detalle` | `id` | campos de `Album`; `canciones`, `artistas` y `comentarios` como JSON | `AlbumDao` |
-| `coleccionistas` | `id` | `nombre`, `correo`, `posicion` | `ColeccionistaDao` |
-| `artistas` | (`tipo`, `id`) | `nombre`, `imagen` | `ArtistaDao` |
-| `artista_detalle` | (`tipo`, `id`) | campos de `ArtistaDetalle`; `integrantes`, `albumes` y `premios` como JSON | `ArtistaDao` |
-| `favoritos` | (`coleccionistaId`, `artistaId`) | sin más columnas | `FavoritoDao` |
+| Tabla              | Clave                            | Columnas                                                                   | DAO                |
+|--------------------|----------------------------------|----------------------------------------------------------------------------|--------------------|
+| `albumes` (existe) | `id`                             | igual que hoy                                                              | `AlbumDao`         |
+| `album_detalle`    | `id`                             | campos de `Album`; `canciones`, `artistas` y `comentarios` como JSON       | `AlbumDao`         |
+| `coleccionistas`   | `id`                             | `nombre`, `correo`, `posicion`                                             | `ColeccionistaDao` |
+| `artistas`         | (`tipo`, `id`)                   | `nombre`, `imagen`                                                         | `ArtistaDao`       |
+| `artista_detalle`  | (`tipo`, `id`)                   | campos de `ArtistaDetalle`; `integrantes`, `albumes` y `premios` como JSON | `ArtistaDao`       |
+| `favoritos`        | (`coleccionistaId`, `artistaId`) | sin más columnas                                                           | `FavoritoDao`      |
 
 Los DAO son clases abstractas, como `AlbumDao`, para que las transacciones tengan cuerpo sin `-Xjvm-default`. Se exporta `app/schemas/com.example.vinilos.data.local.VinilosDb/2.json` y se versiona. La versión sube a 2 y se mantiene `fallbackToDestructiveMigration()`: al actualizar la app se borra el catálogo guardado una vez y la siguiente consulta lo vuelve a llenar.
 
@@ -59,12 +59,12 @@ Los DAO son clases abstractas, como `AlbumDao`, para que las transacciones tenga
 
 ### D3. Cada interfaz suma solo lecturas de lo guardado
 
-| Interfaz | Función nueva |
-|---|---|
-| `CollectorRepository` | `obtenerColeccionistasGuardados(): List<Collector>` |
-| `AlbumRepository` | `obtenerAlbumGuardado(id: Int): Album?` |
-| `ArtistRepository` | `obtenerArtistasGuardados(): List<Artist>` y `obtenerDetalleGuardado(tipo, id): ArtistaDetalle?` |
-| `FavoriteRepository` | `esFavoritoGuardado(collectorId, artistId): Boolean` |
+| Interfaz              | Función nueva                                                                                    |
+|-----------------------|--------------------------------------------------------------------------------------------------|
+| `CollectorRepository` | `obtenerColeccionistasGuardados(): List<Collector>`                                              |
+| `AlbumRepository`     | `obtenerAlbumGuardado(id: Int): Album?`                                                          |
+| `ArtistRepository`    | `obtenerArtistasGuardados(): List<Artist>` y `obtenerDetalleGuardado(tipo, id): ArtistaDetalle?` |
+| `FavoriteRepository`  | `esFavoritoGuardado(collectorId, artistId): Boolean`                                             |
 
 Las funciones que consultan el backend no cambian de firma ni de resultado: además escriben en el DAO cuando salen bien. Es el mismo contrato que `obtenerAlbumesGuardados` y `obtenerAlbumes` del catálogo (D4 de `add-cache-catalogo`). Sin DAO, las lecturas devuelven lista vacía, `null` o `false`.
 
@@ -74,15 +74,15 @@ Las funciones que consultan el backend no cambian de firma ni de resultado: adem
 
 ### D4. Qué escribe cada repositorio
 
-| Repositorio | Consulta exitosa | 404 (`RecursoNoEncontrado`) |
-|---|---|---|
-| `CollectorRepositoryImpl.obtenerColeccionistas` | reemplaza `coleccionistas` | — |
-| `AlbumRepositoryImpl.obtenerAlbumes` | reemplaza `albumes` y `album_detalle` en una sola transacción | — |
-| `AlbumRepositoryImpl.obtenerAlbum` | inserta o reemplaza la fila de `album_detalle` | borra la fila de `album_detalle` y la de `albumes` |
-| `ArtistRepositoryImpl.obtenerArtistas` | reemplaza `artistas` | — |
-| `ArtistRepositoryImpl.obtenerDetalle` | inserta o reemplaza la fila de `artista_detalle` | borra esa fila |
-| `FavoriteRepositoryImpl.esFavorito` | reemplaza los favoritos de ese coleccionista | — |
-| `FavoriteRepositoryImpl.agregarFavorito` | agrega la fila | — |
+| Repositorio                                     | Consulta exitosa                                              | 404 (`RecursoNoEncontrado`)                        |
+|-------------------------------------------------|---------------------------------------------------------------|----------------------------------------------------|
+| `CollectorRepositoryImpl.obtenerColeccionistas` | reemplaza `coleccionistas`                                    | —                                                  |
+| `AlbumRepositoryImpl.obtenerAlbumes`            | reemplaza `albumes` y `album_detalle` en una sola transacción | —                                                  |
+| `AlbumRepositoryImpl.obtenerAlbum`              | inserta o reemplaza la fila de `album_detalle`                | borra la fila de `album_detalle` y la de `albumes` |
+| `ArtistRepositoryImpl.obtenerArtistas`          | reemplaza `artistas`                                          | —                                                  |
+| `ArtistRepositoryImpl.obtenerDetalle`           | inserta o reemplaza la fila de `artista_detalle`              | borra esa fila                                     |
+| `FavoriteRepositoryImpl.esFavorito`             | reemplaza los favoritos de ese coleccionista                  | —                                                  |
+| `FavoriteRepositoryImpl.agregarFavorito`        | agrega la fila                                                | —                                                  |
 
 - **Detalle de álbum desde el catálogo:** `obtenerAlbumes` convierte cada `AlbumDto` dos veces: con `aResumen()`, tolerante, para el catálogo, y con `aModelo()`, estricto, para el detalle. Un álbum que no pasa `aModelo()` (le falta descripción, disquera o una fecha válida) no se guarda como detalle, pero sigue en el catálogo, como hoy. Para eso, la conversión de cada álbum atrapa solo `JsonParseException`, la misma que ya lanza `aModelo()`.
 - **El 404 del artista** se sigue devolviendo como hoy (`ErrorDeCarga`, porque `RecursoNoEncontrado` es su subclase), así que el comportamiento sin caché no cambia.
@@ -117,12 +117,12 @@ Las cuatro pantallas reciben `onAvisoMostrado` y, con `Exito`:
 
 Textos nuevos en `strings.xml`, en el estilo de cada error ya existente:
 
-| Pantalla | Aviso |
-|---|---|
-| Coleccionistas | "No pudimos actualizar los coleccionistas" |
-| Detalle de álbum | "No pudimos actualizar el álbum" |
+| Pantalla            | Aviso                                          |
+|---------------------|------------------------------------------------|
+| Coleccionistas      | "No pudimos actualizar los coleccionistas"     |
+| Detalle de álbum    | "No pudimos actualizar el álbum"               |
 | Listado de artistas | "No se pudo actualizar el listado de artistas" |
-| Detalle de artista | "No se pudo actualizar el artista" |
+| Detalle de artista  | "No se pudo actualizar el artista"             |
 
 Más cuatro descripciones para el indicador de actualización. El botón de favorito no cambia.
 

@@ -80,6 +80,7 @@ import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.ArtistaDetalleUiState
 import com.example.vinilos.viewmodel.FavoritoUiState
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 const val TagDetalleArtista = "detalle_artista"
 const val TagListaDetalleArtista = "detalle_artista_lista"
@@ -99,7 +100,7 @@ const val TagNoDisponibleFavorito = "detalle_artista_no_disponible_favorito"
 const val TagActualizandoDetalleArtista = "detalle_artista_actualizando"
 
 /** Milisegundos que permanece visible la confirmación de favorito antes de ocultarse sola. */
-private const val DuracionConfirmacionFavoritoMs = 2500L
+private val DuracionConfirmacionFavorito = 2500.milliseconds
 
 fun tagAlbumArtista(id: Int) = "detalle_artista_album_$id"
 fun tagRespaldoAlbum(id: Int) = "detalle_artista_album_respaldo_$id"
@@ -136,7 +137,7 @@ fun PantallaDetalleArtista(
     // item se recompone/recicla, lo que impedía que la espera de 2.5s llegara a completarse.
     if (estadoFavorito is FavoritoUiState.Favorito && estadoFavorito.mostrarConfirmacion) {
         LaunchedEffect(estadoFavorito) {
-            delay(DuracionConfirmacionFavoritoMs)
+            delay(DuracionConfirmacionFavorito)
             onConfirmacionFavoritoMostrada()
         }
     }

@@ -178,11 +178,9 @@ class ArtistasFavoritosE2ETest {
     private fun esperarA(tag: String, milis: Long = 15_000) =
         rule.waitUntil(milis) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
 
-    private fun esperarTexto(texto: String, milis: Long = 15_000) =
-        rule.waitUntil(milis) { rule.onAllNodesWithText(texto).fetchSemanticsNodes().isNotEmpty() }
-
-    private fun esperarQueDesaparezca(tag: String, milis: Long = 15_000) =
-        rule.waitUntil(milis) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isEmpty() }
+    /** La confirmación del favorito se oculta sola a los 2,5 s; se le dan hasta 10 s. */
+    private fun esperarQueSeOculteLaConfirmacion() =
+        rule.waitUntil(10_000) { rule.onAllNodesWithTag(TagConfirmacionFavorito).fetchSemanticsNodes().isEmpty() }
 
     /** Espera a que el botón de favorito muestre [texto]. */
     private fun esperarBoton(texto: String, milis: Long = 15_000) = rule.waitUntil(milis) {
@@ -238,10 +236,10 @@ class ArtistasFavoritosE2ETest {
     private fun boton() = rule.onNodeWithTag(TagBotonFavorito).performScrollTo()
 
     /** Toca "Agregar Favorito" y comprueba que queda "Favorito" con la confirmación, que se oculta sola. */
-    private fun agregarYVerConfirmacion(artista: Artist, evidencia: String, pasoAntes: String, pasoDespues: String) {
+    private fun agregarYVerConfirmacion(artista: Artist, evidencia: String, pasoDespues: String) {
         esperarBoton("Agregar Favorito")
         boton().assertIsEnabled()
-        EvidenciaE2E.capturar(rule, evidencia, pasoAntes)
+        EvidenciaE2E.capturar(rule, evidencia, "02_agregar_favorito")
 
         boton().performClick()
         esperarA(TagConfirmacionFavorito, milis = 10_000)
@@ -250,7 +248,7 @@ class ArtistasFavoritosE2ETest {
         EvidenciaE2E.capturar(rule, evidencia, pasoDespues)
 
         // El mensaje es breve: desaparece solo y el botón sigue como "Favorito".
-        esperarQueDesaparezca(TagConfirmacionFavorito, milis = 10_000)
+        esperarQueSeOculteLaConfirmacion()
         boton().assert(hasText("Favorito")).assertIsNotEnabled()
     }
 
@@ -287,7 +285,7 @@ class ArtistasFavoritosE2ETest {
         ActivityScenario.launch(MainActivity::class.java).use {
             entrarComoColeccionista(coleccionista)
             abrirDetalle(banda, evidencia, "01_listado_coleccionista")
-            agregarYVerConfirmacion(banda, evidencia, "02_agregar_favorito", "03_favorito_con_confirmacion")
+            agregarYVerConfirmacion(banda, evidencia, "03_favorito_con_confirmacion")
             EvidenciaE2E.capturar(rule, evidencia, "04_confirmacion_oculta")
         }
         assertEquals(1, favoritos.envios)
@@ -304,7 +302,7 @@ class ArtistasFavoritosE2ETest {
         ActivityScenario.launch(MainActivity::class.java).use {
             entrarComoColeccionista(coleccionista)
             abrirDetalle(musico, evidencia, "01_listado_coleccionista")
-            agregarYVerConfirmacion(musico, evidencia, "02_agregar_favorito", "03_favorito_con_confirmacion")
+            agregarYVerConfirmacion(musico, evidencia, "03_favorito_con_confirmacion")
             EvidenciaE2E.capturar(rule, evidencia, "04_confirmacion_oculta")
         }
         assertEquals(1, favoritos.envios)
@@ -321,7 +319,7 @@ class ArtistasFavoritosE2ETest {
         ActivityScenario.launch(MainActivity::class.java).use {
             entrarComoColeccionista(coleccionista)
             abrirDetalle(artista, evidencia, "01_listado_coleccionista")
-            agregarYVerConfirmacion(artista, evidencia, "02_agregar_favorito", "03_favorito_agregado")
+            agregarYVerConfirmacion(artista, evidencia, "03_favorito_agregado")
         }
         val consultasAntes = favoritos.consultas
 

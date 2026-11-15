@@ -26,12 +26,12 @@ La HU07 se implementa en dos partes. **Este cambio es la parte 1:** la funcional
 
 La Iteración 2 del curso pide aplicar estas técnicas a las historias de las iteraciones 1 y 2. El camino ya se validó y se midió en un Motorola Edge 30 y dos emuladores; el detalle y la evidencia están en `design.md`, sección "Mejoras futuras".
 
-| # | Mejora | Camino validado | Cambio futuro |
-|---|---|---|---|
-| M1 | Micro-optimizaciones | Depurar los 48 avisos de lint, evitar trabajo repetido y analizar con SonarQube | `mejorar-desempeno` |
-| M2 | Evitar ANR | Sacar del hilo principal el orden, los filtros y el arranque, y activar `StrictMode` en debug. Medido: sin riesgo real en el catálogo | `mejorar-desempeno` |
-| M3 | Reducir memoria | Entregar release con R8 y reglas `-keep` (21 % menos memoria en el Motorola), ajustar Coil y mover la imagen de respaldo a Coil | `mejorar-desempeno` |
-| M4 | Room | Caché local del catálogo con Room 2.6.1 y KSP, probado en los tres dispositivos | `add-cache-catalogo` |
+| #   | Mejora               | Camino validado                                                                                                                       | Cambio futuro        |
+|-----|----------------------|---------------------------------------------------------------------------------------------------------------------------------------|----------------------|
+| M1  | Micro-optimizaciones | Depurar los 48 avisos de lint, evitar trabajo repetido y analizar con SonarQube                                                       | `mejorar-desempeno`  |
+| M2  | Evitar ANR           | Sacar del hilo principal el orden, los filtros y el arranque, y activar `StrictMode` en debug. Medido: sin riesgo real en el catálogo | `mejorar-desempeno`  |
+| M3  | Reducir memoria      | Entregar release con R8 y reglas `-keep` (21 % menos memoria en el Motorola), ajustar Coil y mover la imagen de respaldo a Coil       | `mejorar-desempeno`  |
+| M4  | Room                 | Caché local del catálogo con Room 2.6.1 y KSP, probado en los tres dispositivos                                                       | `add-cache-catalogo` |
 
 La parte 1 no adelanta estas mejoras: sigue los patrones actuales de la app aunque la parte 2 vaya a cambiarlos, y no agrega despachadores, Room, R8 ni ajustes de Coil. Tampoco agrega avisos de lint nuevos.
 

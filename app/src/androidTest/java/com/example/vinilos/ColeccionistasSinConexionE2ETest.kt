@@ -74,8 +74,9 @@ class ColeccionistasSinConexionE2ETest {
     private fun esperarA(tag: String, milis: Long = 15_000) =
         rule.waitUntil(milis) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
 
-    private fun esperarTexto(texto: String, milis: Long = 15_000) =
-        rule.waitUntil(milis) { rule.onAllNodesWithText(texto).fetchSemanticsNodes().isNotEmpty() }
+    private fun esperarAvisoDeActualizacion() = rule.waitUntil(15_000) {
+        rule.onAllNodesWithText("No pudimos actualizar los coleccionistas").fetchSemanticsNodes().isNotEmpty()
+    }
 
     private fun esperarPeticiones(cantidad: Int) =
         rule.waitUntil(15_000) { servidor.requestCount >= cantidad }
@@ -96,7 +97,7 @@ class ColeccionistasSinConexionE2ETest {
             servidorCaido()
             abrirSelector()
             esperarPeticiones(2)
-            esperarTexto("No pudimos actualizar los coleccionistas")
+            esperarAvisoDeActualizacion()
             assertTrue(
                 "Con listado guardado no debe verse el error",
                 rule.onAllNodesWithTag(TagMensajeError).fetchSemanticsNodes().isEmpty()
@@ -129,7 +130,7 @@ class ColeccionistasSinConexionE2ETest {
             servidorCaido()
             abrirSelector()
             esperarPeticiones(3)
-            esperarTexto("No pudimos actualizar los coleccionistas")
+            esperarAvisoDeActualizacion()
             rule.onNodeWithTag(tagColeccionista(100)).assertIsDisplayed()
             rule.onNodeWithTag(tagColeccionista(101)).assertDoesNotExist()
         }
