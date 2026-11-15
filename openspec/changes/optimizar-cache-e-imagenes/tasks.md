@@ -98,14 +98,14 @@
 ## 9. Verificación integrada
 
 - [x] 9.1 Correr `./gradlew testDebugUnitTest lintDebug` y verificar que pasan sin avisos de lint nuevos.
-- [ ] 9.2 Correr la suite instrumentada completa en el Samsung (`connectedDebugAndroidTest`), incluidas las E2E y `CatalogoSinConexionE2ETest`, y verificar que pasa.
+- [x] 9.2 Correr la suite instrumentada completa en el Samsung (`connectedDebugAndroidTest`), incluidas las E2E y `CatalogoSinConexionE2ETest`, y verificar que pasa.
 - [ ] 9.3 Hacer el perfilamiento «After» en el Samsung con `docs/performance/guia-manual.md` y anotar solo lo observado en las grabaciones:
   - **HU01, recarga sin cambios en la misma grabación:** sin escrituras en `arch_disk_io`, sin `Gson.toJson` desde `Conversores` y con 304 en Connection View.
   - **HU01, paso 2:** asignaciones de `Bitmap` desde `PortadaAlbum`.
   - **HU07, paso 5:** el álbum visible antes de que responda `GET /albums`, sin reescribir el catálogo.
 
   Revisar también si el backend de Render responde 304 (pregunta abierta de `design.md`).
-- [ ] 9.4 Correr `openspec validate optimizar-cache-e-imagenes --strict` y verificar que pasa.
+- [x] 9.4 Correr `openspec validate optimizar-cache-e-imagenes --strict` y verificar que pasa.
 
 ## Workflow follow-up
 
