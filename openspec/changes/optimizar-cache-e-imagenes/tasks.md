@@ -46,14 +46,14 @@
 
 ## 5. Escrituras incrementales en los DAO (D6)
 
-- [ ] 5.1 En `AlbumDao`, agregar:
+- [x] 5.1 En `AlbumDao`, agregar:
   - `@Upsert` de `AlbumEntity` y de `AlbumDetalleEntity`;
   - el borrado por ids en `albumes` y `album_detalle`, en grupos de 500;
   - `@Transaction aplicarCatalogo(...)`.
 
   Agregar a `AlbumDaoTest` (instrumentada) que el upsert cambia solo la fila modificada, que el borrado funciona con 1.200 ids y que `aplicarCatalogo` es atómica.
-- [ ] 5.2 Agregar a `ArtistaDao`, `ColeccionistaDao` y `FavoritoDao` sus upsert, sus borrados por ids en grupos de 500 y sus transacciones `aplicarListado`, `aplicar` y `aplicarDe`, con sus pruebas en `ArtistaDaoTest`, `ColeccionistaDaoTest` y `FavoritoDaoTest`. Verificar que las cuatro clases pasan en el Samsung.
-- [ ] 5.3 Implementar los métodos nuevos en los DAO falsos de `AppContainerTest`, de las cuatro `*RepositoryCacheTest` y de `RepositoriosDispatcherTest`, contando las escrituras y los borrados. Verificar que, tras compilar, `git diff app/schemas` está vacío (sin cambio de esquema) y que la suite unitaria pasa.
+- [x] 5.2 Agregar a `ArtistaDao`, `ColeccionistaDao` y `FavoritoDao` sus upsert, sus borrados por ids en grupos de 500 y sus transacciones `aplicarListado`, `aplicar` y `aplicarDe`, con sus pruebas en `ArtistaDaoTest`, `ColeccionistaDaoTest` y `FavoritoDaoTest`. Verificar que las cuatro clases pasan en el Samsung.
+- [x] 5.3 Implementar los métodos nuevos en los DAO falsos de `AppContainerTest`, de las cuatro `*RepositoryCacheTest` y de `RepositoriosDispatcherTest`, contando las escrituras y los borrados. Verificar que, tras compilar, `git diff app/schemas` está vacío (sin cambio de esquema) y que la suite unitaria pasa.
 
 ## 6. Copia en memoria y escritura solo de lo que cambió (D4, D5)
 

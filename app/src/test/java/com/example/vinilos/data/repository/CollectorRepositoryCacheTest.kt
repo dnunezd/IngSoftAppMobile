@@ -27,20 +27,38 @@ class CollectorRepositoryCacheTest {
         var fallaAlEscribir: Throwable? = null
         var escrituras = 0
 
+        /** Cada escritura que recibió, en orden, con las claves que tocó (optimizar-cache-e-imagenes). */
+        val operaciones = mutableListOf<String>()
+
+        private fun anotar(operacion: String, claves: List<Any> = emptyList()) {
+            fallaAlEscribir?.let { throw it }
+            operaciones += if (claves.isEmpty()) operacion else "$operacion$claves"
+        }
+
         override suspend fun todos(): List<ColeccionistaEntity> {
             fallaAlLeer?.let { throw it }
             return filas.sortedBy { it.posicion }
         }
 
         override suspend fun borrarTodos() {
-            fallaAlEscribir?.let { throw it }
+            anotar("borrarTodos")
             filas = emptyList()
         }
 
         override suspend fun insertar(coleccionistas: List<ColeccionistaEntity>) {
-            fallaAlEscribir?.let { throw it }
+            anotar("insertar", coleccionistas.map { it.id })
             filas = filas + coleccionistas
             escrituras++
+        }
+
+        override suspend fun guardar(coleccionistas: List<ColeccionistaEntity>) {
+            anotar("guardar", coleccionistas.map { it.id })
+            filas = filas.filterNot { fila -> coleccionistas.any { it.id == fila.id } } + coleccionistas
+        }
+
+        override suspend fun borrarPorId(ids: List<Int>) {
+            anotar("borrarPorId", ids)
+            filas = filas.filterNot { it.id in ids }
         }
     }
 

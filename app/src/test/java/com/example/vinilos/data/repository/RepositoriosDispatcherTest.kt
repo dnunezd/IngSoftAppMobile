@@ -101,6 +101,10 @@ class RepositoriosDispatcherTest {
         override suspend fun insertarDetalles(detalles: List<AlbumDetalleEntity>) = anotarHilo()
         override suspend fun borrarDelCatalogo(id: Int) = anotarHilo()
         override suspend fun borrarDetalle(id: Int) = anotarHilo()
+        override suspend fun guardarAlbumes(albumes: List<AlbumEntity>) = anotarHilo()
+        override suspend fun guardarDetalles(detalles: List<AlbumDetalleEntity>) = anotarHilo()
+        override suspend fun borrarAlbumesPorId(ids: List<Int>) = anotarHilo()
+        override suspend fun borrarDetallesPorId(ids: List<Int>) = anotarHilo()
     }
 
     private val detalleDto = ArtistaDetalleDto(
@@ -133,6 +137,8 @@ class RepositoriosDispatcherTest {
         override suspend fun todos(): List<ColeccionistaEntity> = emptyList<ColeccionistaEntity>().also { anotarHilo() }
         override suspend fun borrarTodos() = anotarHilo()
         override suspend fun insertar(coleccionistas: List<ColeccionistaEntity>) = anotarHilo()
+        override suspend fun guardar(coleccionistas: List<ColeccionistaEntity>) = anotarHilo()
+        override suspend fun borrarPorId(ids: List<Int>) = anotarHilo()
     }
 
     private val artistaDao = object : ArtistaDao() {
@@ -142,6 +148,8 @@ class RepositoriosDispatcherTest {
         override suspend fun detalle(tipo: ArtistType, id: Int): ArtistaDetalleEntity? = null.also { anotarHilo() }
         override suspend fun guardarDetalle(detalle: ArtistaDetalleEntity) = anotarHilo()
         override suspend fun borrarDetalle(tipo: ArtistType, id: Int) = anotarHilo()
+        override suspend fun guardarArtistas(artistas: List<ArtistaEntity>) = anotarHilo()
+        override suspend fun borrarArtistas(tipo: ArtistType, ids: List<Int>) = anotarHilo()
     }
 
     private val favoritoDao = object : FavoritoDao() {
@@ -149,6 +157,7 @@ class RepositoriosDispatcherTest {
         override suspend fun deColeccionista(coleccionistaId: Int): List<Int> = emptyList<Int>().also { anotarHilo() }
         override suspend fun borrarDe(coleccionistaId: Int) = anotarHilo()
         override suspend fun insertar(favoritos: List<FavoritoEntity>) = anotarHilo()
+        override suspend fun borrarDeColeccionista(coleccionistaId: Int, artistaIds: List<Int>) = anotarHilo()
     }
 
     private fun albumes() = AlbumRepositoryImpl(adaptador, albumApi, albumDao, dispatcher)

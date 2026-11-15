@@ -124,4 +124,32 @@ class ArtistaDaoTest {
 
         assertEquals(vacio, dao.detalle(ArtistType.MUSICO, 5))
     }
+
+    // ---------- Escrituras incrementales (optimizar-cache-e-imagenes, D6) ----------
+
+    @Test
+    fun aplicarListadoBorraSoloElTipoYElIdIndicados() = runTest {
+        dao.reemplazar(listOf(artista(ArtistType.MUSICO, 1), artista(ArtistType.BANDA, 1), artista(ArtistType.BANDA, 2)))
+
+        dao.aplicarListado(
+            CambiosDeTabla.diferencias(
+                listOf(artista(ArtistType.BANDA, 2, "Nombre nuevo"), artista(ArtistType.MUSICO, 3)),
+                listOf(ArtistType.BANDA to 1)
+            )
+        )
+
+        assertEquals(
+            setOf(artista(ArtistType.MUSICO, 1), artista(ArtistType.BANDA, 2, "Nombre nuevo"), artista(ArtistType.MUSICO, 3)),
+            dao.todos().toSet()
+        )
+    }
+
+    @Test
+    fun aplicarListadoBorraMasIdsQueElLimiteDeSqlite() = runTest {
+        dao.reemplazar((1..1200).map { artista(ArtistType.MUSICO, it) })
+
+        dao.aplicarListado(CambiosDeTabla.diferencias(emptyList(), (1..1199).map { ArtistType.MUSICO to it }))
+
+        assertEquals(listOf(1200), dao.todos().map { it.id })
+    }
 }

@@ -31,4 +31,20 @@ abstract class FavoritoDao {
 
     suspend fun agregar(coleccionistaId: Int, artistaId: Int) =
         insertar(listOf(FavoritoEntity(coleccionistaId, artistaId)))
+
+    // ---------- Escrituras incrementales (optimizar-cache-e-imagenes, D6) ----------
+
+    @Query("DELETE FROM favoritos WHERE coleccionistaId = :coleccionistaId AND artistaId IN (:artistaIds)")
+    abstract suspend fun borrarDeColeccionista(coleccionistaId: Int, artistaIds: List<Int>)
+
+    /** Aplica lo que cambió en los favoritos de un coleccionista; las filas son los ids de artista. */
+    @Transaction
+    open suspend fun aplicarDe(coleccionistaId: Int, cambios: CambiosDeTabla<Int, Int>) {
+        if (cambios.reemplazarTodo) {
+            reemplazarDe(coleccionistaId, cambios.guardar)
+            return
+        }
+        if (cambios.guardar.isNotEmpty()) insertar(cambios.guardar.map { FavoritoEntity(coleccionistaId, it) })
+        enGrupos(cambios.borrar) { borrarDeColeccionista(coleccionistaId, it) }
+    }
 }

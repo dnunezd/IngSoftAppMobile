@@ -170,7 +170,12 @@ private class AlbumDaoEnMemoria : AlbumDao() {
     override suspend fun insertarDetalles(detalles: List<AlbumDetalleEntity>) = Unit
     override suspend fun borrarDelCatalogo(id: Int) { filas = filas.filterNot { it.id == id } }
     override suspend fun borrarDetalle(id: Int) = Unit
-
+    override suspend fun guardarAlbumes(albumes: List<AlbumEntity>) {
+        filas = filas.filterNot { fila -> albumes.any { it.id == fila.id } } + albumes
+    }
+    override suspend fun guardarDetalles(detalles: List<AlbumDetalleEntity>) = Unit
+    override suspend fun borrarAlbumesPorId(ids: List<Int>) { filas = filas.filterNot { it.id in ids } }
+    override suspend fun borrarDetallesPorId(ids: List<Int>) = Unit
 }
 
 private class ColeccionistaDaoEnMemoria : ColeccionistaDao() {
@@ -178,6 +183,10 @@ private class ColeccionistaDaoEnMemoria : ColeccionistaDao() {
     override suspend fun todos() = filas
     override suspend fun borrarTodos() { filas = emptyList() }
     override suspend fun insertar(coleccionistas: List<ColeccionistaEntity>) { filas = filas + coleccionistas }
+    override suspend fun guardar(coleccionistas: List<ColeccionistaEntity>) {
+        filas = filas.filterNot { fila -> coleccionistas.any { it.id == fila.id } } + coleccionistas
+    }
+    override suspend fun borrarPorId(ids: List<Int>) { filas = filas.filterNot { it.id in ids } }
 }
 
 private class ArtistaDaoEnMemoria : ArtistaDao() {
@@ -188,6 +197,12 @@ private class ArtistaDaoEnMemoria : ArtistaDao() {
     override suspend fun detalle(tipo: ArtistType, id: Int): ArtistaDetalleEntity? = null
     override suspend fun guardarDetalle(detalle: ArtistaDetalleEntity) = Unit
     override suspend fun borrarDetalle(tipo: ArtistType, id: Int) = Unit
+    override suspend fun guardarArtistas(artistas: List<ArtistaEntity>) {
+        filas = filas.filterNot { fila -> artistas.any { it.tipo == fila.tipo && it.id == fila.id } } + artistas
+    }
+    override suspend fun borrarArtistas(tipo: ArtistType, ids: List<Int>) {
+        filas = filas.filterNot { it.tipo == tipo && it.id in ids }
+    }
 }
 
 private class FavoritoDaoEnMemoria : FavoritoDao() {
@@ -197,4 +212,7 @@ private class FavoritoDaoEnMemoria : FavoritoDao() {
         filas.filter { it.coleccionistaId == coleccionistaId }.map { it.artistaId }
     override suspend fun borrarDe(coleccionistaId: Int) { filas = filas.filterNot { it.coleccionistaId == coleccionistaId }.toSet() }
     override suspend fun insertar(favoritos: List<FavoritoEntity>) { filas = filas + favoritos }
+    override suspend fun borrarDeColeccionista(coleccionistaId: Int, artistaIds: List<Int>) {
+        filas = filas.filterNot { it.coleccionistaId == coleccionistaId && it.artistaId in artistaIds }.toSet()
+    }
 }

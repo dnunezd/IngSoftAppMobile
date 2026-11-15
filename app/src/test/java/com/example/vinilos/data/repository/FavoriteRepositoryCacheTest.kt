@@ -25,6 +25,14 @@ class FavoriteRepositoryCacheTest {
         var fallaAlLeer: Throwable? = null
         var fallaAlEscribir: Throwable? = null
 
+        /** Cada escritura que recibió, en orden, con las claves que tocó (optimizar-cache-e-imagenes). */
+        val operaciones = mutableListOf<String>()
+
+        private fun anotar(operacion: String, claves: List<Any> = emptyList()) {
+            fallaAlEscribir?.let { throw it }
+            operaciones += if (claves.isEmpty()) operacion else "$operacion$claves"
+        }
+
         override suspend fun existe(coleccionistaId: Int, artistaId: Int): Boolean {
             fallaAlLeer?.let { throw it }
             return FavoritoEntity(coleccionistaId, artistaId) in filas
@@ -36,13 +44,18 @@ class FavoriteRepositoryCacheTest {
         }
 
         override suspend fun borrarDe(coleccionistaId: Int) {
-            fallaAlEscribir?.let { throw it }
+            anotar("borrarDe", listOf(coleccionistaId))
             filas = filas.filterNot { it.coleccionistaId == coleccionistaId }.toSet()
         }
 
         override suspend fun insertar(favoritos: List<FavoritoEntity>) {
-            fallaAlEscribir?.let { throw it }
+            anotar("insertar", favoritos.map { it.artistaId })
             filas = filas + favoritos
+        }
+
+        override suspend fun borrarDeColeccionista(coleccionistaId: Int, artistaIds: List<Int>) {
+            anotar("borrarDeColeccionista", artistaIds)
+            filas = filas.filterNot { it.coleccionistaId == coleccionistaId && it.artistaId in artistaIds }.toSet()
         }
     }
 

@@ -32,18 +32,26 @@ class ArtistRepositoryCacheTest {
         var fallaAlLeer: Throwable? = null
         var fallaAlEscribir: Throwable? = null
 
+        /** Cada escritura que recibió, en orden, con las claves que tocó (optimizar-cache-e-imagenes). */
+        val operaciones = mutableListOf<String>()
+
+        private fun anotar(operacion: String, claves: List<Any> = emptyList()) {
+            fallaAlEscribir?.let { throw it }
+            operaciones += if (claves.isEmpty()) operacion else "$operacion$claves"
+        }
+
         override suspend fun todos(): List<ArtistaEntity> {
             fallaAlLeer?.let { throw it }
             return filas
         }
 
         override suspend fun borrarTodos() {
-            fallaAlEscribir?.let { throw it }
+            anotar("borrarTodos")
             filas = emptyList()
         }
 
         override suspend fun insertar(artistas: List<ArtistaEntity>) {
-            fallaAlEscribir?.let { throw it }
+            anotar("insertar", artistas.map { it.id })
             filas = filas + artistas
         }
 
@@ -53,13 +61,23 @@ class ArtistRepositoryCacheTest {
         }
 
         override suspend fun guardarDetalle(detalle: ArtistaDetalleEntity) {
-            fallaAlEscribir?.let { throw it }
+            anotar("guardarDetalle", listOf(detalle.id))
             detalles = detalles + ((detalle.tipo to detalle.id) to detalle)
         }
 
         override suspend fun borrarDetalle(tipo: ArtistType, id: Int) {
-            fallaAlEscribir?.let { throw it }
+            anotar("borrarDetalle", listOf(id))
             detalles = detalles - (tipo to id)
+        }
+
+        override suspend fun guardarArtistas(artistas: List<ArtistaEntity>) {
+            anotar("guardarArtistas", artistas.map { it.id })
+            filas = filas.filterNot { fila -> artistas.any { it.tipo == fila.tipo && it.id == fila.id } } + artistas
+        }
+
+        override suspend fun borrarArtistas(tipo: ArtistType, ids: List<Int>) {
+            anotar("borrarArtistas", ids)
+            filas = filas.filterNot { it.tipo == tipo && it.id in ids }
         }
     }
 

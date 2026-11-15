@@ -33,18 +33,26 @@ class AlbumRepositoryCacheTest {
         var fallaAlEscribir: Throwable? = null
         var escrituras = 0
 
+        /** Cada escritura que recibió, en orden, con los ids que tocó (optimizar-cache-e-imagenes). */
+        val operaciones = mutableListOf<String>()
+
+        private fun anotar(operacion: String, ids: List<Int> = emptyList()) {
+            fallaAlEscribir?.let { throw it }
+            operaciones += if (ids.isEmpty()) operacion else "$operacion$ids"
+        }
+
         override suspend fun todos(): List<AlbumEntity> {
             fallaAlLeer?.let { throw it }
             return filas
         }
 
         override suspend fun borrarTodos() {
-            fallaAlEscribir?.let { throw it }
+            anotar("borrarTodos")
             filas = emptyList()
         }
 
         override suspend fun insertar(albumes: List<AlbumEntity>) {
-            fallaAlEscribir?.let { throw it }
+            anotar("insertar", albumes.map { it.id })
             filas = filas + albumes
             escrituras++
         }
@@ -58,28 +66,48 @@ class AlbumRepositoryCacheTest {
         }
 
         override suspend fun guardarDetalle(detalle: AlbumDetalleEntity) {
-            fallaAlEscribir?.let { throw it }
+            anotar("guardarDetalle", listOf(detalle.id))
             detalles = detalles + (detalle.id to detalle)
         }
 
         override suspend fun borrarDetalles() {
-            fallaAlEscribir?.let { throw it }
+            anotar("borrarDetalles")
             detalles = emptyMap()
         }
 
         override suspend fun insertarDetalles(detalles: List<AlbumDetalleEntity>) {
-            fallaAlEscribir?.let { throw it }
+            anotar("insertarDetalles", detalles.map { it.id })
             this.detalles = this.detalles + detalles.associateBy { it.id }
         }
 
         override suspend fun borrarDelCatalogo(id: Int) {
-            fallaAlEscribir?.let { throw it }
+            anotar("borrarDelCatalogo", listOf(id))
             filas = filas.filterNot { it.id == id }
         }
 
         override suspend fun borrarDetalle(id: Int) {
-            fallaAlEscribir?.let { throw it }
+            anotar("borrarDetalle", listOf(id))
             detalles = detalles - id
+        }
+
+        override suspend fun guardarAlbumes(albumes: List<AlbumEntity>) {
+            anotar("guardarAlbumes", albumes.map { it.id })
+            filas = filas.filterNot { fila -> albumes.any { it.id == fila.id } } + albumes
+        }
+
+        override suspend fun guardarDetalles(detalles: List<AlbumDetalleEntity>) {
+            anotar("guardarDetalles", detalles.map { it.id })
+            this.detalles = this.detalles + detalles.associateBy { it.id }
+        }
+
+        override suspend fun borrarAlbumesPorId(ids: List<Int>) {
+            anotar("borrarAlbumesPorId", ids)
+            filas = filas.filterNot { it.id in ids }
+        }
+
+        override suspend fun borrarDetallesPorId(ids: List<Int>) {
+            anotar("borrarDetallesPorId", ids)
+            detalles = detalles - ids.toSet()
         }
     }
 

@@ -66,4 +66,24 @@ class ColeccionistaDaoTest {
 
         assertTrue(dao.todos().isEmpty())
     }
+
+    // ---------- Escrituras incrementales (optimizar-cache-e-imagenes, D6) ----------
+
+    @Test
+    fun aplicarGuardaLasFilasCambiadasYBorraLasQueNoLlegan() = runTest {
+        dao.reemplazar(listOf(coleccionista(1, 0), coleccionista(2, 1), coleccionista(3, 2)))
+
+        dao.aplicar(CambiosDeTabla.diferencias(listOf(coleccionista(3, 1), coleccionista(4, 2)), listOf(2)))
+
+        assertEquals(listOf(coleccionista(1, 0), coleccionista(3, 1), coleccionista(4, 2)), dao.todos())
+    }
+
+    @Test
+    fun aplicarConReemplazoDejaSoloLasFilasRecibidas() = runTest {
+        dao.reemplazar(listOf(coleccionista(1, 0), coleccionista(2, 1)))
+
+        dao.aplicar(CambiosDeTabla.reemplazar(listOf(coleccionista(5, 0))))
+
+        assertEquals(listOf(coleccionista(5, 0)), dao.todos())
+    }
 }

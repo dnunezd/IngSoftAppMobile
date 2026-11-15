@@ -70,4 +70,26 @@ class FavoritoDaoTest {
 
         assertEquals(setOf(1, 2), dao.deColeccionista(100).toSet())
     }
+
+    // ---------- Escrituras incrementales (optimizar-cache-e-imagenes, D6) ----------
+
+    @Test
+    fun aplicarDeAgregaYQuitaSoloLosDeEseColeccionista() = runTest {
+        dao.reemplazarDe(100, listOf(1, 2))
+        dao.reemplazarDe(200, listOf(1))
+
+        dao.aplicarDe(100, CambiosDeTabla.diferencias(listOf(3), listOf(1)))
+
+        assertEquals(setOf(2, 3), dao.deColeccionista(100).toSet())
+        assertEquals(listOf(1), dao.deColeccionista(200))
+    }
+
+    @Test
+    fun aplicarDeConReemplazoDejaSoloLosRecibidos() = runTest {
+        dao.reemplazarDe(100, listOf(1, 2))
+
+        dao.aplicarDe(100, CambiosDeTabla.reemplazar(listOf(5)))
+
+        assertEquals(listOf(5), dao.deColeccionista(100))
+    }
 }
