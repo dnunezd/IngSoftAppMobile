@@ -93,11 +93,11 @@
 
 ## 8. Tipos de Gson creados una sola vez (D8)
 
-- [ ] 8.1 En `Conversores`, declarar un `Type` constante por lista y hacer que `leer` lo reciba. Verificar que `ConversoresTest` pasa y agregar que leer dos veces el mismo JSON da listas iguales.
+- [x] 8.1 En `Conversores`, declarar un `Type` constante por lista y hacer que `leer` lo reciba. Verificar que `ConversoresTest` pasa y agregar que leer dos veces el mismo JSON da listas iguales.
 
 ## 9. Verificación integrada
 
-- [ ] 9.1 Correr `./gradlew testDebugUnitTest lintDebug` y verificar que pasan sin avisos de lint nuevos.
+- [x] 9.1 Correr `./gradlew testDebugUnitTest lintDebug` y verificar que pasan sin avisos de lint nuevos.
 - [ ] 9.2 Correr la suite instrumentada completa en el Samsung (`connectedDebugAndroidTest`), incluidas las E2E y `CatalogoSinConexionE2ETest`, y verificar que pasa.
 - [ ] 9.3 Hacer el perfilamiento «After» en el Samsung con `docs/performance/guia-manual.md` y anotar solo lo observado en las grabaciones:
   - **HU01, recarga sin cambios en la misma grabación:** sin escrituras en `arch_disk_io`, sin `Gson.toJson` desde `Conversores` y con 304 en Connection View.
