@@ -552,4 +552,58 @@ class AlbumRepositoryCacheTest {
         assertEquals(listOf("guardarAlbumes[200]", "guardarDetalles[200]"), dao.operaciones)
         assertEquals(listOf(200), dao.filas.map { it.id })
     }
+
+    // ---- Álbum creado (optimizar-cache-e-imagenes, D7) ----
+
+    private val nuevo = com.example.vinilos.data.model.AlbumNuevo(
+        nombre = "Abbey Road",
+        portada = "https://example.com/abbey.jpg",
+        fechaLanzamientoMillis = -8_380_800_000L,
+        descripcion = "Undécimo álbum de estudio",
+        genero = "Rock",
+        disquera = "EMI"
+    )
+
+    @Test
+    fun crearUnAlbumGuardaLoQueDevuelveElBackend() = runTest {
+        servidor.enqueue(respuesta(albumJson(300, "Abbey Road")))
+
+        assertEquals(300, repositorio.crearAlbum(nuevo).getOrThrow())
+
+        assertEquals(listOf(300), dao.filas.map { it.id })
+        assertEquals("Abbey Road", dao.detalles[300]?.nombre)
+        assertEquals(listOf("Abbey Road"), repositorio.obtenerAlbumesGuardados().map { it.nombre })
+    }
+
+    @Test
+    fun conUnaRespuestaDeCreacionIncompletaLaCreacionEsExitosaSinGuardar() = runTest {
+        servidor.enqueue(MockResponse().setBody("""{"id": 300}"""))
+
+        assertEquals(300, repositorio.crearAlbum(nuevo).getOrThrow())
+
+        assertEquals(emptyList<String>(), dao.operaciones)
+    }
+
+    @Test
+    fun siNoSePuedeGuardarElAlbumCreadoLaCreacionIgualEsExitosa() = runTest {
+        dao.fallaAlEscribir = SQLiteException("disco lleno")
+        servidor.enqueue(respuesta(albumJson(300, "Abbey Road")))
+
+        assertEquals(300, repositorio.crearAlbum(nuevo).getOrThrow())
+    }
+
+    @Test
+    fun siElBackendVuelveALaVersionPreviaALaCreacionElCatalogoSeReescribeSinElAlbum() = runTest {
+        catalogoYaGuardado(albumJson(200), version = "W/\"c1\"")
+        servidor.enqueue(respuesta(albumJson(300, "Abbey Road")))
+        repositorio.crearAlbum(nuevo).getOrThrow()
+        dao.operaciones.clear()
+        // Alguien borró el álbum creado en el backend: el catálogo vuelve a la versión de antes.
+        servidor.enqueue(catalogo(albumJson(200), version = "W/\"c1\""))
+
+        repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals(listOf("borrarAlbumesPorId[300]", "borrarDetallesPorId[300]"), dao.operaciones)
+        assertEquals(listOf(200), dao.filas.map { it.id })
+    }
 }

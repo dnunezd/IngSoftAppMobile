@@ -78,12 +78,12 @@
 
 ## 7. Álbum creado sin esperar la consulta (D7)
 
-- [ ] 7.1 En `AlbumRepositoryImpl.crearAlbum`, convertir el `AlbumDto` del `POST` con `aResumen()` y `aDetalleSiEsValido()` y guardarlo por el punto de escritura, que descarta la versión del catálogo. Agregar a `AlbumRepositoryCacheTest`:
+- [x] 7.1 En `AlbumRepositoryImpl.crearAlbum`, convertir el `AlbumDto` del `POST` con `aResumen()` y `aDetalleSiEsValido()` y guardarlo por el punto de escritura, que descarta la versión del catálogo. Agregar a `AlbumRepositoryCacheTest`:
   - con una respuesta completa, quedan guardados la fila y el detalle;
   - con una respuesta sin nombre o sin género, se devuelve el id sin guardar;
   - si falla el almacenamiento, se devuelve el id;
   - si el backend luego vuelve a la `ETag` previa a la creación, el catálogo se reescribe sin el álbum.
-- [ ] 7.2 En `AlbumsViewModel.albumCreado`, con el catálogo en `Exito` o `Vacio`, poner el indicador, leer lo guardado y, si incluye el id, mostrar `Exito(guardados, actualizando = true)` antes de consultar. Con `Cargando` o `Error`, seguir llamando a `cargar()`. Agregar a `AlbumsViewModelTest` y `AlbumsViewModelCacheTest`:
+- [x] 7.2 En `AlbumsViewModel.albumCreado`, con el catálogo en `Exito` o `Vacio`, poner el indicador, leer lo guardado y, si incluye el id, mostrar `Exito(guardados, actualizando = true)` antes de consultar. Con `Cargando` o `Error`, seguir llamando a `cargar()`. Agregar a `AlbumsViewModelTest` y `AlbumsViewModelCacheTest`:
   - el álbum nuevo se ve antes de que responda la consulta;
   - si la consulta falla, queda `Exito` con el nuevo y `errorAlActualizar`;
   - sin el nuevo guardado, el comportamiento es el de antes.

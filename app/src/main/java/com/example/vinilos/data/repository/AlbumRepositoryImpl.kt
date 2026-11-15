@@ -4,6 +4,7 @@ import android.database.sqlite.SQLiteException
 import com.example.vinilos.data.local.AlbumDao
 import com.example.vinilos.data.local.AlbumDetalleEntity
 import com.example.vinilos.data.local.AlbumEntity
+import com.example.vinilos.data.local.CambiosDeTabla
 import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.AlbumNuevo
 import com.example.vinilos.data.model.AlbumResumen
@@ -194,9 +195,34 @@ class AlbumRepositoryImpl(
             null
         }
 
-    /** Crea el álbum (HU07) y devuelve su id, que el catálogo usa para marcarlo como nuevo. */
+    /**
+     * Crea el álbum (HU07) y devuelve su id, que el catálogo usa para marcarlo como nuevo. El álbum que
+     * devuelve el backend se guarda de inmediato, para que el catálogo lo muestre sin esperar `GET /albums`
+     * (optimizar-cache-e-imagenes, D7). Si la respuesta no trae lo necesario o no se puede guardar, la
+     * creación igual se informa como exitosa: el álbum llega con la siguiente consulta del catálogo.
+     */
     override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> = withContext(dispatcher) {
-        adaptador.llamar { requerido(api.crearAlbum(album.aDto()).id, "id") }
+        adaptador.llamar {
+            val creado = api.crearAlbum(album.aDto())
+            requerido(creado.id, "id") to creado
+        }.onSuccess { (_, creado) -> guardarCreado(creado) }
+            .map { (id, _) -> id }
+    }
+
+    private suspend fun guardarCreado(creado: AlbumDto) {
+        val fila = creado.aResumen()?.aEntidad() ?: return
+        val detalle = creado.aDetalleSiEsValido()?.aEntidad()
+        escribir {
+            aplicarCatalogo(
+                CambiosDeTabla.diferencias(listOf(fila), emptyList()),
+                CambiosDeTabla.diferencias(listOfNotNull(detalle), emptyList())
+            )
+            copiaCatalogo.guardada(fila)
+            detalle?.let(copiaDetalles::guardada)
+            // Regla 3 de D4: si el álbum se borra en el backend, la versión anterior del catálogo vuelve.
+            versionCatalogo = null
+            versionesDetalle.descartar(fila.id)
+        }
     }
 
     private fun AlbumNuevo.aDto() = CrearAlbumDto(
