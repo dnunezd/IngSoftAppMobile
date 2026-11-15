@@ -1,16 +1,17 @@
 package com.example.vinilos.data.remote
 
+import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
 
 interface CollectorApi {
     @GET("collectors")
-    suspend fun getCollectors(): List<CollectorDto>
+    suspend fun getCollectors(): Response<List<CollectorDto>>
 
     /** Favoritos del coleccionista (HU10). Los ids son únicos entre músicos y bandas en el backend. */
     @GET("collectors/{collectorId}/performers")
-    suspend fun getFavoritePerformers(@Path("collectorId") collectorId: Int): List<PerformerDto>
+    suspend fun getFavoritePerformers(@Path("collectorId") collectorId: Int): Response<List<PerformerDto>>
 
     @POST("collectors/{collectorId}/bands/{bandId}")
     suspend fun addFavoriteBand(

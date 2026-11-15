@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import androidx.room.Upsert
 
 /**
  * Acceso a la caché del catálogo y del detalle de cada álbum. Es una clase abstracta y no una interfaz
@@ -66,5 +67,43 @@ abstract class AlbumDao {
         reemplazar(albumes)
         borrarDetalles()
         insertarDetalles(detalles)
+    }
+
+    // ---------- Escrituras incrementales (optimizar-cache-e-imagenes, D6) ----------
+
+    @Upsert
+    abstract suspend fun guardarAlbumes(albumes: List<AlbumEntity>)
+
+    @Upsert
+    abstract suspend fun guardarDetalles(detalles: List<AlbumDetalleEntity>)
+
+    @Query("DELETE FROM albumes WHERE id IN (:ids)")
+    abstract suspend fun borrarAlbumesPorId(ids: List<Int>)
+
+    @Query("DELETE FROM album_detalle WHERE id IN (:ids)")
+    abstract suspend fun borrarDetallesPorId(ids: List<Int>)
+
+    /**
+     * Aplica en una sola transacción lo que cambió del catálogo y de los detalles. Cada tabla se reemplaza
+     * entera o solo recibe sus diferencias, según lo que el repositorio sepa de ella.
+     */
+    @Transaction
+    open suspend fun aplicarCatalogo(
+        albumes: CambiosDeTabla<Int, AlbumEntity>,
+        detalles: CambiosDeTabla<Int, AlbumDetalleEntity>
+    ) {
+        if (albumes.reemplazarTodo) {
+            reemplazar(albumes.guardar)
+        } else {
+            if (albumes.guardar.isNotEmpty()) guardarAlbumes(albumes.guardar)
+            enGrupos(albumes.borrar) { borrarAlbumesPorId(it) }
+        }
+        if (detalles.reemplazarTodo) {
+            borrarDetalles()
+            insertarDetalles(detalles.guardar)
+        } else {
+            if (detalles.guardar.isNotEmpty()) guardarDetalles(detalles.guardar)
+            enGrupos(detalles.borrar) { borrarDetallesPorId(it) }
+        }
     }
 }

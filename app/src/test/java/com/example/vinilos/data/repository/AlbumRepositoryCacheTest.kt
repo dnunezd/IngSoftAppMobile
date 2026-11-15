@@ -33,18 +33,26 @@ class AlbumRepositoryCacheTest {
         var fallaAlEscribir: Throwable? = null
         var escrituras = 0
 
+        /** Cada escritura que recibió, en orden, con los ids que tocó (optimizar-cache-e-imagenes). */
+        val operaciones = mutableListOf<String>()
+
+        private fun anotar(operacion: String, ids: List<Int> = emptyList()) {
+            fallaAlEscribir?.let { throw it }
+            operaciones += if (ids.isEmpty()) operacion else "$operacion$ids"
+        }
+
         override suspend fun todos(): List<AlbumEntity> {
             fallaAlLeer?.let { throw it }
             return filas
         }
 
         override suspend fun borrarTodos() {
-            fallaAlEscribir?.let { throw it }
+            anotar("borrarTodos")
             filas = emptyList()
         }
 
         override suspend fun insertar(albumes: List<AlbumEntity>) {
-            fallaAlEscribir?.let { throw it }
+            anotar("insertar", albumes.map { it.id })
             filas = filas + albumes
             escrituras++
         }
@@ -58,28 +66,48 @@ class AlbumRepositoryCacheTest {
         }
 
         override suspend fun guardarDetalle(detalle: AlbumDetalleEntity) {
-            fallaAlEscribir?.let { throw it }
+            anotar("guardarDetalle", listOf(detalle.id))
             detalles = detalles + (detalle.id to detalle)
         }
 
         override suspend fun borrarDetalles() {
-            fallaAlEscribir?.let { throw it }
+            anotar("borrarDetalles")
             detalles = emptyMap()
         }
 
         override suspend fun insertarDetalles(detalles: List<AlbumDetalleEntity>) {
-            fallaAlEscribir?.let { throw it }
+            anotar("insertarDetalles", detalles.map { it.id })
             this.detalles += detalles.associateBy { it.id }
         }
 
         override suspend fun borrarDelCatalogo(id: Int) {
-            fallaAlEscribir?.let { throw it }
+            anotar("borrarDelCatalogo", listOf(id))
             filas = filas.filterNot { it.id == id }
         }
 
         override suspend fun borrarDetalle(id: Int) {
-            fallaAlEscribir?.let { throw it }
+            anotar("borrarDetalle", listOf(id))
             detalles = detalles - id
+        }
+
+        override suspend fun guardarAlbumes(albumes: List<AlbumEntity>) {
+            anotar("guardarAlbumes", albumes.map { it.id })
+            filas = filas.filterNot { fila -> albumes.any { it.id == fila.id } } + albumes
+        }
+
+        override suspend fun guardarDetalles(detalles: List<AlbumDetalleEntity>) {
+            anotar("guardarDetalles", detalles.map { it.id })
+            this.detalles = this.detalles + detalles.associateBy { it.id }
+        }
+
+        override suspend fun borrarAlbumesPorId(ids: List<Int>) {
+            anotar("borrarAlbumesPorId", ids)
+            filas = filas.filterNot { it.id in ids }
+        }
+
+        override suspend fun borrarDetallesPorId(ids: List<Int>) {
+            anotar("borrarDetallesPorId", ids)
+            detalles = detalles - ids.toSet()
         }
     }
 
@@ -336,5 +364,246 @@ class AlbumRepositoryCacheTest {
 
         assertEquals(albumCompleto, repositorio.obtenerAlbum(200).getOrThrow())
         assertTrue(repositorio.obtenerAlbum(200).exceptionOrNull() is AlbumNoDisponible)
+    }
+
+    // ---- Escribir solo lo que cambió (optimizar-cache-e-imagenes, D4 y D5) ----
+
+    private fun albumJson(id: Int, nombre: String = "Álbum $id", descripcion: String = "Descripción $id") = """
+        {"id": $id, "name": "$nombre", "cover": "https://example.com/$id.jpg", "description": "$descripcion",
+         "genre": "Salsa", "recordLabel": "Elektra", "releaseDate": "1984-08-01T00:00:00.000Z",
+         "tracks": [], "performers": [{"id": 1, "name": "Rubén Blades"}], "comments": []}
+    """.trimIndent()
+
+    private fun respuesta(cuerpo: String, version: String? = null) =
+        MockResponse().setBody(cuerpo).apply { if (version != null) setHeader("ETag", version) }
+
+    private fun catalogo(vararg albumes: String, version: String? = null) =
+        respuesta(albumes.joinToString(prefix = "[", postfix = "]"), version)
+
+    /** Hace una consulta del catálogo que deja la copia completa y limpia el registro de escrituras. */
+    private suspend fun catalogoYaGuardado(vararg albumes: String, version: String? = null) {
+        servidor.enqueue(catalogo(*albumes, version = version))
+        repositorio.obtenerAlbumes().getOrThrow()
+        dao.operaciones.clear()
+    }
+
+    @Test
+    fun laPrimeraConsultaReemplazaTodoLoGuardado() = runTest {
+        servidor.enqueue(catalogo(albumJson(200), albumJson(201), version = "W/\"c1\""))
+
+        repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals("borrarTodos", dao.operaciones.first())
+        assertTrue("borrarDetalles" in dao.operaciones)
+    }
+
+    @Test
+    fun conLaMismaVersionNoSeEscribeNada() = runTest {
+        catalogoYaGuardado(albumJson(200), albumJson(201), version = "W/\"c1\"")
+        servidor.enqueue(catalogo(albumJson(200), albumJson(201), version = "W/\"c1\""))
+
+        val albumes = repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals(listOf(200, 201), albumes.map { it.id })
+        assertEquals(emptyList<String>(), dao.operaciones)
+    }
+
+    @Test
+    fun conOtraVersionYElMismoContenidoNoSeEscribeNada() = runTest {
+        catalogoYaGuardado(albumJson(200), version = "W/\"c1\"")
+        servidor.enqueue(catalogo(albumJson(200), version = "W/\"c2\""))
+
+        repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals(emptyList<String>(), dao.operaciones)
+    }
+
+    @Test
+    fun sinVersionYConElMismoContenidoNoSeEscribeNada() = runTest {
+        catalogoYaGuardado(albumJson(200))
+        servidor.enqueue(catalogo(albumJson(200)))
+
+        repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals(emptyList<String>(), dao.operaciones)
+    }
+
+    @Test
+    fun unAlbumCambiadoEscribeSoloSuFilaYSuDetalle() = runTest {
+        catalogoYaGuardado(albumJson(200), albumJson(201), version = "W/\"c1\"")
+        servidor.enqueue(catalogo(albumJson(200, "Nombre nuevo"), albumJson(201), version = "W/\"c2\""))
+
+        repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals(listOf("guardarAlbumes[200]", "guardarDetalles[200]"), dao.operaciones)
+        assertEquals(setOf("Nombre nuevo", "Álbum 201"), dao.filas.map { it.nombre }.toSet())
+        assertEquals("Nombre nuevo", dao.detalles[200]?.nombre)
+    }
+
+    @Test
+    fun unAlbumQueYaNoLlegaSeBorraSoloPorSuId() = runTest {
+        catalogoYaGuardado(albumJson(200), albumJson(201), version = "W/\"c1\"")
+        servidor.enqueue(catalogo(albumJson(200), version = "W/\"c2\""))
+
+        repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals(listOf("borrarAlbumesPorId[201]", "borrarDetallesPorId[201]"), dao.operaciones)
+        assertEquals(listOf(200), dao.filas.map { it.id })
+        assertEquals(setOf(200), dao.detalles.keys)
+    }
+
+    @Test
+    fun trasUnFalloAlGuardarLaSiguienteConsultaSinCambiosVuelveAGuardarTodo() = runTest {
+        catalogoYaGuardado(albumJson(200), version = "W/\"c1\"")
+        dao.fallaAlEscribir = SQLiteException("disco lleno")
+        servidor.enqueue(catalogo(albumJson(200, "Nombre nuevo"), version = "W/\"c2\""))
+        repositorio.obtenerAlbumes().getOrThrow()
+        dao.fallaAlEscribir = null
+        servidor.enqueue(catalogo(albumJson(200, "Nombre nuevo"), version = "W/\"c2\""))
+
+        repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals("borrarTodos", dao.operaciones.first())
+        assertEquals(listOf("Nombre nuevo"), dao.filas.map { it.nombre })
+    }
+
+    @Test
+    fun unaCancelacionAlGuardarHaceQueLaSiguienteConsultaGuardeTodo() = runTest {
+        catalogoYaGuardado(albumJson(200), version = "W/\"c1\"")
+        dao.fallaAlEscribir = CancellationException("cancelada")
+        servidor.enqueue(catalogo(albumJson(200, "Nombre nuevo"), version = "W/\"c2\""))
+        try {
+            repositorio.obtenerAlbumes()
+            fail("La cancelación debe relanzarse")
+        } catch (e: CancellationException) {
+            assertEquals("cancelada", e.message)
+        }
+        dao.fallaAlEscribir = null
+        // El backend vuelve a la versión anterior: sin descartar lo recordado, no se escribiría nada.
+        servidor.enqueue(catalogo(albumJson(200), version = "W/\"c1\""))
+
+        repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals("borrarTodos", dao.operaciones.first())
+    }
+
+    @Test
+    fun unDetalleIgualAlQueGuardoElCatalogoNoSeEscribe() = runTest {
+        catalogoYaGuardado(albumJson(200), version = "W/\"c1\"")
+        servidor.enqueue(respuesta(albumJson(200), "W/\"d1\""))
+
+        repositorio.obtenerAlbum(200).getOrThrow()
+
+        assertEquals(emptyList<String>(), dao.operaciones)
+    }
+
+    @Test
+    fun unDetalleConLaMismaVersionNoSeEscribeDosVeces() = runTest {
+        servidor.enqueue(respuesta(albumJson(200), "W/\"d1\""))
+        servidor.enqueue(respuesta(albumJson(200), "W/\"d1\""))
+
+        repositorio.obtenerAlbum(200).getOrThrow()
+        repositorio.obtenerAlbum(200).getOrThrow()
+
+        assertEquals(listOf("guardarDetalle[200]"), dao.operaciones)
+    }
+
+    @Test
+    fun escribirUnDetalleDescartaLaVersionDelCatalogo() = runTest {
+        catalogoYaGuardado(albumJson(200), version = "W/\"c1\"")
+        servidor.enqueue(respuesta(albumJson(200, descripcion = "Descripción nueva"), "W/\"d1\""))
+        repositorio.obtenerAlbum(200).getOrThrow()
+        dao.operaciones.clear()
+        // El backend vuelve a la versión anterior del catálogo.
+        servidor.enqueue(catalogo(albumJson(200), version = "W/\"c1\""))
+
+        repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals(listOf("guardarDetalles[200]"), dao.operaciones)
+        assertEquals("Descripción 200", dao.detalles[200]?.descripcion)
+    }
+
+    @Test
+    fun elCatalogoQueCambiaUnDetalleDescartaLaVersionDeEseDetalle() = runTest {
+        servidor.enqueue(respuesta(albumJson(200), "W/\"d1\""))
+        repositorio.obtenerAlbum(200).getOrThrow()
+        servidor.enqueue(catalogo(albumJson(200, descripcion = "Descripción nueva"), version = "W/\"c1\""))
+        repositorio.obtenerAlbumes().getOrThrow()
+        dao.operaciones.clear()
+        // El backend vuelve a la versión anterior del detalle.
+        servidor.enqueue(respuesta(albumJson(200), "W/\"d1\""))
+
+        repositorio.obtenerAlbum(200).getOrThrow()
+
+        assertEquals(listOf("guardarDetalle[200]"), dao.operaciones)
+        assertEquals("Descripción 200", dao.detalles[200]?.descripcion)
+    }
+
+    @Test
+    fun trasUn404ElCatalogoConLaVersionAnteriorVuelveAGuardarElAlbum() = runTest {
+        catalogoYaGuardado(albumJson(200), version = "W/\"c1\"")
+        servidor.enqueue(MockResponse().setResponseCode(404))
+        repositorio.obtenerAlbum(200)
+        dao.operaciones.clear()
+        servidor.enqueue(catalogo(albumJson(200), version = "W/\"c1\""))
+
+        repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals(listOf("guardarAlbumes[200]", "guardarDetalles[200]"), dao.operaciones)
+        assertEquals(listOf(200), dao.filas.map { it.id })
+    }
+
+    // ---- Álbum creado (optimizar-cache-e-imagenes, D7) ----
+
+    private val nuevo = com.example.vinilos.data.model.AlbumNuevo(
+        nombre = "Abbey Road",
+        portada = "https://example.com/abbey.jpg",
+        fechaLanzamientoMillis = -8_380_800_000L,
+        descripcion = "Undécimo álbum de estudio",
+        genero = "Rock",
+        disquera = "EMI"
+    )
+
+    @Test
+    fun crearUnAlbumGuardaLoQueDevuelveElBackend() = runTest {
+        servidor.enqueue(respuesta(albumJson(300, "Abbey Road")))
+
+        assertEquals(300, repositorio.crearAlbum(nuevo).getOrThrow())
+
+        assertEquals(listOf(300), dao.filas.map { it.id })
+        assertEquals("Abbey Road", dao.detalles[300]?.nombre)
+        assertEquals(listOf("Abbey Road"), repositorio.obtenerAlbumesGuardados().map { it.nombre })
+    }
+
+    @Test
+    fun conUnaRespuestaDeCreacionIncompletaLaCreacionEsExitosaSinGuardar() = runTest {
+        servidor.enqueue(MockResponse().setBody("""{"id": 300}"""))
+
+        assertEquals(300, repositorio.crearAlbum(nuevo).getOrThrow())
+
+        assertEquals(emptyList<String>(), dao.operaciones)
+    }
+
+    @Test
+    fun siNoSePuedeGuardarElAlbumCreadoLaCreacionIgualEsExitosa() = runTest {
+        dao.fallaAlEscribir = SQLiteException("disco lleno")
+        servidor.enqueue(respuesta(albumJson(300, "Abbey Road")))
+
+        assertEquals(300, repositorio.crearAlbum(nuevo).getOrThrow())
+    }
+
+    @Test
+    fun siElBackendVuelveALaVersionPreviaALaCreacionElCatalogoSeReescribeSinElAlbum() = runTest {
+        catalogoYaGuardado(albumJson(200), version = "W/\"c1\"")
+        servidor.enqueue(respuesta(albumJson(300, "Abbey Road")))
+        repositorio.crearAlbum(nuevo).getOrThrow()
+        dao.operaciones.clear()
+        // Alguien borró el álbum creado en el backend: el catálogo vuelve a la versión de antes.
+        servidor.enqueue(catalogo(albumJson(200), version = "W/\"c1\""))
+
+        repositorio.obtenerAlbumes().getOrThrow()
+
+        assertEquals(listOf("borrarAlbumesPorId[300]", "borrarDetallesPorId[300]"), dao.operaciones)
+        assertEquals(listOf(200), dao.filas.map { it.id })
     }
 }

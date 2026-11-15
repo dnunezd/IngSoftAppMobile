@@ -15,6 +15,7 @@ import com.example.vinilos.data.repository.FavoriteRepository
 import com.example.vinilos.data.repository.FavoriteRepositoryImpl
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import java.io.File
 
 /**
  * Contenedor de dependencias manual: crea una sola vez el [ServiceAdapter] y los repositorios
@@ -35,10 +36,15 @@ class AppContainer(
     /** Caché de los favoritos confirmados de cada coleccionista (add-cache-consultas). */
     favoritoDao: FavoritoDao? = null,
     /** Dónde convierten y ordenan los repositorios, fuera del hilo principal. Retrofit y Room usan sus hilos. */
-    dispatcher: CoroutineDispatcher = Dispatchers.Default
+    dispatcher: CoroutineDispatcher = Dispatchers.Default,
+    /**
+     * Carpeta de la caché HTTP de la API (optimizar-cache-e-imagenes, D2). Sin ella, el cliente no guarda
+     * respuestas, que es lo que usan las pruebas.
+     */
+    carpetaCacheHttp: File? = null
 ) {
 
-    val serviceAdapter: ServiceAdapter = ServiceAdapter(baseUrl)
+    val serviceAdapter: ServiceAdapter = ServiceAdapter(baseUrl, ServiceAdapter.clientePorDefecto(carpetaCacheHttp))
 
     /** Se puede reemplazar con `colectoresRepositorio` en las pruebas instrumentadas. */
     val collectorRepository: CollectorRepository =

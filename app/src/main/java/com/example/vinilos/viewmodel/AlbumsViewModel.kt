@@ -41,13 +41,27 @@ class AlbumsViewModel(private val repositorio: AlbumRepository) : ViewModel() {
 
     /**
      * Se creó un álbum en el formulario. Este ViewModel siguió vivo en la pila, así que hay que volver
-     * a consultar; [actualizar] no hace nada con el catálogo en error o cargando, y en ese caso se
-     * carga de nuevo.
+     * a consultar. Con el catálogo a la vista, el repositorio ya guardó el álbum creado: se muestra lo
+     * guardado de inmediato, con el indicador de actualización, y la consulta lo revalida
+     * (optimizar-cache-e-imagenes, D7). Si lo guardado no lo trae, se actualiza como al deslizar. Con el
+     * catálogo en error o cargando se carga de nuevo, y la carga también empieza por lo guardado.
      */
     fun albumCreado(id: Int) {
         _albumNuevo.value = AlbumNuevoCatalogo(id)
-        val estado = _uiState.value
-        if (estado is AlbumsUiState.Exito || estado is AlbumsUiState.Vacio) actualizar() else cargar()
+        val anterior = _uiState.value
+        _uiState.value = anterior.conIndicadores(actualizando = true, errorAlActualizar = false) ?: return cargar()
+        lanzar { consulta ->
+            val guardados = repositorio.obtenerAlbumesGuardados()
+            if (consulta != consultaVigente) return@lanzar
+            val alFallar = if (guardados.any { it.id == id }) {
+                val conElCreado = AlbumsUiState.Exito(guardados, actualizando = true)
+                _uiState.value = conElCreado
+                conElCreado.copy(actualizando = false, errorAlActualizar = true)
+            } else {
+                anterior.conIndicadores(actualizando = false, errorAlActualizar = true)!!
+            }
+            consultarAhora(consulta, alFallar)
+        }
     }
 
     fun avisoCreadoMostrado() {

@@ -74,6 +74,7 @@ import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.ArtistaDetalle
 import com.example.vinilos.data.model.IntegranteArtista
 import com.example.vinilos.data.model.PremioArtista
+import com.example.vinilos.ui.detalle.PortadaAlbum
 import com.example.vinilos.ui.ingreso.AvisoUnaVez
 import com.example.vinilos.ui.ingreso.IndicadorActualizando
 import com.example.vinilos.ui.theme.VinilosTheme
@@ -103,7 +104,6 @@ const val TagActualizandoDetalleArtista = "detalle_artista_actualizando"
 private val DuracionConfirmacionFavorito = 2500.milliseconds
 
 fun tagAlbumArtista(id: Int) = "detalle_artista_album_$id"
-fun tagRespaldoAlbum(id: Int) = "detalle_artista_album_respaldo_$id"
 fun tagIntegrante(id: Int) = "detalle_artista_integrante_$id"
 
 private val EsquinaTarjeta = RoundedCornerShape(24.dp)
@@ -655,27 +655,15 @@ private fun FilaAlbum(album: AlbumArtista, onSeleccionar: (Int) -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // El ícono de disco queda debajo: se ve mientras carga y si la portada falta o no carga.
-        Box(
+        // Misma portada del catálogo: el ícono de disco se ve mientras carga y si la portada falta o no carga.
+        PortadaAlbum(
+            url = album.portada,
+            contentDescription = stringResource(R.string.artistas_imagen_descripcion, album.nombre),
+            contentScale = ContentScale.Crop,
             modifier = Modifier
                 .size(56.dp)
                 .clip(EsquinaMiniatura)
-                .background(MaterialTheme.colorScheme.surfaceVariant),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_cat_album),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.testTag(tagRespaldoAlbum(album.id))
-            )
-            AsyncImage(
-                model = album.portada?.takeIf { it.isNotBlank() },
-                contentDescription = stringResource(R.string.artistas_imagen_descripcion, album.nombre),
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
+        )
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 text = album.nombre,
