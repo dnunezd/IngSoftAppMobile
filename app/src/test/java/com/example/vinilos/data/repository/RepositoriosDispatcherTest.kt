@@ -32,6 +32,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import retrofit2.Response
 import java.util.Collections
 import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
@@ -85,8 +86,8 @@ class RepositoriosDispatcherTest {
     )
 
     private val albumApi = object : AlbumApi {
-        override suspend fun obtenerAlbumes(): List<AlbumDto> = listOf(albumDto).also { anotarHilo() }
-        override suspend fun obtenerAlbum(id: Int): AlbumDto = albumDto.also { anotarHilo() }
+        override suspend fun obtenerAlbumes(): Response<List<AlbumDto>> = Response.success(listOf(albumDto)).also { anotarHilo() }
+        override suspend fun obtenerAlbum(id: Int): Response<AlbumDto> = Response.success(albumDto).also { anotarHilo() }
         override suspend fun crearAlbum(album: CrearAlbumDto): AlbumDto = albumDto.also { anotarHilo() }
     }
 
@@ -109,19 +110,19 @@ class RepositoriosDispatcherTest {
     )
 
     private val artistApi = object : ArtistApi {
-        override suspend fun getMusicians(): List<MusicianDto> =
-            listOf(MusicianDto(2, "Rubén Blades", null)).also { anotarHilo() }
-        override suspend fun getBands(): List<BandDto> = listOf(BandDto(1, "Queen", null)).also { anotarHilo() }
-        override suspend fun getMusician(id: Int): ArtistaDetalleDto = detalleDto.also { anotarHilo() }
-        override suspend fun getBand(id: Int): ArtistaDetalleDto = detalleDto.also { anotarHilo() }
-        override suspend fun getPerformerPrizes(): List<PremiacionDto> = emptyList<PremiacionDto>().also { anotarHilo() }
+        override suspend fun getMusicians(): Response<List<MusicianDto>> =
+            Response.success(listOf(MusicianDto(2, "Rubén Blades", null))).also { anotarHilo() }
+        override suspend fun getBands(): Response<List<BandDto>> = Response.success(listOf(BandDto(1, "Queen", null))).also { anotarHilo() }
+        override suspend fun getMusician(id: Int): Response<ArtistaDetalleDto> = Response.success(detalleDto).also { anotarHilo() }
+        override suspend fun getBand(id: Int): Response<ArtistaDetalleDto> = Response.success(detalleDto).also { anotarHilo() }
+        override suspend fun getPerformerPrizes(): Response<List<PremiacionDto>> = Response.success(emptyList<PremiacionDto>()).also { anotarHilo() }
     }
 
     private val collectorApi = object : CollectorApi {
-        override suspend fun getCollectors(): List<CollectorDto> =
-            listOf(CollectorDto(100, "Manolo Bellon", "manollo@caracol.com.co")).also { anotarHilo() }
-        override suspend fun getFavoritePerformers(collectorId: Int): List<PerformerDto> =
-            listOf(PerformerDto(1)).also { anotarHilo() }
+        override suspend fun getCollectors(): Response<List<CollectorDto>> =
+            Response.success(listOf(CollectorDto(100, "Manolo Bellon", "manollo@caracol.com.co"))).also { anotarHilo() }
+        override suspend fun getFavoritePerformers(collectorId: Int): Response<List<PerformerDto>> =
+            Response.success(listOf(PerformerDto(1))).also { anotarHilo() }
         override suspend fun addFavoriteBand(collectorId: Int, bandId: Int): PerformerDto =
             PerformerDto(bandId).also { anotarHilo() }
         override suspend fun addFavoriteMusician(collectorId: Int, musicianId: Int): PerformerDto =

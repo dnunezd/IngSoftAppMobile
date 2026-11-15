@@ -36,13 +36,13 @@
 
 ## 4. Versión de las respuestas (D3)
 
-- [ ] 4.1 Agregar a `data.remote` la clase `ConVersion<T>(valor, version)` y la extensión `Response<T>.conVersion()`. Una respuesta no exitosa lanza `HttpException(this)`, y un cuerpo nulo lanza `JsonParseException`. Agregar a `ServiceAdapterTest` que, dentro de `llamar`:
+- [x] 4.1 Agregar a `data.remote` la clase `ConVersion<T>(valor, version)` y la extensión `Response<T>.conVersion()`. Una respuesta no exitosa lanza `HttpException(this)`, y un cuerpo nulo lanza `JsonParseException`. Agregar a `ServiceAdapterTest` que, dentro de `llamar`:
   - un 200 con `ETag` entrega esa versión;
   - un 404 da `RecursoNoEncontrado`;
   - un 500 da `ErrorDeCarga`;
   - un 200 sin cuerpo da `ErrorDeCarga`;
   - un 304 servido desde la caché entrega la versión.
-- [ ] 4.2 Cambiar a `Response<...>` los 9 `GET` de `AlbumApi`, `ArtistApi` y `CollectorApi`. En los repositorios, leer `.conVersion().valor`, todavía sin usar la versión, y ajustar las llamadas a `api.getCollectors()` de `ServiceAdapterTest`. Verificar que toda la suite unitaria pasa sin otros cambios: el comportamiento es idéntico.
+- [x] 4.2 Cambiar a `Response<...>` los 9 `GET` de `AlbumApi`, `ArtistApi` y `CollectorApi`. En los repositorios, leer `.conVersion().valor`, todavía sin usar la versión, y ajustar las llamadas a `api.getCollectors()` de `ServiceAdapterTest`. Verificar que toda la suite unitaria pasa sin otros cambios: el comportamiento es idéntico.
 
 ## 5. Escrituras incrementales en los DAO (D6)
 

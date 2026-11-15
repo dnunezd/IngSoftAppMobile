@@ -17,6 +17,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
+import retrofit2.Response
 import java.util.concurrent.TimeUnit
 
 /** Mapeo de DTO a modelo; la traducción de errores de red se prueba en `ServiceAdapterTest`. */
@@ -140,9 +141,9 @@ class CollectorRepositoryTest {
     @Test
     fun laCancelacionSeRelanzaYNoSeConvierteEnError() = runTest {
         val api = object : CollectorApi {
-            override suspend fun getCollectors(): List<CollectorDto> = throw CancellationException("cancelado")
+            override suspend fun getCollectors(): Response<List<CollectorDto>> = throw CancellationException("cancelado")
 
-            override suspend fun getFavoritePerformers(collectorId: Int): List<PerformerDto> =
+            override suspend fun getFavoritePerformers(collectorId: Int): Response<List<PerformerDto>> =
                 throw UnsupportedOperationException("no usado en esta prueba")
 
             override suspend fun addFavoriteBand(collectorId: Int, bandId: Int): PerformerDto =

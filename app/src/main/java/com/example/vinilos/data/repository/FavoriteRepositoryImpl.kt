@@ -6,6 +6,7 @@ import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.remote.CollectorApi
 import com.example.vinilos.data.remote.RecursoNoEncontrado
 import com.example.vinilos.data.remote.ServiceAdapter
+import com.example.vinilos.data.remote.conVersion
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -31,7 +32,7 @@ class FavoriteRepositoryImpl(
      */
     override suspend fun esFavorito(collectorId: Int, artistId: Int): Result<Boolean> =
         withContext(dispatcher) {
-            adaptador.llamar { api.getFavoritePerformers(collectorId).mapNotNull { it.id } }
+            adaptador.llamar { api.getFavoritePerformers(collectorId).conVersion().valor.mapNotNull { it.id } }
                 .onSuccess { ids -> escribir { reemplazarDe(collectorId, ids) } }
                 .map { ids -> artistId in ids }
         }

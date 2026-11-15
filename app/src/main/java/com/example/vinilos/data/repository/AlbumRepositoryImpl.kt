@@ -18,6 +18,7 @@ import com.example.vinilos.data.remote.ArtistaDto
 import com.example.vinilos.data.remote.CrearAlbumDto
 import com.example.vinilos.data.remote.RecursoNoEncontrado
 import com.example.vinilos.data.remote.ServiceAdapter
+import com.example.vinilos.data.remote.conVersion
 import com.google.gson.JsonParseException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -45,7 +46,7 @@ class AlbumRepositoryImpl(
      * un 404 que ya no existe, lo borra de lo guardado (add-cache-consultas, D4).
      */
     override suspend fun obtenerAlbum(id: Int): Result<Album> = withContext(dispatcher) {
-        val respuesta = adaptador.llamar { api.obtenerAlbum(id).aModelo() }
+        val respuesta = adaptador.llamar { api.obtenerAlbum(id).conVersion().valor.aModelo() }
         val error = respuesta.exceptionOrNull()
         if (error is RecursoNoEncontrado) {
             escribir { borrarAlbum(id) }
@@ -63,7 +64,7 @@ class AlbumRepositoryImpl(
      */
     override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> = withContext(dispatcher) {
         adaptador.llamar {
-            val respuesta = api.obtenerAlbumes()
+            val respuesta = api.obtenerAlbumes().conVersion().valor
             val albumes = respuesta.mapNotNull { it.aResumen() }.sortedWith(ordenCatalogo())
             albumes to respuesta.mapNotNull { it.aDetalleSiEsValido() }
         }.onSuccess { (albumes, detalles) ->

@@ -17,6 +17,7 @@ import com.example.vinilos.data.remote.PremiacionArtistaDto
 import com.example.vinilos.data.remote.PremiacionDto
 import com.example.vinilos.data.remote.RecursoNoEncontrado
 import com.example.vinilos.data.remote.ServiceAdapter
+import com.example.vinilos.data.remote.conVersion
 import com.google.gson.JsonParseException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -47,8 +48,8 @@ class ArtistRepositoryImpl(
     override suspend fun obtenerArtistas(): Result<List<Artist>> = withContext(dispatcher) {
         adaptador.llamar {
             coroutineScope {
-                val musicos = async { api.getMusicians() }
-                val bandas = async { api.getBands() }
+                val musicos = async { api.getMusicians().conVersion().valor }
+                val bandas = async { api.getBands().conVersion().valor }
                 musicos.await().mapNotNull { artista(it.id, it.name, it.image, ArtistType.MUSICO) } +
                     bandas.await().mapNotNull { artista(it.id, it.name, it.image, ArtistType.BANDA) }
             }
@@ -103,11 +104,11 @@ class ArtistRepositoryImpl(
         withContext(dispatcher) {
             adaptador.llamar {
                 val respuesta = when (tipo) {
-                    ArtistType.MUSICO -> api.getMusician(id)
-                    ArtistType.BANDA -> api.getBand(id)
+                    ArtistType.MUSICO -> api.getMusician(id).conVersion().valor
+                    ArtistType.BANDA -> api.getBand(id).conVersion().valor
                 }
                 val premiaciones =
-                    if (respuesta.performerPrizes.isNullOrEmpty()) emptyList() else api.getPerformerPrizes()
+                    if (respuesta.performerPrizes.isNullOrEmpty()) emptyList() else api.getPerformerPrizes().conVersion().valor
                 respuesta.aDetalle(tipo, premiaciones)
             }.onSuccess { detalle -> escribir { guardarDetalle(detalle.aEntidad()) } }
                 .onFailure { if (it is RecursoNoEncontrado) escribir { borrarDetalle(tipo, id) } }

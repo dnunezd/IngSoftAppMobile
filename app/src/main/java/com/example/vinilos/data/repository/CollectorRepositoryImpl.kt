@@ -7,6 +7,7 @@ import com.example.vinilos.data.model.Collector
 import com.example.vinilos.data.remote.CollectorApi
 import com.example.vinilos.data.remote.CollectorDto
 import com.example.vinilos.data.remote.ServiceAdapter
+import com.example.vinilos.data.remote.conVersion
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -27,7 +28,7 @@ class CollectorRepositoryImpl(
 
     /** Si la consulta sale bien, reemplaza lo guardado conservando el orden del backend (D4). */
     override suspend fun obtenerColeccionistas(): Result<List<Collector>> = withContext(dispatcher) {
-        adaptador.llamar { api.getCollectors() }
+        adaptador.llamar { api.getCollectors().conVersion().valor }
             .map { lista -> lista.mapNotNull { it.aModelo() } }
             .onSuccess { guardar(it) }
     }
