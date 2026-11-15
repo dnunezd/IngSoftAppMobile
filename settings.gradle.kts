@@ -11,6 +11,8 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
+// RepositoriesMode es @Incubating en Gradle, pero es la configuración recomendada por Android.
+@Suppress("UnstableApiUsage")
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {

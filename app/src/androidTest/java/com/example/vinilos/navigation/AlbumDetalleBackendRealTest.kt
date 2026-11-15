@@ -14,7 +14,6 @@ import androidx.navigation.testing.TestNavHostController
 import com.example.vinilos.AppContainer
 import com.example.vinilos.RepositorioArtistasFalso
 import com.example.vinilos.RepositorioFalso
-import com.example.vinilos.data.model.Collector
 import com.example.vinilos.e2e.EvidenciaE2E
 import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.SessionViewModel
@@ -57,6 +56,8 @@ class AlbumDetalleBackendRealTest {
     private val contenedor = AppContainer()
 
     private fun mostrarDesde(ruta: String) {
+        // El ViewModel se crea fuera del composable para que no se recree en cada recomposición.
+        val sesion = SessionViewModel().apply { enterAsVisitor() }
         rule.setContent {
             val contexto = LocalContext.current
             nav = remember {
@@ -65,8 +66,8 @@ class AlbumDetalleBackendRealTest {
             VinilosTheme {
                 VinilosNavHost(
                     navController = nav,
-                    sessionViewModel = SessionViewModel().apply { enterAsVisitor() },
-                    collectorRepository = RepositorioFalso(Result.success(emptyList<Collector>())),
+                    sessionViewModel = sesion,
+                    collectorRepository = RepositorioFalso(Result.success(emptyList())),
                     artistRepository = RepositorioArtistasFalso(Result.success(emptyList())),
                     albumRepository = contenedor.albumRepository,
                     favoriteRepository = contenedor.favoriteRepository

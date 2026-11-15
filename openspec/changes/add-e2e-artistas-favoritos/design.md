@@ -6,17 +6,17 @@ Ver proposal.md (Why). El detalle del artista (`PantallaDetalleArtista`) ya expo
 
 Criterios de la [HU10](https://github.com/dnunezd/IngSoftAppMobile/wiki/HU10) y escenario que cubre cada uno:
 
-| # | Criterio | Escenario |
-|---|---|---|
-| 1 | Marcar como favorito una banda o un músico; el botón pasa de "Agregar Favorito" a "Favorito" | ESC02, ESC03 |
-| 2 | Si ya es favorito, el botón aparece como "Favorito" y desactivado | ESC04, ESC05 |
-| 3 | El botón refleja si es favorito cada vez que se abre el detalle, aunque se cierre y vuelva a abrir la app | ESC04 |
-| 4 | Si no se puede comprobar, el botón aparece desactivado con opción de reintentar | ESC06 |
-| 5 | El Visitante no ve el botón | ESC01 |
-| 6 | Si el artista ya no existe, "El artista ya no está disponible" y botón para volver al listado, que se actualiza sin ese artista | ESC08 |
-| 7 | Si no se puede guardar, "No se pudo guardar el favorito, intenta de nuevo" y el botón queda disponible para reintentar | ESC07 |
-| 8 | Mientras se guarda, el botón se desactiva y muestra "Guardando..." | ESC07 |
-| 9 | Al guardar, mensaje breve "<artista> se agregó a tus favoritos" que desaparece solo; si falla, no aparece | ESC02, ESC07 |
+| #   | Criterio                                                                                                                        | Escenario    |
+|-----|---------------------------------------------------------------------------------------------------------------------------------|--------------|
+| 1   | Marcar como favorito una banda o un músico; el botón pasa de "Agregar Favorito" a "Favorito"                                    | ESC02, ESC03 |
+| 2   | Si ya es favorito, el botón aparece como "Favorito" y desactivado                                                               | ESC04, ESC05 |
+| 3   | El botón refleja si es favorito cada vez que se abre el detalle, aunque se cierre y vuelva a abrir la app                       | ESC04        |
+| 4   | Si no se puede comprobar, el botón aparece desactivado con opción de reintentar                                                 | ESC06        |
+| 5   | El Visitante no ve el botón                                                                                                     | ESC01        |
+| 6   | Si el artista ya no existe, "El artista ya no está disponible" y botón para volver al listado, que se actualiza sin ese artista | ESC08        |
+| 7   | Si no se puede guardar, "No se pudo guardar el favorito, intenta de nuevo" y el botón queda disponible para reintentar          | ESC07        |
+| 8   | Mientras se guarda, el botón se desactiva y muestra "Guardando..."                                                              | ESC07        |
+| 9   | Al guardar, mensaje breve "<artista> se agregó a tus favoritos" que desaparece solo; si falla, no aparece                       | ESC02, ESC07 |
 
 ## Goals / Non-Goals
 

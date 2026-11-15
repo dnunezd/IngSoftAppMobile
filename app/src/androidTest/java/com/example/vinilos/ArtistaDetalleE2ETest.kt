@@ -137,7 +137,7 @@ class ArtistaDetalleE2ETest {
     private fun masCompleto(tipo: ArtistType, motivo: String): Candidato {
         val elegido = candidatosReales()
             .filter { it.artista.type == tipo }
-            .maxWithOrNull(compareBy<Candidato>({ it.detalle.premios.size }, { it.detalle.albumes.size }))
+            .maxWithOrNull(compareBy({ it.detalle.premios.size }, { it.detalle.albumes.size }))
         Assume.assumeTrue("El backend conectado no tiene $motivo", elegido != null)
         return requireNotNull(elegido)
     }

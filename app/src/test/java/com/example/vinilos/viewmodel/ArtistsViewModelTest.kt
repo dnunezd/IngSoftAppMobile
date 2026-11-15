@@ -7,6 +7,7 @@ import com.example.vinilos.data.model.ArtistaDetalle
 import com.example.vinilos.data.remote.ErrorDeCarga
 import com.example.vinilos.data.repository.ArtistRepository
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -30,9 +31,10 @@ private class RepositorioArtistasFalso : ArtistRepository {
     override suspend fun obtenerArtistasGuardados(): List<Artist> = guardados
 
     override suspend fun obtenerDetalle(tipo: ArtistType, id: Int): Result<ArtistaDetalle> = error("No se usa en esta prueba")
-    override suspend fun obtenerDetalleGuardado(tipo: ArtistType, id: Int): ArtistaDetalle? = error("No se usa en esta prueba")
+    override suspend fun obtenerDetalleGuardado(tipo: ArtistType, id: Int): ArtistaDetalle = error("No se usa en esta prueba")
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class ArtistsViewModelTest {
 
     @get:Rule

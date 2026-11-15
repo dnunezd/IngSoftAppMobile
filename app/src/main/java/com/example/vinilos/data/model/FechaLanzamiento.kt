@@ -62,7 +62,7 @@ fun formatearFechaLanzamiento(fechaIso: String): String {
     if (fecha == null || posicion.index != texto.length) {
         throw ParseException("Fecha ISO inválida: $fechaIso", posicion.errorIndex.coerceAtLeast(0))
     }
-    return SimpleDateFormat("d 'de' MMMM 'de' yyyy", Locale("es")).apply {
+    return SimpleDateFormat("d 'de' MMMM 'de' yyyy", Locale.forLanguageTag("es")).apply {
         timeZone = Utc
     }.format(fecha)
 }

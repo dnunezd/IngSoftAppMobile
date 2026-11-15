@@ -84,8 +84,9 @@ class CatalogoSinConexionE2ETest {
     private fun esperarA(tag: String, milis: Long = 15_000) =
         rule.waitUntil(milis) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
 
-    private fun esperarTexto(texto: String, milis: Long = 15_000) =
-        rule.waitUntil(milis) { rule.onAllNodesWithText(texto).fetchSemanticsNodes().isNotEmpty() }
+    private fun esperarAvisoDeActualizacion() = rule.waitUntil(15_000) {
+        rule.onAllNodesWithText("No pudimos actualizar el catálogo").fetchSemanticsNodes().isNotEmpty()
+    }
 
     private fun esperarPeticiones(cantidad: Int) =
         rule.waitUntil(15_000) { servidor.requestCount >= cantidad }
@@ -116,7 +117,7 @@ class CatalogoSinConexionE2ETest {
             servidorCaido()
             abrirCatalogo()
             esperarPeticiones(2)
-            esperarTexto("No pudimos actualizar el catálogo")
+            esperarAvisoDeActualizacion()
 
             rule.onNodeWithText("Buscando América").assertIsDisplayed()
             assertEquals(listOf(100, 101, 102), idsVisibles(listOf(100, 101, 102)))
@@ -146,7 +147,7 @@ class CatalogoSinConexionE2ETest {
             servidorCaido()
             abrirCatalogo()
             esperarPeticiones(3)
-            esperarTexto("No pudimos actualizar el catálogo")
+            esperarAvisoDeActualizacion()
             assertEquals(listOf(100, 102), idsVisibles(listOf(100, 101, 102)))
         }
     }

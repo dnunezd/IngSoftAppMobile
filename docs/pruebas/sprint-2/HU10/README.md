@@ -8,26 +8,26 @@ Todas las pruebas unitarias (JVM) se escribieron con TDD: ROJO (falla antes de i
 
 ## Cada criterio de aceptación tiene al menos una prueba automatizada
 
-| # | Criterio | Unitarias (JVM) | Compose UI (instrumentadas) |
-|---|---|---|---|
-| 1 | Marcar como favorito desde el detalle; el botón pasa a mostrar "Favorito" | `FavoritoViewModelTest.noFavoritoPasaAGuardandoYLuegoAFavoritoConConfirmacion`, `FavoriteRepositoryTest.agregarFavoritoUsaElEndpointDeBandaCuandoElTipoEsBanda`, `…agregarFavoritoUsaElEndpointDeMusicoCuandoElTipoEsMusico` | `PantallaDetalleArtistaFavoritoTest.favoritoMuestraElBotonDesactivadoConSuTexto` |
-| 2 | Si ya es favorito, el botón aparece como "Favorito" y desactivado | `FavoritoViewModelTest.comprobandoPasaAFavoritoCuandoElArtistaYaEsFavorito`, `FavoriteRepositoryTest.esFavoritoEncuentraElArtistaPorIdEnElListadoDelColeccionista` | `PantallaDetalleArtistaFavoritoTest.favoritoMuestraElBotonDesactivadoConSuTexto` |
-| 3 | El botón refleja el estado de favorito cada vez que se abre el detalle (persistencia entre sesiones de la app) | `FavoritoViewModelTest.comprobandoPasaANoFavoritoCuandoElArtistaNoEsFavorito`, `FavoriteRepositoryTest.esFavoritoDevuelveFalsoCuandoElIdNoEstaEnElListado` | `PantallaDetalleArtistaFavoritoTest.noFavoritoMuestraElBotonActivoParaAgregar` |
-| 4 | Si falla la comprobación, el botón aparece desactivado con opción de reintentar | `FavoritoViewModelTest.comprobandoPasaAErrorComprobacionCuandoFallaLaConsulta`, `…reintentarComprobacionPasaDeErrorComprobacionAFavoritoOtraVez`, `FavoriteRepositoryTest.esFavoritoDevuelveErrorDeCargaSiLaConsultaFalla` | `PantallaDetalleArtistaFavoritoTest.errorComprobacionMuestraElBotonDesactivadoYPermiteReintentar` |
-| 5 | El Visitante no ve el botón de favorito | — (decisión de composición en `VinilosNavHost`, ver design.md) | `PantallaDetalleArtistaFavoritoTest.visitanteNoVeNingunBotonDeFavorito` |
-| 6 | Si el artista ya no existe al guardar, "El artista ya no está disponible" + botón para volver al listado actualizado | `FavoritoViewModelTest.guardarFavoritoPasaANoDisponibleCuandoElArtistaYaNoExiste` | `PantallaDetalleArtistaFavoritoTest.noDisponibleMuestraElMensajeYElBotonParaVolverAlListado`, `…noDisponibleUsaUnCallbackDeVolverAlListadoDistintoDeAtras`, `VinilosNavHostTest.alVolverDesdeArtistaNoDisponibleElListadoSeActualizaSinElArtistaEliminado` |
-| 7 | Si falla la conexión/servicio al guardar, "No se pudo guardar el favorito, intenta de nuevo" + botón disponible para reintentar | `FavoritoViewModelTest.guardarFavoritoPasaAErrorGuardadoYPermiteReintentar`, `FavoriteRepositoryTest.agregarFavoritoDevuelveErrorDeCargaSiFallaLaConexion` | `PantallaDetalleArtistaFavoritoTest.errorGuardadoMuestraElMensajeYElBotonDisponibleParaReintentar`, `…errorGuardadoNoMuestraNingunaConfirmacion` |
-| 8 | Mientras se guarda, el botón se desactiva y muestra "Guardando...", evitando toques repetidos | `FavoritoViewModelTest.segundoToqueMientrasGuardandoSeIgnora` | `PantallaDetalleArtistaFavoritoTest.guardandoMuestraElBotonDesactivadoConSuTexto` |
-| 9 | Al guardar correctamente, mensaje breve de confirmación con el nombre del artista, que desaparece solo tras unos segundos; no aparece si falla | `FavoritoViewModelTest.confirmacionMostradaOcultaElMensajeDeFavorito` | `PantallaDetalleArtistaFavoritoTest.favoritoConConfirmacionMuestraElMensajeConElNombre`, `…laConfirmacionDesapareceSolaDespuesDeUnosSegundos` |
+| #   | Criterio                                                                                                                                       | Unitarias (JVM)                                                                                                                                                                                                              | Compose UI (instrumentadas)                                                                                                                                                                                                                                |
+|-----|------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| 1   | Marcar como favorito desde el detalle; el botón pasa a mostrar "Favorito"                                                                      | `FavoritoViewModelTest.noFavoritoPasaAGuardandoYLuegoAFavoritoConConfirmacion`, `FavoriteRepositoryTest.agregarFavoritoUsaElEndpointDeBandaCuandoElTipoEsBanda`, `…agregarFavoritoUsaElEndpointDeMusicoCuandoElTipoEsMusico` | `PantallaDetalleArtistaFavoritoTest.favoritoMuestraElBotonDesactivadoConSuTexto`                                                                                                                                                                           |
+| 2   | Si ya es favorito, el botón aparece como "Favorito" y desactivado                                                                              | `FavoritoViewModelTest.comprobandoPasaAFavoritoCuandoElArtistaYaEsFavorito`, `FavoriteRepositoryTest.esFavoritoEncuentraElArtistaPorIdEnElListadoDelColeccionista`                                                           | `PantallaDetalleArtistaFavoritoTest.favoritoMuestraElBotonDesactivadoConSuTexto`                                                                                                                                                                           |
+| 3   | El botón refleja el estado de favorito cada vez que se abre el detalle (persistencia entre sesiones de la app)                                 | `FavoritoViewModelTest.comprobandoPasaANoFavoritoCuandoElArtistaNoEsFavorito`, `FavoriteRepositoryTest.esFavoritoDevuelveFalsoCuandoElIdNoEstaEnElListado`                                                                   | `PantallaDetalleArtistaFavoritoTest.noFavoritoMuestraElBotonActivoParaAgregar`                                                                                                                                                                             |
+| 4   | Si falla la comprobación, el botón aparece desactivado con opción de reintentar                                                                | `FavoritoViewModelTest.comprobandoPasaAErrorComprobacionCuandoFallaLaConsulta`, `…reintentarComprobacionPasaDeErrorComprobacionAFavoritoOtraVez`, `FavoriteRepositoryTest.esFavoritoDevuelveErrorDeCargaSiLaConsultaFalla`   | `PantallaDetalleArtistaFavoritoTest.errorComprobacionMuestraElBotonDesactivadoYPermiteReintentar`                                                                                                                                                          |
+| 5   | El Visitante no ve el botón de favorito                                                                                                        | — (decisión de composición en `VinilosNavHost`, ver design.md)                                                                                                                                                               | `PantallaDetalleArtistaFavoritoTest.visitanteNoVeNingunBotonDeFavorito`                                                                                                                                                                                    |
+| 6   | Si el artista ya no existe al guardar, "El artista ya no está disponible" + botón para volver al listado actualizado                           | `FavoritoViewModelTest.guardarFavoritoPasaANoDisponibleCuandoElArtistaYaNoExiste`                                                                                                                                            | `PantallaDetalleArtistaFavoritoTest.noDisponibleMuestraElMensajeYElBotonParaVolverAlListado`, `…noDisponibleUsaUnCallbackDeVolverAlListadoDistintoDeAtras`, `VinilosNavHostTest.alVolverDesdeArtistaNoDisponibleElListadoSeActualizaSinElArtistaEliminado` |
+| 7   | Si falla la conexión/servicio al guardar, "No se pudo guardar el favorito, intenta de nuevo" + botón disponible para reintentar                | `FavoritoViewModelTest.guardarFavoritoPasaAErrorGuardadoYPermiteReintentar`, `FavoriteRepositoryTest.agregarFavoritoDevuelveErrorDeCargaSiFallaLaConexion`                                                                   | `PantallaDetalleArtistaFavoritoTest.errorGuardadoMuestraElMensajeYElBotonDisponibleParaReintentar`, `…errorGuardadoNoMuestraNingunaConfirmacion`                                                                                                           |
+| 8   | Mientras se guarda, el botón se desactiva y muestra "Guardando...", evitando toques repetidos                                                  | `FavoritoViewModelTest.segundoToqueMientrasGuardandoSeIgnora`                                                                                                                                                                | `PantallaDetalleArtistaFavoritoTest.guardandoMuestraElBotonDesactivadoConSuTexto`                                                                                                                                                                          |
+| 9   | Al guardar correctamente, mensaje breve de confirmación con el nombre del artista, que desaparece solo tras unos segundos; no aparece si falla | `FavoritoViewModelTest.confirmacionMostradaOcultaElMensajeDeFavorito`                                                                                                                                                        | `PantallaDetalleArtistaFavoritoTest.favoritoConConfirmacionMuestraElMensajeConElNombre`, `…laConfirmacionDesapareceSolaDespuesDeUnosSegundos`                                                                                                              |
 
 Cobertura: 9/9 criterios con al menos una prueba automatizada (unitaria o de Compose UI).
 
 ## Protecciones adicionales cubiertas por pruebas
 
-| Comportamiento | Prueba |
-|---|---|
-| Respuesta tardía de una comprobación anterior no sobrescribe la vigente | `FavoritoViewModelTest.respuestaTardiaDeComprobacionNoReemplazaLaConsultaVigente` |
-| Cancelación de la comprobación no se reporta como error de carga | `FavoriteRepositoryTest.cancelarLaComprobacionPropagaLaCancelacionSinErrorDeCarga` |
+| Comportamiento                                                          | Prueba                                                                             |
+|-------------------------------------------------------------------------|------------------------------------------------------------------------------------|
+| Respuesta tardía de una comprobación anterior no sobrescribe la vigente | `FavoritoViewModelTest.respuestaTardiaDeComprobacionNoReemplazaLaConsultaVigente`  |
+| Cancelación de la comprobación no se reporta como error de carga        | `FavoriteRepositoryTest.cancelarLaComprobacionPropagaLaCancelacionSinErrorDeCarga` |
 
 ## Resultado de la última ejecución
 
@@ -80,32 +80,32 @@ Al probar manualmente contra el backend compartido/desplegado (no el local), gua
 
 ## Pruebas E2E (T10-5)
 
-Clase `ArtistasFavoritosE2ETest` (cambio de OpenSpec [`add-e2e-artistas-favoritos`](../../../../openspec/changes/add-e2e-artistas-favoritos/)). Recorre la app desde el ingreso, como la persona. ESC01 a ESC05 van contra BackVynils; como agregan favoritos, se corren contra el backend **local**. Cada escenario que agrega favoritos crea su propio coleccionista (`POST /collectors`) y lo borra al terminar (`DELETE /collectors/{id}`), lo que también borra sus favoritos. ESC06 a ESC08 usan `MockWebServer` para provocar los errores.
+Clase `ArtistasFavoritosE2ETest` (cambio de OpenSpec [`add-e2e-artistas-favoritos`](../../../../openspec/changes/add-e2e-artistas-favoritos)). Recorre la app desde el ingreso, como la persona. ESC01 a ESC05 van contra BackVynils; como agregan favoritos, se corren contra el backend **local**. Cada escenario que agrega favoritos crea su propio coleccionista (`POST /collectors`) y lo borra al terminar (`DELETE /collectors/{id}`), lo que también borra sus favoritos. ESC06 a ESC08 usan `MockWebServer` para provocar los errores.
 
-| ID | Descripción del escenario | Resultado esperado | Backend | Evidencia |
-|---|---|---|---|---|
-| FN10-ESC01 | El Visitante abre el detalle de una banda y de un músico | Ninguno de los dos muestra el botón de favorito ni consulta los favoritos | BackVynils local | [PDF](e2e/FN10_ESC01.pdf) |
-| FN10-ESC02 | El Coleccionista agrega una banda como favorita | "Agregar Favorito" pasa a "Favorito" desactivado; aparece "<banda> se agregó a tus favoritos" y desaparece sola; el backend la devuelve en `GET /collectors/{id}/performers` | BackVynils local | [PDF](e2e/FN10_ESC02.pdf) |
-| FN10-ESC03 | El Coleccionista agrega un músico como favorito | Lo mismo que ESC02, con el músico | BackVynils local | [PDF](e2e/FN10_ESC03.pdf) |
-| FN10-ESC04 | Agrega un favorito, cierra la app, la vuelve a abrir y entra con el mismo coleccionista | El botón sigue como "Favorito" desactivado, sin confirmación, y se consultó de nuevo el backend | BackVynils local | [PDF](e2e/FN10_ESC04.pdf) |
-| FN10-ESC05 | Abre el detalle de un artista que ya es su favorito | "Favorito" desactivado con "Este artista ya está en tus favoritos."; tocarlo no envía nada | BackVynils local | [PDF](e2e/FN10_ESC05.pdf) |
-| FN10-ESC06 | No se puede comprobar si el artista es favorito | Botón desactivado, "No pudimos comprobar si es tu favorito" y "Reintentar"; al reintentar con el servicio arriba queda "Agregar Favorito" | `MockWebServer` | [PDF](e2e/FN10_ESC06.pdf) |
-| FN10-ESC07 | Agrega un favorito y el guardado tarda y falla | Mientras guarda, "Guardando..." desactivado y un segundo toque no envía nada; luego "No se pudo guardar el favorito, intenta de nuevo" sin confirmación; "Reintentar guardar" lo guarda | `MockWebServer` | [PDF](e2e/FN10_ESC07.pdf) |
-| FN10-ESC08 | Agrega un favorito y el artista ya no existe (404) | "El artista ya no está disponible"; "Volver al listado de artistas" muestra el listado ya sin ese artista | `MockWebServer` | [PDF](e2e/FN10_ESC08.pdf) |
+| ID         | Descripción del escenario                                                               | Resultado esperado                                                                                                                                                                      | Backend          | Evidencia                 |
+|------------|-----------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------|---------------------------|
+| FN10-ESC01 | El Visitante abre el detalle de una banda y de un músico                                | Ninguno de los dos muestra el botón de favorito ni consulta los favoritos                                                                                                               | BackVynils local | [PDF](e2e/FN10_ESC01.pdf) |
+| FN10-ESC02 | El Coleccionista agrega una banda como favorita                                         | "Agregar Favorito" pasa a "Favorito" desactivado; aparece "<banda> se agregó a tus favoritos" y desaparece sola; el backend la devuelve en `GET /collectors/{id}/performers`            | BackVynils local | [PDF](e2e/FN10_ESC02.pdf) |
+| FN10-ESC03 | El Coleccionista agrega un músico como favorito                                         | Lo mismo que ESC02, con el músico                                                                                                                                                       | BackVynils local | [PDF](e2e/FN10_ESC03.pdf) |
+| FN10-ESC04 | Agrega un favorito, cierra la app, la vuelve a abrir y entra con el mismo coleccionista | El botón sigue como "Favorito" desactivado, sin confirmación, y se consultó de nuevo el backend                                                                                         | BackVynils local | [PDF](e2e/FN10_ESC04.pdf) |
+| FN10-ESC05 | Abre el detalle de un artista que ya es su favorito                                     | "Favorito" desactivado con "Este artista ya está en tus favoritos."; tocarlo no envía nada                                                                                              | BackVynils local | [PDF](e2e/FN10_ESC05.pdf) |
+| FN10-ESC06 | No se puede comprobar si el artista es favorito                                         | Botón desactivado, "No pudimos comprobar si es tu favorito" y "Reintentar"; al reintentar con el servicio arriba queda "Agregar Favorito"                                               | `MockWebServer`  | [PDF](e2e/FN10_ESC06.pdf) |
+| FN10-ESC07 | Agrega un favorito y el guardado tarda y falla                                          | Mientras guarda, "Guardando..." desactivado y un segundo toque no envía nada; luego "No se pudo guardar el favorito, intenta de nuevo" sin confirmación; "Reintentar guardar" lo guarda | `MockWebServer`  | [PDF](e2e/FN10_ESC07.pdf) |
+| FN10-ESC08 | Agrega un favorito y el artista ya no existe (404)                                      | "El artista ya no está disponible"; "Volver al listado de artistas" muestra el listado ya sin ese artista                                                                               | `MockWebServer`  | [PDF](e2e/FN10_ESC08.pdf) |
 
 Criterios de la [HU10](https://github.com/dnunezd/IngSoftAppMobile/wiki/HU10) cubiertos por las E2E:
 
-| # | Criterio | Escenarios |
-|---|---|---|
-| 1 | Marcar como favorito una banda o un músico; el botón pasa a "Favorito" | ESC02, ESC03 |
-| 2 | Si ya es favorito, "Favorito" y desactivado | ESC04, ESC05 |
-| 3 | El botón refleja el favorito aunque se cierre y vuelva a abrir la app | ESC04 |
-| 4 | Si no se puede comprobar, botón desactivado con opción de reintentar | ESC06 |
-| 5 | El Visitante no ve el botón | ESC01 |
-| 6 | Artista que ya no existe: mensaje y volver al listado actualizado | ESC08 |
-| 7 | Error al guardar: mensaje y botón disponible para reintentar | ESC07 |
-| 8 | Mientras guarda, "Guardando..." y desactivado | ESC07 |
-| 9 | Confirmación breve al guardar; no aparece si falla | ESC02, ESC03, ESC07, ESC08 |
+| #   | Criterio                                                               | Escenarios                 |
+|-----|------------------------------------------------------------------------|----------------------------|
+| 1   | Marcar como favorito una banda o un músico; el botón pasa a "Favorito" | ESC02, ESC03               |
+| 2   | Si ya es favorito, "Favorito" y desactivado                            | ESC04, ESC05               |
+| 3   | El botón refleja el favorito aunque se cierre y vuelva a abrir la app  | ESC04                      |
+| 4   | Si no se puede comprobar, botón desactivado con opción de reintentar   | ESC06                      |
+| 5   | El Visitante no ve el botón                                            | ESC01                      |
+| 6   | Artista que ya no existe: mensaje y volver al listado actualizado      | ESC08                      |
+| 7   | Error al guardar: mensaje y botón disponible para reintentar           | ESC07                      |
+| 8   | Mientras guarda, "Guardando..." y desactivado                          | ESC07                      |
+| 9   | Confirmación breve al guardar; no aparece si falla                     | ESC02, ESC03, ESC07, ESC08 |
 
 **Cerrar y volver a abrir (ESC04):** se cierra la Activity y se abre de nuevo dentro del mismo proceso de prueba, porque matar el proceso termina la instrumentación. La HU10 no guarda nada en el dispositivo: el botón sale de `GET /collectors/{id}/performers`, y la prueba comprueba que esa consulta se repite.
 
@@ -113,12 +113,12 @@ Criterios de la [HU10](https://github.com/dnunezd/IngSoftAppMobile/wiki/HU10) cu
 
 Emulador Pixel 8 (API 34), 2026-11-10, contra BackVynils local:
 
-| Ejecución | Resultado |
-|---|---|
+| Ejecución                                       | Resultado                                                                                                               |
+|-------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------|
 | `ArtistasFavoritosE2ETest`, 3 corridas seguidas | `OK (8 tests)` en cada una, sin escenarios omitidos; 31 capturas en "Ok" (evidencia de esta carpeta: la última corrida) |
-| Backend después de cada corrida | Los 2 coleccionistas de ejemplo con su favorito de ejemplo; ningún coleccionista ni favorito de prueba |
-| Suite instrumentada completa | `OK (152 tests)`, ninguna omitida ni ignorada |
-| `testDebugUnitTest` y `lintDebug` | 238 sin fallos; 0 errores de lint |
+| Backend después de cada corrida                 | Los 2 coleccionistas de ejemplo con su favorito de ejemplo; ningún coleccionista ni favorito de prueba                  |
+| Suite instrumentada completa                    | `OK (152 tests)`, ninguna omitida ni ignorada                                                                           |
+| `testDebugUnitTest` y `lintDebug`               | 238 sin fallos; 0 errores de lint                                                                                       |
 
 ### Cómo correrlas
 
