@@ -490,7 +490,7 @@ class ArtistRepositoryTest {
         otrasRutas["/musicians/1"] = MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE)
         otrasRutas["/bands/1"] = MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE)
 
-        for (tipo in ArtistType.values()) {
+        for (tipo in ArtistType.entries) {
             var resultado: Result<ArtistaDetalle>? = null
             val consulta = launch(Dispatchers.Default) { resultado = repositorio.obtenerDetalle(tipo, 1) }
             servidor.takeRequest()

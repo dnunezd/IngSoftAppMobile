@@ -21,7 +21,6 @@ import androidx.test.core.app.ApplicationProvider
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.remote.ServiceAdapter
-import com.example.vinilos.data.repository.ArtistRepository
 import com.example.vinilos.data.repository.ArtistRepositoryImpl
 import com.example.vinilos.data.repository.FavoriteRepository
 import com.example.vinilos.data.repository.FavoriteRepositoryImpl

@@ -430,7 +430,7 @@ private fun NotaBloqueoTemporalFavorito() {
 }
 
 /**
- * Tarjeta de error al guardar el favorito (HU10), con el mismo lenguaje visual que [TarjetaError]
+ * Tarjeta de error al guardar el favorito (HU10), con el mismo lenguaje visual que `TarjetaError`
  * en la creación de álbum (HU07): fondo errorContainer, ícono de advertencia y botón de reintento.
  */
 @Composable

@@ -30,7 +30,7 @@ private class RepositorioArtistasFalso : ArtistRepository {
     override suspend fun obtenerArtistasGuardados(): List<Artist> = guardados
 
     override suspend fun obtenerDetalle(tipo: ArtistType, id: Int): Result<ArtistaDetalle> = error("No se usa en esta prueba")
-    override suspend fun obtenerDetalleGuardado(tipo: ArtistType, id: Int): ArtistaDetalle? = error("No se usa en esta prueba")
+    override suspend fun obtenerDetalleGuardado(tipo: ArtistType, id: Int): ArtistaDetalle = error("No se usa en esta prueba")
 }
 
 class ArtistsViewModelTest {

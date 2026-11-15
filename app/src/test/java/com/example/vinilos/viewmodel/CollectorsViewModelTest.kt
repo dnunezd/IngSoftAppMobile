@@ -142,7 +142,7 @@ class CollectorsViewModelTest {
 
     // ---- 4.2: búsqueda ----
 
-    private suspend fun kotlinx.coroutines.test.TestScope.vmConDatos(): CollectorsViewModel {
+    private fun kotlinx.coroutines.test.TestScope.vmConDatos(): CollectorsViewModel {
         val repo = RepositorioFalso()
         val vm = CollectorsViewModel(repo)
         advanceUntilIdle()

@@ -15,7 +15,6 @@ import com.example.vinilos.data.model.AlbumNuevo
 import com.example.vinilos.data.model.AlbumResumen
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.Collector
-import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.AlbumNoDisponible
 import com.example.vinilos.data.repository.AlbumRepository
 import kotlinx.coroutines.test.runTest
@@ -34,7 +33,7 @@ private class AlbumRepositoryFalso : AlbumRepository {
 
     override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> = error("No se usa en esta prueba")
     override suspend fun obtenerAlbumesGuardados(): List<AlbumResumen> = error("No se usa en esta prueba")
-    override suspend fun obtenerAlbumGuardado(id: Int): Album? = error("No se usa en esta prueba")
+    override suspend fun obtenerAlbumGuardado(id: Int): Album = error("No se usa en esta prueba")
     override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> = error("No se usa en esta prueba")
 }
 

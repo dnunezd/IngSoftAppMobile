@@ -25,7 +25,6 @@ import com.example.vinilos.data.model.AlbumNuevo
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.AlbumRepository
 import com.example.vinilos.data.repository.AlbumRepositoryImpl
-import com.example.vinilos.data.repository.CollectorRepository
 import com.example.vinilos.data.repository.CollectorRepositoryImpl
 import com.example.vinilos.e2e.EvidenciaE2E
 import com.example.vinilos.ui.catalogo.TagContadorCatalogo

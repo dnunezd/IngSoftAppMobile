@@ -5,6 +5,7 @@ import java.math.RoundingMode
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
+import kotlin.math.roundToInt
 
 fun promedioCalificaciones(comentarios: List<Comentario>): String? {
     val calificaciones = comentarios.mapNotNull { it.calificacion }
@@ -19,5 +20,5 @@ fun promedioCalificaciones(comentarios: List<Comentario>): String? {
 fun estrellasLlenas(promedio: String?): Int {
     if (promedio == null) return 0
     val valor = promedio.replace(',', '.').toDouble()
-    return Math.round(valor).toInt().coerceIn(0, 5)
+    return valor.roundToInt().coerceIn(0, 5)
 }
