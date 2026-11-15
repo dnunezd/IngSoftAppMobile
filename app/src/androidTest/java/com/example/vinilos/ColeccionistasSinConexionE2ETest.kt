@@ -13,6 +13,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.room.Room
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
+import androidx.test.espresso.Espresso
 import com.example.vinilos.data.local.VinilosDb
 import com.example.vinilos.ui.ingreso.TagAtras
 import com.example.vinilos.ui.ingreso.TagBuscador
@@ -78,6 +79,10 @@ class ColeccionistasSinConexionE2ETest {
         rule.onAllNodesWithText("No pudimos actualizar los coleccionistas").fetchSemanticsNodes().isNotEmpty()
     }
 
+    private fun esperarQueSeOculteElAviso() = rule.waitUntil(15_000) {
+        rule.onAllNodesWithText("No pudimos actualizar los coleccionistas").fetchSemanticsNodes().isEmpty()
+    }
+
     private fun esperarPeticiones(cantidad: Int) =
         rule.waitUntil(15_000) { servidor.requestCount >= cantidad }
 
@@ -106,6 +111,9 @@ class ColeccionistasSinConexionE2ETest {
             rule.onNodeWithTag(TagBuscador).performTextInput("monsalve")
             rule.onNodeWithTag(tagColeccionista(101)).assertIsDisplayed()
             rule.onNodeWithTag(tagColeccionista(100)).assertDoesNotExist()
+            // En pantallas chicas (API 23), con el teclado abierto el aviso tapa la tarjeta y se lleva el toque.
+            Espresso.closeSoftKeyboard()
+            esperarQueSeOculteElAviso()
             rule.onNodeWithTag(tagColeccionista(101)).performClick()
 
             esperarA(TagInicio)

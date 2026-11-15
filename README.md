@@ -74,15 +74,15 @@ Antes de generarlo, comprueba que el backend desplegado responda (ver [opción A
 
 ## Requisitos
 
-| Herramienta    | Versión                                                                                                            |
-|----------------|--------------------------------------------------------------------------------------------------------------------|
-| JDK            | 17. Gradle 8.7 no arranca con un JDK más nuevo (como el que trae Android Studio): define `JAVA_HOME` con un JDK 17 |
-| Android Studio | Compatible con AGP 8.6.0 (Koala Feature Drop 2024.1.2 o superior)                                                  |
-| Android SDK    | Plataforma 34 (`minSdk` 23, `compileSdk` y `targetSdk` 34), con `adb` en `platform-tools`                          |
-| Docker         | Docker Desktop o Docker Engine con Compose, solo para el backend local                                             |
-| Dispositivo    | Físico o emulador con Android 6.0 (API 23) o superior                                                              |
+| Herramienta    | Versión                                                                                     |
+|----------------|---------------------------------------------------------------------------------------------|
+| JDK            | 17 o superior (Gradle 9.9.1 y AGP 9.5.1 no arrancan con uno más viejo); compila con 17 y 21 |
+| Android Studio | Compatible con AGP 9.5.1                                                                    |
+| Android SDK    | Plataforma 37 (`minSdk` 23, `compileSdk` y `targetSdk` 37), con `adb` en `platform-tools`   |
+| Docker         | Docker Desktop o Docker Engine con Compose, solo para el backend local                      |
+| Dispositivo    | Físico o emulador con Android 6.0 (API 23) o superior                                       |
 
-Stack: Kotlin 1.9, Jetpack Compose con Material 3, MVVM + Repository, Retrofit + OkHttp, Room, Coil, Navigation Compose y corrutinas. Gradle 8.7 viene con el wrapper.
+Stack: Kotlin 2.4, Jetpack Compose con Material 3, MVVM + Repository, Retrofit + OkHttp, Room, Coil, Navigation Compose y corrutinas. Gradle 9.9.1 viene con el wrapper.
 
 ## Puesta en marcha
 
@@ -203,7 +203,7 @@ Debe terminar en `OK (41 tests)`. En Git Bash antepone `MSYS_NO_PATHCONV=1` a lo
 | `Cleartext HTTP traffic not permitted`                                                            | El host del backend no está en `network_security_config.xml`.                                                                                                                                                     |
 | `more than one device/emulator`                                                                   | Elige un dispositivo con `ANDROID_SERIAL`.                                                                                                                                                                        |
 | `Your project path contains non-ASCII characters` (Windows)                                       | La ruta del repositorio tiene tildes. Clónalo en una ruta sin ellas (por ejemplo `C:\dev\IngSoftAppMobile`); `android.overridePathCheck=true` no basta, porque las unitarias fallan con `ClassNotFoundException`. |
-| Gradle falla al arrancar y solo muestra una versión de Java (por ejemplo `25.0.3`)                | Gradle 8.7 no soporta ese JDK: define `JAVA_HOME` con un JDK 17.                                                                                                                                                  |
+| Gradle falla al arrancar y solo muestra una versión de Java (por ejemplo `25.0.3`)                | Gradle 9.9.1 no soporta ese JDK: define `JAVA_HOME` con un JDK 17 o 21.                                                                                                                                           |
 
 ## Estructura y arquitectura
 

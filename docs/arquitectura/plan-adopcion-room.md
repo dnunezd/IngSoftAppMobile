@@ -121,13 +121,13 @@ En todos los casos se cumple el requisito "Portada por defecto": una imagen que 
 
 ### Dependencias
 
-Se fija **Room 2.6.1** con **KSP `1.9.0-1.0.13`**, compatibles con Kotlin 1.9.0. No se debe subir Room sin revisar antes su compatibilidad con la versión de Kotlin del proyecto.
+Se usa **Room 2.8.5** con **KSP `2.3.10`**, compatibles con Kotlin 2.4.21 (al adoptar Room eran Room 2.6.1 y KSP `1.9.0-1.0.13`, con Kotlin 1.9.0). No se debe subir Room sin revisar antes su compatibilidad con la versión de Kotlin del proyecto.
 
 ```toml
 # gradle/libs.versions.toml
 [versions]
-room = "2.6.1"
-ksp = "1.9.0-1.0.13"
+room = "2.8.5"
+ksp = "2.3.10"
 
 [libraries]
 androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
@@ -318,7 +318,7 @@ Room no reduce la memoria: no se presenta como evidencia de la mejora M3 (memori
 | El detalle no funciona sin conexión                       | Está fuera de alcance: el detalle muestra su propio error con "Reintentar".                                                                                                                |
 | Cambios futuros en el esquema                             | `fallbackToDestructiveMigration`: es una caché y se reconstruye con la siguiente consulta. El esquema exportado deja ver cada cambio.                                                      |
 | Pruebas contaminadas por una caché de corridas anteriores | Las pruebas existentes no usan DAO. Las nuevas usan una base en memoria o limpian la base con `clearAllTables()` al empezar.                                                               |
-| Incompatibilidad de versiones                             | Room 2.6.1 y KSP `1.9.0-1.0.13` quedan fijos mientras el proyecto siga en Kotlin 1.9.0.                                                                                                    |
+| Incompatibilidad de versiones                             | Room y KSP se suben junto con Kotlin: hoy Room 2.8.5 y KSP `2.3.10` con Kotlin 2.4.21.                                                                                                     |
 | Sin conexión, algunas portadas muestran la ilustración    | Es el comportamiento esperado para las portadas nunca vistas o que su servidor marca como no guardables. Se mide en la evidencia y, si hace falta, se evalúa `respectCacheHeaders(false)`. |
 | Un error de disco tumba el catálogo                       | Los fallos al leer o escribir la caché se ignoran y la app sigue solo con la red.                                                                                                          |
 
