@@ -15,6 +15,7 @@ import com.example.vinilos.data.repository.FavoriteRepository
 import com.example.vinilos.data.repository.FavoriteRepositoryImpl
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import java.io.File
 
 /**
  * Contenedor de dependencias manual: crea una sola vez el [ServiceAdapter] y los repositorios
@@ -35,25 +36,30 @@ class AppContainer(
     /** Caché de los favoritos confirmados de cada coleccionista (add-cache-consultas). */
     favoritoDao: FavoritoDao? = null,
     /** Dónde convierten y ordenan los repositorios, fuera del hilo principal. Retrofit y Room usan sus hilos. */
-    dispatcher: CoroutineDispatcher = Dispatchers.Default
+    dispatcher: CoroutineDispatcher = Dispatchers.Default,
+    /**
+     * Carpeta de la caché HTTP de la API (optimizar-cache-e-imagenes, D2). Sin ella, el cliente no guarda
+     * respuestas, que es lo que usan las pruebas.
+     */
+    carpetaCacheHttp: File? = null
 ) {
 
-    val serviceAdapter: ServiceAdapter = ServiceAdapter(baseUrl)
+    val serviceAdapter: ServiceAdapter = ServiceAdapter(baseUrl, ServiceAdapter.clientePorDefecto(carpetaCacheHttp))
 
-    /** Se puede reemplazar con [colectoresRepositorio] en las pruebas instrumentadas. */
+    /** Se puede reemplazar con `colectoresRepositorio` en las pruebas instrumentadas. */
     val collectorRepository: CollectorRepository =
         colectoresRepositorio ?: CollectorRepositoryImpl(serviceAdapter, coleccionistaDao = coleccionistaDao, dispatcher = dispatcher)
 
-    /** Se puede reemplazar con [albumesRepositorio] en las pruebas instrumentadas. */
+    /** Se puede reemplazar con `albumesRepositorio` en las pruebas instrumentadas. */
     val albumRepository: AlbumRepository =
         albumesRepositorio ?: AlbumRepositoryImpl(serviceAdapter, albumDao = albumDao, dispatcher = dispatcher)
 
-    /** Se puede reemplazar con [artistasRepositorio] en las pruebas instrumentadas. */
+    /** Se puede reemplazar con `artistasRepositorio` en las pruebas instrumentadas. */
     val artistRepository: ArtistRepository =
         artistasRepositorio ?: ArtistRepositoryImpl(serviceAdapter, artistaDao = artistaDao, dispatcher = dispatcher)
 
     /**
-     * Se puede reemplazar con [favoritosRepositorio] en las pruebas instrumentadas (p. ej. con
+     * Se puede reemplazar con `favoritosRepositorio` en las pruebas instrumentadas (p. ej. con
      * un `MockWebServer`). Antes se creaba de forma autocontenida en `VinilosNavHost` con su
      * propio [ServiceAdapter], lo que ignoraba estos reemplazos; ver revisión de PR de HU10
      * (@lorennossauniandes).

@@ -22,6 +22,17 @@ class ConversoresTest {
     }
 
     @Test
+    fun leerDosVecesElMismoJsonDaListasIguales() {
+        val json = conversores.dePremios(listOf(PremioArtista(7, "Grammy", "Academia", "10 de diciembre de 1978")))
+
+        val primera = conversores.aPremios(json)
+        val segunda = conversores.aPremios(json)
+
+        assertEquals(primera, segunda)
+        assertEquals("Grammy", segunda.single().nombre)
+    }
+
+    @Test
     fun artistasDelAlbumConImagenNula() {
         val artistas = listOf(Artista("Rubén Blades", null), Artista("Queen", "https://img.example/q.jpg"))
         assertEquals(artistas, conversores.aArtistas(conversores.deArtistas(artistas)))

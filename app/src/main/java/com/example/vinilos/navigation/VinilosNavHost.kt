@@ -38,20 +38,20 @@ import com.example.vinilos.viewmodel.FavoritoViewModel
 import com.example.vinilos.viewmodel.SessionViewModel
 
 object Rutas {
-    const val Ingreso = "ingreso"
-    const val Coleccionistas = "coleccionistas"
-    const val Inicio = "inicio"
-    const val Catalogo = "catalogo"
-    const val Artistas = "artistas"
+    const val INGRESO = "ingreso"
+    const val COLECCIONISTAS = "coleccionistas"
+    const val INICIO = "inicio"
+    const val CATALOGO = "catalogo"
+    const val ARTISTAS = "artistas"
 
     /** Detalle del artista (HU04). El tipo distingue a un músico de una banda con el mismo id. */
-    const val DetalleArtista = "artista/{tipo}/{id}"
+    const val DETALLE_ARTISTA = "artista/{tipo}/{id}"
 
     /** Detalle del álbum (HU02). */
-    const val DetalleAlbum = "album/{id}"
+    const val DETALLE_ALBUM = "album/{id}"
 
     /** Formulario para crear un álbum (HU07), solo para el Coleccionista. */
-    const val CrearAlbum = "crear-album"
+    const val CREAR_ALBUM = "crear-album"
 
     fun detalleArtista(tipo: ArtistType, id: Int) = "artista/${tipo.name}/$id"
 
@@ -80,22 +80,22 @@ fun VinilosNavHost(
     modifier: Modifier = Modifier
 ) {
     fun irAlInicio() {
-        navController.navigate(Rutas.Inicio) {
-            popUpTo(Rutas.Ingreso) { inclusive = false }
+        navController.navigate(Rutas.INICIO) {
+            popUpTo(Rutas.INGRESO) { inclusive = false }
         }
     }
 
     /** Dos toques rápidos no deben sacar también el catálogo. */
     fun cerrarFormulario() {
-        if (navController.currentDestination?.route == Rutas.CrearAlbum) navController.popBackStack()
+        if (navController.currentDestination?.route == Rutas.CREAR_ALBUM) navController.popBackStack()
     }
 
     NavHost(
         navController = navController,
-        startDestination = Rutas.Ingreso,
+        startDestination = Rutas.INGRESO,
         modifier = modifier
     ) {
-        composable(Rutas.Ingreso) {
+        composable(Rutas.INGRESO) {
             // Volver al ingreso (desde el selector o el inicio) deja la sesión sin perfil.
             LaunchedEffect(Unit) { sessionViewModel.clear() }
             PantallaIngreso(
@@ -103,10 +103,10 @@ fun VinilosNavHost(
                     sessionViewModel.enterAsVisitor()
                     irAlInicio()
                 },
-                onColeccionista = { navController.navigate(Rutas.Coleccionistas) }
+                onColeccionista = { navController.navigate(Rutas.COLECCIONISTAS) }
             )
         }
-        composable(Rutas.Coleccionistas) {
+        composable(Rutas.COLECCIONISTAS) {
             val viewModel: CollectorsViewModel = viewModel(
                 factory = viewModelFactory {
                     initializer { CollectorsViewModel(collectorRepository) }
@@ -129,15 +129,15 @@ fun VinilosNavHost(
                 onAvisoMostrado = viewModel::avisoMostrado
             )
         }
-        composable(Rutas.Inicio) {
+        composable(Rutas.INICIO) {
             val session by sessionViewModel.session.collectAsStateWithLifecycle()
             PantallaInicio(
                 session = session,
-                onVerAlbumes = { navController.navigate(Rutas.Catalogo) },
-                onVerArtistas = { navController.navigate(Rutas.Artistas) }
+                onVerAlbumes = { navController.navigate(Rutas.CATALOGO) },
+                onVerArtistas = { navController.navigate(Rutas.ARTISTAS) }
             )
         }
-        composable(Rutas.Catalogo) { entrada ->
+        composable(Rutas.CATALOGO) { entrada ->
             val session by sessionViewModel.session.collectAsStateWithLifecycle()
             val viewModel: AlbumsViewModel = viewModel(
                 factory = viewModelFactory {
@@ -167,12 +167,12 @@ fun VinilosNavHost(
                 },
                 onAtras = { navController.popBackStack() },
                 albumNuevo = albumNuevo,
-                onCrearAlbum = { navController.navigate(Rutas.CrearAlbum) { launchSingleTop = true } },
+                onCrearAlbum = { navController.navigate(Rutas.CREAR_ALBUM) { launchSingleTop = true } },
                 onAvisoCreadoMostrado = viewModel::avisoCreadoMostrado,
                 onDesplazadoAlNuevo = viewModel::desplazadoAlNuevo
             )
         }
-        composable(Rutas.CrearAlbum) {
+        composable(Rutas.CREAR_ALBUM) {
             val session by sessionViewModel.session.collectAsStateWithLifecycle()
             val viewModel: CrearAlbumViewModel = viewModel(
                 factory = viewModelFactory {
@@ -206,7 +206,7 @@ fun VinilosNavHost(
                 )
             )
         }
-        composable(Rutas.Artistas) { entrada ->
+        composable(Rutas.ARTISTAS) { entrada ->
             val viewModel: ArtistsViewModel = viewModel(
                 factory = viewModelFactory {
                     initializer { ArtistsViewModel(artistRepository) }
@@ -238,7 +238,7 @@ fun VinilosNavHost(
             )
         }
         composable(
-            Rutas.DetalleArtista,
+            Rutas.DETALLE_ARTISTA,
             arguments = listOf(
                 navArgument("tipo") { type = NavType.StringType },
                 navArgument("id") { type = NavType.IntType }
@@ -298,7 +298,7 @@ fun VinilosNavHost(
             }
         }
         composable(
-            Rutas.DetalleAlbum,
+            Rutas.DETALLE_ALBUM,
             arguments = listOf(navArgument("id") { type = NavType.IntType })
         ) { entrada ->
             val id = requireNotNull(entrada.arguments).getInt("id")

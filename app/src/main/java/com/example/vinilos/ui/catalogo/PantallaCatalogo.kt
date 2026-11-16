@@ -39,7 +39,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.pullToRefresh
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -49,7 +50,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -114,14 +114,9 @@ fun PantallaCatalogo(
     onDesplazadoAlNuevo: () -> Unit = {}
 ) {
     val cargado = estado is AlbumsUiState.Exito || estado is AlbumsUiState.Vacio
-    val deslizar = rememberPullToRefreshState(enabled = { cargado })
-    if (deslizar.isRefreshing) {
-        LaunchedEffect(Unit) {
-            onActualizar()
-            // El progreso de la actualización se muestra junto al encabezado de la lista.
-            deslizar.endRefresh()
-        }
-    }
+    // El progreso de la actualización se muestra junto al encabezado de la lista, así que el
+    // indicador de deslizar nunca queda girando (isRefreshing = false) y vuelve a ocultarse solo.
+    val deslizar = rememberPullToRefreshState()
 
     val avisos = remember { SnackbarHostState() }
     val mensajeAviso = stringResource(R.string.catalogo_error_actualizar)
@@ -181,7 +176,12 @@ fun PantallaCatalogo(
             modifier = Modifier
                 .fillMaxSize()
                 .clipToBounds()
-                .nestedScroll(deslizar.nestedScrollConnection)
+                .pullToRefresh(
+                    isRefreshing = false,
+                    state = deslizar,
+                    enabled = cargado,
+                    onRefresh = onActualizar
+                )
         ) {
             LazyVerticalGrid(
                 columns = GridCells.Adaptive(minSize = 156.dp),
@@ -217,11 +217,12 @@ fun PantallaCatalogo(
                     }
                 }
             }
-            PullToRefreshContainer(
+            PullToRefreshDefaults.Indicator(
                 state = deslizar,
+                isRefreshing = false,
                 modifier = Modifier.align(Alignment.TopCenter),
                 containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary
             )
             if (puedeCrear) {
                 ExtendedFloatingActionButton(
@@ -359,7 +360,6 @@ private fun TarjetaAlbum(album: AlbumResumen, esNuevo: Boolean, onSeleccionar: (
                 modifier = Modifier
                     .fillMaxWidth()
                     .aspectRatio(1f)
-                    .background(MaterialTheme.colorScheme.surfaceVariant)
             )
             // El año sigue visible junto al género, así que la insignia ocupa su lugar.
             if (esNuevo) {

@@ -5,6 +5,7 @@ import com.example.vinilos.data.model.Collector
 import com.example.vinilos.data.remote.ErrorDeCarga
 import com.example.vinilos.data.repository.CollectorRepository
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
@@ -28,6 +29,7 @@ private class RepositorioFalso : CollectorRepository {
     }
 }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class CollectorsViewModelTest {
 
     @get:Rule
@@ -142,7 +144,7 @@ class CollectorsViewModelTest {
 
     // ---- 4.2: búsqueda ----
 
-    private suspend fun kotlinx.coroutines.test.TestScope.vmConDatos(): CollectorsViewModel {
+    private fun kotlinx.coroutines.test.TestScope.vmConDatos(): CollectorsViewModel {
         val repo = RepositorioFalso()
         val vm = CollectorsViewModel(repo)
         advanceUntilIdle()

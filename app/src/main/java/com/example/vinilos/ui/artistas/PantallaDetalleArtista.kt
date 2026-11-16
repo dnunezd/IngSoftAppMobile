@@ -74,12 +74,14 @@ import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.ArtistaDetalle
 import com.example.vinilos.data.model.IntegranteArtista
 import com.example.vinilos.data.model.PremioArtista
+import com.example.vinilos.ui.detalle.PortadaAlbum
 import com.example.vinilos.ui.ingreso.AvisoUnaVez
 import com.example.vinilos.ui.ingreso.IndicadorActualizando
 import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.ArtistaDetalleUiState
 import com.example.vinilos.viewmodel.FavoritoUiState
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 const val TagDetalleArtista = "detalle_artista"
 const val TagListaDetalleArtista = "detalle_artista_lista"
@@ -99,10 +101,9 @@ const val TagNoDisponibleFavorito = "detalle_artista_no_disponible_favorito"
 const val TagActualizandoDetalleArtista = "detalle_artista_actualizando"
 
 /** Milisegundos que permanece visible la confirmación de favorito antes de ocultarse sola. */
-private const val DuracionConfirmacionFavoritoMs = 2500L
+private val DuracionConfirmacionFavorito = 2500.milliseconds
 
 fun tagAlbumArtista(id: Int) = "detalle_artista_album_$id"
-fun tagRespaldoAlbum(id: Int) = "detalle_artista_album_respaldo_$id"
 fun tagIntegrante(id: Int) = "detalle_artista_integrante_$id"
 
 private val EsquinaTarjeta = RoundedCornerShape(24.dp)
@@ -136,7 +137,7 @@ fun PantallaDetalleArtista(
     // item se recompone/recicla, lo que impedía que la espera de 2.5s llegara a completarse.
     if (estadoFavorito is FavoritoUiState.Favorito && estadoFavorito.mostrarConfirmacion) {
         LaunchedEffect(estadoFavorito) {
-            delay(DuracionConfirmacionFavoritoMs)
+            delay(DuracionConfirmacionFavorito)
             onConfirmacionFavoritoMostrada()
         }
     }
@@ -430,7 +431,7 @@ private fun NotaBloqueoTemporalFavorito() {
 }
 
 /**
- * Tarjeta de error al guardar el favorito (HU10), con el mismo lenguaje visual que [TarjetaError]
+ * Tarjeta de error al guardar el favorito (HU10), con el mismo lenguaje visual que `TarjetaError`
  * en la creación de álbum (HU07): fondo errorContainer, ícono de advertencia y botón de reintento.
  */
 @Composable
@@ -654,27 +655,15 @@ private fun FilaAlbum(album: AlbumArtista, onSeleccionar: (Int) -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // El ícono de disco queda debajo: se ve mientras carga y si la portada falta o no carga.
-        Box(
+        // Misma portada del catálogo: el ícono de disco se ve mientras carga y si la portada falta o no carga.
+        PortadaAlbum(
+            url = album.portada,
+            contentDescription = stringResource(R.string.artistas_imagen_descripcion, album.nombre),
+            contentScale = ContentScale.Crop,
             modifier = Modifier
                 .size(56.dp)
                 .clip(EsquinaMiniatura)
-                .background(MaterialTheme.colorScheme.surfaceVariant),
-            contentAlignment = Alignment.Center
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_cat_album),
-                contentDescription = null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.testTag(tagRespaldoAlbum(album.id))
-            )
-            AsyncImage(
-                model = album.portada?.takeIf { it.isNotBlank() },
-                contentDescription = stringResource(R.string.artistas_imagen_descripcion, album.nombre),
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-        }
+        )
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 text = album.nombre,

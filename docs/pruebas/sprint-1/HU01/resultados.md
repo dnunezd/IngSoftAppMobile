@@ -6,14 +6,14 @@
 
 ## Resumen
 
-| Entorno | Tipo | Android | Pantalla | Unitarias | Instrumentadas | Cierres | Fecha |
-|---|---|---|---|---|---|---|---|
-| JVM | — | — | — | 152/152 | — | — | 2026-10-30 |
-| Nexus 5X API 23 | Emulador | 6.0 (API 23, mínima) | 411×731 dp | — | 121/121 | 0 | 2026-10-30 |
-| Nexus 5X API 23 | Emulador | 6.0 (API 23, mínima) | 360×640 dp (1 columna) | — | 121/121 | 0 | 2026-10-30 |
-| Nexus 5X API 23 | Emulador | 6.0 (API 23, mínima) | 320×533 dp (1 columna) | — | 121/121 | 0 | 2026-10-30 |
-| Pixel 8 API 34 | Emulador | 14 (API 34) | 412×915 dp | — | 121/121 | 0 | 2026-10-30 |
-| Motorola Edge 30 | Físico | 14 (API 34) | 432×960 dp | — | 121/121 | 0 | 2026-10-30 |
+| Entorno          | Tipo     | Android              | Pantalla               | Unitarias | Instrumentadas | Cierres | Fecha      |
+|------------------|----------|----------------------|------------------------|-----------|----------------|---------|------------|
+| JVM              | —        | —                    | —                      | 152/152   | —              | —       | 2026-10-30 |
+| Nexus 5X API 23  | Emulador | 6.0 (API 23, mínima) | 411×731 dp             | —         | 121/121        | 0       | 2026-10-30 |
+| Nexus 5X API 23  | Emulador | 6.0 (API 23, mínima) | 360×640 dp (1 columna) | —         | 121/121        | 0       | 2026-10-30 |
+| Nexus 5X API 23  | Emulador | 6.0 (API 23, mínima) | 320×533 dp (1 columna) | —         | 121/121        | 0       | 2026-10-30 |
+| Pixel 8 API 34   | Emulador | 14 (API 34)          | 412×915 dp             | —         | 121/121        | 0       | 2026-10-30 |
+| Motorola Edge 30 | Físico   | 14 (API 34)          | 432×960 dp             | —         | 121/121        | 0       | 2026-10-30 |
 
 Las instrumentadas incluyen las 5 E2E del catálogo contra BackVynils real (en el Motorola, con `adb reverse` y `-PbaseUrl=http://localhost:3000/`). Los perfiles de 360×640 y 320×533 dp se simularon en el Nexus 5X con `adb shell wm size` y `wm density`. La ejecución de las E2E con evidencia (`am instrument`, 5/5 en los tres dispositivos, con una carpeta, un informe y un PDF por escenario `FN01-ESC01` a `FN01-ESC05`) es del 2026-10-31.
 
@@ -49,27 +49,27 @@ En el teléfono, además: `adb reverse tcp:3000 tcp:3000` y agregar `-PbaseUrl=h
 
 ## Instrumentadas por clase (igual en todos los entornos)
 
-| Clase | Pruebas | HU |
-|---|---|---|
-| `ui.catalogo.PantallaCatalogoTest` | 16 | HU01 |
-| `ui.catalogo.CatalogoActualizarTest` | 4 | HU01 |
-| `ui.catalogo.CatalogoListaLargaTest` | 2 | HU01 |
-| `CatalogoE2ETest` | 5 | HU01 |
-| `navigation.VinilosNavHostTest` | 21 | HU00–HU03 |
-| `RotacionTest` | 4 | HU00, HU01 |
-| `RecuperacionTest` | 5 | HU00, HU01 |
-| `IngresoE2ETest` | 4 | HU00 |
-| `AlbumDetalleE2ETest` | 1 | HU02 |
-| `navigation.AlbumDetalleBackendRealTest` | 2 | HU02 |
-| `ui.detalle.ContenidoAlbumTest` | 11 | HU02 |
-| `ui.detalle.PantallaDetalleAlbumTest` | 4 | HU02 |
-| `ui.detalle.PortadaAlbumTest` | 3 | HU02 |
-| `ui.artistas.PantallaArtistasTest` | 12 | HU03 |
-| `ui.ingreso.PantallaColeccionistasTest` | 14 | HU00 |
-| `ui.ingreso.PantallaIngresoTest` | 4 | HU00 |
-| `ui.inicio.PantallaInicioTest` | 8 | HU00 |
-| `ExampleInstrumentedTest` | 1 | — |
-| **Total** | **121** | |
+| Clase                                    | Pruebas | HU         |
+|------------------------------------------|---------|------------|
+| `ui.catalogo.PantallaCatalogoTest`       | 16      | HU01       |
+| `ui.catalogo.CatalogoActualizarTest`     | 4       | HU01       |
+| `ui.catalogo.CatalogoListaLargaTest`     | 2       | HU01       |
+| `CatalogoE2ETest`                        | 5       | HU01       |
+| `navigation.VinilosNavHostTest`          | 21      | HU00–HU03  |
+| `RotacionTest`                           | 4       | HU00, HU01 |
+| `RecuperacionTest`                       | 5       | HU00, HU01 |
+| `IngresoE2ETest`                         | 4       | HU00       |
+| `AlbumDetalleE2ETest`                    | 1       | HU02       |
+| `navigation.AlbumDetalleBackendRealTest` | 2       | HU02       |
+| `ui.detalle.ContenidoAlbumTest`          | 11      | HU02       |
+| `ui.detalle.PantallaDetalleAlbumTest`    | 4       | HU02       |
+| `ui.detalle.PortadaAlbumTest`            | 3       | HU02       |
+| `ui.artistas.PantallaArtistasTest`       | 12      | HU03       |
+| `ui.ingreso.PantallaColeccionistasTest`  | 14      | HU00       |
+| `ui.ingreso.PantallaIngresoTest`         | 4       | HU00       |
+| `ui.inicio.PantallaInicioTest`           | 8       | HU00       |
+| `ExampleInstrumentedTest`                | 1       | —          |
+| **Total**                                | **121** |            |
 
 ## Observaciones
 

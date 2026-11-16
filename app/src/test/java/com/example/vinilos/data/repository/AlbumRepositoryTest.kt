@@ -31,6 +31,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
+import retrofit2.Response
 import retrofit2.HttpException
 import java.io.IOException
 import java.lang.reflect.Modifier
@@ -208,8 +209,8 @@ class AlbumRepositoryTest {
     fun errorInesperadoSePropagaSinDisfrazarloDeErrorDeCarga() = runTest {
         val esperado = IllegalStateException("Error de programación")
         val api = object : AlbumApi {
-            override suspend fun obtenerAlbum(id: Int): AlbumDto = throw esperado
-            override suspend fun obtenerAlbumes(): List<AlbumDto> = throw esperado
+            override suspend fun obtenerAlbum(id: Int): Response<AlbumDto> = throw esperado
+            override suspend fun obtenerAlbumes(): Response<List<AlbumDto>> = throw esperado
             override suspend fun crearAlbum(album: CrearAlbumDto): AlbumDto = throw esperado
         }
         val repositorio = AlbumRepositoryImpl(ServiceAdapter(servidor.url("/").toString()), api)
@@ -226,8 +227,8 @@ class AlbumRepositoryTest {
     @Test
     fun cancelarLaConsultaPropagaLaCancelacionSinErrorDeCarga() = runTest {
         val api = object : AlbumApi {
-            override suspend fun obtenerAlbum(id: Int): AlbumDto = awaitCancellation()
-            override suspend fun obtenerAlbumes(): List<AlbumDto> = awaitCancellation()
+            override suspend fun obtenerAlbum(id: Int): Response<AlbumDto> = awaitCancellation()
+            override suspend fun obtenerAlbumes(): Response<List<AlbumDto>> = awaitCancellation()
             override suspend fun crearAlbum(album: CrearAlbumDto): AlbumDto = awaitCancellation()
         }
         val repositorio = AlbumRepositoryImpl(ServiceAdapter(servidor.url("/").toString()), api)
@@ -422,8 +423,8 @@ class AlbumRepositoryTest {
     @Test
     fun cancelarElCatalogoPropagaLaCancelacion() = runTest {
         val api = object : AlbumApi {
-            override suspend fun obtenerAlbum(id: Int): AlbumDto = awaitCancellation()
-            override suspend fun obtenerAlbumes(): List<AlbumDto> = awaitCancellation()
+            override suspend fun obtenerAlbum(id: Int): Response<AlbumDto> = awaitCancellation()
+            override suspend fun obtenerAlbumes(): Response<List<AlbumDto>> = awaitCancellation()
             override suspend fun crearAlbum(album: CrearAlbumDto): AlbumDto = awaitCancellation()
         }
         val repositorio = AlbumRepositoryImpl(ServiceAdapter(servidor.url("/").toString()), api)
@@ -503,8 +504,8 @@ class AlbumRepositoryTest {
     @Test
     fun cancelarLaCreacionPropagaLaCancelacion() = runTest {
         val api = object : AlbumApi {
-            override suspend fun obtenerAlbum(id: Int): AlbumDto = awaitCancellation()
-            override suspend fun obtenerAlbumes(): List<AlbumDto> = awaitCancellation()
+            override suspend fun obtenerAlbum(id: Int): Response<AlbumDto> = awaitCancellation()
+            override suspend fun obtenerAlbumes(): Response<List<AlbumDto>> = awaitCancellation()
             override suspend fun crearAlbum(album: CrearAlbumDto): AlbumDto = awaitCancellation()
         }
         val repositorio = AlbumRepositoryImpl(ServiceAdapter(servidor.url("/").toString()), api)

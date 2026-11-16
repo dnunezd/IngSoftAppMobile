@@ -3,12 +3,16 @@ package com.example.vinilos.data.remote
 import com.google.gson.JsonParseException
 import com.google.gson.JsonSyntaxException
 import kotlinx.coroutines.CancellationException
+import okhttp3.Cache
+import okhttp3.CacheControl
+import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.ResponseBody
 import retrofit2.Converter
 import retrofit2.HttpException
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
+import java.io.File
 import java.io.IOException
 import java.lang.reflect.Type
 import java.util.concurrent.TimeUnit
@@ -93,13 +97,41 @@ class ServiceAdapter(
         ) = gson.requestBodyConverter(type, parameterAnnotations, methodAnnotations, retrofit)
     }
 
-    private companion object {
-        const val TIMEOUT_SEGUNDOS = 10L
-        const val HTTP_NO_ENCONTRADO = 404
+    /**
+     * Pide al backend confirmar cada respuesta guardada antes de usarla (`max-age=0`): OkHttp siempre envía
+     * `If-None-Match` y nunca entrega lo guardado sin preguntar, aunque el backend o un proxy envíen un
+     * `max-age`. Así, sin conexión la consulta falla como antes y cada pantalla muestra lo que guardó en Room.
+     */
+    private object RevalidarConElBackend : Interceptor {
+        private val siempreRevalidar = CacheControl.Builder().maxAge(0, TimeUnit.SECONDS).build()
 
-        fun clientePorDefecto(): OkHttpClient = OkHttpClient.Builder()
+        override fun intercept(chain: Interceptor.Chain): okhttp3.Response {
+            val peticion = chain.request()
+            if (peticion.method != "GET") return chain.proceed(peticion)
+            return chain.proceed(peticion.newBuilder().cacheControl(siempreRevalidar).build())
+        }
+    }
+
+    companion object {
+        private const val TIMEOUT_SEGUNDOS = 10L
+        private const val HTTP_NO_ENCONTRADO = 404
+        private const val TAMANO_CACHE_HTTP = 10L * 1024 * 1024
+
+        /**
+         * Cliente de red de la API. Con [carpetaCache], guarda las respuestas en una caché HTTP de disco de
+         * 10 MiB y revalida cada consulta repetida con su `ETag`: si nada cambió, el backend responde 304 sin
+         * cuerpo y se usa lo guardado (optimizar-cache-e-imagenes, D2). La carpeta debe ser propia: Coil usa
+         * otra para las imágenes. Sin carpeta (pruebas), el cliente no guarda nada, como antes.
+         */
+        fun clientePorDefecto(carpetaCache: File? = null): OkHttpClient = OkHttpClient.Builder()
             .connectTimeout(TIMEOUT_SEGUNDOS, TimeUnit.SECONDS)
             .readTimeout(TIMEOUT_SEGUNDOS, TimeUnit.SECONDS)
+            .apply {
+                if (carpetaCache != null) {
+                    cache(Cache(carpetaCache, TAMANO_CACHE_HTTP))
+                    addInterceptor(RevalidarConElBackend)
+                }
+            }
             .build()
     }
 }

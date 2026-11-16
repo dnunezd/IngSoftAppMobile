@@ -7,8 +7,11 @@ import com.example.vinilos.data.model.Collector
 import com.example.vinilos.data.remote.CollectorApi
 import com.example.vinilos.data.remote.CollectorDto
 import com.example.vinilos.data.remote.ServiceAdapter
+import com.example.vinilos.data.remote.conVersion
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
@@ -25,11 +28,20 @@ class CollectorRepositoryImpl(
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : CollectorRepository {
 
-    /** Si la consulta sale bien, reemplaza lo guardado conservando el orden del backend (D4). */
+    /** Protege la comparación, la escritura y la actualización de lo que sigue (optimizar-cache-e-imagenes, D4). */
+    private val escritura = Mutex()
+    private val copia = CopiaTabla<Int, ColeccionistaEntity> { it.id }
+    private var versionGuardada: String? = null
+
+    /**
+     * Si la consulta sale bien, lo guardado queda igual a la respuesta, en el orden del backend (D4). Solo se
+     * escriben los coleccionistas nuevos o cambiados (una fila cambia también si cambió su posición).
+     */
     override suspend fun obtenerColeccionistas(): Result<List<Collector>> = withContext(dispatcher) {
-        adaptador.llamar { api.getCollectors() }
-            .map { lista -> lista.mapNotNull { it.aModelo() } }
-            .onSuccess { guardar(it) }
+        adaptador.llamar { api.getCollectors().conVersion() }
+            .map { respuesta -> respuesta.valor.mapNotNull { it.aModelo() } to respuesta.version }
+            .onSuccess { (coleccionistas, version) -> guardar(coleccionistas, version) }
+            .map { (coleccionistas, _) -> coleccionistas }
     }
 
     /** Vacío si no hay caché o si no se pudo leer: la caché es una mejora, nunca una condición. */
@@ -42,13 +54,29 @@ class CollectorRepositoryImpl(
         }
     }
 
-    /** Un fallo al escribir no cambia el resultado de la consulta, que ya llegó bien. */
-    private suspend fun guardar(coleccionistas: List<Collector>) {
+    /**
+     * Punto único de escritura (D4 y D5). Si no termina normalmente, se descarta lo que se recordaba y la
+     * siguiente consulta reemplaza todo. Un fallo del almacenamiento no cambia el resultado de la consulta; la
+     * cancelación y los errores de programación se relanzan.
+     */
+    private suspend fun guardar(coleccionistas: List<Collector>, version: String?) {
         val dao = coleccionistaDao ?: return
-        try {
-            dao.reemplazar(coleccionistas.mapIndexed { posicion, it -> ColeccionistaEntity(it.id, it.name, it.email, posicion) })
-        } catch (e: SQLiteException) {
-            // Se sigue mostrando la respuesta; la siguiente consulta exitosa vuelve a intentarlo.
+        escritura.withLock {
+            try {
+                if (version != null && version == versionGuardada) return@withLock
+                val cambios = copia.cambiosPara(
+                    coleccionistas.mapIndexed { posicion, it -> ColeccionistaEntity(it.id, it.name, it.email, posicion) }
+                )
+                if (!cambios.vacios) {
+                    dao.aplicar(cambios)
+                    copia.aplicar(cambios)
+                }
+                versionGuardada = version
+            } catch (e: Throwable) {
+                copia.descartar()
+                versionGuardada = null
+                if (e !is SQLiteException) throw e
+            }
         }
     }
 

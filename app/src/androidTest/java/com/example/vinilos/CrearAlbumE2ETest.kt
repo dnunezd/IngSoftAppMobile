@@ -25,7 +25,6 @@ import com.example.vinilos.data.model.AlbumNuevo
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.AlbumRepository
 import com.example.vinilos.data.repository.AlbumRepositoryImpl
-import com.example.vinilos.data.repository.CollectorRepository
 import com.example.vinilos.data.repository.CollectorRepositoryImpl
 import com.example.vinilos.e2e.EvidenciaE2E
 import com.example.vinilos.ui.catalogo.TagContadorCatalogo
@@ -157,8 +156,8 @@ class CrearAlbumE2ETest {
     private fun esperarTexto(texto: String, milis: Long = 15_000) =
         rule.waitUntil(milis) { rule.onAllNodesWithText(texto).fetchSemanticsNodes().isNotEmpty() }
 
-    private fun esperarQueDesaparezca(tag: String, milis: Long = 15_000) =
-        rule.waitUntil(milis) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isEmpty() }
+    private fun esperarQueSeCierreElFormulario() =
+        rule.waitUntil(15_000) { rule.onAllNodesWithTag(TagFormularioCrear).fetchSemanticsNodes().isEmpty() }
 
     /** Inicio -> "Ver álbumes" -> catálogo cargado. */
     private fun verCatalogo(evidencia: String, paso: String) {
@@ -306,7 +305,7 @@ class CrearAlbumE2ETest {
             EvidenciaE2E.capturar(rule, evidencia, "03_formulario_lleno")
 
             pulsar(TagCrearAlbum)
-            esperarQueDesaparezca(TagFormularioCrear)
+            esperarQueSeCierreElFormulario()
             esperarTexto("Álbum creado", milis = 10_000)
             EvidenciaE2E.capturar(rule, evidencia, "04_album_creado")
 
@@ -341,7 +340,7 @@ class CrearAlbumE2ETest {
             EvidenciaE2E.capturar(rule, evidencia, "03_formulario_lleno")
 
             pulsar(TagCancelarCrear)
-            esperarQueDesaparezca(TagFormularioCrear)
+            esperarQueSeCierreElFormulario()
             esperarA(TagContadorCatalogo)
             rule.onAllNodesWithText(formulario.nombre).assertCountEquals(0)
             EvidenciaE2E.capturar(rule, evidencia, "04_catalogo_sin_cambios")
@@ -496,7 +495,7 @@ class CrearAlbumE2ETest {
             // El backend "vuelve" y la persona reintenta.
             caido = false
             pulsar(TagCrearAlbum)
-            esperarQueDesaparezca(TagFormularioCrear)
+            esperarQueSeCierreElFormulario()
             esperarTexto("Álbum creado", milis = 10_000)
             esperarInsigniaNuevo(idCreado)
             EvidenciaE2E.capturar(rule, evidencia, "05_album_creado_al_reintentar")

@@ -14,12 +14,12 @@ La documentación del proyecto (historias de usuario, arquitectura y estrategia 
 
 Cerró el 1 de noviembre de 2026.
 
-| Historia | Qué hace | Responsable | Pull Requests |
-|---|---|---|---|
-| HU00 · Ingreso a la plataforma | Ingreso como Visitante o Coleccionista, selector de coleccionista, sesión por rol y pantalla de inicio | Daniel Nuñez | [#64](https://github.com/dnunezd/IngSoftAppMobile/pull/64), [#75](https://github.com/dnunezd/IngSoftAppMobile/pull/75) |
-| HU01 · Catálogo de álbumes | Álbumes en orden alfabético con portada, nombre y género; carga, vacío, error con "Reintentar", deslizar para actualizar y paso al detalle | Jeffrey Díaz | [#72](https://github.com/dnunezd/IngSoftAppMobile/pull/72), [#78](https://github.com/dnunezd/IngSoftAppMobile/pull/78) |
-| HU02 · Detalle de álbum | Portada, datos del álbum, artistas, canciones, comentarios y promedio; mensaje propio para un álbum inexistente (404) | Lorena Nossa | [#71](https://github.com/dnunezd/IngSoftAppMobile/pull/71), [#77](https://github.com/dnunezd/IngSoftAppMobile/pull/77), [#80](https://github.com/dnunezd/IngSoftAppMobile/pull/80) |
-| HU03 · Listado de artistas | Músicos y bandas en orden alfabético con búsqueda por nombre (sin distinguir mayúsculas ni tildes) | Michael Mora | [#66](https://github.com/dnunezd/IngSoftAppMobile/pull/66), [#76](https://github.com/dnunezd/IngSoftAppMobile/pull/76) |
+| Historia                       | Qué hace                                                                                                                                   | Responsable  | Pull Requests                                                                                                                                                                      |
+|--------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|--------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| HU00 · Ingreso a la plataforma | Ingreso como Visitante o Coleccionista, selector de coleccionista, sesión por rol y pantalla de inicio                                     | Daniel Nuñez | [#64](https://github.com/dnunezd/IngSoftAppMobile/pull/64), [#75](https://github.com/dnunezd/IngSoftAppMobile/pull/75)                                                             |
+| HU01 · Catálogo de álbumes     | Álbumes en orden alfabético con portada, nombre y género; carga, vacío, error con "Reintentar", deslizar para actualizar y paso al detalle | Jeffrey Díaz | [#72](https://github.com/dnunezd/IngSoftAppMobile/pull/72), [#78](https://github.com/dnunezd/IngSoftAppMobile/pull/78)                                                             |
+| HU02 · Detalle de álbum        | Portada, datos del álbum, artistas, canciones, comentarios y promedio; mensaje propio para un álbum inexistente (404)                      | Lorena Nossa | [#71](https://github.com/dnunezd/IngSoftAppMobile/pull/71), [#77](https://github.com/dnunezd/IngSoftAppMobile/pull/77), [#80](https://github.com/dnunezd/IngSoftAppMobile/pull/80) |
+| HU03 · Listado de artistas     | Músicos y bandas en orden alfabético con búsqueda por nombre (sin distinguir mayúsculas ni tildes)                                         | Michael Mora | [#66](https://github.com/dnunezd/IngSoftAppMobile/pull/66), [#76](https://github.com/dnunezd/IngSoftAppMobile/pull/76)                                                             |
 
 Base técnica del sprint:
 - `ServiceAdapter` como único punto de acceso al backend ([#68](https://github.com/dnunezd/IngSoftAppMobile/pull/68)).
@@ -27,17 +27,17 @@ Base técnica del sprint:
 - CI con lint y pruebas unitarias.
 - Backend desplegado de los tutores como valor por defecto ([#79](https://github.com/dnunezd/IngSoftAppMobile/pull/79)).
 
-Evidencia de pruebas en [`docs/pruebas/sprint-1/`](docs/pruebas/sprint-1/).
+Evidencia de pruebas en [`docs/pruebas/sprint-1/`](docs/pruebas/sprint-1).
 
 ### Sprint 2 · en curso
 
 Va del 2 al 15 de noviembre de 2026. Su primer release será **`v2.0.0` – Sprint 2**. Estado al 8 de noviembre, al cierre de la semana 1: el [milestone](https://github.com/dnunezd/IngSoftAppMobile/milestone/3) tiene 8 issues cerrados y 12 abiertos.
 
-| Historia | En `develop` | En revisión | Pendiente |
-|---|---|---|---|
-| HU04 · Detalle de artista (Daniel Nuñez) | Datos del músico o la banda, integrantes, álbumes con paso a su detalle y premios ([#82](https://github.com/dnunezd/IngSoftAppMobile/pull/82)) | E2E `FN04-ESC01` a `ESC07` ([#84](https://github.com/dnunezd/IngSoftAppMobile/pull/84)) | Wiki y mockups (T04-6) |
-| HU07 · Crear un álbum (Jeffrey Díaz) | Parte 1: formulario solo para el Coleccionista, validación, selector de fecha, envío con reintento y álbum nuevo marcado en el catálogo ([#83](https://github.com/dnunezd/IngSoftAppMobile/pull/83)) | E2E `FN07-ESC01` a `ESC07` ([#85](https://github.com/dnunezd/IngSoftAppMobile/pull/85)) | Wiki y mockups (T07-7) y parte 2 de desempeño |
-| HU10 · Agregar artistas favoritos (Lorena Nossa) | — | Botón de favorito en el detalle del artista, con confirmación y errores ([#86](https://github.com/dnunezd/IngSoftAppMobile/pull/86)) | E2E (T10-5), wiki y mockups (T10-7) |
+| Historia                                         | En `develop`                                                                                                                                                                                         | En revisión                                                                                                                          | Pendiente                                     |
+|--------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------|
+| HU04 · Detalle de artista (Daniel Nuñez)         | Datos del músico o la banda, integrantes, álbumes con paso a su detalle y premios ([#82](https://github.com/dnunezd/IngSoftAppMobile/pull/82))                                                       | E2E `FN04-ESC01` a `ESC07` ([#84](https://github.com/dnunezd/IngSoftAppMobile/pull/84))                                              | Wiki y mockups (T04-6)                        |
+| HU07 · Crear un álbum (Jeffrey Díaz)             | Parte 1: formulario solo para el Coleccionista, validación, selector de fecha, envío con reintento y álbum nuevo marcado en el catálogo ([#83](https://github.com/dnunezd/IngSoftAppMobile/pull/83)) | E2E `FN07-ESC01` a `ESC07` ([#85](https://github.com/dnunezd/IngSoftAppMobile/pull/85))                                              | Wiki y mockups (T07-7) y parte 2 de desempeño |
+| HU10 · Agregar artistas favoritos (Lorena Nossa) | —                                                                                                                                                                                                    | Botón de favorito en el detalle del artista, con confirmación y errores ([#86](https://github.com/dnunezd/IngSoftAppMobile/pull/86)) | E2E (T10-5), wiki y mockups (T10-7)           |
 
 - **Caché sin conexión** (rama `feature/cache-consultas`, cambio `add-cache-consultas`): extiende la caché del catálogo a coleccionistas, detalle de álbum, listado y detalle de artistas y favoritos, en respuesta a la revisión "si se quedan sin internet, no van a mostrar nada".
 - **Regresión:** el equipo decidió no hacer pruebas de regresión en este sprint (T07-6 y T10-6).
@@ -46,12 +46,12 @@ Va del 2 al 15 de noviembre de 2026. Su primer release será **`v2.0.0` – Spri
   - En `CrearAlbumE2ETest` (en #85), el teclado tapaba el siguiente campo; ahora se cierra después de escribir.
 - **Verificación de `develop`** (8 de noviembre, contra BackVynils local) en un Motorola Edge 30 (Android 14), un emulador Pixel 8 (API 34) y un emulador Nexus 5X (API 23):
 
-  | Prueba | Resultado |
-  |---|---|
-  | Lint | 0 errores, 48 avisos esperados |
-  | Unitarias | 220 sin fallos |
-  | Instrumentadas | 130 sin fallos en cada dispositivo, corridas en paralelo |
-  | `ExampleInstrumentedTest` | Sin fallos en los dos emuladores, corrida aparte porque compara el paquete de la app |
+| Prueba                    | Resultado                                                                            |
+|---------------------------|--------------------------------------------------------------------------------------|
+| Lint                      | 0 errores, 48 avisos esperados                                                       |
+| Unitarias                 | 220 sin fallos                                                                       |
+| Instrumentadas            | 130 sin fallos en cada dispositivo, corridas en paralelo                             |
+| `ExampleInstrumentedTest` | Sin fallos en los dos emuladores, corrida aparte porque compara el paquete de la app |
 - **Pendiente para cerrar la iteración 2:**
   - Optimizar las cinco historias de las iteraciones 1 y 2: micro-optimizaciones con el Lint de Android, corrutinas para evitar ANR y menor consumo de memoria.
   - Perfilarlas en al menos tres dispositivos físicos.
@@ -62,7 +62,7 @@ Va del 2 al 15 de noviembre de 2026. Su primer release será **`v2.0.0` – Spri
 
 La versión publicada es `1.1.0` (`versionCode` 2), en el release [`v1.1.0`](https://github.com/dnunezd/IngSoftAppMobile/releases/tag/v1.1.0) sobre `main`, con el APK `vinilos-v1.1.0.apk` adjunto. El identificador de la app es `com.example.vinilos` y funciona desde Android 6.0 (API 23). Para instalarla sin compilar, descarga el APK del release en el teléfono y ábrelo.
 
-El primer release del Sprint 2 fue **`v2.0.0` – Sprint 2**; el segundo será **`v2.1.0` – Sprint 2**. `app/build.gradle.kts` ya tiene `versionName` `2.1.0` y `versionCode` 4. Los releases siguen el formato `v<versión> – Sprint <n>`, como `v1.1.0 – Sprint 1`.
+Los releases del Sprint 2 fueron **`v2.0.0`** y **`v2.1.0`**; el siguiente será **`v2.2.0` – Sprint 2**. `app/build.gradle.kts` ya tiene `versionName` `2.2.0` y `versionCode` 5. Los releases siguen el formato `v<versión> – Sprint <n>`, como `v1.1.0 – Sprint 1`.
 
 Para cada release:
 
@@ -74,15 +74,15 @@ Antes de generarlo, comprueba que el backend desplegado responda (ver [opción A
 
 ## Requisitos
 
-| Herramienta | Versión |
-|---|---|
-| JDK | 17. Gradle 8.7 no arranca con un JDK más nuevo (como el que trae Android Studio): define `JAVA_HOME` con un JDK 17 |
-| Android Studio | Compatible con AGP 8.6.0 (Koala Feature Drop 2024.1.2 o superior) |
-| Android SDK | Plataforma 34 (`minSdk` 23, `compileSdk` y `targetSdk` 34), con `adb` en `platform-tools` |
-| Docker | Docker Desktop o Docker Engine con Compose, solo para el backend local |
-| Dispositivo | Físico o emulador con Android 6.0 (API 23) o superior |
+| Herramienta    | Versión                                                                                     |
+|----------------|---------------------------------------------------------------------------------------------|
+| JDK            | 17 o superior (Gradle 9.9.1 y AGP 9.5.1 no arrancan con uno más viejo); compila con 17 y 21 |
+| Android Studio | Compatible con AGP 9.5.1                                                                    |
+| Android SDK    | Plataforma 37 (`minSdk` 23, `compileSdk` y `targetSdk` 37), con `adb` en `platform-tools`   |
+| Docker         | Docker Desktop o Docker Engine con Compose, solo para el backend local                      |
+| Dispositivo    | Físico o emulador con Android 6.0 (API 23) o superior                                       |
 
-Stack: Kotlin 1.9, Jetpack Compose con Material 3, MVVM + Repository, Retrofit + OkHttp, Room, Coil, Navigation Compose y corrutinas. Gradle 8.7 viene con el wrapper.
+Stack: Kotlin 2.4, Jetpack Compose con Material 3, MVVM + Repository, Retrofit + OkHttp, Room, Coil, Navigation Compose y corrutinas. Gradle 9.9.1 viene con el wrapper.
 
 ## Puesta en marcha
 
@@ -134,11 +134,11 @@ La respuesta debe incluir a **Manolo Bellon** y **Jaime Monsalve** (ids 100 y 10
 
 La URL sale de la propiedad de Gradle `baseUrl` y queda fija en la APK al compilar.
 
-| Dónde corres la app | Qué hacer |
-|---|---|
-| Cualquier dispositivo, backend desplegado | Nada: es el valor por defecto |
-| Emulador, backend local | Compila con `-PbaseUrl=http://10.0.2.2:3000/` (`10.0.2.2` es el computador visto desde el emulador) |
-| Dispositivo físico, backend local | Ejecuta `adb reverse tcp:3000 tcp:3000` (repítelo si se reconecta) y compila con `-PbaseUrl=http://localhost:3000/` |
+| Dónde corres la app                       | Qué hacer                                                                                                           |
+|-------------------------------------------|---------------------------------------------------------------------------------------------------------------------|
+| Cualquier dispositivo, backend desplegado | Nada: es el valor por defecto                                                                                       |
+| Emulador, backend local                   | Compila con `-PbaseUrl=http://10.0.2.2:3000/` (`10.0.2.2` es el computador visto desde el emulador)                 |
+| Dispositivo físico, backend local         | Ejecuta `adb reverse tcp:3000 tcp:3000` (repítelo si se reconecta) y compila con `-PbaseUrl=http://localhost:3000/` |
 
 El HTTP sin cifrar solo está permitido hacia `localhost` y `10.0.2.2` (`app/src/main/res/xml/network_security_config.xml`).
 
@@ -153,11 +153,11 @@ Agrega `-PbaseUrl=...` para usar el backend local. Si hay varios dispositivos co
 
 ## Pruebas
 
-| Tipo | Comando | Cantidad | Necesita |
-|---|---|---|---|
-| Lint y unitarias (lo que corre la CI) | `./gradlew lint testDebugUnitTest --continue` | 220 unitarias | Nada |
-| Instrumentadas sin E2E | `./gradlew connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.notClass=com.example.vinilos.IngresoE2ETest,com.example.vinilos.CatalogoE2ETest,com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest,com.example.vinilos.ArtistasE2ETest,com.example.vinilos.ArtistaDetalleE2ETest,com.example.vinilos.CrearAlbumE2ETest,com.example.vinilos.ArtistasFavoritosE2ETest"` | 112 | Dispositivo |
-| Todas las instrumentadas (con E2E) | `./gradlew connectedDebugAndroidTest -PbaseUrl=http://localhost:3000/` | 131 (112 + 19 E2E) | Dispositivo, backend local con datos y `adb reverse` en un teléfono |
+| Tipo                                  | Comando                                                                                                                                                                                                                                                                                                                                                                                                                                  | Cantidad           | Necesita                                                            |
+|---------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------|---------------------------------------------------------------------|
+| Lint y unitarias (lo que corre la CI) | `./gradlew lint testDebugUnitTest --continue`                                                                                                                                                                                                                                                                                                                                                                                            | 220 unitarias      | Nada                                                                |
+| Instrumentadas sin E2E                | `./gradlew connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.notClass=com.example.vinilos.IngresoE2ETest,com.example.vinilos.CatalogoE2ETest,com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest,com.example.vinilos.ArtistasE2ETest,com.example.vinilos.ArtistaDetalleE2ETest,com.example.vinilos.CrearAlbumE2ETest,com.example.vinilos.ArtistasFavoritosE2ETest"` | 112                | Dispositivo                                                         |
+| Todas las instrumentadas (con E2E)    | `./gradlew connectedDebugAndroidTest -PbaseUrl=http://localhost:3000/`                                                                                                                                                                                                                                                                                                                                                                   | 131 (112 + 19 E2E) | Dispositivo, backend local con datos y `adb reverse` en un teléfono |
 
 - El dispositivo debe estar **desbloqueado y con la pantalla encendida** durante toda la corrida.
 - Pasa `-PbaseUrl` también a las instrumentadas: la URL queda fija en la APK de prueba. Las E2E que crean datos deben correr contra el backend local.
@@ -169,16 +169,16 @@ Agrega `-PbaseUrl=...` para usar el backend local. Si hay varios dispositivos co
 
 Las E2E recorren la app contra el backend real. Cada escenario se nombra con el id de su historia (`FN03-ESC07`) y guarda en el dispositivo capturas, un informe y un PDF en `.../files/e2e-evidencia/<escenario>/`. Esa carpeta no se versiona; los PDF que se entregan se copian a `docs/pruebas/<sprint>/<HU>/e2e/`.
 
-| Clase | Historia | Escenarios |
-|---|---|---|
-| `IngresoE2ETest` | HU00 | `FN00-ESC01` a `ESC03`, más una prueba de navegación |
-| `CatalogoE2ETest` | HU01 | `FN01-ESC01` a `ESC05` |
-| `AlbumDetalleE2ETest` | HU02 | `FN02-ESC01` |
-| `AlbumDetalleBackendRealTest` | HU02 | `FN02-ESC02` y `ESC03` |
-| `ArtistasE2ETest` | HU03 | `FN03-ESC01` a `ESC07` |
-| `ArtistaDetalleE2ETest` | HU04 | `FN04-ESC01` a `ESC07` |
-| `CrearAlbumE2ETest` | HU07 | `FN07-ESC01` a `ESC07` (crea y borra álbumes: correr contra BackVynils local) |
-| `ArtistasFavoritosE2ETest` | HU10 | `FN10-ESC01` a `ESC08` (agrega favoritos: correr contra BackVynils local) |
+| Clase                         | Historia | Escenarios                                                                    |
+|-------------------------------|----------|-------------------------------------------------------------------------------|
+| `IngresoE2ETest`              | HU00     | `FN00-ESC01` a `ESC03`, más una prueba de navegación                          |
+| `CatalogoE2ETest`             | HU01     | `FN01-ESC01` a `ESC05`                                                        |
+| `AlbumDetalleE2ETest`         | HU02     | `FN02-ESC01`                                                                  |
+| `AlbumDetalleBackendRealTest` | HU02     | `FN02-ESC02` y `ESC03`                                                        |
+| `ArtistasE2ETest`             | HU03     | `FN03-ESC01` a `ESC07`                                                        |
+| `ArtistaDetalleE2ETest`       | HU04     | `FN04-ESC01` a `ESC07`                                                        |
+| `CrearAlbumE2ETest`           | HU07     | `FN07-ESC01` a `ESC07` (crea y borra álbumes: correr contra BackVynils local) |
+| `ArtistasFavoritosE2ETest`    | HU10     | `FN10-ESC01` a `ESC08` (agrega favoritos: correr contra BackVynils local)     |
 
 Total: **41 pruebas E2E**. Para correrlas y traer la evidencia (con `connectedDebugAndroidTest` la app se desinstala al terminar y la evidencia se pierde):
 
@@ -194,16 +194,16 @@ Debe terminar en `OK (41 tests)`. En Git Bash antepone `MSYS_NO_PATHCONV=1` a lo
 
 ## Problemas frecuentes
 
-| Síntoma | Causa y solución |
-|---|---|
-| `No compose hierarchies found in the app` | El dispositivo está bloqueado o con la pantalla apagada. |
-| "No pudimos cargar los coleccionistas" o fallan las E2E | Backend caído, falta `adb reverse` o la app se instaló con otra `baseUrl`. Revisa `curl http://localhost:3000/collectors` y reinstala con `-PbaseUrl`. |
-| El backend desplegado responde `{"statusCode":500,"message":"Internal server error"}` | Está caído o dormido. Usa el [backend local](#opción-b-backend-local-con-docker). |
-| Una E2E que escribe en un campo falla solo en API 23 (toque sin efecto o texto repetido al girar) | El teclado de API 23 sigue abierto o conectado al campo. Ciérralo después de escribir (`Espresso.closeSoftKeyboard()`) y quita el foco antes de girar. |
-| `Cleartext HTTP traffic not permitted` | El host del backend no está en `network_security_config.xml`. |
-| `more than one device/emulator` | Elige un dispositivo con `ANDROID_SERIAL`. |
-| `Your project path contains non-ASCII characters` (Windows) | La ruta del repositorio tiene tildes. Clónalo en una ruta sin ellas (por ejemplo `C:\dev\IngSoftAppMobile`); `android.overridePathCheck=true` no basta, porque las unitarias fallan con `ClassNotFoundException`. |
-| Gradle falla al arrancar y solo muestra una versión de Java (por ejemplo `25.0.3`) | Gradle 8.7 no soporta ese JDK: define `JAVA_HOME` con un JDK 17. |
+| Síntoma                                                                                           | Causa y solución                                                                                                                                                                                                  |
+|---------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `No compose hierarchies found in the app`                                                         | El dispositivo está bloqueado o con la pantalla apagada.                                                                                                                                                          |
+| "No pudimos cargar los coleccionistas" o fallan las E2E                                           | Backend caído, falta `adb reverse` o la app se instaló con otra `baseUrl`. Revisa `curl http://localhost:3000/collectors` y reinstala con `-PbaseUrl`.                                                            |
+| El backend desplegado responde `{"statusCode":500,"message":"Internal server error"}`             | Está caído o dormido. Usa el [backend local](#opción-b-backend-local-con-docker).                                                                                                                                 |
+| Una E2E que escribe en un campo falla solo en API 23 (toque sin efecto o texto repetido al girar) | El teclado de API 23 sigue abierto o conectado al campo. Ciérralo después de escribir (`Espresso.closeSoftKeyboard()`) y quita el foco antes de girar.                                                            |
+| `Cleartext HTTP traffic not permitted`                                                            | El host del backend no está en `network_security_config.xml`.                                                                                                                                                     |
+| `more than one device/emulator`                                                                   | Elige un dispositivo con `ANDROID_SERIAL`.                                                                                                                                                                        |
+| `Your project path contains non-ASCII characters` (Windows)                                       | La ruta del repositorio tiene tildes. Clónalo en una ruta sin ellas (por ejemplo `C:\dev\IngSoftAppMobile`); `android.overridePathCheck=true` no basta, porque las unitarias fallan con `ClassNotFoundException`. |
+| Gradle falla al arrancar y solo muestra una versión de Java (por ejemplo `25.0.3`)                | Gradle 9.9.1 no soporta ese JDK: define `JAVA_HOME` con un JDK 17 o 21.                                                                                                                                           |
 
 ## Estructura y arquitectura
 
@@ -220,7 +220,9 @@ openspec/      specs vigentes (specs/), cambios en curso (changes/) y archivados
 
 **MVVM** con capa de datos por **Repository**: la vista dibuja el estado que expone el `ViewModel` y le envía los eventos; los repositorios son interfaces con su implementación (`*RepositoryImpl`) y hablan con el backend solo a través del `ServiceAdapter`, que construye una sola vez el cliente de red y traduce los errores de red y del servidor a `ErrorDeCarga` (un 404, a `RecursoNoEncontrado`). Cada repositorio convierte y ordena en un dispatcher inyectado (`Dispatchers.Default`), fuera del hilo principal.
 
-**Sin conexión:** los repositorios guardan en Room la última respuesta de cada consulta de lectura: catálogo y detalle de álbumes, coleccionistas, listado de artistas, detalle de cada artista abierto y favoritos confirmados. Al abrir una de esas pantallas se muestra lo guardado mientras se consulta el backend; si la consulta falla, se conserva con un aviso breve, y la pantalla de error queda solo para cuando no hay nada guardado. Las escrituras (crear un álbum, agregar un favorito) siguen necesitando conexión. El detalle está en [`plan-adopcion-room.md`](docs/arquitectura/plan-adopcion-room.md) y en los cambios OpenSpec `add-cache-catalogo` y `add-cache-consultas`.
+**Sin conexión:** los repositorios guardan en Room la última respuesta de cada consulta de lectura: catálogo y detalle de álbumes, coleccionistas, listado de artistas, detalle de cada artista abierto y favoritos confirmados. Al abrir una de esas pantallas se muestra lo guardado mientras se consulta el backend; si la consulta falla, se conserva con un aviso breve, y la pantalla de error queda solo para cuando no hay nada guardado. Las escrituras (crear un álbum, agregar un favorito) siguen necesitando conexión. El detalle está en los cambios OpenSpec `add-cache-catalogo` y `add-cache-consultas`.
+
+**Escribir solo lo que cambió:** cada repositorio recuerda en memoria lo último que guardó y la versión (`ETag`) de cada respuesta. Si una consulta llega con la misma versión o con el mismo contenido, no escribe en Room; si cambió, guarda solo las filas nuevas o modificadas y borra las que ya no llegan. El cliente de la API tiene además una caché HTTP en `cacheDir/http`: una consulta repetida envía `If-None-Match` y, si nada cambió, el backend responde 304 sin cuerpo. Ver el cambio OpenSpec `optimizar-cache-e-imagenes`.
 
 Los diagramas están en la página de cada sprint en la wiki.
 

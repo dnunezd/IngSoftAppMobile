@@ -4,6 +4,7 @@ import android.database.sqlite.SQLiteException
 import com.example.vinilos.data.local.AlbumDao
 import com.example.vinilos.data.local.AlbumDetalleEntity
 import com.example.vinilos.data.local.AlbumEntity
+import com.example.vinilos.data.local.CambiosDeTabla
 import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.AlbumNuevo
 import com.example.vinilos.data.model.AlbumResumen
@@ -18,9 +19,12 @@ import com.example.vinilos.data.remote.ArtistaDto
 import com.example.vinilos.data.remote.CrearAlbumDto
 import com.example.vinilos.data.remote.RecursoNoEncontrado
 import com.example.vinilos.data.remote.ServiceAdapter
+import com.example.vinilos.data.remote.conVersion
 import com.google.gson.JsonParseException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.text.ParseException
 
@@ -32,6 +36,10 @@ import java.text.ParseException
  * Retrofit y Room hacen su I/O en sus propios hilos; lo que corre en [dispatcher] (`Dispatchers.Default`
  * por defecto) es el trabajo de CPU: convertir, ordenar y validar fechas. Así se puede llamar desde el
  * hilo principal sin bloquearlo.
+ *
+ * Solo se escribe lo que cambió (optimizar-cache-e-imagenes, D4 y D5): el repositorio recuerda en memoria lo
+ * último que escribió en cada tabla y la versión (`ETag`) de cada consulta, y toda escritura pasa por
+ * [escribir], que protege esa memoria con [escritura].
  */
 class AlbumRepositoryImpl(
     private val adaptador: ServiceAdapter,
@@ -40,35 +48,109 @@ class AlbumRepositoryImpl(
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : AlbumRepository {
 
+    /** Protege la comparación, la escritura y la actualización de lo que sigue. */
+    private val escritura = Mutex()
+    private val copiaCatalogo = CopiaTabla<Int, AlbumEntity> { it.id }
+    private val copiaDetalles = CopiaTabla<Int, AlbumDetalleEntity> { it.id }
+    private var versionCatalogo: String? = null
+    private val versionesDetalle = Versiones<Int>()
+
     /**
-     * Detalle del álbum (HU02). Si sale bien, guarda o reemplaza su detalle; si el backend confirma con
+     * Detalle del álbum (HU02). Si sale bien, guarda su detalle si cambió; si el backend confirma con
      * un 404 que ya no existe, lo borra de lo guardado (add-cache-consultas, D4).
      */
     override suspend fun obtenerAlbum(id: Int): Result<Album> = withContext(dispatcher) {
-        val respuesta = adaptador.llamar { api.obtenerAlbum(id).aModelo() }
+        val respuesta = adaptador.llamar {
+            val conVersion = api.obtenerAlbum(id).conVersion()
+            conVersion.valor.aModelo() to conVersion.version
+        }
         val error = respuesta.exceptionOrNull()
         if (error is RecursoNoEncontrado) {
-            escribir { borrarAlbum(id) }
+            borrarAlbumGuardado(id)
             Result.failure(AlbumNoDisponible(error.cause))
         } else {
-            respuesta.onSuccess { album -> escribir { guardarDetalle(album.aEntidad()) } }
+            respuesta.onSuccess { (album, version) -> guardarDetalleSiCambio(album.aEntidad(), version) }
+                .map { (album, _) -> album }
         }
     }
 
     /**
      * Catálogo (HU01) ordenado por nombre. A diferencia del detalle, la conversión es tolerante:
      * un álbum sin id, nombre o género se descarta sin afectar a los demás. Si la consulta sale bien,
-     * la respuesta reemplaza el catálogo guardado y, con la misma respuesta, los detalles guardados:
-     * `GET /albums` ya trae canciones, intérpretes y comentarios (add-cache-consultas, D4).
+     * lo guardado del catálogo y de los detalles queda igual a la respuesta: `GET /albums` ya trae
+     * canciones, intérpretes y comentarios (add-cache-consultas, D4).
      */
     override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> = withContext(dispatcher) {
         adaptador.llamar {
-            val respuesta = api.obtenerAlbumes()
-            val albumes = respuesta.mapNotNull { it.aResumen() }.sortedWith(ordenCatalogo())
-            albumes to respuesta.mapNotNull { it.aDetalleSiEsValido() }
-        }.onSuccess { (albumes, detalles) ->
-            escribir { reemplazarCatalogo(albumes.map { it.aEntidad() }, detalles.map { it.aEntidad() }) }
-        }.map { (albumes, _) -> albumes }
+            val respuesta = api.obtenerAlbumes().conVersion()
+            val albumes = respuesta.valor.mapNotNull { it.aResumen() }.sortedWith(ordenCatalogo())
+            Triple(albumes, respuesta.valor.mapNotNull { it.aDetalleSiEsValido() }, respuesta.version)
+        }.onSuccess { (albumes, detalles, version) -> guardarCatalogo(albumes, detalles, version) }
+            .map { (albumes, _, _) -> albumes }
+    }
+
+    // ---------- Punto único de escritura (optimizar-cache-e-imagenes, D4 y D5) ----------
+
+    private suspend fun guardarCatalogo(albumes: List<AlbumResumen>, detalles: List<Album>, version: String?) =
+        escribir {
+            if (version != null && version == versionCatalogo) return@escribir
+            val cambiosCatalogo = copiaCatalogo.cambiosPara(albumes.map { it.aEntidad() })
+            val cambiosDetalles = copiaDetalles.cambiosPara(detalles.map { it.aEntidad() })
+            if (!cambiosCatalogo.vacios || !cambiosDetalles.vacios) {
+                aplicarCatalogo(cambiosCatalogo, cambiosDetalles)
+                copiaCatalogo.aplicar(cambiosCatalogo)
+                copiaDetalles.aplicar(cambiosDetalles)
+                // Regla 3 de D4: un detalle que cambió deja sin valor la versión de su propia consulta.
+                if (cambiosDetalles.reemplazarTodo) {
+                    versionesDetalle.descartarTodas()
+                } else {
+                    (cambiosDetalles.guardar.map { it.id } + cambiosDetalles.borrar).forEach(versionesDetalle::descartar)
+                }
+            }
+            versionCatalogo = version
+        }
+
+    private suspend fun guardarDetalleSiCambio(detalle: AlbumDetalleEntity, version: String?) = escribir {
+        if (versionesDetalle.igual(detalle.id, version)) return@escribir
+        if (copiaDetalles.fila(detalle.id) != detalle) {
+            guardarDetalle(detalle)
+            copiaDetalles.guardada(detalle)
+            versionCatalogo = null
+        }
+        versionesDetalle.anotar(detalle.id, version)
+    }
+
+    private suspend fun borrarAlbumGuardado(id: Int) = escribir {
+        borrarAlbum(id)
+        copiaCatalogo.borrada(id)
+        copiaDetalles.borrada(id)
+        versionesDetalle.descartar(id)
+        versionCatalogo = null
+    }
+
+    /**
+     * Ejecuta [bloque] con [escritura] tomado. Si el bloque no termina normalmente, no se sabe qué quedó en
+     * Room, así que se descarta lo que se recordaba y la siguiente escritura reemplaza todo (regla 2 de D4).
+     * Un fallo del almacenamiento no cambia el resultado de la consulta, que ya llegó del backend; la
+     * cancelación y los errores de programación se relanzan.
+     */
+    private suspend fun escribir(bloque: suspend AlbumDao.() -> Unit) {
+        val dao = albumDao ?: return
+        escritura.withLock {
+            try {
+                dao.bloque()
+            } catch (e: Throwable) {
+                olvidarLoEscrito()
+                if (e !is SQLiteException) throw e
+            }
+        }
+    }
+
+    private fun olvidarLoEscrito() {
+        copiaCatalogo.descartar()
+        copiaDetalles.descartar()
+        versionCatalogo = null
+        versionesDetalle.descartarTodas()
     }
 
     /**
@@ -93,16 +175,6 @@ class AlbumRepositoryImpl(
         }
     }
 
-    /** Un fallo al escribir no cambia el resultado de la consulta, que ya llegó del backend. */
-    private suspend fun escribir(bloque: suspend AlbumDao.() -> Unit) {
-        val dao = albumDao ?: return
-        try {
-            dao.bloque()
-        } catch (e: SQLiteException) {
-            // Se sigue mostrando la respuesta; la siguiente consulta exitosa vuelve a intentarlo.
-        }
-    }
-
     private fun AlbumResumen.aEntidad() = AlbumEntity(id, nombre, portada, genero, artista, anio)
 
     private fun AlbumEntity.aResumen() = AlbumResumen(id, nombre, portada, genero, artista, anio)
@@ -123,9 +195,34 @@ class AlbumRepositoryImpl(
             null
         }
 
-    /** Crea el álbum (HU07) y devuelve su id, que el catálogo usa para marcarlo como nuevo. */
+    /**
+     * Crea el álbum (HU07) y devuelve su id, que el catálogo usa para marcarlo como nuevo. El álbum que
+     * devuelve el backend se guarda de inmediato, para que el catálogo lo muestre sin esperar `GET /albums`
+     * (optimizar-cache-e-imagenes, D7). Si la respuesta no trae lo necesario o no se puede guardar, la
+     * creación igual se informa como exitosa: el álbum llega con la siguiente consulta del catálogo.
+     */
     override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> = withContext(dispatcher) {
-        adaptador.llamar { requerido(api.crearAlbum(album.aDto()).id, "id") }
+        adaptador.llamar {
+            val creado = api.crearAlbum(album.aDto())
+            requerido(creado.id, "id") to creado
+        }.onSuccess { (_, creado) -> guardarCreado(creado) }
+            .map { (id, _) -> id }
+    }
+
+    private suspend fun guardarCreado(creado: AlbumDto) {
+        val fila = creado.aResumen()?.aEntidad() ?: return
+        val detalle = creado.aDetalleSiEsValido()?.aEntidad()
+        escribir {
+            aplicarCatalogo(
+                CambiosDeTabla.diferencias(listOf(fila), emptyList()),
+                CambiosDeTabla.diferencias(listOfNotNull(detalle), emptyList())
+            )
+            copiaCatalogo.guardada(fila)
+            detalle?.let(copiaDetalles::guardada)
+            // Regla 3 de D4: si el álbum se borra en el backend, la versión anterior del catálogo vuelve.
+            versionCatalogo = null
+            versionesDetalle.descartar(fila.id)
+        }
     }
 
     private fun AlbumNuevo.aDto() = CrearAlbumDto(
