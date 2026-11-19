@@ -67,7 +67,8 @@ fun PantallaDetalleAlbum(
             if (onComentar != null) {
                 ExtendedFloatingActionButton(
                     onClick = onComentar,
-                    icon = { Icon(Icons.Filled.Edit, contentDescription = null) },
+                    // Material oculta el texto a la accesibilidad, así que el nombre lo da el ícono (como en HU07).
+                    icon = { Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.detalle_comentar)) },
                     text = { Text(stringResource(R.string.detalle_comentar)) },
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary,

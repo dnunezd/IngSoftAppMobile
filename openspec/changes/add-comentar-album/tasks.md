@@ -44,16 +44,16 @@ Cada paso de código empieza con su prueba unitaria en rojo (TDD).
 
 ## 5. Verificación
 
-- [ ] 5.1 `./gradlew lint testDebugUnitTest --continue`: 0 errores de lint y todas las unitarias pasan.
-- [ ] 5.2 `./gradlew compileDebugAndroidTestKotlin` y la suite instrumentada, para confirmar que lo existente sigue pasando.
-- [ ] 5.3 Verificar a mano en el emulador, contra BackVynils local:
+- [x] 5.1 `./gradlew lint testDebugUnitTest --continue`: 0 errores de lint y todas las unitarias pasan.
+- [x] 5.2 `./gradlew compileDebugAndroidTestKotlin` y la suite instrumentada, para confirmar que lo existente sigue pasando.
+- [x] 5.3 Verificar a mano en el emulador, contra BackVynils local:
   - los 7 criterios;
   - el diálogo de descarte;
   - el giro;
   - el detalle actualizado.
 
   Borrar después los comentarios creados.
-- [ ] 5.4 `openspec validate add-comentar-album --strict`.
+- [x] 5.4 `openspec validate add-comentar-album --strict`.
 
 ## 6. Pendiente, fuera de este cambio
 
