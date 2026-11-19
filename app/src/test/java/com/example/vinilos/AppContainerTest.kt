@@ -15,8 +15,10 @@ import com.example.vinilos.data.model.AlbumNuevo
 import com.example.vinilos.data.model.AlbumResumen
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.Collector
+import com.example.vinilos.data.model.ComentarioNuevo
 import com.example.vinilos.data.repository.AlbumNoDisponible
 import com.example.vinilos.data.repository.AlbumRepository
+import com.example.vinilos.data.repository.ComentarioRepository
 import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -37,6 +39,10 @@ private class AlbumRepositoryFalso : AlbumRepository {
     override suspend fun obtenerAlbumesGuardados(): List<AlbumResumen> = error("No se usa en esta prueba")
     override suspend fun obtenerAlbumGuardado(id: Int): Album = error("No se usa en esta prueba")
     override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> = error("No se usa en esta prueba")
+}
+
+private class ComentarioRepositoryFalso : ComentarioRepository {
+    override suspend fun publicarComentario(albumId: Int, comentario: ComentarioNuevo): Result<Unit> = Result.success(Unit)
 }
 
 class AppContainerTest {
@@ -78,6 +84,25 @@ class AppContainerTest {
 
         assertSame(falso, contenedor.albumRepository)
         assertTrue(contenedor.albumRepository.obtenerAlbum(1).exceptionOrNull() is AlbumNoDisponible)
+    }
+
+    @Test
+    fun comentariosUsanLaConfiguracionDelContenedor() = runTest {
+        servidor.enqueue(MockResponse().setBody("""{"id": 7, "description": "Gran prensado", "rating": 5}"""))
+        val contenedor = AppContainer(baseUrl = servidor.url("/").toString())
+
+        val repositorio = contenedor.comentarioRepository
+        assertSame(repositorio, contenedor.comentarioRepository)
+        assertTrue(repositorio.publicarComentario(100, ComentarioNuevo(101, 5, "Gran prensado")).isSuccess)
+        assertEquals("/albums/100/comments", servidor.takeRequest(1, TimeUnit.SECONDS)?.path)
+    }
+
+    @Test
+    fun comentarioRepositorioPuedeReemplazarseComoLosDemas() {
+        val falso = ComentarioRepositoryFalso()
+        val contenedor = AppContainer(baseUrl = servidor.url("/").toString(), comentariosRepositorio = falso)
+
+        assertSame(falso, contenedor.comentarioRepository)
     }
 
     @Test
