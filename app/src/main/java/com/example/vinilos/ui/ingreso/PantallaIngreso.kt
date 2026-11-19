@@ -6,6 +6,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -41,12 +43,15 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vinilos.R
@@ -55,6 +60,7 @@ import com.example.vinilos.ui.theme.ChipFondo
 import com.example.vinilos.ui.theme.ChipTexto
 import com.example.vinilos.ui.theme.FondoImagen
 import com.example.vinilos.ui.theme.Naranja
+import com.example.vinilos.ui.theme.NaranjaContraste
 import com.example.vinilos.ui.theme.NaranjaOscuro
 import com.example.vinilos.ui.theme.TextoTenue
 import com.example.vinilos.ui.theme.TitularGris
@@ -206,21 +212,38 @@ private fun SeccionTitular() {
         lineHeight = 38.88.sp,
         letterSpacing = (-1.08).sp
     )
+    // El titular del Figma es un lienzo de medidas fijas; con la fuente ampliada se pasa a un
+    // flujo vertical sin decoraciones para que ningún texto se solape.
+    if (LocalDensity.current.fontScale > FuenteAmpliada) {
+        TitularAmpliado(titular)
+        return
+    }
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(233.dp)
     ) {
         Column(modifier = Modifier.offset(y = 8.dp)) {
-            Text(text = stringResource(R.string.ingreso_hero_1), style = titular, color = TitularIngreso)
+            Text(
+                text = stringResource(R.string.ingreso_hero_1),
+                style = titular,
+                color = TitularIngreso,
+                modifier = Modifier.decorativo()
+            )
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(text = stringResource(R.string.ingreso_hero_2), style = titular, color = TitularGris)
+                Text(
+                    text = stringResource(R.string.ingreso_hero_2),
+                    style = titular,
+                    color = TitularGris,
+                    modifier = Modifier.decorativo()
+                )
                 Spacer(Modifier.width(6.dp))
                 Text(
                     text = stringResource(R.string.ingreso_hero_pill),
                     style = titular.copy(fontSize = 28.sp, lineHeight = 30.24.sp),
                     color = ChipTexto,
                     modifier = Modifier
+                        .decorativo()
                         .rotate(-2f)
                         .clip(RoundedCornerShape(32.dp))
                         .background(ChipFondo)
@@ -233,7 +256,7 @@ private fun SeccionTitular() {
             text = stringResource(R.string.ingreso_hero_3),
             style = titular.copy(fontSize = 30.sp, lineHeight = 33.sp, letterSpacing = (-0.6).sp),
             color = TitularIngreso,
-            modifier = Modifier.offset(y = 96.5.dp)
+            modifier = Modifier.decorativo().offset(y = 96.5.dp)
         )
         Text(
             text = stringResource(R.string.ingreso_subtitulo),
@@ -279,38 +302,99 @@ private fun SeccionTitular() {
                 .rotate(6f)
                 .size(20.dp)
         )
-        Row(
+        ChipSuperior(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .offset(x = 5.dp, y = (-23).dp)
                 .rotate(6f)
-                .shadow(1.dp, CircleShape)
-                .clip(CircleShape)
-                .background(ChipFondo)
-                .border(1.dp, BordeChip.copy(alpha = 0.4f), CircleShape)
-                .padding(horizontal = 15.dp, vertical = 7.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(6.dp)
-        ) {
-            Image(
-                painter = painterResource(R.drawable.ic_ing_chip_nota),
-                contentDescription = null,
-                modifier = Modifier.size(14.dp)
-            )
-            Text(
-                text = stringResource(R.string.ingreso_chip_superior),
-                style = MaterialTheme.typography.labelLarge.copy(
-                    fontSize = 12.sp,
-                    lineHeight = 18.sp,
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 0.3.sp
-                ),
-                color = ChipTexto
-            )
-        }
+        )
     }
 }
 
+/** Escala de fuente a partir de la cual el titular deja el lienzo de medidas fijas. */
+private const val FuenteAmpliada = 1.15f
+
+@Composable
+private fun ChipSuperior(modifier: Modifier = Modifier) {
+    Row(
+        modifier = modifier
+            .decorativo()
+            .shadow(1.dp, CircleShape)
+            .clip(CircleShape)
+            .background(ChipFondo)
+            .border(1.dp, BordeChip.copy(alpha = 0.4f), CircleShape)
+            .padding(horizontal = 15.dp, vertical = 7.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
+        Image(
+            painter = painterResource(R.drawable.ic_ing_chip_nota),
+            contentDescription = null,
+            modifier = Modifier.size(14.dp)
+        )
+        Text(
+            text = stringResource(R.string.ingreso_chip_superior),
+            style = MaterialTheme.typography.labelLarge.copy(
+                fontSize = 12.sp,
+                lineHeight = 18.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.3.sp
+            ),
+            color = ChipTexto
+        )
+    }
+}
+
+/** Titular en flujo vertical para fuentes ampliadas: mismos textos, sin posiciones absolutas. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun TitularAmpliado(titular: TextStyle) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        ChipSuperior()
+        Text(
+                text = stringResource(R.string.ingreso_hero_1),
+                style = titular,
+                color = TitularIngreso,
+                modifier = Modifier.decorativo()
+            )
+        FlowRow(
+            itemVerticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Text(
+                    text = stringResource(R.string.ingreso_hero_2),
+                    style = titular,
+                    color = TitularGris,
+                    modifier = Modifier.decorativo()
+                )
+            Text(
+                text = stringResource(R.string.ingreso_hero_pill),
+                style = titular.copy(fontSize = 28.sp, lineHeight = 30.24.sp),
+                color = ChipTexto,
+                modifier = Modifier
+                    .decorativo()
+                    .clip(RoundedCornerShape(32.dp))
+                    .background(ChipFondo)
+                    .border(1.dp, BordeChip.copy(alpha = 0.3f), RoundedCornerShape(32.dp))
+                    .padding(start = 11.dp, end = 11.dp, top = 2.dp, bottom = 3.dp)
+            )
+        }
+        Text(
+            text = stringResource(R.string.ingreso_hero_3),
+            style = titular.copy(fontSize = 30.sp, lineHeight = 33.sp, letterSpacing = (-0.6).sp),
+            color = TitularIngreso,
+            modifier = Modifier.decorativo()
+        )
+        Text(
+            text = stringResource(R.string.ingreso_subtitulo),
+            style = MaterialTheme.typography.bodyLarge.copy(fontSize = 14.sp, lineHeight = 22.75.sp),
+            color = TextoTenue
+        )
+        FranjaAudioWave()
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TarjetaPerfil(
     nombre: String,
@@ -376,15 +460,16 @@ private fun TarjetaPerfil(
                     )
                 }
             }
-            Row(
+            FlowRow(
                 modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                itemVerticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Row(
-                    modifier = Modifier.weight(1f, fill = false),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                FlowRow(
+                    itemVerticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     Text(
                         text = nombre,
@@ -412,28 +497,31 @@ private fun TarjetaPerfil(
                             .padding(horizontal = 8.dp, vertical = 2.dp)
                     )
                 }
-                Spacer(Modifier.width(8.dp))
+                val descripcionEntrar = stringResource(R.string.ingreso_entrar_como, nombre)
                 Button(
                     onClick = onEntrar,
                     shape = CircleShape,
-                    colors = ButtonDefaults.buttonColors(containerColor = Naranja),
+                    colors = ButtonDefaults.buttonColors(containerColor = NaranjaContraste),
                     contentPadding = PaddingValues(horizontal = 20.dp, vertical = 10.dp),
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp),
                     modifier = Modifier.testTag(tagEntrar)
                 ) {
+                    // La descripción va en el contenido del botón, no en un nodo aparte: así el botón
+                    // es un solo elemento ("Entrar como Visitante") y no dos paradas para TalkBack.
                     Text(
                         text = stringResource(R.string.ingreso_entrar),
                         style = MaterialTheme.typography.labelLarge.copy(
                             fontWeight = FontWeight.Bold,
                             lineHeight = 21.sp,
                             letterSpacing = 0.35.sp
-                        )
+                        ),
+                        modifier = Modifier.clearAndSetSemantics { contentDescription = descripcionEntrar }
                     )
                     Spacer(Modifier.width(8.dp))
                     Image(
                         painter = painterResource(R.drawable.ic_ing_flecha),
                         contentDescription = null,
-                        modifier = Modifier.size(12.dp)
+                        modifier = Modifier.clearAndSetSemantics {}.size(12.dp)
                     )
                 }
             }

@@ -65,7 +65,7 @@ class ContenidoAlbumTest {
             VinilosTheme { ContenidoAlbum(presentacion, onAtras = {}) }
         }
 
-        val imagen = rule.onNodeWithContentDescription("Portada del álbum")
+        val imagen = rule.onNodeWithContentDescription("Portada del álbum, Buscando América")
             .assertIsDisplayed().fetchSemanticsNode()
         val nombre = rule.onNodeWithText("Buscando América").fetchSemanticsNode()
         org.junit.Assert.assertTrue(imagen.boundsInRoot.bottom <= nombre.boundsInRoot.top)
@@ -78,8 +78,8 @@ class ContenidoAlbumTest {
             VinilosTheme { ContenidoAlbum(presentacion, onAtras = {}) }
         }
 
-        rule.onAllNodesWithContentDescription("Portada del álbum").assertCountEquals(1)
-        rule.onNodeWithContentDescription("Portada del álbum").assertIsDisplayed()
+        rule.onAllNodesWithContentDescription("Portada del álbum, Buscando América").assertCountEquals(1)
+        rule.onNodeWithContentDescription("Portada del álbum, Buscando América").assertIsDisplayed()
     }
 
     @Test

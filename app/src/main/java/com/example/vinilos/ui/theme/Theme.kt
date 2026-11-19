@@ -7,7 +7,7 @@ import androidx.compose.runtime.Composable
 // El mockup de Vinilos solo existe en claro, así que el tema es siempre claro y de marca
 // (sin color dinámico ni esquema oscuro).
 private val EsquemaClaro = lightColorScheme(
-    primary = Naranja,
+    primary = NaranjaContraste,
     onPrimary = Superficie,
     primaryContainer = NaranjaSuave,
     onPrimaryContainer = NaranjaOscuro,

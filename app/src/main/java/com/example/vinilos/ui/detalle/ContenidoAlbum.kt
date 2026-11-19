@@ -67,6 +67,7 @@ fun ContenidoAlbum(
         item {
             PortadaAlbum(
                 url = presentacion.album.portada,
+                contentDescription = stringResource(R.string.detalle_portada_con_nombre, presentacion.album.nombre),
                 modifier = Modifier.fillMaxWidth().height(220.dp).clip(RoundedCornerShape(24.dp))
             )
         }
@@ -165,7 +166,11 @@ private fun PromedioConEstrellas(promedio: String?) {
         } else {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(promedio, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                TextoEstrellas(estrellasLlenas(promedio))
+                val descripcionEstrellas = stringResource(R.string.detalle_promedio_estrellas, promedio)
+                TextoEstrellas(
+                    llenas = estrellasLlenas(promedio),
+                    modifier = Modifier.semantics { contentDescription = descripcionEstrellas }
+                )
             }
         }
     }

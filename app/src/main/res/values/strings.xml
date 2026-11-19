@@ -20,6 +20,7 @@
     <string name="ingreso_coleccionista_etiqueta">PRO</string>
     <string name="ingreso_coleccionista_chip">Mi bóveda &amp; Vinilos</string>
     <string name="ingreso_entrar">Entrar</string>
+    <string name="ingreso_entrar_como">Entrar como %1$s</string>
 
     <!-- Selector de coleccionista -->
     <string name="coleccionistas_chip_curado">Curated Vinyls</string>
@@ -65,6 +66,7 @@
     <!-- Los tres puntos son el texto exacto del mockup. -->
     <string name="artistas_buscar" tools:ignore="TypographyEllipsis">Buscar artista por nombre...</string>
     <string name="artistas_lista">Artistas</string>
+    <string name="artistas_lista_descripcion">Lista de artistas</string>
     <plurals name="artistas_contador">
         <item quantity="one">%d artista</item>
         <item quantity="other">%d artistas</item>
@@ -191,8 +193,10 @@
     <string name="detalle_canciones">Canciones</string>
     <string name="detalle_comentarios">Comentarios</string>
     <string name="detalle_promedio">Promedio de calificaciones</string>
+    <string name="detalle_promedio_estrellas">%1$s de 5 estrellas</string>
     <string name="detalle_calificacion">%1$d / 5</string>
     <string name="detalle_portada">Portada del álbum</string>
+    <string name="detalle_portada_con_nombre">Portada del álbum, %1$s</string>
     <string name="detalle_artistas">Artistas</string>
     <string name="detalle_artista_imagen">Imagen de %1$s</string>
     <string name="detalle_estreno">Estreno</string>

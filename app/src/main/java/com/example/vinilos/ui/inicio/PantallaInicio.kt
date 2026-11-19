@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -128,7 +129,7 @@ private fun TitularInicio(session: Session) {
                 Text(
                     text = stringResource(R.string.inicio_chip).uppercase(),
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
                 )
             }
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -247,10 +248,10 @@ private fun BotonSeccion(texto: String, tag: String, onClick: () -> Unit) {
         onClick = onClick,
         shape = CircleShape,
         colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
-        contentPadding = PaddingValues(start = 24.dp, end = 11.dp),
+        contentPadding = PaddingValues(start = 24.dp, end = 11.dp, top = 8.dp, bottom = 8.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .height(50.dp)
+            .heightIn(min = 50.dp)
             .testTag(tag)
     ) {
         Row(

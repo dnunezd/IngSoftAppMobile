@@ -1,9 +1,8 @@
 package com.example.vinilos.ui.ingreso
 
-import androidx.compose.ui.test.assertCountEquals
+import androidx.compose.ui.test.assertContentDescriptionEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -35,15 +34,17 @@ class PantallaIngresoTest {
 
         rule.onNodeWithText("Visitante").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("Coleccionista").performScrollTo().assertIsDisplayed()
-        rule.onAllNodesWithText("Entrar").assertCountEquals(2)
+        // Cada botón es un solo elemento y se anuncia con su perfil (el texto "Entrar" queda dentro de él).
+        rule.onNodeWithTag(TagEntrarVisitante).assertContentDescriptionEquals("Entrar como Visitante")
+        rule.onNodeWithTag(TagEntrarColeccionista).assertContentDescriptionEquals("Entrar como Coleccionista")
     }
 
     @Test
     fun muestraLaFranjaAudioWaveConSuBpmYNoLaInsigniaDeVersion() {
         mostrar()
 
-        rule.onNodeWithText("AUDIO WAVE").performScrollTo().assertIsDisplayed()
-        rule.onNodeWithText("94 BPM").assertIsDisplayed()
+        rule.onNodeWithText("AUDIO WAVE", useUnmergedTree = true).performScrollTo().assertIsDisplayed()
+        rule.onNodeWithText("94 BPM", useUnmergedTree = true).assertIsDisplayed()
         rule.onNodeWithText("v1.0.4").assertDoesNotExist()
     }
 
