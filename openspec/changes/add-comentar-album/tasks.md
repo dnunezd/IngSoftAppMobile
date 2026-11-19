@@ -10,13 +10,13 @@ Cada paso de código empieza con su prueba unitaria en rojo (TDD).
 
 ## 2. Estado y ViewModel (T09-3, #49)
 
-- [ ] 2.1 Pruebas del estado (D2): `puedePublicar`, `tieneBorrador`, el texto de la calificación y el límite de 400 caracteres.
-- [ ] 2.2 Pruebas de `ComentarAlbumViewModel`:
+- [x] 2.1 Pruebas del estado (D2): `puedePublicar`, `tieneBorrador`, el texto de la calificación y el límite de 400 caracteres.
+- [x] 2.2 Pruebas de `ComentarAlbumViewModel`:
   - carga del álbum guardado, por red, con error y al reintentar (D3);
   - edición, el envío, la guarda contra dos toques, éxito y error, y editar después del error (D4);
   - salida con y sin borrador, el diálogo y la salida después de publicar (D5).
-- [ ] 2.3 Implementar `ComentarAlbumUiState` y `ComentarAlbumViewModel` hasta que las pruebas pasen.
-- [ ] 2.4 Prueba de `AlbumViewModel.actualizar()` (D7): mantiene el álbum a la vista y lo reemplaza con la respuesta; si falla, conserva el álbum con el aviso. Luego implementarlo.
+- [x] 2.3 Implementar `ComentarAlbumUiState` y `ComentarAlbumViewModel` hasta que las pruebas pasen.
+- [x] 2.4 Prueba de `AlbumViewModel.actualizar()` (D7): mantiene el álbum a la vista y lo reemplaza con la respuesta; si falla, conserva el álbum con el aviso. Luego implementarlo.
 
 ## 3. Pantalla (T09-3, #49)
 
