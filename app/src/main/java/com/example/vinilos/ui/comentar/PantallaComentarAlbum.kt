@@ -1,6 +1,7 @@
 package com.example.vinilos.ui.comentar
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -45,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
@@ -472,6 +474,7 @@ private fun ContenidoPublicado(album: Album, coleccionista: String, estado: Come
                 color = MaterialTheme.colorScheme.primary
             )
         }
+        IlustracionPublicado(Modifier.align(Alignment.CenterHorizontally))
         Text(
             stringResource(R.string.comentar_publicado_titulo),
             style = MaterialTheme.typography.titleLarge,
@@ -546,6 +549,31 @@ private fun ContenidoPublicado(album: Album, coleccionista: String, estado: Come
         Icon(Icons.Filled.ThumbUp, contentDescription = null, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(8.dp))
         Text(stringResource(R.string.comentar_aceptar), style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+/** Vinilo con la marca de publicado, como en el mockup de éxito. */
+@Composable
+private fun IlustracionPublicado(modifier: Modifier = Modifier) {
+    Box(modifier.size(152.dp)) {
+        Image(
+            painter = painterResource(R.drawable.vinilo_logo),
+            contentDescription = stringResource(R.string.comentar_ilustracion),
+            modifier = Modifier
+                .size(140.dp)
+                .align(Alignment.Center)
+                .clip(CircleShape)
+        )
+        Icon(
+            imageVector = Icons.Filled.CheckCircle,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .size(44.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surface)
+        )
     }
 }
 

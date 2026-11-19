@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.vinilos.data.model.ComentarioNuevo
 import com.example.vinilos.data.remote.ErrorDeCarga
+import com.example.vinilos.data.repository.AlbumNoDisponible
 import com.example.vinilos.data.repository.AlbumRepository
 import com.example.vinilos.data.repository.ComentarioRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -40,7 +41,8 @@ class ComentarAlbumViewModel(
         viewModelScope.launch {
             val album = albumRepository.obtenerAlbumGuardado(albumId)
                 ?: albumRepository.obtenerAlbum(albumId).getOrElse {
-                    if (it !is ErrorDeCarga) throw it
+                    // Un 404 llega como AlbumNoDisponible, que no es ErrorDeCarga: también es "no se pudo obtener".
+                    if (it !is ErrorDeCarga && it !is AlbumNoDisponible) throw it
                     null
                 }
             _uiState.update { it.copy(album = album?.let(CargaAlbum::Listo) ?: CargaAlbum.Error) }

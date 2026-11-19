@@ -14,6 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.vinilos.data.model.ArtistType
+import com.example.vinilos.data.model.Session
 import com.example.vinilos.data.repository.AlbumRepository
 import com.example.vinilos.data.repository.ArtistRepository
 import com.example.vinilos.data.repository.CollectorRepository
@@ -273,7 +274,7 @@ fun VinilosNavHost(
             )
             val estado by viewModel.uiState.collectAsStateWithLifecycle()
             val session by sessionViewModel.session.collectAsStateWithLifecycle()
-            val coleccionista = (session as? com.example.vinilos.data.model.Session.Collector)?.collector
+            val coleccionista = (session as? Session.Collector)?.collector
             if (coleccionista != null) {
                 // Solo el Coleccionista comprueba y guarda favoritos; el Visitante no ve el botón.
                 val favoritoViewModel: FavoritoViewModel = viewModel(
@@ -355,7 +356,7 @@ fun VinilosNavHost(
             arguments = listOf(navArgument("id") { type = NavType.IntType })
         ) {
             val session by sessionViewModel.session.collectAsStateWithLifecycle()
-            val coleccionista = (session as? com.example.vinilos.data.model.Session.Collector)?.collector
+            val coleccionista = (session as? Session.Collector)?.collector
             // La pila se restaura al morir el proceso, pero la sesión no.
             if (coleccionista == null) {
                 LaunchedEffect(Unit) { cerrarComentar() }

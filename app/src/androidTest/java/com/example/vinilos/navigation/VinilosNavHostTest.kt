@@ -1,7 +1,5 @@
 package com.example.vinilos.navigation
 
-import com.example.vinilos.data.model.ComentarioNuevo
-import com.example.vinilos.data.repository.ComentarioRepository
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
@@ -28,8 +26,10 @@ import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.ArtistaDetalle
 import com.example.vinilos.data.model.Collector
+import com.example.vinilos.data.model.ComentarioNuevo
 import com.example.vinilos.data.model.Session
 import com.example.vinilos.data.repository.ArtistaNoDisponible
+import com.example.vinilos.data.repository.ComentarioRepository
 import com.example.vinilos.data.remote.ErrorDeCarga
 import com.example.vinilos.ui.artistas.TagArtistas
 import com.example.vinilos.ui.artistas.TagBotonFavorito

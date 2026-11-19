@@ -209,7 +209,7 @@
     <string name="comentar_calificando">Calificando álbum</string>
     <string name="comentar_coleccionista">%1$s (Coleccionista)</string>
     <string name="comentar_pregunta">¿Qué te pareció este vinilo?</string>
-    <string name="comentar_subtitulo">Tu experiencia sobre el máster, el prensado y el audio</string>
+    <string name="comentar_subtitulo">Tu experiencia sobre el máster, prensado y audio</string>
     <string name="comentar_estrella">%1$d de 5 estrellas</string>
     <string name="comentar_nivel">%1$s (%2$d/5)</string>
     <string name="comentar_nivel_1">Muy malo</string>
@@ -232,7 +232,8 @@
     <string name="comentar_descartar">Descartar y salir</string>
     <string name="comentar_publicado">Comentario publicado</string>
     <string name="comentar_publicado_titulo">¡Comentario publicado exitosamente!</string>
-    <string name="comentar_publicado_texto">Tu apreciación ya forma parte de la bitácora viva del vinilo.</string>
+    <string name="comentar_publicado_texto">Tu apreciación audiófila ya forma parte de la bitácora viva del vinilo.</string>
+    <string name="comentar_ilustracion">Vinilo con la marca de publicado</string>
     <string name="comentar_album_resenado">Álbum reseñado</string>
     <string name="comentar_aceptar">Aceptar</string>
 </resources>

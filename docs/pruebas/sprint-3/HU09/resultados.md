@@ -6,7 +6,7 @@ Ejecución del 2026-11-18 sobre `feature/HU09-comentar-album`, con el cambio Ope
 
 | Suite | Resultado | Entorno |
 |---|---|---|
-| Unitarias (`testDebugUnitTest`) | 448 sin fallos (44 nuevas, escritas antes del código) | JVM |
+| Unitarias (`testDebugUnitTest`) | 449 sin fallos (45 nuevas, escritas antes del código) | JVM |
 | Lint (`lintDebug`) | 0 errores; solo los 2 avisos de navigation 2.10, que son intencionales | JVM |
 | Instrumentadas (`connectedDebugAndroidTest`) | 224 pruebas: 223 pasan y 1 se omite (la de siempre, `ArtistaDetalleE2ETest.unArtistaSinAlbumesNiPremiosMuestraLosMensajesDeVacio`) | Emulador Pixel 8 (API 34) |
 | OpenSpec | `openspec validate add-comentar-album --strict` pasa | — |
@@ -17,7 +17,7 @@ Pruebas unitarias nuevas:
 |---|---|---|
 | `ComentarioRepositoryTest` | 5 | Ruta y cuerpo del `POST`, y 404, 400, 500 y sin conexión como `ErrorDeCarga` |
 | `ComentarAlbumUiStateTest` | 10 | `puedePublicar`, `tieneBorrador`, niveles de calificación y límite de 400 |
-| `ComentarAlbumViewModelTest` | 23 | Carga del álbum, edición, envío, guarda contra dos toques, error, salida y diálogo |
+| `ComentarAlbumViewModelTest` | 24 | Carga del álbum (incluido un 404), edición, envío, guarda contra dos toques, error, salida y diálogo |
 | `AlbumViewModelTest` | 3 | `actualizar()` después de comentar |
 | `RepositoriosDispatcherTest` | 1 | Publicar corre en el dispatcher inyectado |
 | `AppContainerTest` | 2 | El contenedor crea y permite reemplazar el repositorio |
@@ -46,6 +46,15 @@ El backend guardó el comentario con el coleccionista 101 (Jaime Monsalve) y la 
 | Defecto | Corrección |
 |---|---|
 | El botón "Comentar álbum" no tenía nombre para la accesibilidad: Material oculta el texto del botón extendido, como pasó en HU07 | El ícono lleva la descripción "Comentar álbum". Se verificó de nuevo en el emulador |
+
+## Correcciones de la revisión del PR
+
+| Punto (@jeffrey-uandes) | Corrección |
+|---|---|
+| Un 404 al cargar el álbum sin guardar dejaba la pantalla en "Cargando" (y en la app la excepción escapaba del `launch`) | `AlbumNoDisponible` también lleva a `CargaAlbum.Error` con "Reintentar"; prueba nueva en `ComentarAlbumViewModelTest` |
+| Textos distintos del mockup | Subtítulo "Tu experiencia sobre el máster, prensado y audio" y "Tu apreciación audiófila ya forma parte…" |
+| Faltaba la ilustración del vinilo en el éxito | Vinilo con la marca de publicado (`07_comentario_publicado.jpg`, recapturada) |
+| Imports | `Session` importado en `VinilosNavHost` y orden corregido en `VinilosNavHostTest` |
 
 ## Sin verificar
 

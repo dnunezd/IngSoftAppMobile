@@ -6,6 +6,7 @@ import com.example.vinilos.data.model.AlbumNuevo
 import com.example.vinilos.data.model.AlbumResumen
 import com.example.vinilos.data.model.ComentarioNuevo
 import com.example.vinilos.data.remote.ErrorDeCarga
+import com.example.vinilos.data.repository.AlbumNoDisponible
 import com.example.vinilos.data.repository.AlbumRepository
 import com.example.vinilos.data.repository.ComentarioRepository
 import kotlinx.coroutines.CompletableDeferred
@@ -120,6 +121,18 @@ class ComentarAlbumViewModelTest {
 
         assertEquals(CargaAlbum.Listo(album), viewModel.uiState.value.album)
         assertEquals(2, albumes.consultas.size)
+    }
+
+    @Test
+    fun siElBackendYaNoTieneElAlbumMuestraError() = runTest {
+        albumes.guardados.clear()
+        val viewModel = viewModel()
+        advanceUntilIdle()
+
+        albumes.responder(Result.failure(AlbumNoDisponible()))
+        advanceUntilIdle()
+
+        assertEquals(CargaAlbum.Error, viewModel.uiState.value.album)
     }
 
     @Test
