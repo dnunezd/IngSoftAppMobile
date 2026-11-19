@@ -20,8 +20,8 @@ Cada paso de código empieza con su prueba unitaria en rojo (TDD).
 
 ## 3. Pantalla (T09-3, #49)
 
-- [ ] 3.1 Agregar los textos a `strings.xml` (D9).
-- [ ] 3.2 Crear `PantallaComentarAlbum`:
+- [x] 3.1 Agregar los textos a `strings.xml` (D9).
+- [x] 3.2 Crear `PantallaComentarAlbum`:
   - encabezado con flecha;
   - álbum y coleccionista;
   - estrellas con su texto;
@@ -31,13 +31,13 @@ Cada paso de código empieza con su prueba unitaria en rojo (TDD).
   - diálogo de descarte;
   - contenido de éxito con "Aceptar";
   - estados de carga y de error del álbum.
-- [ ] 3.3 Agregar el botón "Comentar álbum" a `PantallaDetalleAlbum`, con `onComentar` opcional (D8).
+- [x] 3.3 Agregar el botón "Comentar álbum" a `PantallaDetalleAlbum`, con `onComentar` opcional (D8).
 
 ## 4. Navegación (T09-4, #50)
 
-- [ ] 4.1 Agregar `Rutas.COMENTAR_ALBUM` (`album/{id}/comentar`) y su `viewModelFactory` con el coleccionista de la sesión.
-- [ ] 4.2 En el detalle, pasar `onComentar` solo para el Coleccionista. Observar `comentario_publicado` y llamar a `actualizar()` (D7).
-- [ ] 4.3 En la ruta de comentar:
+- [x] 4.1 Agregar `Rutas.COMENTAR_ALBUM` (`album/{id}/comentar`) y su `viewModelFactory` con el coleccionista de la sesión.
+- [x] 4.2 En el detalle, pasar `onComentar` solo para el Coleccionista. Observar `comentario_publicado` y llamar a `actualizar()` (D7).
+- [x] 4.3 En la ruta de comentar:
   - `BackHandler` hacia `pedirSalir()`;
   - cerrar al ver `salir`, dejando el resultado si se publicó;
   - cerrar si no hay sesión de Coleccionista (D8).

@@ -1,5 +1,7 @@
 package com.example.vinilos.navigation
 
+import com.example.vinilos.data.model.ComentarioNuevo
+import com.example.vinilos.data.repository.ComentarioRepository
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.test.assertIsDisplayed
@@ -104,6 +106,10 @@ class VinilosNavHostTest {
         catalogo = listOf(Result.success(catalogoDePrueba))
     )
     private val favoritos = RepositorioFavoritosFalso()
+    private val comentarios = object : ComentarioRepository {
+        override suspend fun publicarComentario(albumId: Int, comentario: ComentarioNuevo): Result<Unit> =
+            error("No se usa en esta prueba")
+    }
 
     private fun mostrar(repositorio: RepositorioFalso, albumesRepositorio: RepositorioAlbumesFalso = albumes) {
         albumes = albumesRepositorio
@@ -115,7 +121,8 @@ class VinilosNavHostTest {
             VinilosTheme {
                 VinilosNavHost(
                     nav, session, repositorio, artistas, albumesRepositorio,
-                    favoriteRepository = favoritos
+                    favoriteRepository = favoritos,
+                    comentarioRepository = comentarios
                 )
             }
         }

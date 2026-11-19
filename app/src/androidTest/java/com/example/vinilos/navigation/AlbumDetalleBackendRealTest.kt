@@ -70,7 +70,8 @@ class AlbumDetalleBackendRealTest {
                     collectorRepository = RepositorioFalso(Result.success(emptyList())),
                     artistRepository = RepositorioArtistasFalso(Result.success(emptyList())),
                     albumRepository = contenedor.albumRepository,
-                    favoriteRepository = contenedor.favoriteRepository
+                    favoriteRepository = contenedor.favoriteRepository,
+                    comentarioRepository = contenedor.comentarioRepository
                 )
             }
         }

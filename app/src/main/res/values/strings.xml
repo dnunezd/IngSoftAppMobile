@@ -203,4 +203,36 @@
     <string name="detalle_error_actualizar">No pudimos actualizar el álbum</string>
     <string name="detalle_actualizando">Actualizando álbum</string>
     <string name="detalle_reintentar">Reintentar</string>
+    <string name="detalle_comentar">Comentar álbum</string>
+    <!-- Comentar un álbum (HU09) -->
+    <string name="comentar_encabezado">Comentar álbum</string>
+    <string name="comentar_calificando">Calificando álbum</string>
+    <string name="comentar_coleccionista">%1$s (Coleccionista)</string>
+    <string name="comentar_pregunta">¿Qué te pareció este vinilo?</string>
+    <string name="comentar_subtitulo">Tu experiencia sobre el máster, el prensado y el audio</string>
+    <string name="comentar_estrella">%1$d de 5 estrellas</string>
+    <string name="comentar_nivel">%1$s (%2$d/5)</string>
+    <string name="comentar_nivel_1">Muy malo</string>
+    <string name="comentar_nivel_2">Malo</string>
+    <string name="comentar_nivel_3">Regular</string>
+    <string name="comentar_nivel_4">Bueno</string>
+    <string name="comentar_nivel_5">Excelente</string>
+    <string name="comentar_opinion">Escribe tu opinión</string>
+    <string name="comentar_publico">Comentario público para la comunidad</string>
+    <string name="comentar_contador">%1$d / %2$d</string>
+    <string name="comentar_publicar">Publicar comentario</string>
+    <string name="comentar_publicando" tools:ignore="TypographyEllipsis">Publicando...</string>
+    <string name="comentar_error">No se pudo publicar, intenta de nuevo</string>
+    <string name="comentar_cargando">Cargando álbum</string>
+    <string name="comentar_error_album">No pudimos cargar el álbum</string>
+    <string name="comentar_reintentar">Reintentar</string>
+    <string name="comentar_descartar_titulo">¿Descartar comentario?</string>
+    <string name="comentar_descartar_texto">Tienes un comentario en redacción. Si sales ahora, se perderán los cambios que has escrito.</string>
+    <string name="comentar_continuar">Continuar escribiendo</string>
+    <string name="comentar_descartar">Descartar y salir</string>
+    <string name="comentar_publicado">Comentario publicado</string>
+    <string name="comentar_publicado_titulo">¡Comentario publicado exitosamente!</string>
+    <string name="comentar_publicado_texto">Tu apreciación ya forma parte de la bitácora viva del vinilo.</string>
+    <string name="comentar_album_resenado">Álbum reseñado</string>
+    <string name="comentar_aceptar">Aceptar</string>
 </resources>
