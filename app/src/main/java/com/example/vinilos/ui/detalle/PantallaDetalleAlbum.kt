@@ -11,7 +11,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -20,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -31,6 +36,7 @@ import com.example.vinilos.ui.ingreso.EncabezadoVinilo
 import com.example.vinilos.viewmodel.AlbumUiState
 
 const val TagActualizandoDetalle = "detalle_actualizando"
+const val TagComentarAlbum = "detalle_comentar"
 
 @Composable
 fun PantallaDetalleAlbum(
@@ -38,7 +44,9 @@ fun PantallaDetalleAlbum(
     onAtras: () -> Unit,
     onReintentar: () -> Unit,
     modifier: Modifier = Modifier,
-    onAvisoMostrado: () -> Unit = {}
+    onAvisoMostrado: () -> Unit = {},
+    /** Solo el Coleccionista puede comentar (HU09); sin esta acción el botón no se dibuja. */
+    onComentar: (() -> Unit)? = null
 ) {
     if (estado is AlbumUiState.Exito) {
         val presentacion = remember(estado.album) { presentarAlbum(estado.album) }
@@ -50,7 +58,27 @@ fun PantallaDetalleAlbum(
             onMostrado = onAvisoMostrado
         )
         Box(modifier.fillMaxSize()) {
-            ContenidoAlbum(presentacion, onAtras, actualizando = estado.actualizando)
+            ContenidoAlbum(
+                presentacion,
+                onAtras,
+                actualizando = estado.actualizando,
+                margenInferior = if (onComentar != null) 72.dp else 0.dp
+            )
+            if (onComentar != null) {
+                ExtendedFloatingActionButton(
+                    onClick = onComentar,
+                    // Material oculta el texto a la accesibilidad, así que el nombre lo da el ícono (como en HU07).
+                    icon = { Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.detalle_comentar)) },
+                    text = { Text(stringResource(R.string.detalle_comentar)) },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .windowInsetsPadding(WindowInsets.safeDrawing)
+                        .padding(20.dp)
+                        .testTag(TagComentarAlbum)
+                )
+            }
             SnackbarHost(
                 avisos,
                 Modifier.align(Alignment.BottomCenter).windowInsetsPadding(WindowInsets.safeDrawing)

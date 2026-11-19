@@ -34,7 +34,8 @@ class MainActivity : ComponentActivity() {
                     collectorRepository = container.collectorRepository,
                     artistRepository = container.artistRepository,
                     albumRepository = container.albumRepository,
-                    favoriteRepository = container.favoriteRepository
+                    favoriteRepository = container.favoriteRepository,
+                    comentarioRepository = container.comentarioRepository
                 )
             }
         }

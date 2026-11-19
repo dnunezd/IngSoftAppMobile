@@ -26,8 +26,10 @@ import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.ArtistaDetalle
 import com.example.vinilos.data.model.Collector
+import com.example.vinilos.data.model.ComentarioNuevo
 import com.example.vinilos.data.model.Session
 import com.example.vinilos.data.repository.ArtistaNoDisponible
+import com.example.vinilos.data.repository.ComentarioRepository
 import com.example.vinilos.data.remote.ErrorDeCarga
 import com.example.vinilos.ui.artistas.TagArtistas
 import com.example.vinilos.ui.artistas.TagBotonFavorito
@@ -104,6 +106,10 @@ class VinilosNavHostTest {
         catalogo = listOf(Result.success(catalogoDePrueba))
     )
     private val favoritos = RepositorioFavoritosFalso()
+    private val comentarios = object : ComentarioRepository {
+        override suspend fun publicarComentario(albumId: Int, comentario: ComentarioNuevo): Result<Unit> =
+            error("No se usa en esta prueba")
+    }
 
     private fun mostrar(repositorio: RepositorioFalso, albumesRepositorio: RepositorioAlbumesFalso = albumes) {
         albumes = albumesRepositorio
@@ -115,7 +121,8 @@ class VinilosNavHostTest {
             VinilosTheme {
                 VinilosNavHost(
                     nav, session, repositorio, artistas, albumesRepositorio,
-                    favoriteRepository = favoritos
+                    favoriteRepository = favoritos,
+                    comentarioRepository = comentarios
                 )
             }
         }

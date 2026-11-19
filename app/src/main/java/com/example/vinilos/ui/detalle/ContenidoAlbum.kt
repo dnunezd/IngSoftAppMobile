@@ -33,6 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.vinilos.R
@@ -44,14 +45,16 @@ fun ContenidoAlbum(
     presentacion: AlbumPresentacion,
     onAtras: () -> Unit,
     modifier: Modifier = Modifier,
-    actualizando: Boolean = false
+    actualizando: Boolean = false,
+    /** Espacio extra al final para que un botón flotante no tape el último comentario (HU09). */
+    margenInferior: Dp = 0.dp
 ) {
     val descripcionActualizando = stringResource(R.string.detalle_actualizando)
     LazyColumn(
         modifier = modifier.fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.safeDrawing),
-        contentPadding = PaddingValues(20.dp),
+        contentPadding = PaddingValues(start = 20.dp, top = 20.dp, end = 20.dp, bottom = 20.dp + margenInferior),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {

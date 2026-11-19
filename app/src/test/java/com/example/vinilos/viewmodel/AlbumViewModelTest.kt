@@ -4,6 +4,7 @@ import com.example.vinilos.MainDispatcherRule
 import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.AlbumNuevo
 import com.example.vinilos.data.model.AlbumResumen
+import com.example.vinilos.data.model.Comentario
 import com.example.vinilos.data.remote.ErrorDeCarga
 import com.example.vinilos.data.repository.AlbumRepository
 import com.example.vinilos.data.repository.AlbumNoDisponible
@@ -230,5 +231,58 @@ class AlbumViewModelTest {
         assertEquals(listOf(102), repositorio.consultas.map { it.first })
         repositorio.consultas.single().second.complete(Result.success(otro))
         advanceUntilIdle()
+    }
+
+    // ---------- Actualizar después de comentar (add-comentar-album, D7) ----------
+
+    private suspend fun kotlinx.coroutines.test.TestScope.conAlbumVisible(repositorio: AlbumRepositoryFalso): AlbumViewModel {
+        val viewModel = AlbumViewModel(101, repositorio)
+        advanceUntilIdle()
+        repositorio.consultas.single().second.complete(Result.success(album))
+        advanceUntilIdle()
+        return viewModel
+    }
+
+    @Test
+    fun actualizarMantieneElAlbumALaVistaYLoReemplazaConLaRespuesta() = runTest {
+        val repositorio = AlbumRepositoryFalso()
+        val viewModel = conAlbumVisible(repositorio)
+        val comentado = album.copy(comentarios = listOf(Comentario("Gran prensado", 5)))
+
+        viewModel.actualizar()
+        advanceUntilIdle()
+        assertEquals(AlbumUiState.Exito(album, actualizando = true), viewModel.uiState.value)
+        assertEquals(listOf(101, 101), repositorio.consultas.map { it.first })
+
+        repositorio.consultas.last().second.complete(Result.success(comentado))
+        advanceUntilIdle()
+
+        assertEquals(AlbumUiState.Exito(comentado), viewModel.uiState.value)
+    }
+
+    @Test
+    fun siActualizarFallaConservaElAlbumConElAviso() = runTest {
+        val repositorio = AlbumRepositoryFalso()
+        val viewModel = conAlbumVisible(repositorio)
+
+        viewModel.actualizar()
+        advanceUntilIdle()
+        repositorio.consultas.last().second.complete(Result.failure(ErrorDeCarga()))
+        advanceUntilIdle()
+
+        assertEquals(AlbumUiState.Exito(album, errorAlActualizar = true), viewModel.uiState.value)
+    }
+
+    @Test
+    fun actualizarSinAlbumALaVistaCargaComoAlEmpezar() = runTest {
+        val repositorio = AlbumRepositoryFalso()
+        val viewModel = AlbumViewModel(101, repositorio)
+        advanceUntilIdle()
+        repositorio.consultas.single().second.complete(Result.failure(ErrorDeCarga()))
+        advanceUntilIdle()
+
+        viewModel.actualizar()
+
+        assertEquals(AlbumUiState.Cargando, viewModel.uiState.value)
     }
 }

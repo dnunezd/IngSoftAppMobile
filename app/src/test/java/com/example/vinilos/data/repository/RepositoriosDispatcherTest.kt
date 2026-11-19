@@ -12,6 +12,7 @@ import com.example.vinilos.data.local.FavoritoDao
 import com.example.vinilos.data.local.FavoritoEntity
 import com.example.vinilos.data.model.AlbumNuevo
 import com.example.vinilos.data.model.ArtistType
+import com.example.vinilos.data.model.ComentarioNuevo
 import com.example.vinilos.data.remote.AlbumApi
 import com.example.vinilos.data.remote.AlbumDto
 import com.example.vinilos.data.remote.ArtistApi
@@ -19,6 +20,9 @@ import com.example.vinilos.data.remote.ArtistaDetalleDto
 import com.example.vinilos.data.remote.BandDto
 import com.example.vinilos.data.remote.CollectorApi
 import com.example.vinilos.data.remote.CollectorDto
+import com.example.vinilos.data.remote.ComentarioApi
+import com.example.vinilos.data.remote.ComentarioDto
+import com.example.vinilos.data.remote.ComentarioNuevoDto
 import com.example.vinilos.data.remote.CrearAlbumDto
 import com.example.vinilos.data.remote.MusicianDto
 import com.example.vinilos.data.remote.PerformerDto
@@ -165,6 +169,13 @@ class RepositoriosDispatcherTest {
     private fun coleccionistas() = CollectorRepositoryImpl(adaptador, collectorApi, coleccionistaDao, dispatcher)
     private fun favoritos() = FavoriteRepositoryImpl(adaptador, collectorApi, favoritoDao, dispatcher)
 
+    private val comentarioApi = object : ComentarioApi {
+        override suspend fun publicarComentario(albumId: Int, comentario: ComentarioNuevoDto): ComentarioDto =
+            ComentarioDto(comentario.description, comentario.rating).also { anotarHilo() }
+    }
+
+    private fun comentarios() = ComentarioRepositoryImpl(adaptador, comentarioApi, dispatcher)
+
     // ---------- Álbumes ----------
 
     @Test
@@ -226,6 +237,12 @@ class RepositoriosDispatcherTest {
     fun agregarFavoritoCorreEnElDispatcher() = runTest {
         assertTrue(favoritos().agregarFavorito(100, 1, ArtistType.BANDA).isSuccess)
         assertTrue(favoritos().agregarFavorito(100, 2, ArtistType.MUSICO).isSuccess)
+        assertTodoEnElDispatcher()
+    }
+
+    @Test
+    fun publicarComentarioCorreEnElDispatcher() = runTest {
+        assertTrue(comentarios().publicarComentario(100, ComentarioNuevo(101, 5, "Gran prensado")).isSuccess)
         assertTodoEnElDispatcher()
     }
 
