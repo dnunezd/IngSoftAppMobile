@@ -160,6 +160,7 @@
     <string name="crear_titular_1">Nuevo</string>
     <string name="crear_titular_2">álbum</string>
     <string name="crear_subtitulo">Ingresa la información para catalogar tu vinilo en el archivo central.</string>
+    <string name="crear_campo_anuncio">%1$s, obligatorio</string>
     <string name="crear_nombre">Nombre del álbum</string>
     <string name="crear_nombre_indicacion">Ej. Abbey Road</string>
     <string name="crear_portada">Portada (URL)</string>

@@ -128,15 +128,15 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
                 }
             }
         }
-        listOf("Nombre del álbum", "Portada (URL)", "Descripción").forEach {
+        listOf("Nombre del álbum, obligatorio", "Portada (URL), obligatorio", "Descripción, obligatorio").forEach {
             rule.onNodeWithContentDescription(it).assertExists()
         }
         // Fecha y listas: el nodo combinado lleva etiqueta y valor, es accionable y el texto de adentro
         // no queda como un segundo elemento (TalkBack se detenía en ese texto y decía solo el valor).
         listOf(
-            "Fecha de lanzamiento, DD/MM/AAAA" to "DD/MM/AAAA",
-            "Género, Selecciona un género" to "Selecciona un género",
-            "Disquera, Selecciona una disquera" to "Selecciona una disquera"
+            "Fecha de lanzamiento, obligatorio, DD/MM/AAAA" to "DD/MM/AAAA",
+            "Género, obligatorio, Selecciona un género" to "Selecciona un género",
+            "Disquera, obligatorio, Selecciona una disquera" to "Selecciona una disquera"
         ).forEach { (descripcion, textoInterno) ->
             rule.onNode(hasContentDescription(descripcion) and hasClickAction()).assertExists()
             rule.onAllNodesWithText(textoInterno).assertCountEquals(0)

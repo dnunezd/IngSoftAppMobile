@@ -48,3 +48,4 @@
 - [x] 7.2 Marcar con `heading()` los títulos de pantalla y de sección de las 8 pantallas; el encabezado del listado de artistas empieza con su texto visible
 - [x] 7.3 Promedio con estrellas como un solo elemento ("5,0 de 5 estrellas")
 - [x] 7.4 Corregir el requisito de verificación automática y hacer que la prueba instrumentada compruebe encabezados y los elementos combinados
+- [x] 7.5 Campos de "Crear álbum": anunciar "obligatorio" y ocultar al lector la etiqueta visible repetida

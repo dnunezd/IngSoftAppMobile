@@ -64,15 +64,16 @@ La app SHALL mantener su tema claro de marca cuando el sistema está en modo osc
 - **THEN** la app se muestra con la paleta clara y cumple los mismos contrastes
 
 ### Requirement: Campos y valores anunciados
-Cada campo del formulario "Crear álbum" MUST anunciar su etiqueta ("Nombre del álbum", "Portada (URL)", "Descripción"), y los campos de fecha y de lista MUST anunciar la etiqueta junto con el valor actual. Una calificación mostrada con estrellas MUST anunciarse con su valor numérico ("4,5 de 5 estrellas") y no como símbolos.
+Cada campo del formulario "Crear álbum" MUST anunciar su etiqueta y que es obligatorio ("Nombre del álbum, obligatorio"), y los campos de fecha y de lista MUST anunciar además el valor actual. La etiqueta visible con su asterisco SHALL ocultarse al lector, porque el campo ya la anuncia. Una calificación mostrada con estrellas MUST anunciarse con su valor numérico ("4,5 de 5 estrellas") y no como símbolos.
 
 #### Scenario: Campo vacío del formulario
 - **WHEN** TalkBack enfoca el campo "Nombre del álbum" vacío
-- **THEN** anuncia "Nombre del álbum" y no solo el texto de ejemplo
+- **THEN** anuncia "Nombre del álbum, obligatorio" y no solo el texto de ejemplo
+- **AND** la etiqueta visible no se lee como un elemento aparte
 
 #### Scenario: Campo de lista con valor
 - **WHEN** TalkBack enfoca "Género" con "Rock" elegido
-- **THEN** se detiene en un solo elemento con rol de lista y anuncia "Género, Rock", sin un segundo elemento con el texto de adentro
+- **THEN** se detiene en un solo elemento con rol de lista y anuncia "Género, obligatorio, Rock", sin un segundo elemento con el texto de adentro
 
 ### Requirement: Verificación automática de accesibilidad
 El proyecto SHALL incluir una prueba unitaria del contraste de la paleta y una prueba instrumentada que active las comprobaciones de accesibilidad de Compose y recorra las 8 pantallas con la fuente normal y al 200 %. El contraste MUST verificarse con `ContrasteDePaletaTest`, sobre los pares texto/fondo de la paleta, y con el Accessibility Scanner a mano, porque las comprobaciones de Compose no evalúan contraste. La prueba instrumentada MUST fallar si una pantalla vuelve a tener un elemento sin etiqueta, un destino táctil menor al mínimo, elementos duplicados, o un título que deje de ser encabezado.

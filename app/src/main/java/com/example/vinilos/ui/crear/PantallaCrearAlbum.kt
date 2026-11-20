@@ -105,6 +105,7 @@ import com.example.vinilos.viewmodel.EnvioAlbum
 import com.example.vinilos.viewmodel.ErrorCampo
 import com.example.vinilos.viewmodel.LimiteDescripcion
 import com.example.vinilos.viewmodel.portadaValida
+import com.example.vinilos.ui.ingreso.decorativo
 import com.example.vinilos.ui.ingreso.encabezado
 import java.util.Locale
 import java.util.TimeZone
@@ -288,7 +289,7 @@ private fun TarjetaCampos(estado: CrearAlbumUiState, acciones: AccionesCrearAlbu
     ) {
         Campo(stringResource(R.string.crear_nombre), estado, CampoAlbum.Nombre) {
             CampoTexto(
-                etiqueta = stringResource(R.string.crear_nombre),
+                etiqueta = stringResource(R.string.crear_campo_anuncio, stringResource(R.string.crear_nombre)),
                 valor = estado.nombre,
                 onCambio = acciones.onNombre,
                 indicacion = stringResource(R.string.crear_nombre_indicacion),
@@ -305,7 +306,7 @@ private fun TarjetaCampos(estado: CrearAlbumUiState, acciones: AccionesCrearAlbu
         Campo(stringResource(R.string.crear_portada), estado, CampoAlbum.Portada) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 CampoTexto(
-                    etiqueta = stringResource(R.string.crear_portada),
+                    etiqueta = stringResource(R.string.crear_campo_anuncio, stringResource(R.string.crear_portada)),
                     valor = estado.portada,
                     onCambio = acciones.onPortada,
                     indicacion = stringResource(R.string.crear_portada_indicacion),
@@ -336,7 +337,7 @@ private fun TarjetaCampos(estado: CrearAlbumUiState, acciones: AccionesCrearAlbu
         }
         Campo(stringResource(R.string.crear_fecha), estado, CampoAlbum.Fecha) {
             CampoFecha(
-                etiqueta = stringResource(R.string.crear_fecha),
+                etiqueta = stringResource(R.string.crear_campo_anuncio, stringResource(R.string.crear_fecha)),
                 fechaMillis = estado.fechaMillis,
                 conError = CampoAlbum.Fecha in estado.errores,
                 habilitado = habilitado,
@@ -345,7 +346,7 @@ private fun TarjetaCampos(estado: CrearAlbumUiState, acciones: AccionesCrearAlbu
         }
         Campo(stringResource(R.string.crear_genero), estado, CampoAlbum.Genero) {
             CampoOpciones(
-                etiqueta = stringResource(R.string.crear_genero),
+                etiqueta = stringResource(R.string.crear_campo_anuncio, stringResource(R.string.crear_genero)),
                 valor = estado.genero,
                 opciones = GenerosAlbum,
                 indicacion = stringResource(R.string.crear_genero_indicacion),
@@ -358,7 +359,7 @@ private fun TarjetaCampos(estado: CrearAlbumUiState, acciones: AccionesCrearAlbu
         }
         Campo(stringResource(R.string.crear_disquera), estado, CampoAlbum.Disquera) {
             CampoOpciones(
-                etiqueta = stringResource(R.string.crear_disquera),
+                etiqueta = stringResource(R.string.crear_campo_anuncio, stringResource(R.string.crear_disquera)),
                 valor = estado.disquera,
                 opciones = DisquerasAlbum,
                 indicacion = stringResource(R.string.crear_disquera_indicacion),
@@ -383,7 +384,7 @@ private fun TarjetaCampos(estado: CrearAlbumUiState, acciones: AccionesCrearAlbu
             }
         ) {
             CampoDescripcion(
-                etiqueta = stringResource(R.string.crear_descripcion),
+                etiqueta = stringResource(R.string.crear_campo_anuncio, stringResource(R.string.crear_descripcion)),
                 valor = estado.descripcion,
                 onCambio = acciones.onDescripcion,
                 conError = CampoAlbum.Descripcion in estado.errores,
@@ -410,7 +411,9 @@ private fun Campo(
                     withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) { append(" *") }
                 },
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
+                // El campo ya anuncia su etiqueta y que es obligatorio: no se lee aparte.
+                modifier = Modifier.decorativo()
             )
             Spacer(Modifier.weight(1f))
             extra()
