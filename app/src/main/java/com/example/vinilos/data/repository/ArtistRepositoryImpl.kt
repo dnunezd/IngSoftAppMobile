@@ -13,6 +13,7 @@ import com.example.vinilos.data.model.PremioArtista
 import com.example.vinilos.data.model.formatearFechaLanzamiento
 import com.example.vinilos.data.remote.ArtistApi
 import com.example.vinilos.data.remote.ArtistaDetalleDto
+import com.example.vinilos.data.remote.IdAlbumDto
 import com.example.vinilos.data.remote.PremiacionArtistaDto
 import com.example.vinilos.data.remote.PremiacionDto
 import com.example.vinilos.data.remote.RecursoNoEncontrado
@@ -26,6 +27,8 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import retrofit2.HttpException
+import retrofit2.Response
 import java.text.ParseException
 
 /**
@@ -172,6 +175,33 @@ class ArtistRepositoryImpl(
                 .onFailure { if (it is RecursoNoEncontrado) borrarDetalleGuardado(tipo, id) }
                 .map { (detalle, _) -> detalle }
         }
+
+    /**
+     * Músico: `POST`, que agrega sin quitar a nadie. Banda: el `POST` del backend deja a la banda como única
+     * intérprete del álbum, así que se lee su lista actual y se reemplaza por esa lista más el nuevo con
+     * `PUT`. Si la lista no se puede leer completa, no se envía nada: un `PUT` incompleto le quitaría
+     * álbumes a la banda (add-agregar-album-artista, D1).
+     */
+    override suspend fun asociarAlbum(tipo: ArtistType, idArtista: Int, idAlbum: Int): Result<Unit> =
+        withContext(dispatcher) {
+            adaptador.llamar {
+                when (tipo) {
+                    ArtistType.MUSICO -> api.asociarAlbumAMusico(idArtista, idAlbum).exitosa()
+                    ArtistType.BANDA -> {
+                        val actuales = api.getBand(idArtista).conVersion().valor.albums
+                            ?: throw JsonParseException("La banda llegó sin su lista de álbumes")
+                        val ids = actuales.map { it.id ?: throw JsonParseException("Un álbum de la banda llegó sin id") }
+                        val nuevos = (ids + idAlbum).distinct().map(::IdAlbumDto)
+                        api.reemplazarAlbumesDeBanda(idArtista, nuevos).exitosa()
+                    }
+                }
+            }
+        }
+
+    /** Dentro de [ServiceAdapter.llamar]: una respuesta no exitosa se lanza para que se traduzca a `ErrorDeCarga`. */
+    private fun Response<Unit>.exitosa() {
+        if (!isSuccessful) throw HttpException(this)
+    }
 
     /**
      * Conversión tolerante: solo el id y el nombre del artista son obligatorios, porque el backend compartido

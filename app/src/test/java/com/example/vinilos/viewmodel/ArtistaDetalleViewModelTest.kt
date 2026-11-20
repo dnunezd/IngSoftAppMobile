@@ -31,6 +31,8 @@ private class ArtistRepositoryFalso : ArtistRepository {
 
     override suspend fun obtenerArtistas(): Result<List<Artist>> = error("No se usa en esta prueba")
     override suspend fun obtenerArtistasGuardados(): List<Artist> = error("No se usa en esta prueba")
+    override suspend fun asociarAlbum(tipo: ArtistType, idArtista: Int, idAlbum: Int): Result<Unit> =
+        error("No se usa en esta prueba")
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
