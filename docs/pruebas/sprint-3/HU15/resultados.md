@@ -94,6 +94,10 @@ Revisión de Daniel Nuñez en el PR #114, corregida con TDD (rojo antes del cód
 | Texto de otra HU | `asociar_cancelar` propio | Las existentes |
 | Carrera del `PUT` de bandas | Ya aceptada en `design.md` (*Risks*) | — |
 
+<img src="capturas/06_revision_busqueda_quita_seleccion.jpg" width="220">
+
+Escenario de la revisión repetido en el Pixel 8 contra BackVynils local: Queen → elegir "Buscando América" → buscar "poeta". "Asociar" queda deshabilitado y no se escribe nada en el backend.
+
 Después de las correcciones: 502 unitarias sin fallos, lint sin errores y 59/59 instrumentadas en el Pixel 8 (`VentanaAsociarAlbumTest`, `PantallaDetalleArtistaAsociarTest`, `VinilosNavHostTest` y `RotacionTest` completas).
 
 ## Guía para las pruebas E2E (T15-5, #56)
