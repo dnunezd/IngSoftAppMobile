@@ -66,11 +66,12 @@ El orden es el del catálogo (por nombre). No se implementa "Orden cronológico"
 - Filtro por nombre con `normalizar()` de `Busqueda.kt` (sin tildes ni mayúsculas), sobre todos los álbumes, incluidos los ya asociados.
 - **"No hay álbumes para asociar"**: cuando el catálogo está vacío o todos sus álbumes ya están asociados. Si hay ya asociados, se siguen viendo debajo deshabilitados (criterio 4).
 - **"No encontramos álbumes con esa búsqueda"**: cuando el texto no coincide con ningún álbum. Se separa del anterior para que la prueba del criterio no pase por accidente con una búsqueda vacía.
-- Si el álbum elegido queda fuera del filtro, la selección se conserva y "Asociar" sigue habilitado.
+- Si el álbum elegido deja de verse (por la búsqueda o porque el catálogo actualizado ya no lo trae), la selección se quita y "Asociar" se deshabilita; `puedeAsociar` además exige que el elegido esté entre los visibles. *Cambio de la revisión del PR #114 (Daniel Nuñez):* la versión inicial conservaba la selección oculta, lo que permitía asociar un álbum que no se veía, y esa escritura no se puede deshacer de forma segura en el backend.
+- `visibles` se calcula una sola vez por estado (`by lazy`), porque la ventana lo lee varias veces en cada recomposición.
 
 ### D5. Después de asociar: actualizar la discografía sin depender de otra consulta
 `ArtistaDetalleViewModel` gana `albumAsociado(album: AlbumResumen)`, con el mismo enfoque que `AlbumViewModel.actualizar()` de HU09 (volver a consultar sin quitar de la vista lo que ya se muestra):
-1. Si el estado es `Exito`, agrega el álbum (convertido a `AlbumArtista`) a `detalle.albumes` si no estaba, y activa `mostrarAlbumAsociado = true` para el aviso.
+1. Si el estado es `Exito`, agrega el álbum (convertido a `AlbumArtista`) **al final** de `detalle.albumes` si no estaba, y activa `mostrarAlbumAsociado = true` para el aviso. El orden lo fija la consulta del paso 2, con el criterio del repositorio (fecha completa); así hay un solo criterio de orden (revisión del PR #114).
 2. Vuelve a consultar `obtenerDetalle(tipo, id)` en segundo plano, lo que también actualiza Room. Si esa consulta falla, se conserva la lista con el álbum agregado y no se muestra el aviso de error de actualización (la asociación sí ocurrió).
 3. `albumAsociadoMostrado()` apaga el aviso.
 
@@ -84,7 +85,7 @@ La copia en Room del detalle de ese **álbum** (HU02) queda desactualizada hasta
 No se guardan asociaciones pendientes para enviarlas después: sin conexión el `POST`/`PUT` falla y se muestra el mensaje de error con la selección conservada. El listado puede venir del catálogo guardado (D3).
 
 ### D7. Interfaz y estética
-Regla de color, alineada con el PR #113 (`corregir-accesibilidad-scanner`, abierto contra `develop`): los rellenos con texto blanco y los textos naranja usan `MaterialTheme.colorScheme.primary`, no `Naranja` directamente. Hoy `primary` es `Naranja`; con #113 pasa a `NaranjaContraste` (`#D13A12`, ≥ 4,5:1), así que la ventana cumple contraste sin volver a tocarla. `Naranja` queda solo para lo que no es texto (íconos, borde y `RadioButton` de la fila elegida). Ningún texto se atenúa con transparencia.
+Regla de color, alineada con el PR #113 (`corregir-accesibilidad-scanner`, abierto contra `develop`): los rellenos con texto blanco y los textos naranja usan `MaterialTheme.colorScheme.primary`, no `Naranja` directamente. Hoy `primary` es `Naranja`; con #113 pasa a `NaranjaContraste` (`#D13A12`, ≥ 4,5:1), así que la ventana cumple contraste sin volver a tocarla. El borde y el `RadioButton` de la fila elegida también usan `primary`: `Naranja` sobre `NaranjaSuave` da 2,73:1, por debajo del 3:1 de los componentes de interfaz; con `NaranjaContraste` da 4,0:1 (revisión del PR #114). Ningún texto se atenúa con transparencia.
 
 Pantalla sin estado `VentanaAsociarAlbum(estado, nombreArtista, callbacks…)` en `ui/artistas/VentanaAsociarAlbum.kt`, mostrada con `ModalBottomSheet` de Material 3 (el primero de la app; contenedor `Superficie`, esquinas superiores de 28 dp y la barra de arrastre por defecto). El botón "Agregar álbum" va en el título de la sección de álbumes de `PantallaDetalleArtista`, solo con el detalle cargado.
 
@@ -94,7 +95,7 @@ Pantalla sin estado `VentanaAsociarAlbum(estado, nombreArtista, callbacks…)` e
 | Título "Asociar álbum a {nombre}" | 1 | `TextoPrincipal`, `titleLarge` en negrita; botón circular de cierre (ícono `Close`) sobre `SuperficieVariante` que equivale a "Cancelar" |
 | Barra de búsqueda | 3 | Campo redondeado (`RoundedCornerShape(50)`) con fondo `SuperficieVariante`, ícono `Search`, `Close` para borrar y texto de ayuda "Buscar álbum por título..." |
 | Fila de álbum | 3 | Tarjeta redondeada (16 dp) `Superficie` con borde `Contorno`: portada 56 dp con `AsyncImage` y la ilustración local de respaldo, nombre en `TextoPrincipal`, año en `TextoSecundario`, `RadioButton` a la derecha |
-| Fila elegida | 5 | Fondo `NaranjaSuave`, borde y `RadioButton` en `Naranja` |
+| Fila elegida | 5 | Fondo `primaryContainer` (`NaranjaSuave`), borde y `RadioButton` en `primary` |
 | Fila ya asociada | 4 | Fondo `SuperficieVariante`, nombre y año en `TextoSecundario` sin transparencia (para conservar el contraste), chip "Ya asociado" en `Superficie`/`TextoSecundario`, `RadioButton` deshabilitado y sin clic |
 | Recuadro de error al asociar | 10 | Tarjeta `ErrorFormularioFondo` con ícono `ic_cat_priority_high` y texto `ErrorFormularioTexto` (mismo estilo que `TarjetaError` de HU07); solo el texto del criterio, sin el título "Error de conexión" del mockup |
 | Botón "Asociar" | 6, 7 | Píldora `primary` a lo ancho con ícono `ic_crear_enlace`; deshabilitado sin selección; durante el envío muestra un indicador circular y queda inactivo |
@@ -102,12 +103,12 @@ Pantalla sin estado `VentanaAsociarAlbum(estado, nombreArtista, callbacks…)` e
 | Vacío / sin resultados | 9 | Ilustración `ic_cat_album` en gris con el texto centrado, como `BloqueVacio` del detalle |
 | Cargando / error del listado | DoD 5 | Indicador `primary` con "Cargando álbumes..."; error con "No pudimos cargar los álbumes" y botón "Reintentar" |
 
-Accesibilidad (Sprint 3, en la línea de #113): cada fila es `selectable` con rol `RadioButton` y una descripción que incluye nombre, año y, si aplica, "Ya asociado"; los botones de ícono tienen `contentDescription`; los objetivos táctiles miden al menos 48 dp.
+Accesibilidad (Sprint 3, en la línea de #113): la portada de cada fila es decorativa (`clearAndSetSemantics`), para que TalkBack no lea el nombre dos veces; cada fila es `selectable` con rol `RadioButton` y una descripción que incluye nombre, año y, si aplica, "Ya asociado"; los botones de ícono tienen `contentDescription`; los objetivos táctiles miden al menos 48 dp.
 
 Tags para pruebas: `TagBotonAgregarAlbum`, `TagVentanaAsociar`, `TagTituloAsociar`, `TagBusquedaAsociar`, `TagBotonAsociar`, `TagCancelarAsociar`, `TagErrorAsociar`, `TagVacioAsociar`, `TagSinResultadosAsociar`, `TagCargandoAsociar`, `TagErrorListadoAsociar` y `tagAlbumAsociable(id)`; el chip usa `tagYaAsociado(id)`.
 
 ### D8. Textos
-Solo en `values/strings.xml`, con el texto literal de la HU: "Agregar álbum", "Asociar álbum a %1$s", "Buscar álbum por título...", "Ya asociado", "Asociar", "Cancelar" (se reutiliza `crear_cancelar`), "Álbum asociado", "No hay álbumes para asociar", "No se pudo asociar el álbum, intenta de nuevo", más los de D4 y D7 que la HU no define.
+Solo en `values/strings.xml`, con el texto literal de la HU: "Agregar álbum", "Asociar álbum a %1$s", "Buscar álbum por título...", "Ya asociado", "Asociar", "Cancelar" (`asociar_cancelar`, propio de la HU15 para no depender de los textos de crear álbum), "Álbum asociado", "No hay álbumes para asociar", "No se pudo asociar el álbum, intenta de nuevo", más los de D4 y D7 que la HU no define.
 
 ## Risks / Trade-offs
 

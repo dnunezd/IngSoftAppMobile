@@ -51,15 +51,23 @@ Los álbumes que ya están asociados al artista SHALL mostrarse deshabilitados c
 - **AND** al tocarlo no queda seleccionado
 
 ### Requirement: Selección de un solo álbum
-La ventana SHALL permitir seleccionar un solo álbum a la vez: elegir otro álbum SHALL reemplazar la selección anterior.
+La ventana SHALL permitir seleccionar un solo álbum a la vez: elegir otro álbum SHALL reemplazar la selección anterior. Si el álbum elegido deja de verse en el listado (por la búsqueda o porque el catálogo actualizado ya no lo trae), la selección SHALL quitarse, para no asociar un álbum que el Coleccionista no ve.
 
 #### Scenario: Cambiar la selección
 - **WHEN** el Coleccionista selecciona "A Night at the Opera" y luego "A Day at the Races"
 - **THEN** solo "A Day at the Races" queda seleccionado
 
-#### Scenario: La selección se conserva al filtrar
+#### Scenario: Una búsqueda que deja fuera al álbum elegido quita la selección
 - **WHEN** el Coleccionista selecciona un álbum y luego escribe una búsqueda que lo deja fuera del listado
+- **THEN** ningún álbum queda seleccionado y el botón "Asociar" se deshabilita
+
+#### Scenario: Una búsqueda que sigue mostrando al álbum elegido conserva la selección
+- **WHEN** el Coleccionista selecciona un álbum y luego escribe una búsqueda que lo sigue mostrando
 - **THEN** el álbum sigue seleccionado y el botón "Asociar" sigue habilitado
+
+#### Scenario: El catálogo actualizado ya no trae al álbum elegido
+- **WHEN** el listado guardado se reemplaza por la respuesta del backend y esta ya no trae al álbum elegido
+- **THEN** ningún álbum queda seleccionado y el botón "Asociar" se deshabilita
 
 ### Requirement: Botón "Asociar" deshabilitado sin selección
 La ventana SHALL mostrar el botón "Asociar", que SHALL permanecer deshabilitado mientras no haya un álbum seleccionado y mientras se está enviando la asociación.

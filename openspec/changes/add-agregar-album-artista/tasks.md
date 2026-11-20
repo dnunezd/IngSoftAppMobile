@@ -39,6 +39,18 @@ Implementado con TDD (rojo, verde y refactor por ciclo). Comandos desde PowerShe
 - [x] 5.2 Las 29 instrumentadas de la HU15 en paralelo en los 3 dispositivos, todas en verde: Pixel 8 (API 34), Nexus 5X (API 23) y Motorola Edge 30 (con `applicationId` `com.example.vinilos.revision` para no reemplazar la app instalada). Suite instrumentada completa sin E2E en el Pixel 8 como regresión.
 - [x] 5.3 Prueba manual contra un backend local aislado (puerto 3001, Pixel 8): se asoció "Buscando América" a Queen y "A Night at the Opera" a Rubén Blades desde la app; `GET /albums` mostró los dos álbumes con ambos intérpretes, Queen con [100, 102, 103] y Rubén con [100, 101, 102], y el aviso "Álbum asociado". Se restauró con `sql/data.sql`. Capturas de la ventana en el Pixel 8 y en el Nexus 5X. Quedan pendientes las capturas rotadas y con fuente al 200 % para la wiki (6.1); la app solo tiene tema claro.
 
+## 7. Revisión del PR #114 (Daniel Nuñez)
+
+Con TDD, como el resto de la HU.
+
+- [x] 7.1 **Cambio necesario:** quitar la selección cuando el álbum elegido deja de verse (búsqueda o catálogo actualizado) y exigir en `puedeAsociar` que esté visible. Rojo con 3 pruebas nuevas en `AsociarAlbumViewModelTest`; la que conservaba la selección oculta se reemplazó. Spec y D4 actualizados.
+- [x] 7.2 TalkBack ya no lee el nombre del álbum dos veces: la portada de la fila es decorativa. Rojo con `VentanaAsociarAlbumTest.laFilaNoRepiteElNombreConLaDescripcionDeLaPortada`.
+- [x] 7.3 Borde y `RadioButton` de la fila elegida en `primary` (contraste de 3:1 sobre `primaryContainer` con #113).
+- [x] 7.4 El álbum asociado se agrega al final de la discografía y el orden lo fija la nueva consulta (un solo criterio de orden). Prueba de `ArtistaDetalleViewModelTest` actualizada.
+- [x] 7.5 `visibles` se calcula una vez por estado (`by lazy`).
+- [x] 7.6 Texto propio `asociar_cancelar`. El ícono de enlace se sigue compartiendo, como otros íconos de la app.
+- [x] 7.7 El punto de la carrera del `PUT` de bandas ya estaba aceptado en *Risks* ("Carrera en bandas"); no requiere cambios.
+
 ## 6. Documentación (T15-6, #57)
 
 - [ ] 6.1 Actualizar la wiki de HU15 con los mockups de la implementación y la nota de las decisiones del backend (D1).

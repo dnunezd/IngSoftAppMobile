@@ -32,9 +32,9 @@ Las pruebas que pasaron en rojo comprueban ausencias (por ejemplo, que el Visita
 |---|---|---|
 | `ArtistRepositoryAsociarTest` | 13 | `POST` del músico; `GET` y `PUT` de la banda con los álbumes actuales más el nuevo; sin `PUT` si no se puede leer la lista completa; 404, 500 y sin conexión como `ErrorDeCarga`; cancelación |
 | `RepositoriosDispatcherTest` | 1 | Asociar corre en el dispatcher inyectado |
-| `AsociarAlbumViewModelTest` | 31 | Carga con y sin caché, búsqueda, vacío y sin resultados, selección única, ya asociados, asociar, error, reintento, doble toque, cancelar |
+| `AsociarAlbumViewModelTest` | 34 | Carga con y sin caché, búsqueda, vacío y sin resultados, selección única, ya asociados, asociar, error, reintento, doble toque, cancelar |
 | `ArtistaDetalleViewModelTest` | 5 | El álbum se agrega a la discografía por año, aviso, nueva consulta y fallo de esa consulta |
-| `VentanaAsociarAlbumTest` | 19 | Un caso por criterio de aceptación, más cargando, error del listado y sin resultados |
+| `VentanaAsociarAlbumTest` | 20 | Un caso por criterio de aceptación, más cargando, error del listado y sin resultados |
 | `PantallaDetalleArtistaAsociarTest` | 6 | Botón solo para el Coleccionista, ids enviados al abrir, título con el artista y "Álbum asociado" |
 | `VinilosNavHostTest` | 3 | Flujo completo del Coleccionista, cancelar y el Visitante sin botón |
 | `RotacionTest` | 1 | Girar con la ventana abierta conserva búsqueda y selección sin volver a consultar |
@@ -79,6 +79,22 @@ Contenedor aislado (puerto 3001) con `sql/data.sql`, emulador Pixel 8. Al termin
 | Defecto | Corrección |
 |---|---|
 | En Android 6 (Nexus 5X) la ventana enfocaba sola la búsqueda y abría el teclado; la lista quedaba sin espacio y una fila se montaba sobre "Asociar" | El foco inicial va al título (que TalkBack anuncia primero). Las pruebas se desplazan hasta la fila que revisan (`TagListaAsociar`) |
+
+## Correcciones de la revisión del PR
+
+Revisión de Daniel Nuñez en el PR #114, corregida con TDD (rojo antes del código).
+
+| Punto | Corrección | Prueba |
+|---|---|---|
+| **Necesario:** "Asociar" seguía habilitado con un álbum elegido que la búsqueda dejaba fuera, y se asociaba un álbum que no se veía | La selección se quita cuando el álbum deja de verse (búsqueda o catálogo actualizado) y `puedeAsociar` exige que esté visible. Se cambiaron la spec y D4 | 3 nuevas en `AsociarAlbumViewModelTest` (rojo con 3 fallos) |
+| TalkBack leía el nombre del álbum dos veces | La portada de la fila es decorativa | `laFilaNoRepiteElNombreConLaDescripcionDeLaPortada` (rojo) |
+| `Naranja` fijo en el radio y el borde | `primary`: 2,73:1 hoy sobre `NaranjaSuave` y 4,0:1 con `NaranjaContraste` (#113) | — |
+| Dos criterios de orden en la discografía | El álbum se agrega al final y lo ordena la nueva consulta | `albumAsociadoLoAgregaAlFinalDeLaDiscografiaYActivaElAviso` (rojo) |
+| `visibles` se recalculaba en cada lectura | `by lazy`, una vez por estado | Las existentes |
+| Texto de otra HU | `asociar_cancelar` propio | Las existentes |
+| Carrera del `PUT` de bandas | Ya aceptada en `design.md` (*Risks*) | — |
+
+Después de las correcciones: 502 unitarias sin fallos, lint sin errores y 59/59 instrumentadas en el Pixel 8 (`VentanaAsociarAlbumTest`, `PantallaDetalleArtistaAsociarTest`, `VinilosNavHostTest` y `RotacionTest` completas).
 
 ## Guía para las pruebas E2E (T15-5, #56)
 
