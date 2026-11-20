@@ -1,6 +1,8 @@
 package com.example.vinilos.viewmodel
 
 import com.example.vinilos.MainDispatcherRule
+import com.example.vinilos.data.model.AlbumArtista
+import com.example.vinilos.data.model.AlbumResumen
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.ArtistaDetalle
@@ -12,6 +14,8 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
@@ -31,6 +35,8 @@ private class ArtistRepositoryFalso : ArtistRepository {
 
     override suspend fun obtenerArtistas(): Result<List<Artist>> = error("No se usa en esta prueba")
     override suspend fun obtenerArtistasGuardados(): List<Artist> = error("No se usa en esta prueba")
+    override suspend fun asociarAlbum(tipo: ArtistType, idArtista: Int, idAlbum: Int): Result<Unit> =
+        error("No se usa en esta prueba")
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -184,5 +190,92 @@ class ArtistaDetalleViewModelTest {
         repositorio.consultas.single().third.complete(Result.failure(ErrorDeCarga()))
         advanceUntilIdle()
         assertEquals(ArtistaDetalleUiState.Error, viewModel.uiState.value)
+    }
+
+    // ---------- Álbum asociado (HU15, add-agregar-album-artista D5) ----------
+
+    private val ruben = ArtistaDetalle(
+        100, "Rubén Blades Bellido de Luna", null, null, ArtistType.MUSICO, null, emptyList(),
+        listOf(AlbumArtista(100, "Buscando América", "p100", "1984"), AlbumArtista(101, "Poeta del pueblo", "p101", null)),
+        emptyList()
+    )
+    private val noche = AlbumResumen(102, "A Night at the Opera", "p102", "Rock", "Queen", "1975")
+    private val nocheEnElDetalle = AlbumArtista(102, "A Night at the Opera", "p102", "1975")
+
+    private fun kotlinx.coroutines.test.TestScope.rubenCargado(repositorio: ArtistRepositoryFalso): ArtistaDetalleViewModel {
+        val viewModel = ArtistaDetalleViewModel(ArtistType.MUSICO, 100, repositorio)
+        advanceUntilIdle()
+        repositorio.consultas.single().third.complete(Result.success(ruben))
+        advanceUntilIdle()
+        return viewModel
+    }
+
+    @Test
+    fun albumAsociadoLoAgregaAlFinalDeLaDiscografiaYActivaElAviso() = runTest {
+        // Revisión del PR #114: se agrega al final y el orden lo fija la nueva consulta (un solo criterio de orden).
+        val repositorio = ArtistRepositoryFalso()
+        val viewModel = rubenCargado(repositorio)
+
+        viewModel.albumAsociado(noche)
+
+        val estado = viewModel.uiState.value as ArtistaDetalleUiState.Exito
+        assertEquals(ruben.albumes + nocheEnElDetalle, estado.detalle.albumes)
+        assertTrue(estado.mostrarAlbumAsociado)
+    }
+
+    @Test
+    fun albumAsociadoVuelveAConsultarElDetalleYUsaLaRespuesta() = runTest {
+        val repositorio = ArtistRepositoryFalso()
+        val viewModel = rubenCargado(repositorio)
+        val actualizado = ruben.copy(albumes = listOf(nocheEnElDetalle) + ruben.albumes)
+
+        viewModel.albumAsociado(noche)
+        advanceUntilIdle()
+        assertEquals(2, repositorio.consultas.size)
+        assertEquals(ArtistType.MUSICO to 100, repositorio.consultas.last().first to repositorio.consultas.last().second)
+        repositorio.consultas.last().third.complete(Result.success(actualizado))
+        advanceUntilIdle()
+
+        val estado = viewModel.uiState.value as ArtistaDetalleUiState.Exito
+        assertEquals(actualizado, estado.detalle)
+        assertTrue("El aviso sigue pendiente hasta que la pantalla lo muestre", estado.mostrarAlbumAsociado)
+        assertFalse(estado.actualizando)
+    }
+
+    @Test
+    fun siLaNuevaConsultaFallaConservaElAlbumAgregadoSinAvisoDeError() = runTest {
+        val repositorio = ArtistRepositoryFalso()
+        val viewModel = rubenCargado(repositorio)
+
+        viewModel.albumAsociado(noche)
+        advanceUntilIdle()
+        repositorio.consultas.last().third.complete(Result.failure(ErrorDeCarga()))
+        advanceUntilIdle()
+
+        val estado = viewModel.uiState.value as ArtistaDetalleUiState.Exito
+        assertTrue(nocheEnElDetalle in estado.detalle.albumes)
+        assertFalse(estado.errorAlActualizar)
+        assertFalse(estado.actualizando)
+    }
+
+    @Test
+    fun albumAsociadoMostradoApagaElAviso() = runTest {
+        val repositorio = ArtistRepositoryFalso()
+        val viewModel = rubenCargado(repositorio)
+        viewModel.albumAsociado(noche)
+
+        viewModel.albumAsociadoMostrado()
+
+        assertFalse((viewModel.uiState.value as ArtistaDetalleUiState.Exito).mostrarAlbumAsociado)
+    }
+
+    @Test
+    fun unAlbumQueYaEstabaNoSeRepite() = runTest {
+        val repositorio = ArtistRepositoryFalso()
+        val viewModel = rubenCargado(repositorio)
+
+        viewModel.albumAsociado(AlbumResumen(100, "Buscando América", "p100", "Salsa", "Rubén Blades", "1984"))
+
+        assertEquals(ruben.albumes, (viewModel.uiState.value as ArtistaDetalleUiState.Exito).detalle.albumes)
     }
 }

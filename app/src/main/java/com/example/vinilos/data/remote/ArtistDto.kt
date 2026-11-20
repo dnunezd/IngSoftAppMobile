@@ -29,6 +29,9 @@ data class ArtistaDetalleDto(
     val performerPrizes: List<PremiacionArtistaDto>?
 )
 
+/** Elemento del cuerpo de `PUT /bands/{id}/albums`: el backend solo lee el id. */
+data class IdAlbumDto(val id: Int)
+
 data class AlbumArtistaDto(
     val id: Int?,
     val name: String?,

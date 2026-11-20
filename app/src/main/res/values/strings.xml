@@ -241,4 +241,22 @@
     <string name="comentar_ilustracion">Vinilo con la marca de publicado</string>
     <string name="comentar_album_resenado">Álbum reseñado</string>
     <string name="comentar_aceptar">Aceptar</string>
+
+    <!-- Agregar un álbum a un artista (HU15) -->
+    <string name="asociar_agregar_album">Agregar álbum</string>
+    <string name="asociar_titulo">Asociar álbum a %1$s</string>
+    <string name="asociar_buscar" tools:ignore="TypographyEllipsis">Buscar álbum por título...</string>
+    <string name="asociar_limpiar_busqueda">Borrar búsqueda</string>
+    <string name="asociar_cerrar">Cerrar</string>
+    <string name="asociar_ya_asociado">Ya asociado</string>
+    <string name="asociar_asociar">Asociar</string>
+    <string name="asociar_cancelar">Cancelar</string>
+    <string name="asociar_asociando">Asociando álbum</string>
+    <string name="asociar_album_asociado">Álbum asociado</string>
+    <string name="asociar_sin_albumes">No hay álbumes para asociar</string>
+    <string name="asociar_sin_resultados">No encontramos álbumes con esa búsqueda</string>
+    <string name="asociar_error">No se pudo asociar el álbum, intenta de nuevo</string>
+    <string name="asociar_cargando" tools:ignore="TypographyEllipsis">Cargando álbumes...</string>
+    <string name="asociar_error_listado">No pudimos cargar los álbumes</string>
+    <string name="asociar_reintentar">Reintentar</string>
 </resources>
