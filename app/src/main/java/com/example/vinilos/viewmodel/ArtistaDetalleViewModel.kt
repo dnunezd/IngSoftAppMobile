@@ -2,6 +2,8 @@ package com.example.vinilos.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.vinilos.data.model.AlbumArtista
+import com.example.vinilos.data.model.AlbumResumen
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.remote.ErrorDeCarga
 import com.example.vinilos.data.remote.RecursoNoEncontrado
@@ -33,6 +35,46 @@ class ArtistaDetalleViewModel(
         val estado = _uiState.value
         if (estado is ArtistaDetalleUiState.Exito && estado.errorAlActualizar) {
             _uiState.value = estado.copy(errorAlActualizar = false)
+        }
+    }
+
+    /**
+     * Un álbum se acaba de asociar al artista (HU15, D5): se agrega de inmediato a la discografía y se vuelve
+     * a consultar el detalle, que también actualiza lo guardado. Si esa consulta falla, se conserva el álbum
+     * agregado sin avisar de error: la asociación sí ocurrió.
+     */
+    fun albumAsociado(album: AlbumResumen) {
+        val estado = _uiState.value as? ArtistaDetalleUiState.Exito ?: return
+        val detalle = estado.detalle
+        val albumes = if (detalle.albumes.any { it.id == album.id }) {
+            detalle.albumes
+        } else {
+            (detalle.albumes + AlbumArtista(album.id, album.nombre, album.portada, album.anio))
+                .sortedWith(compareBy<AlbumArtista> { it.anio == null }.thenByDescending { it.anio })
+        }
+        _uiState.value = estado.copy(
+            detalle = detalle.copy(albumes = albumes),
+            actualizando = true,
+            mostrarAlbumAsociado = true
+        )
+        viewModelScope.launch {
+            val resultado = repositorio.obtenerDetalle(tipo, id)
+            val actual = _uiState.value as? ArtistaDetalleUiState.Exito ?: return@launch
+            _uiState.value = resultado.fold(
+                onSuccess = { actual.copy(detalle = it, actualizando = false) },
+                onFailure = {
+                    if (it !is ErrorDeCarga) throw it
+                    actual.copy(actualizando = false)
+                }
+            )
+        }
+    }
+
+    /** La pantalla ya mostró "Álbum asociado". */
+    fun albumAsociadoMostrado() {
+        val estado = _uiState.value
+        if (estado is ArtistaDetalleUiState.Exito && estado.mostrarAlbumAsociado) {
+            _uiState.value = estado.copy(mostrarAlbumAsociado = false)
         }
     }
 
