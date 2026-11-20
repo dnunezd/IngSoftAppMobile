@@ -36,7 +36,7 @@ class AsociarAlbumViewModel(
     }
 
     fun buscar(texto: String) {
-        _uiState.update { it.copy(busqueda = texto) }
+        _uiState.update { it.copy(busqueda = texto).sinSeleccionOculta() }
     }
 
     fun seleccionar(id: Int) {
@@ -91,7 +91,9 @@ class AsociarAlbumViewModel(
             val guardados = albumes.obtenerAlbumesGuardados()
             if (guardados.isNotEmpty()) _uiState.update { it.copy(listado = ListadoAsociable.Listo(guardados)) }
             albumes.obtenerAlbumes().fold(
-                onSuccess = { lista -> _uiState.update { it.copy(listado = ListadoAsociable.Listo(lista)) } },
+                onSuccess = { lista ->
+                    _uiState.update { it.copy(listado = ListadoAsociable.Listo(lista)).sinSeleccionOculta() }
+                },
                 onFailure = {
                     if (it !is ErrorDeCarga) throw it
                     if (guardados.isEmpty()) _uiState.update { estado -> estado.copy(listado = ListadoAsociable.Error) }

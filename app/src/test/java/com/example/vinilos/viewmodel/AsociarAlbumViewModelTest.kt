@@ -281,15 +281,53 @@ class AsociarAlbumViewModelTest {
     }
 
     @Test
-    fun laSeleccionSeConservaAunqueElFiltroLaDejeFuera() = runTest {
+    fun unaBusquedaQueDejaFueraAlElegidoQuitaLaSeleccion() = runTest {
+        // Revisión del PR #114: no se debe poder asociar un álbum que ya no se ve.
         val vm = abiertaConCatalogo()
         vm.seleccionar(102)
 
         vm.buscar("races")
 
         assertEquals(listOf(dia), vm.uiState.value.visibles)
+        assertNull(vm.uiState.value.seleccionado)
+        assertFalse(vm.uiState.value.puedeAsociar)
+    }
+
+    @Test
+    fun unaBusquedaQueSigueMostrandoAlElegidoConservaLaSeleccion() = runTest {
+        val vm = abiertaConCatalogo()
+        vm.seleccionar(102)
+
+        vm.buscar("opera")
+
         assertEquals(102, vm.uiState.value.seleccionado)
         assertTrue(vm.uiState.value.puedeAsociar)
+    }
+
+    @Test
+    fun siElCatalogoActualizadoYaNoTraeAlElegidoQuitaLaSeleccion() = runTest {
+        albumes.guardados = listOf(dia, noche)
+        val vm = viewModel()
+        vm.abrir(emptySet())
+        advanceUntilIdle()
+        vm.seleccionar(102)
+
+        albumes.consultas.single().complete(Result.success(listOf(dia)))
+        advanceUntilIdle()
+
+        assertNull(vm.uiState.value.seleccionado)
+        assertFalse(vm.uiState.value.puedeAsociar)
+    }
+
+    @Test
+    fun unElegidoQueNoEstaEntreLosVisiblesNoSePuedeAsociar() {
+        val estado = AsociarAlbumUiState(
+            abierta = true,
+            seleccionado = 102,
+            listado = ListadoAsociable.Listo(listOf(dia))
+        )
+
+        assertFalse(estado.puedeAsociar)
     }
 
     // ---------- Asociar ----------
