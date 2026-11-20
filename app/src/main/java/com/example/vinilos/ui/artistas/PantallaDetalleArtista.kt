@@ -29,6 +29,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Lock
@@ -79,6 +80,7 @@ import com.example.vinilos.ui.ingreso.AvisoUnaVez
 import com.example.vinilos.ui.ingreso.IndicadorActualizando
 import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.ArtistaDetalleUiState
+import com.example.vinilos.viewmodel.AsociarAlbumUiState
 import com.example.vinilos.viewmodel.FavoritoUiState
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
@@ -130,7 +132,12 @@ fun PantallaDetalleArtista(
     // VinilosNavHost pasa uno propio para marcar el listado y forzar una nueva consulta (sin
     // eso, popBackStack por sí solo no recarga el listado; ver bug corregido en HU10).
     onVolverAlListado: () -> Unit = onAtras,
-    onAvisoMostrado: () -> Unit = {}
+    onAvisoMostrado: () -> Unit = {},
+    // HU15: nulo oculta "Agregar álbum" (Visitante), igual que estadoFavorito.
+    estadoAsociar: AsociarAlbumUiState? = null,
+    accionesAsociar: AccionesAsociarAlbum = AccionesAsociarAlbum(),
+    onAgregarAlbum: (Set<Int>) -> Unit = {},
+    onAlbumAsociadoMostrado: () -> Unit = {}
 ) {
     // Se maneja aquí arriba (fuera del LazyColumn) y no dentro de la tarjeta: esa tarjeta se
     // compone en un "item" sin key explícita, y un LaunchedEffect allí puede reiniciarse si el
@@ -148,6 +155,12 @@ fun PantallaDetalleArtista(
         mensaje = stringResource(R.string.artista_error_actualizar),
         avisos = avisos,
         onMostrado = onAvisoMostrado
+    )
+    AvisoUnaVez(
+        mostrar = exito?.mostrarAlbumAsociado == true,
+        mensaje = stringResource(R.string.asociar_album_asociado),
+        avisos = avisos,
+        onMostrado = onAlbumAsociadoMostrado
     )
     val descripcionActualizando = stringResource(R.string.artista_actualizando)
     Box(
@@ -190,12 +203,16 @@ fun PantallaDetalleArtista(
                         estadoFavorito = estadoFavorito,
                         onAgregarFavorito = onAgregarFavorito,
                         onReintentarFavorito = onReintentarFavorito,
-                        onVolverAlListado = onVolverAlListado
+                        onVolverAlListado = onVolverAlListado,
+                        onAgregarAlbum = if (estadoAsociar != null) onAgregarAlbum else null
                     )
                 }
             }
         }
         SnackbarHost(avisos, Modifier.align(Alignment.BottomCenter))
+    }
+    if (estadoAsociar != null && exito != null) {
+        VentanaAsociarAlbum(estadoAsociar, exito.detalle.nombre, accionesAsociar)
     }
 }
 
@@ -205,7 +222,9 @@ private fun LazyListScope.contenido(
     estadoFavorito: FavoritoUiState?,
     onAgregarFavorito: () -> Unit,
     onReintentarFavorito: () -> Unit,
-    onVolverAlListado: () -> Unit
+    onVolverAlListado: () -> Unit,
+    /** Nulo para el Visitante: no ve "Agregar álbum" (HU15). */
+    onAgregarAlbum: ((Set<Int>) -> Unit)?
 ) {
     item(key = "tarjeta_principal") {
         TarjetaPrincipal(
@@ -238,7 +257,10 @@ private fun LazyListScope.contenido(
             titulo = R.string.artista_albumes,
             contador = R.plurals.artista_albumes_contador,
             cantidad = detalle.albumes.size,
-            tagContador = TagContadorAlbumes
+            tagContador = TagContadorAlbumes,
+            accion = onAgregarAlbum?.let { agregar ->
+                { BotonAgregarAlbum { agregar(detalle.albumes.map { it.id }.toSet()) } }
+            }
         )
     }
     if (detalle.albumes.isEmpty()) {
@@ -546,12 +568,19 @@ private fun BloqueFecha(tipo: ArtistType, fecha: String) {
 
 /** Título de la sección, con el contador a la derecha solo cuando hay elementos. */
 @Composable
-private fun TituloSeccion(@StringRes titulo: Int, @PluralsRes contador: Int, cantidad: Int, tagContador: String) {
+private fun TituloSeccion(
+    @StringRes titulo: Int,
+    @PluralsRes contador: Int,
+    cantidad: Int,
+    tagContador: String,
+    accion: (@Composable () -> Unit)? = null
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(top = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
             text = stringResource(titulo),
@@ -567,6 +596,23 @@ private fun TituloSeccion(@StringRes titulo: Int, @PluralsRes contador: Int, can
                 modifier = Modifier.testTag(tagContador)
             )
         }
+        accion?.invoke()
+    }
+}
+
+/** "Agregar álbum" junto al título de la sección de álbumes, solo para el Coleccionista (HU15). */
+@Composable
+private fun BotonAgregarAlbum(onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        shape = RoundedCornerShape(50),
+        // Alto visual de 40 dp; Material 3 mantiene el área táctil de 48 dp.
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+        modifier = Modifier.testTag(TagBotonAgregarAlbum)
+    ) {
+        Icon(imageVector = Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+        Spacer(Modifier.width(4.dp))
+        Text(stringResource(R.string.asociar_agregar_album), style = MaterialTheme.typography.labelLarge)
     }
 }
 
