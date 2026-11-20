@@ -6,6 +6,7 @@ import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performScrollToNode
@@ -103,6 +104,15 @@ class VentanaAsociarAlbumTest {
         rule.onNodeWithText("A Night at the Opera").assertIsDisplayed()
         rule.onNodeWithText("1975").assertIsDisplayed()
         rule.onNodeWithTag(tagPortadaAsociable(102), useUnmergedTree = true).assertIsDisplayed()
+    }
+
+    @Test
+    fun laFilaNoRepiteElNombreConLaDescripcionDeLaPortada() {
+        // Revisión del PR #114: TalkBack leía "Imagen de A Night at the Opera" y luego "A Night at the Opera".
+        mostrar(abierta)
+
+        fila(102).assert(!hasContentDescription("Imagen de A Night at the Opera"))
+        fila(102).assert(hasText("A Night at the Opera"))
     }
 
     // Criterio 4

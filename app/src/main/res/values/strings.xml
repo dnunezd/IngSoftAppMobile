@@ -245,6 +245,7 @@
     <string name="asociar_cerrar">Cerrar</string>
     <string name="asociar_ya_asociado">Ya asociado</string>
     <string name="asociar_asociar">Asociar</string>
+    <string name="asociar_cancelar">Cancelar</string>
     <string name="asociar_asociando">Asociando álbum</string>
     <string name="asociar_album_asociado">Álbum asociado</string>
     <string name="asociar_sin_albumes">No hay álbumes para asociar</string>

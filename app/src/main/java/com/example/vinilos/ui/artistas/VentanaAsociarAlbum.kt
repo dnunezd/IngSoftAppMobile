@@ -57,7 +57,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.testTag
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -69,7 +71,6 @@ import androidx.compose.ui.unit.dp
 import com.example.vinilos.R
 import com.example.vinilos.data.model.AlbumResumen
 import com.example.vinilos.ui.detalle.PortadaAlbum
-import com.example.vinilos.ui.theme.Naranja
 import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.AsociarAlbumUiState
 import com.example.vinilos.viewmodel.ListadoAsociable
@@ -322,7 +323,8 @@ private fun FilaAsociable(
         elegido -> MaterialTheme.colorScheme.primaryContainer
         else -> MaterialTheme.colorScheme.surface
     }
-    val borde = if (elegido) Naranja else MaterialTheme.colorScheme.outline
+    // `primary` y no `Naranja`: sobre `primaryContainer` el radio y el borde necesitan 3:1 (revisión del PR #114).
+    val borde = if (elegido) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -341,15 +343,16 @@ private fun FilaAsociable(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        PortadaAlbum(
-            url = album.portada,
-            contentDescription = stringResource(R.string.artistas_imagen_descripcion, album.nombre),
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(56.dp)
-                .clip(EsquinaPortada)
-                .testTag(tagPortadaAsociable(album.id))
-        )
+        // La portada es decorativa dentro de la fila: el nombre ya se anuncia, así TalkBack no lo lee dos veces.
+        Box(modifier = Modifier.clearAndSetSemantics { testTag = tagPortadaAsociable(album.id) }) {
+            PortadaAlbum(
+                url = album.portada,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(EsquinaPortada)
+            )
+        }
         Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
                 text = album.nombre,
@@ -382,7 +385,7 @@ private fun FilaAsociable(
             selected = elegido,
             onClick = null,
             enabled = activa && !yaAsociado,
-            colors = RadioButtonDefaults.colors(selectedColor = Naranja)
+            colors = RadioButtonDefaults.colors(selectedColor = MaterialTheme.colorScheme.primary)
         )
     }
 }
@@ -458,7 +461,7 @@ private fun Botones(estado: AsociarAlbumUiState, acciones: AccionesAsociarAlbum)
             .heightIn(min = 52.dp)
             .testTag(TagCancelarAsociar)
     ) {
-        Text(stringResource(R.string.crear_cancelar), style = MaterialTheme.typography.titleSmall)
+        Text(stringResource(R.string.asociar_cancelar), style = MaterialTheme.typography.titleSmall)
     }
 }
 
