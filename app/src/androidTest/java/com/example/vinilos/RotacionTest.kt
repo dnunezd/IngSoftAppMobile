@@ -1,6 +1,7 @@
 package com.example.vinilos
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
@@ -12,11 +13,18 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
+import com.example.vinilos.data.model.AlbumResumen
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.ArtistaDetalle
 import com.example.vinilos.data.model.Collector
+import com.example.vinilos.ui.artistas.TagBotonAgregarAlbum
+import com.example.vinilos.ui.artistas.TagBusquedaAsociar
+import com.example.vinilos.ui.artistas.TagListaAsociar
+import com.example.vinilos.ui.artistas.TagListaDetalleArtista
 import com.example.vinilos.ui.artistas.TagNombreDetalleArtista
+import com.example.vinilos.ui.artistas.TagVentanaAsociar
+import com.example.vinilos.ui.artistas.tagAlbumAsociable
 import com.example.vinilos.ui.artistas.TagProgresoDetalleArtista
 import com.example.vinilos.ui.artistas.tagArtista
 import com.example.vinilos.ui.catalogo.TagCuadriculaCatalogo
@@ -160,6 +168,61 @@ class RotacionTest {
             rule.onNodeWithTag(TagNombreDetalleArtista).assertTextEquals("Queen")
             rule.onNodeWithTag(TagProgresoDetalleArtista).assertDoesNotExist()
             assertEquals(1, artistas.consultasDetalle.size)
+        }
+    }
+
+    @Test
+    fun alGirarConLaVentanaDeAsociarAbiertaConservaBusquedaYSeleccionSinVolverAConsultar() {
+        val ruben = Artist(100, "Rubén Blades Bellido de Luna", null, ArtistType.MUSICO)
+        val artistas = RepositorioArtistasFalso(
+            Result.success(listOf(ruben)),
+            mapOf(
+                (ArtistType.MUSICO to 100) to Result.success(
+                    ArtistaDetalle(
+                        100, "Rubén Blades Bellido de Luna", null, null, ArtistType.MUSICO, null,
+                        emptyList(), emptyList(), emptyList()
+                    )
+                )
+            )
+        )
+        val albumes = RepositorioAlbumesFalso(
+            catalogo = listOf(
+                Result.success(
+                    listOf(
+                        AlbumResumen(103, "A Day at the Races", null, "Rock", "Queen", "1976"),
+                        AlbumResumen(102, "A Night at the Opera", null, "Rock", "Queen", "1975")
+                    )
+                )
+            )
+        )
+        ApplicationProvider.getApplicationContext<VinilosApplication>().container = AppContainer(
+            colectoresRepositorio = RepositorioFalso(Result.success(listOf(manolo))),
+            artistasRepositorio = artistas,
+            albumesRepositorio = albumes,
+            favoritosRepositorio = RepositorioFavoritosFalso()
+        )
+
+        ActivityScenario.launch(MainActivity::class.java).use { escenario ->
+            rule.onNodeWithTag(TagEntrarColeccionista).performScrollTo().performClick()
+            rule.onNodeWithTag(tagColeccionista(100)).performClick()
+            rule.onNodeWithTag(TagVerArtistas).performScrollTo().performClick()
+            rule.onNodeWithTag(tagArtista(ruben)).performClick()
+            rule.onNodeWithTag(TagListaDetalleArtista).performScrollToNode(hasTestTag(TagBotonAgregarAlbum))
+            rule.onNodeWithTag(TagBotonAgregarAlbum).performClick()
+            rule.waitForIdle()
+            rule.onNodeWithTag(TagListaAsociar).performScrollToNode(hasTestTag(tagAlbumAsociable(102)))
+            rule.onNodeWithTag(tagAlbumAsociable(102)).performClick()
+            rule.onNodeWithTag(TagBusquedaAsociar).performTextInput("night")
+            rule.waitForIdle()
+
+            escenario.recreate()
+            rule.waitForIdle()
+
+            rule.onNodeWithTag(TagVentanaAsociar).assertIsDisplayed()
+            rule.onNodeWithText("night").assertIsDisplayed()
+            rule.onNodeWithTag(tagAlbumAsociable(102)).assertIsSelected()
+            rule.onNodeWithTag(tagAlbumAsociable(103)).assertDoesNotExist()
+            assertEquals(1, albumes.consultasCatalogo)
         }
     }
 }

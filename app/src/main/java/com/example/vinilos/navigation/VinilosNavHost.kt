@@ -20,6 +20,7 @@ import com.example.vinilos.data.repository.ArtistRepository
 import com.example.vinilos.data.repository.CollectorRepository
 import com.example.vinilos.data.repository.ComentarioRepository
 import com.example.vinilos.data.repository.FavoriteRepository
+import com.example.vinilos.ui.artistas.AccionesAsociarAlbum
 import com.example.vinilos.ui.artistas.PantallaArtistas
 import com.example.vinilos.ui.artistas.PantallaDetalleArtista
 import com.example.vinilos.ui.catalogo.PantallaCatalogo
@@ -35,6 +36,7 @@ import com.example.vinilos.viewmodel.AlbumViewModel
 import com.example.vinilos.viewmodel.AlbumsViewModel
 import com.example.vinilos.viewmodel.ArtistaDetalleViewModel
 import com.example.vinilos.viewmodel.ArtistsViewModel
+import com.example.vinilos.viewmodel.AsociarAlbumViewModel
 import com.example.vinilos.viewmodel.CollectorsViewModel
 import com.example.vinilos.viewmodel.ComentarAlbumViewModel
 import com.example.vinilos.viewmodel.CrearAlbumViewModel
@@ -286,6 +288,21 @@ fun VinilosNavHost(
                     }
                 )
                 val estadoFavorito by favoritoViewModel.uiState.collectAsStateWithLifecycle()
+                // HU15: la ventana vive en la misma entrada que el detalle, así que el álbum asociado se
+                // entrega directo al ViewModel del detalle, sin savedStateHandle (add-agregar-album-artista, D5).
+                val asociarViewModel: AsociarAlbumViewModel = viewModel(
+                    key = "asociar-$tipo-$artistId",
+                    factory = viewModelFactory {
+                        initializer { AsociarAlbumViewModel(tipo, artistId, albumRepository, artistRepository) }
+                    }
+                )
+                val estadoAsociar by asociarViewModel.uiState.collectAsStateWithLifecycle()
+                LaunchedEffect(estadoAsociar.albumAsociado) {
+                    estadoAsociar.albumAsociado?.let {
+                        viewModel.albumAsociado(it)
+                        asociarViewModel.asociadoNotificado()
+                    }
+                }
                 PantallaDetalleArtista(
                     estado = estado,
                     onSeleccionarAlbum = { idAlbum ->
@@ -302,7 +319,17 @@ fun VinilosNavHost(
                             ?.set(ClaveArtistaEliminado, true)
                         navController.popBackStack()
                     },
-                    onAvisoMostrado = viewModel::avisoMostrado
+                    onAvisoMostrado = viewModel::avisoMostrado,
+                    estadoAsociar = estadoAsociar,
+                    accionesAsociar = AccionesAsociarAlbum(
+                        onBuscar = asociarViewModel::buscar,
+                        onSeleccionar = asociarViewModel::seleccionar,
+                        onAsociar = asociarViewModel::asociar,
+                        onCancelar = asociarViewModel::cancelar,
+                        onReintentarCarga = asociarViewModel::reintentarCarga
+                    ),
+                    onAgregarAlbum = asociarViewModel::abrir,
+                    onAlbumAsociadoMostrado = viewModel::albumAsociadoMostrado
                 )
             } else {
                 PantallaDetalleArtista(
