@@ -46,11 +46,12 @@ class ArtistaDetalleViewModel(
     fun albumAsociado(album: AlbumResumen) {
         val estado = _uiState.value as? ArtistaDetalleUiState.Exito ?: return
         val detalle = estado.detalle
+        // Se agrega al final: el orden de la discografía lo fija la consulta que sigue, con el mismo criterio del
+        // repositorio (revisión del PR #114).
         val albumes = if (detalle.albumes.any { it.id == album.id }) {
             detalle.albumes
         } else {
-            (detalle.albumes + AlbumArtista(album.id, album.nombre, album.portada, album.anio))
-                .sortedWith(compareBy<AlbumArtista> { it.anio == null }.thenByDescending { it.anio })
+            detalle.albumes + AlbumArtista(album.id, album.nombre, album.portada, album.anio)
         }
         _uiState.value = estado.copy(
             detalle = detalle.copy(albumes = albumes),

@@ -211,17 +211,15 @@ class ArtistaDetalleViewModelTest {
     }
 
     @Test
-    fun albumAsociadoLoAgregaALaDiscografiaPorAnioYActivaElAviso() = runTest {
+    fun albumAsociadoLoAgregaAlFinalDeLaDiscografiaYActivaElAviso() = runTest {
+        // Revisión del PR #114: se agrega al final y el orden lo fija la nueva consulta (un solo criterio de orden).
         val repositorio = ArtistRepositoryFalso()
         val viewModel = rubenCargado(repositorio)
 
         viewModel.albumAsociado(noche)
 
         val estado = viewModel.uiState.value as ArtistaDetalleUiState.Exito
-        assertEquals(
-            listOf(ruben.albumes[0], nocheEnElDetalle, ruben.albumes[1]),
-            estado.detalle.albumes
-        )
+        assertEquals(ruben.albumes + nocheEnElDetalle, estado.detalle.albumes)
         assertTrue(estado.mostrarAlbumAsociado)
     }
 
