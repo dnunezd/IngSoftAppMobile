@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -53,6 +54,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -72,6 +74,7 @@ import com.example.vinilos.ui.theme.EtiquetaBandaFondo
 import com.example.vinilos.ui.theme.EtiquetaBandaTexto
 import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.ArtistsUiState
+import com.example.vinilos.ui.ingreso.encabezado
 
 /** Se conserva el tag del destino provisional: las pruebas de navegación llegan aquí por él. */
 const val TagArtistas = "artistas"
@@ -168,8 +171,8 @@ internal fun EncabezadoArtistas(titulo: String, onAtras: () -> Unit, accion: (@C
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(64.dp)
-            .padding(horizontal = 12.dp),
+            .heightIn(min = 64.dp)
+            .padding(horizontal = 12.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -189,7 +192,8 @@ internal fun EncabezadoArtistas(titulo: String, onAtras: () -> Unit, accion: (@C
         Text(
             text = titulo,
             style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.encabezado()
         )
         if (accion != null) {
             Spacer(Modifier.weight(1f))
@@ -206,7 +210,11 @@ private fun Titular() {
             fondo = MaterialTheme.colorScheme.primary,
             contenido = MaterialTheme.colorScheme.onPrimary
         )
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.encabezado(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Text(
                 text = stringResource(R.string.artistas_titular_1),
                 style = MaterialTheme.typography.headlineLarge,
@@ -253,11 +261,11 @@ private fun Buscador(consultaInicial: String, habilitado: Boolean, onBuscar: (St
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(52.dp)
+                    .heightIn(min = 52.dp)
                     .clip(CircleShape)
                     .background(MaterialTheme.colorScheme.surface)
                     .border(1.dp, MaterialTheme.colorScheme.onSurfaceVariant, CircleShape)
-                    .padding(horizontal = 16.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
@@ -289,11 +297,17 @@ private fun EncabezadoLista(cantidad: Int) {
             .padding(top = 8.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
+        val descripcionLista = stringResource(R.string.artistas_lista_descripcion)
         Text(
             text = stringResource(R.string.artistas_lista),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier
+                .weight(1f)
+                .semantics {
+                    heading()
+                    contentDescription = descripcionLista
+                }
         )
         Text(
             text = pluralStringResource(R.plurals.artistas_contador, cantidad, cantidad),

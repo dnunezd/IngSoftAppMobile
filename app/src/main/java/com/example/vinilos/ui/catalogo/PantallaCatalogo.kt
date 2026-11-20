@@ -71,6 +71,7 @@ import com.example.vinilos.ui.ingreso.ChipEtiqueta
 import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.AlbumNuevoCatalogo
 import com.example.vinilos.viewmodel.AlbumsUiState
+import com.example.vinilos.ui.ingreso.encabezado
 
 /** `catalogo` y `catalogo_rol` son los tags que ya usaban las pruebas de ingreso y rotación (HU00). */
 const val TagCatalogo = "catalogo"
@@ -281,7 +282,11 @@ private fun Titular() {
                 )
             }
         }
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.encabezado(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Text(
                 text = stringResource(R.string.catalogo_titular_1),
                 style = MaterialTheme.typography.headlineLarge,
@@ -317,7 +322,8 @@ private fun EncabezadoLista(cantidad: Int, actualizando: Boolean) {
         Text(
             text = stringResource(R.string.catalogo_lista),
             style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.encabezado()
         )
         if (actualizando) {
             val descripcion = stringResource(R.string.catalogo_actualizando)

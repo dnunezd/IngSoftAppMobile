@@ -30,6 +30,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -39,6 +40,7 @@ import coil.compose.AsyncImage
 import com.example.vinilos.R
 import com.example.vinilos.ui.ingreso.EncabezadoVinilo
 import com.example.vinilos.ui.ingreso.IndicadorActualizando
+import com.example.vinilos.ui.ingreso.encabezado
 
 @Composable
 fun ContenidoAlbum(
@@ -70,6 +72,7 @@ fun ContenidoAlbum(
         item {
             PortadaAlbum(
                 url = presentacion.album.portada,
+                contentDescription = stringResource(R.string.detalle_portada_con_nombre, presentacion.album.nombre),
                 modifier = Modifier.fillMaxWidth().height(220.dp).clip(RoundedCornerShape(24.dp))
             )
         }
@@ -79,7 +82,8 @@ fun ContenidoAlbum(
                 Text(
                     stringResource(R.string.detalle_artistas),
                     style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.encabezado()
                 )
             }
             items(presentacion.album.artistas) { artista -> FilaArtista(artista) }
@@ -88,7 +92,8 @@ fun ContenidoAlbum(
             Text(
                 stringResource(R.string.detalle_canciones),
                 style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.encabezado()
             )
         }
         presentacion.mensajeCanciones?.let { mensaje ->
@@ -99,7 +104,8 @@ fun ContenidoAlbum(
             Text(
                 stringResource(R.string.detalle_comentarios),
                 style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.encabezado()
             )
         }
         presentacion.mensajeComentarios?.let { mensaje ->
@@ -166,9 +172,15 @@ private fun PromedioConEstrellas(promedio: String?) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         } else {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            // Un solo elemento ("5,0 de 5 estrellas"): sin esto TalkBack leía "5,0" y luego "5,0 de 5 estrellas".
+            val descripcionEstrellas = stringResource(R.string.detalle_promedio_estrellas, promedio)
+            Row(
+                modifier = Modifier.clearAndSetSemantics { contentDescription = descripcionEstrellas },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
                 Text(promedio, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                TextoEstrellas(estrellasLlenas(promedio))
+                TextoEstrellas(llenas = estrellasLlenas(promedio))
             }
         }
     }

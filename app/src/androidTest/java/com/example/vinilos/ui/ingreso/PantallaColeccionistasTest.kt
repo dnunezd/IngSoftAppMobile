@@ -48,25 +48,25 @@ class PantallaColeccionistasTest {
     @Test
     fun laFranjaAudioFeedSeMuestraEnTodosLosEstados() {
         mostrar(CollectorsUiState.Exito(listOf(manolo, jaime)))
-        rule.onNodeWithText("AUDIO FEED").assertIsDisplayed()
+        rule.onNodeWithText("AUDIO FEED", useUnmergedTree = true).assertIsDisplayed()
     }
 
     @Test
     fun laFranjaAudioFeedSeMuestraMientrasCarga() {
         mostrar(CollectorsUiState.Cargando)
-        rule.onNodeWithText("AUDIO FEED").assertIsDisplayed()
+        rule.onNodeWithText("AUDIO FEED", useUnmergedTree = true).assertIsDisplayed()
     }
 
     @Test
     fun laFranjaAudioFeedSeMuestraConError() {
         mostrar(CollectorsUiState.Error)
-        rule.onNodeWithText("AUDIO FEED").assertIsDisplayed()
+        rule.onNodeWithText("AUDIO FEED", useUnmergedTree = true).assertIsDisplayed()
     }
 
     @Test
     fun laFranjaAudioFeedSeMuestraSinColeccionistas() {
         mostrar(CollectorsUiState.Vacio)
-        rule.onNodeWithText("AUDIO FEED").assertIsDisplayed()
+        rule.onNodeWithText("AUDIO FEED", useUnmergedTree = true).assertIsDisplayed()
     }
 
     @Test
