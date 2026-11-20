@@ -74,6 +74,7 @@ import com.example.vinilos.ui.theme.EtiquetaBandaFondo
 import com.example.vinilos.ui.theme.EtiquetaBandaTexto
 import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.ArtistsUiState
+import com.example.vinilos.ui.ingreso.encabezado
 
 /** Se conserva el tag del destino provisional: las pruebas de navegación llegan aquí por él. */
 const val TagArtistas = "artistas"
@@ -191,7 +192,8 @@ internal fun EncabezadoArtistas(titulo: String, onAtras: () -> Unit, accion: (@C
         Text(
             text = titulo,
             style = MaterialTheme.typography.titleLarge,
-            color = MaterialTheme.colorScheme.onBackground
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.encabezado()
         )
         if (accion != null) {
             Spacer(Modifier.weight(1f))
@@ -208,7 +210,11 @@ private fun Titular() {
             fondo = MaterialTheme.colorScheme.primary,
             contenido = MaterialTheme.colorScheme.onPrimary
         )
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.encabezado(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Text(
                 text = stringResource(R.string.artistas_titular_1),
                 style = MaterialTheme.typography.headlineLarge,

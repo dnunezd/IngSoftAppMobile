@@ -80,6 +80,7 @@ import com.example.vinilos.ui.ingreso.IndicadorActualizando
 import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.ArtistaDetalleUiState
 import com.example.vinilos.viewmodel.FavoritoUiState
+import com.example.vinilos.ui.ingreso.encabezado
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -557,7 +558,7 @@ private fun TituloSeccion(@StringRes titulo: Int, @PluralsRes contador: Int, can
             text = stringResource(titulo),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.weight(1f)
+            modifier = Modifier.weight(1f).encabezado()
         )
         if (cantidad > 0) {
             Text(

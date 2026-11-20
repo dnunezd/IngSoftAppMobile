@@ -49,6 +49,7 @@ import com.example.vinilos.data.model.Session
 import com.example.vinilos.ui.ingreso.ChipEtiqueta
 import com.example.vinilos.ui.ingreso.EncabezadoVinilo
 import com.example.vinilos.ui.theme.VinilosTheme
+import com.example.vinilos.ui.ingreso.encabezado
 
 const val TagInicio = "inicio"
 const val TagVerAlbumes = "ver_albumes"
@@ -156,7 +157,8 @@ private fun TitularInicio(session: Session) {
         Text(
             text = stringResource(R.string.inicio_titular),
             style = MaterialTheme.typography.headlineMedium,
-            color = MaterialTheme.colorScheme.onBackground
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.encabezado()
         )
         Text(
             text = stringResource(R.string.inicio_subtitulo),
@@ -220,7 +222,8 @@ private fun TarjetaSeccion(
                     Text(
                         text = titulo,
                         style = MaterialTheme.typography.titleLarge.copy(letterSpacing = (-0.2).sp),
-                        color = MaterialTheme.colorScheme.onSurface
+                        color = MaterialTheme.colorScheme.onSurface,
+                        modifier = Modifier.encabezado()
                     )
                     Text(
                         text = descripcion,

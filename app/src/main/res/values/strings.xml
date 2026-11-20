@@ -66,7 +66,7 @@
     <!-- Los tres puntos son el texto exacto del mockup. -->
     <string name="artistas_buscar" tools:ignore="TypographyEllipsis">Buscar artista por nombre...</string>
     <string name="artistas_lista">Artistas</string>
-    <string name="artistas_lista_descripcion">Lista de artistas</string>
+    <string name="artistas_lista_descripcion">Artistas, lista</string>
     <plurals name="artistas_contador">
         <item quantity="one">%d artista</item>
         <item quantity="other">%d artistas</item>

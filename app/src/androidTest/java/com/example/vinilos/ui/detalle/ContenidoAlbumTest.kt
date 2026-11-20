@@ -139,7 +139,8 @@ class ContenidoAlbumTest {
 
         rule.onNodeWithText("Estreno").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("1 de agosto de 1984").performScrollTo().assertIsDisplayed()
-        rule.onNodeWithText("★★★★☆").performScrollTo().assertIsDisplayed()
+        // El promedio y sus estrellas son un solo elemento para TalkBack: "4,0 de 5 estrellas".
+        rule.onNodeWithContentDescription("4,0 de 5 estrellas").performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -195,8 +196,8 @@ class ContenidoAlbumTest {
         rule.onNodeWithText("Buen sonido").assertIsDisplayed()
         lista.performScrollToNode(hasContentDescription("4 / 5"))
         rule.onNodeWithContentDescription("4 / 5").assertIsDisplayed()
-        lista.performScrollToNode(hasText("4,5"))
-        rule.onNodeWithText("4,5").assertIsDisplayed()
+        lista.performScrollToNode(hasContentDescription("4,5 de 5 estrellas"))
+        rule.onNodeWithContentDescription("4,5 de 5 estrellas").assertIsDisplayed()
         rule.onNodeWithText("Aún no hay comentarios para este álbum").assertDoesNotExist()
         rule.onNodeWithText("Sin calificaciones").assertDoesNotExist()
         rule.onNodeWithText("Autor", substring = true).assertDoesNotExist()

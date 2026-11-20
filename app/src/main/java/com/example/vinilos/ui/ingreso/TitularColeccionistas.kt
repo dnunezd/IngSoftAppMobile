@@ -140,6 +140,7 @@ private fun FilaEtiquetas() {
 @OptIn(ExperimentalLayoutApi::class)
 private fun FilaTitular() {
     FlowRow(
+        modifier = Modifier.encabezado(),
         itemVerticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp)

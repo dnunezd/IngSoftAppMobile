@@ -41,3 +41,10 @@
 - [x] 6.6 Pruebas instrumentadas con fuente 1x y 2x, y del botón y de las etiquetas del formulario
 - [x] 6.7 Ocultar a TalkBack los textos de ambientación (`Modifier.decorativo()`) sin cambiar el diseño
 - [x] 6.8 Ejecutar la suite completa y la prueba de accesibilidad en el emulador API 35
+
+## 7. Revisión del PR (TalkBack en dispositivo)
+
+- [x] 7.1 Género, Disquera y fecha: un solo elemento con rol y acción (`clearAndSetSemantics`), sin el texto de adentro como segunda parada
+- [x] 7.2 Marcar con `heading()` los títulos de pantalla y de sección de las 8 pantallas; el encabezado del listado de artistas empieza con su texto visible
+- [x] 7.3 Promedio con estrellas como un solo elemento ("5,0 de 5 estrellas")
+- [x] 7.4 Corregir el requisito de verificación automática y hacer que la prueba instrumentada compruebe encabezados y los elementos combinados

@@ -68,6 +68,10 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -101,6 +105,7 @@ import com.example.vinilos.viewmodel.EnvioAlbum
 import com.example.vinilos.viewmodel.ErrorCampo
 import com.example.vinilos.viewmodel.LimiteDescripcion
 import com.example.vinilos.viewmodel.portadaValida
+import com.example.vinilos.ui.ingreso.encabezado
 import java.util.Locale
 import java.util.TimeZone
 
@@ -193,7 +198,11 @@ fun PantallaCrearAlbum(
 @Composable
 private fun Titular() {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.encabezado(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Text(
                 text = stringResource(R.string.crear_titular_1),
                 style = MaterialTheme.typography.headlineLarge,
@@ -574,8 +583,17 @@ private fun CampoFecha(
         modifier = Modifier
             .clip(CircleShape)
             .clickable(enabled = habilitado, role = Role.Button) { abierto = true }
-            .semantics { contentDescription = descripcion }
             .testTag(TagFechaAlbum)
+            // Un solo elemento: sin esto TalkBack lee la descripción y luego el texto de adentro.
+            .clearAndSetSemantics {
+                contentDescription = descripcion
+                role = Role.Button
+                if (!habilitado) disabled()
+                onClick {
+                    if (habilitado) abierto = true
+                    true
+                }
+            }
     ) {
         Icon(
             imageVector = Icons.Filled.DateRange,
@@ -725,8 +743,18 @@ private fun CampoOpciones(
             conError = conError,
             modifier = Modifier
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, habilitado)
-                .semantics { contentDescription = descripcion }
                 .testTag(tag)
+                // El ancla es un solo elemento con su rol: TalkBack se detenía en el texto de adentro
+                // y solo decía el valor, sin la etiqueta ni que es una lista.
+                .clearAndSetSemantics {
+                    contentDescription = descripcion
+                    role = Role.DropdownList
+                    if (!habilitado) disabled()
+                    onClick {
+                        if (habilitado) abierto = true
+                        true
+                    }
+                }
         ) {
             IconoCampo(icono)
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {

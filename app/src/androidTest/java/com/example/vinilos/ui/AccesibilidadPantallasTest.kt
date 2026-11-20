@@ -5,17 +5,24 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.hasClickAction
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasScrollToNodeAction
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.test.junit4.accessibility.enableAccessibilityChecks
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.tryPerformAccessibilityChecks
 import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.AlbumArtista
 import com.example.vinilos.data.model.AlbumResumen
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
+import com.example.vinilos.data.model.Artista
 import com.example.vinilos.data.model.ArtistaDetalle
 import com.example.vinilos.data.model.Cancion
 import com.example.vinilos.data.model.Collector
@@ -37,6 +44,7 @@ import com.example.vinilos.viewmodel.ArtistaDetalleUiState
 import com.example.vinilos.viewmodel.ArtistsUiState
 import com.example.vinilos.viewmodel.CollectorsUiState
 import com.example.vinilos.viewmodel.CrearAlbumUiState
+import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -68,13 +76,28 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
     )
     private val album = Album(
         100, "Buscando América", null, "Álbum de Rubén Blades y Seis del Solar", "Salsa", "Elektra",
-        "1984-08-01", listOf(Cancion("Decisiones", "5:05")), emptyList(), listOf(Comentario("Excelente", 5))
+        "1984-08-01", listOf(Cancion("Decisiones", "5:05")), listOf(Artista("Rubén Blades", null)),
+        listOf(Comentario("Excelente", 5))
     )
 
-    private fun verificar(contenido: @Composable () -> Unit) {
+    /** Comprobaciones de accesibilidad de la pantalla y, además, que cada título esperado sea un encabezado. */
+    private fun verificar(vararg encabezados: String, contenido: @Composable () -> Unit) {
         rule.enableAccessibilityChecks()
         rule.setContent { ConEscala { VinilosTheme { contenido() } } }
         rule.onRoot().tryPerformAccessibilityChecks()
+        encabezados.forEach {
+            val encabezado = hasText(it, substring = true) and isHeading()
+            // En una lista larga (o con la fuente al 200 %) el título puede no estar compuesto aún.
+            val yaCompuesto = rule.onAllNodes(encabezado).fetchSemanticsNodes().isNotEmpty()
+            if (!yaCompuesto && rule.onAllNodes(hasScrollToNodeAction()).fetchSemanticsNodes().isNotEmpty()) {
+                rule.onAllNodes(hasScrollToNodeAction())[0].performScrollToNode(encabezado)
+            }
+            // Puede haber varios con el mismo texto (título de la barra y del listado): basta con uno.
+            assertTrue(
+                "Falta el encabezado \"$it\"",
+                rule.onAllNodes(encabezado).fetchSemanticsNodes().isNotEmpty()
+            )
+        }
     }
 
     @Composable
@@ -93,7 +116,7 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
     }
 
     @Test
-    fun losCamposDelFormularioAnuncianSuEtiqueta() {
+    fun losCamposDelFormularioAnuncianSuEtiquetaComoUnSoloElemento() {
         rule.setContent {
             ConEscala {
                 VinilosTheme {
@@ -105,10 +128,26 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
                 }
             }
         }
+        listOf("Nombre del álbum", "Portada (URL)", "Descripción").forEach {
+            rule.onNodeWithContentDescription(it).assertExists()
+        }
+        // Fecha y listas: el nodo combinado lleva etiqueta y valor, es accionable y el texto de adentro
+        // no queda como un segundo elemento (TalkBack se detenía en ese texto y decía solo el valor).
         listOf(
-            "Nombre del álbum", "Portada (URL)", "Fecha de lanzamiento, DD/MM/AAAA",
-            "Género, Selecciona un género", "Disquera, Selecciona una disquera", "Descripción"
-        ).forEach { rule.onNodeWithContentDescription(it).assertExists() }
+            "Fecha de lanzamiento, DD/MM/AAAA" to "DD/MM/AAAA",
+            "Género, Selecciona un género" to "Selecciona un género",
+            "Disquera, Selecciona una disquera" to "Selecciona una disquera"
+        ).forEach { (descripcion, textoInterno) ->
+            rule.onNode(hasContentDescription(descripcion) and hasClickAction()).assertExists()
+            rule.onAllNodesWithText(textoInterno).assertCountEquals(0)
+        }
+    }
+
+    @Test
+    fun elPromedioSeAnunciaConUnaSolaDescripcion() {
+        rule.setContent { ConEscala { VinilosTheme { ContenidoAlbum(presentarAlbum(album), onAtras = {}) } } }
+        rule.onNodeWithContentDescription("5,0 de 5 estrellas").assertExists()
+        rule.onAllNodesWithText("5,0").assertCountEquals(0)
     }
 
     @Test
@@ -117,7 +156,7 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
     }
 
     @Test
-    fun coleccionistas() = verificar {
+    fun coleccionistas() = verificar("Quién") {
         PantallaColeccionistas(
             estado = CollectorsUiState.Exito(
                 listOf(
@@ -131,12 +170,12 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
     }
 
     @Test
-    fun inicio() = verificar {
+    fun inicio() = verificar("Descubre música", "Catálogo de Álbumes", "Listado de Artistas") {
         PantallaInicio(session = Session.Visitor, onVerAlbumes = {}, onVerArtistas = {})
     }
 
     @Test
-    fun catalogo() = verificar {
+    fun catalogo() = verificar("Álbumes", "Explora", "Catálogo") {
         PantallaCatalogo(
             estado = AlbumsUiState.Exito(albumes),
             session = Session.Visitor,
@@ -145,12 +184,12 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
     }
 
     @Test
-    fun detalleDeAlbum() = verificar {
+    fun detalleDeAlbum() = verificar("Artistas", "Canciones", "Comentarios") {
         ContenidoAlbum(presentarAlbum(album), onAtras = {})
     }
 
     @Test
-    fun artistas() = verificar {
+    fun artistas() = verificar("Artistas", "Explora") {
         PantallaArtistas(
             estado = ArtistsUiState.Exito(listOf(queen, ruben)),
             onBuscar = {}, onReintentar = {}, onSeleccionar = {}, onAtras = {}, onAvisoMostrado = {}
@@ -158,7 +197,7 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
     }
 
     @Test
-    fun detalleDeArtista() = verificar {
+    fun detalleDeArtista() = verificar("Artista", "Álbumes") {
         PantallaDetalleArtista(
             estado = ArtistaDetalleUiState.Exito(
                 ArtistaDetalle(
@@ -171,7 +210,7 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
     }
 
     @Test
-    fun crearAlbum() = verificar {
+    fun crearAlbum() = verificar("Crear", "Nuevo") {
         PantallaCrearAlbum(
             estado = CrearAlbumUiState(),
             session = Session.Collector(Collector(100, "Manolo Bellon", "manollo@caracol.com.co")),

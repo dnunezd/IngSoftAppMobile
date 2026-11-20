@@ -25,6 +25,7 @@ import com.example.vinilos.R
 import com.example.vinilos.data.model.Session
 import com.example.vinilos.ui.ingreso.ChipEtiqueta
 import com.example.vinilos.ui.ingreso.TagAtras
+import com.example.vinilos.ui.ingreso.encabezado
 
 /** Encabezado del catálogo y del formulario: flecha de atrás, etiqueta del rol y título. */
 @Composable
@@ -74,7 +75,8 @@ fun EncabezadoConRol(
             Text(
                 text = titulo,
                 style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.encabezado()
             )
         }
     }

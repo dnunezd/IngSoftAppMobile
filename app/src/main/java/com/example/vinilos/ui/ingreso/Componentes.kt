@@ -33,6 +33,8 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.example.vinilos.R
 
@@ -146,3 +148,9 @@ fun ChipEtiqueta(
  * invisibles. Debe ir al final de la cadena de modificadores para no borrar un `testTag`.
  */
 fun Modifier.decorativo(): Modifier = clearAndSetSemantics { }
+
+/**
+ * Marca un título de pantalla o de sección como encabezado para TalkBack. Une los descendientes para
+ * que un titular partido en varios textos ("Nuevo" + "álbum") se lea como un solo encabezado.
+ */
+fun Modifier.encabezado(): Modifier = semantics(mergeDescendants = true) { heading() }

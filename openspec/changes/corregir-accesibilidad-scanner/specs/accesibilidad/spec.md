@@ -34,7 +34,8 @@ Los iconos e imágenes puramente decorativos SHALL ocultarse a los lectores de p
 
 #### Scenario: Encabezado de pantalla
 - **WHEN** TalkBack recorre una pantalla
-- **THEN** cada encabezado se anuncia como encabezado, con su texto visible
+- **THEN** cada título de pantalla y de sección se anuncia como encabezado, con su texto visible
+- **AND** un titular partido en varios textos ("Nuevo" y "álbum") se anuncia como un solo encabezado
 
 ### Requirement: Adornos de texto omitidos por TalkBack
 Los textos de ambientación SHALL ocultarse a los lectores de pantalla sin cambiar su aspecto: el titular "Make Endless Beats, Sound Amazing", la etiqueta "Beats & Sound", "AUDIO WAVE" con su "94 BPM", "CURATED VINYLS", "Explore Sounds" y "AUDIO FEED".
@@ -71,11 +72,15 @@ Cada campo del formulario "Crear álbum" MUST anunciar su etiqueta ("Nombre del 
 
 #### Scenario: Campo de lista con valor
 - **WHEN** TalkBack enfoca "Género" con "Rock" elegido
-- **THEN** anuncia "Género, Rock"
+- **THEN** se detiene en un solo elemento con rol de lista y anuncia "Género, Rock", sin un segundo elemento con el texto de adentro
 
 ### Requirement: Verificación automática de accesibilidad
-El proyecto SHALL incluir una prueba instrumentada que active las comprobaciones de accesibilidad de Compose y recorra las 8 pantallas con la fuente normal y al 200 %. La prueba MUST fallar si una pantalla vuelve a tener contraste insuficiente, un elemento sin descripción o un destino táctil menor al mínimo.
+El proyecto SHALL incluir una prueba unitaria del contraste de la paleta y una prueba instrumentada que active las comprobaciones de accesibilidad de Compose y recorra las 8 pantallas con la fuente normal y al 200 %. El contraste MUST verificarse con `ContrasteDePaletaTest`, sobre los pares texto/fondo de la paleta, y con el Accessibility Scanner a mano, porque las comprobaciones de Compose no evalúan contraste. La prueba instrumentada MUST fallar si una pantalla vuelve a tener un elemento sin etiqueta, un destino táctil menor al mínimo, elementos duplicados, o un título que deje de ser encabezado.
 
 #### Scenario: Regresión de contraste
-- **WHEN** alguien cambia un color de la paleta y deja un texto por debajo del contraste exigido
-- **THEN** la prueba de accesibilidad falla e indica la pantalla y el elemento
+- **WHEN** alguien cambia un color de la paleta y deja un par texto/fondo por debajo del contraste exigido
+- **THEN** `ContrasteDePaletaTest` falla e indica el par
+
+#### Scenario: Regresión de semántica
+- **WHEN** un título de pantalla o de sección deja de marcarse como encabezado, o un campo de lista vuelve a anunciar solo su valor
+- **THEN** `AccesibilidadPantallasTest` falla e indica la pantalla
