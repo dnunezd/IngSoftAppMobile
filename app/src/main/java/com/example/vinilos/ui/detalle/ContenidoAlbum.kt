@@ -32,15 +32,18 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.vinilos.R
 import com.example.vinilos.data.model.Session
 import com.example.vinilos.ui.ingreso.EncabezadoVinilo
 import com.example.vinilos.ui.ingreso.IndicadorActualizando
+import com.example.vinilos.ui.ingreso.encabezado
 
 const val TagAgregarCancionDetalle = "detalle_agregar_cancion"
 const val TagListaDetalleAlbum = "lista_detalle_album"
@@ -52,7 +55,9 @@ fun ContenidoAlbum(
     modifier: Modifier = Modifier,
     actualizando: Boolean = false,
     session: Session = Session.Visitor,
-    onAgregarCancion: () -> Unit = {}
+    onAgregarCancion: () -> Unit = {},
+    /** Espacio extra al final para que un botón flotante no tape el último comentario (HU09). */
+    margenInferior: Dp = 0.dp
 ) {
     val descripcionActualizando = stringResource(R.string.detalle_actualizando)
     LazyColumn(
@@ -60,7 +65,7 @@ fun ContenidoAlbum(
             .testTag(TagListaDetalleAlbum)
             .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.safeDrawing),
-        contentPadding = PaddingValues(20.dp),
+        contentPadding = PaddingValues(start = 20.dp, top = 20.dp, end = 20.dp, bottom = 20.dp + margenInferior),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
@@ -76,6 +81,7 @@ fun ContenidoAlbum(
         item {
             PortadaAlbum(
                 url = presentacion.album.portada,
+                contentDescription = stringResource(R.string.detalle_portada_con_nombre, presentacion.album.nombre),
                 modifier = Modifier.fillMaxWidth().height(220.dp).clip(RoundedCornerShape(24.dp))
             )
         }
@@ -85,7 +91,8 @@ fun ContenidoAlbum(
                 Text(
                     stringResource(R.string.detalle_artistas),
                     style = MaterialTheme.typography.titleLarge,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.encabezado()
                 )
             }
             items(presentacion.album.artistas) { artista -> FilaArtista(artista) }
@@ -94,7 +101,8 @@ fun ContenidoAlbum(
             Text(
                 stringResource(R.string.detalle_canciones),
                 style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.encabezado()
             )
         }
         if (session.collectorActionsEnabled) {
@@ -115,7 +123,8 @@ fun ContenidoAlbum(
             Text(
                 stringResource(R.string.detalle_comentarios),
                 style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.encabezado()
             )
         }
         presentacion.mensajeComentarios?.let { mensaje ->
@@ -182,9 +191,15 @@ private fun PromedioConEstrellas(promedio: String?) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         } else {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            // Un solo elemento ("5,0 de 5 estrellas"): sin esto TalkBack leía "5,0" y luego "5,0 de 5 estrellas".
+            val descripcionEstrellas = stringResource(R.string.detalle_promedio_estrellas, promedio)
+            Row(
+                modifier = Modifier.clearAndSetSemantics { contentDescription = descripcionEstrellas },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
                 Text(promedio, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                TextoEstrellas(estrellasLlenas(promedio))
+                TextoEstrellas(llenas = estrellasLlenas(promedio))
             }
         }
     }

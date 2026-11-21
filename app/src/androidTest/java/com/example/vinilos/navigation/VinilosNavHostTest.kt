@@ -7,6 +7,7 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithTag
@@ -26,10 +27,18 @@ import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.ArtistaDetalle
 import com.example.vinilos.data.model.Collector
+import com.example.vinilos.data.model.ComentarioNuevo
 import com.example.vinilos.data.model.Session
 import com.example.vinilos.data.repository.ArtistaNoDisponible
+import com.example.vinilos.data.repository.ComentarioRepository
 import com.example.vinilos.data.remote.ErrorDeCarga
 import com.example.vinilos.ui.artistas.TagArtistas
+import com.example.vinilos.ui.artistas.TagBotonAgregarAlbum
+import com.example.vinilos.ui.artistas.TagBotonAsociar
+import com.example.vinilos.ui.artistas.TagCancelarAsociar
+import com.example.vinilos.ui.artistas.TagListaAsociar
+import com.example.vinilos.ui.artistas.TagVentanaAsociar
+import com.example.vinilos.ui.artistas.tagAlbumAsociable
 import com.example.vinilos.ui.artistas.TagBotonFavorito
 import com.example.vinilos.ui.artistas.TagBuscadorArtistas
 import com.example.vinilos.ui.artistas.TagDetalleArtista
@@ -110,6 +119,10 @@ class VinilosNavHostTest {
         catalogo = listOf(Result.success(catalogoDePrueba))
     )
     private val favoritos = RepositorioFavoritosFalso()
+    private val comentarios = object : ComentarioRepository {
+        override suspend fun publicarComentario(albumId: Int, comentario: ComentarioNuevo): Result<Unit> =
+            error("No se usa en esta prueba")
+    }
 
     private fun mostrar(repositorio: RepositorioFalso, albumesRepositorio: RepositorioAlbumesFalso = albumes) {
         albumes = albumesRepositorio
@@ -121,7 +134,8 @@ class VinilosNavHostTest {
             VinilosTheme {
                 VinilosNavHost(
                     nav, session, repositorio, artistas, albumesRepositorio,
-                    favoriteRepository = favoritos
+                    favoriteRepository = favoritos,
+                    comentarioRepository = comentarios
                 )
             }
         }
@@ -463,6 +477,76 @@ class VinilosNavHostTest {
         assertEquals(2, artistas.consultas)
         rule.onNodeWithTag(tagArtista(queen)).assertIsDisplayed()
         rule.onAllNodesWithTag(tagArtista(ruben)).assertCountEquals(0)
+    }
+
+    // ---------- Agregar un álbum a un artista (HU15) ----------
+
+    private fun abrirDetalleDeRubenComoColeccionista() {
+        mostrar(RepositorioFalso(Result.success(listOf(manolo))))
+        entrarComoColeccionista()
+        elegir(manolo)
+        rule.onNodeWithTag(TagVerArtistas).performScrollTo().performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag(TagListaArtistas).performScrollToNode(hasTestTag(tagArtista(ruben)))
+        rule.onNodeWithTag(tagArtista(ruben)).performClick()
+        rule.waitForIdle()
+    }
+
+    private fun abrirVentanaAsociar() {
+        rule.onNodeWithTag(TagListaDetalleArtista).performScrollToNode(hasTestTag(TagBotonAgregarAlbum))
+        rule.onNodeWithTag(TagBotonAgregarAlbum).performClick()
+        rule.waitForIdle()
+    }
+
+    @Test
+    fun elColeccionistaAsociaUnAlbumYLoVeEnLaDiscografiaDelArtista() {
+        abrirDetalleDeRubenComoColeccionista()
+        abrirVentanaAsociar()
+        rule.onNodeWithText("Asociar álbum a Rubén Blades Bellido de Luna").assertIsDisplayed()
+
+        // Lo que respondería el backend al volver a consultar el detalle.
+        artistas.detalles = artistas.detalles + ((ArtistType.MUSICO to 100) to Result.success(
+            detalleRuben.copy(albumes = listOf(AlbumArtista(100, "Bailando con lobos", null, "2020")))
+        ))
+        rule.onNodeWithTag(TagListaAsociar).performScrollToNode(hasTestTag(tagAlbumAsociable(100)))
+        rule.onNodeWithTag(tagAlbumAsociable(100)).performClick()
+        rule.onNodeWithTag(TagBotonAsociar).performClick()
+        rule.waitForIdle()
+
+        assertEquals(listOf(Triple(ArtistType.MUSICO, 100, 100)), artistas.asociacionesPedidas)
+        rule.onNodeWithTag(TagVentanaAsociar).assertDoesNotExist()
+        rule.waitUntil(5_000) { rule.onAllNodesWithText("Álbum asociado").fetchSemanticsNodes().isNotEmpty() }
+        rule.onNodeWithTag(TagListaDetalleArtista).performScrollToNode(hasTestTag(tagAlbumArtista(100)))
+        rule.onNodeWithTag(tagAlbumArtista(100)).assertIsDisplayed()
+        assertEquals(2, artistas.consultasDetalle.size)
+    }
+
+    @Test
+    fun cancelarCierraLaVentanaSinAsociar() {
+        abrirDetalleDeRubenComoColeccionista()
+        abrirVentanaAsociar()
+        rule.onNodeWithTag(TagListaAsociar).performScrollToNode(hasTestTag(tagAlbumAsociable(100)))
+        rule.onNodeWithTag(tagAlbumAsociable(100)).performClick()
+
+        rule.onNodeWithTag(TagCancelarAsociar).performClick()
+        rule.waitForIdle()
+
+        rule.onNodeWithTag(TagVentanaAsociar).assertDoesNotExist()
+        assertEquals(emptyList<Triple<ArtistType, Int, Int>>(), artistas.asociacionesPedidas)
+        assertEquals(Rutas.DETALLE_ARTISTA, ruta())
+    }
+
+    @Test
+    fun elVisitanteNoVeAgregarAlbumEnElDetalleDelArtista() {
+        mostrar(RepositorioFalso(Result.success(listOf(manolo))))
+        entrarComoVisitante()
+        rule.onNodeWithTag(TagVerArtistas).performScrollTo().performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag(tagArtista(queen)).performScrollTo().performClick()
+        rule.waitForIdle()
+
+        rule.onNodeWithTag(TagListaDetalleArtista).performScrollToNode(hasTestTag(tagAlbumArtista(100)))
+        rule.onAllNodesWithTag(TagBotonAgregarAlbum).assertCountEquals(0)
     }
 
     private fun irAlCatalogoComoVisitante() {

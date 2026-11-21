@@ -12,10 +12,16 @@ class RepositorioArtistasFalso(
     var detalles: Map<Pair<ArtistType, Int>, Result<ArtistaDetalle>> = emptyMap(),
     /** Listado y detalles guardados (add-cache-consultas); vacíos, sin caché, como antes. */
     var guardados: List<Artist> = emptyList(),
-    var detallesGuardados: Map<Pair<ArtistType, Int>, ArtistaDetalle> = emptyMap()
+    var detallesGuardados: Map<Pair<ArtistType, Int>, ArtistaDetalle> = emptyMap(),
+    /** Respuestas de asociar un álbum (HU15), en orden; la última se repite. */
+    asociaciones: List<Result<Unit>> = listOf(Result.success(Unit))
 ) : ArtistRepository {
     var consultas = 0
     val consultasDetalle = mutableListOf<Pair<ArtistType, Int>>()
+
+    /** Cada llamada a [asociarAlbum]: tipo, id del artista e id del álbum. */
+    val asociacionesPedidas = mutableListOf<Triple<ArtistType, Int, Int>>()
+    private val respuestasAsociar = ArrayDeque(asociaciones)
 
     override suspend fun obtenerArtistas(): Result<List<Artist>> {
         consultas++
@@ -31,4 +37,9 @@ class RepositorioArtistasFalso(
 
     override suspend fun obtenerDetalleGuardado(tipo: ArtistType, id: Int): ArtistaDetalle? =
         detallesGuardados[tipo to id]
+
+    override suspend fun asociarAlbum(tipo: ArtistType, idArtista: Int, idAlbum: Int): Result<Unit> {
+        asociacionesPedidas += Triple(tipo, idArtista, idAlbum)
+        return if (respuestasAsociar.size > 1) respuestasAsociar.removeFirst() else respuestasAsociar.first()
+    }
 }

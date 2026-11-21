@@ -18,4 +18,10 @@ interface ArtistRepository {
 
     /** Detalle guardado de un artista que ya se abrió; `null` si no hay o no se pudo leer. */
     suspend fun obtenerDetalleGuardado(tipo: ArtistType, id: Int): ArtistaDetalle?
+
+    /**
+     * Agrega el álbum [idAlbum] al artista sin quitárselo a sus otros intérpretes (HU15). Cualquier fallo,
+     * incluido un 404, es un `ErrorDeCarga`.
+     */
+    suspend fun asociarAlbum(tipo: ArtistType, idArtista: Int, idAlbum: Int): Result<Unit>
 }

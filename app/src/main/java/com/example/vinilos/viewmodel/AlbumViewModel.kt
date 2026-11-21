@@ -2,6 +2,7 @@ package com.example.vinilos.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.repository.AlbumRepository
 import com.example.vinilos.data.repository.AlbumNoDisponible
 import com.example.vinilos.data.remote.ErrorDeCarga
@@ -28,17 +29,21 @@ class AlbumViewModel(id: Int, private val repositorio: AlbumRepository) : ViewMo
         if (_uiState.value == AlbumUiState.Error) cargar()
     }
 
-    /** Refresca el detalle al regresar de una operación que modificó el álbum. */
-    fun actualizar() {
-        cargar()
-    }
-
     /** La pantalla ya mostró el aviso de que no se pudo actualizar el detalle guardado. */
     fun avisoMostrado() {
         val estado = _uiState.value
         if (estado is AlbumUiState.Exito && estado.errorAlActualizar) {
             _uiState.value = estado.copy(errorAlActualizar = false)
         }
+    }
+
+    /**
+     * Vuelve a consultar el álbum manteniendo a la vista el que ya se muestra, por ejemplo después de
+     * agregarle una canción o comentarlo (add-comentar-album, D7). Sin álbum a la vista, carga como al
+     * empezar.
+     */
+    fun actualizar() {
+        cargar(visible = (_uiState.value as? AlbumUiState.Exito)?.album)
     }
 
     init {
@@ -50,15 +55,16 @@ class AlbumViewModel(id: Int, private val repositorio: AlbumRepository) : ViewMo
      * activa el aviso. Sin nada guardado, se comporta como antes: `Cargando` y `Error` si falla. Un 404
      * siempre lleva a `NoDisponible` (add-cache-consultas, D5).
      */
-    private fun cargar() {
+    private fun cargar(visible: Album? = null) {
         val consulta = ++consultaVigente
         val id = idActual
         carga?.cancel()
-        _uiState.value = AlbumUiState.Cargando
+        _uiState.value = visible?.let { AlbumUiState.Exito(it, actualizando = true) } ?: AlbumUiState.Cargando
         carga = viewModelScope.launch {
-            val guardado = repositorio.obtenerAlbumGuardado(id)
+            // Con un álbum a la vista, ese hace las veces de lo guardado.
+            val guardado = visible ?: repositorio.obtenerAlbumGuardado(id)
             if (consulta != consultaVigente) return@launch
-            if (guardado != null) _uiState.value = AlbumUiState.Exito(guardado, actualizando = true)
+            if (visible == null && guardado != null) _uiState.value = AlbumUiState.Exito(guardado, actualizando = true)
 
             val resultado = repositorio.obtenerAlbum(id)
             if (consulta != consultaVigente) return@launch

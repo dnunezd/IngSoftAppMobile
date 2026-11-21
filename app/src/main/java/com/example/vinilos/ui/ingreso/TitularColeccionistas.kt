@@ -8,7 +8,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -32,10 +35,13 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vinilos.R
 import com.example.vinilos.ui.theme.Naranja
+import com.example.vinilos.ui.theme.NaranjaContraste
+import com.example.vinilos.ui.theme.NaranjaOscuro
 import com.example.vinilos.ui.theme.TextoPrincipal
 import com.example.vinilos.ui.theme.VinilosTheme
 
@@ -54,13 +60,20 @@ private val BarrasDerecha = listOf(
 @Composable
 fun TitularColeccionistas() {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Box(modifier = Modifier.fillMaxWidth().height(106.dp)) {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilaEtiquetas()
-                FilaTitular()
+        // Con la fuente ampliada el titular crece: la altura de 106 dp es solo el mínimo y la franja
+        // va debajo del texto, no encima.
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier.fillMaxWidth().heightIn(min = 106.dp),
+                verticalArrangement = Arrangement.SpaceBetween
+            ) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilaEtiquetas()
+                    FilaTitular()
+                }
+                FranjaAudioFeed()
             }
             DoodlesColeccionistas(modifier = Modifier.align(Alignment.TopEnd))
-            FranjaAudioFeed(modifier = Modifier.align(Alignment.BottomStart))
         }
         Text(
             text = stringResource(R.string.coleccionistas_subtitulo),
@@ -71,8 +84,14 @@ fun TitularColeccionistas() {
 }
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 private fun FilaEtiquetas() {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    FlowRow(
+        modifier = Modifier.decorativo(),
+        itemVerticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp)
+    ) {
         Row(
             modifier = Modifier
                 .clip(CircleShape)
@@ -90,7 +109,7 @@ private fun FilaEtiquetas() {
             Text(
                 text = stringResource(R.string.coleccionistas_chip_curado).uppercase(),
                 style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.275.sp),
-                color = Naranja
+                color = NaranjaOscuro
             )
         }
         Row(
@@ -98,7 +117,7 @@ private fun FilaEtiquetas() {
                 .rotate(-3f)
                 .shadow(3.dp, CircleShape, spotColor = Naranja)
                 .clip(CircleShape)
-                .background(Naranja)
+                .background(NaranjaContraste)
                 .padding(horizontal = 12.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -118,8 +137,14 @@ private fun FilaEtiquetas() {
 }
 
 @Composable
+@OptIn(ExperimentalLayoutApi::class)
 private fun FilaTitular() {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    FlowRow(
+        modifier = Modifier.encabezado(),
+        itemVerticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
         Text(
             text = stringResource(R.string.coleccionistas_titulo_1),
             style = MaterialTheme.typography.headlineLarge,
@@ -133,7 +158,7 @@ private fun FilaTitular() {
                 .rotate(-2f)
                 .shadow(4.dp, RoundedCornerShape(16.dp), spotColor = Naranja)
                 .clip(RoundedCornerShape(16.dp))
-                .background(Naranja)
+                .background(NaranjaContraste)
                 .padding(horizontal = 12.dp, vertical = 2.dp)
         )
     }
@@ -146,7 +171,8 @@ fun FranjaAudioFeed(modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .padding(4.dp)
-            .testTag(TagFranjaAudioFeed),
+            .testTag(TagFranjaAudioFeed)
+            .decorativo(),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -154,7 +180,7 @@ fun FranjaAudioFeed(modifier: Modifier = Modifier) {
         Text(
             text = stringResource(R.string.coleccionistas_audio_feed).uppercase(),
             style = MaterialTheme.typography.labelSmall.copy(lineHeight = 16.5.sp),
-            color = Naranja
+            color = NaranjaContraste
         )
         OndaDeBarras(barras = BarrasDerecha, alFinal = true, modifier = Modifier.weight(1f))
     }
@@ -187,7 +213,7 @@ private val Serif = FontFamily.Serif
 /** Racimo de notas y estrella en la esquina superior derecha: SVG del Figma y glifos de texto. */
 @Composable
 private fun DoodlesColeccionistas(modifier: Modifier = Modifier) {
-    Box(modifier = modifier.size(width = 112.dp, height = 64.dp)) {
+    Box(modifier = modifier.clearAndSetSemantics {}.size(width = 112.dp, height = 64.dp)) {
         Text(
             text = "♪",
             style = TextStyle(fontFamily = Serif, fontWeight = FontWeight.Bold, fontSize = 22.sp),
@@ -263,7 +289,7 @@ private fun TitularColeccionistasPreview() {
 @Composable
 fun NotasDelBuscador(modifier: Modifier = Modifier) {
     Row(
-        modifier = modifier.offset(x = (-24).dp, y = (-12).dp),
+        modifier = modifier.clearAndSetSemantics {}.offset(x = (-24).dp, y = (-12).dp),
         horizontalArrangement = Arrangement.spacedBy(1.dp)
     ) {
         Text(

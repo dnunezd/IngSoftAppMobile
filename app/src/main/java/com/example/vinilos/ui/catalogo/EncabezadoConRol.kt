@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -25,6 +25,7 @@ import com.example.vinilos.R
 import com.example.vinilos.data.model.Session
 import com.example.vinilos.ui.ingreso.ChipEtiqueta
 import com.example.vinilos.ui.ingreso.TagAtras
+import com.example.vinilos.ui.ingreso.encabezado
 
 /** Encabezado del catálogo y del formulario: flecha de atrás, etiqueta del rol y título. */
 @Composable
@@ -38,8 +39,8 @@ fun EncabezadoConRol(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(64.dp)
-            .padding(horizontal = 12.dp),
+            .heightIn(min = 64.dp)
+            .padding(horizontal = 12.dp, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -74,7 +75,8 @@ fun EncabezadoConRol(
             Text(
                 text = titulo,
                 style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.onBackground
+                color = MaterialTheme.colorScheme.onBackground,
+                modifier = Modifier.encabezado()
             )
         }
     }

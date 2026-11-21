@@ -46,7 +46,8 @@ fun FranjaAudioWave(modifier: Modifier = Modifier) {
             .background(Color.White.copy(alpha = 0.7f))
             .border(1.dp, Color.Black.copy(alpha = 0.04f), forma)
             .padding(horizontal = 9.dp, vertical = 5.dp)
-            .testTag(TagFranjaAudioWave),
+            .testTag(TagFranjaAudioWave)
+            .decorativo(),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
