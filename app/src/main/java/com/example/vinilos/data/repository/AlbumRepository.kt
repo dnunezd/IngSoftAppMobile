@@ -1,6 +1,7 @@
 package com.example.vinilos.data.repository
 
 import com.example.vinilos.data.model.Album
+import com.example.vinilos.data.model.Cancion
 import com.example.vinilos.data.model.AlbumNuevo
 import com.example.vinilos.data.model.AlbumResumen
 
@@ -24,4 +25,7 @@ interface AlbumRepository {
 
     /** Crea el álbum (HU07) y devuelve su id. */
     suspend fun crearAlbum(album: AlbumNuevo): Result<Int>
+
+    /** Asocia una canción existente al álbum indicado (HU08). */
+    suspend fun agregarCancion(albumId: Int, cancion: Cancion): Result<Unit>
 }

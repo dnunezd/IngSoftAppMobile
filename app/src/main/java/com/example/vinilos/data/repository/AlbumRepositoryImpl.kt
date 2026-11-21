@@ -17,8 +17,10 @@ import com.example.vinilos.data.remote.AlbumApi
 import com.example.vinilos.data.remote.AlbumDto
 import com.example.vinilos.data.remote.ArtistaDto
 import com.example.vinilos.data.remote.CrearAlbumDto
+import com.example.vinilos.data.remote.CrearCancionDto
 import com.example.vinilos.data.remote.RecursoNoEncontrado
 import com.example.vinilos.data.remote.ServiceAdapter
+import com.example.vinilos.data.remote.TrackApi
 import com.example.vinilos.data.remote.conVersion
 import com.google.gson.JsonParseException
 import kotlinx.coroutines.CoroutineDispatcher
@@ -26,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
+import retrofit2.HttpException
 import java.text.ParseException
 
 /**
@@ -45,7 +48,8 @@ class AlbumRepositoryImpl(
     private val adaptador: ServiceAdapter,
     private val api: AlbumApi = adaptador.api(),
     private val albumDao: AlbumDao? = null,
-    private val dispatcher: CoroutineDispatcher = Dispatchers.Default
+    private val dispatcher: CoroutineDispatcher = Dispatchers.Default,
+    private val trackApi: TrackApi = adaptador.api()
 ) : AlbumRepository {
 
     /** Protege la comparación, la escritura y la actualización de lo que sigue. */
@@ -208,6 +212,23 @@ class AlbumRepositoryImpl(
         }.onSuccess { (_, creado) -> guardarCreado(creado) }
             .map { (id, _) -> id }
     }
+
+    override suspend fun agregarCancion(albumId: Int, cancion: Cancion): Result<Unit> =
+        withContext(dispatcher) {
+            val resultado = adaptador.llamar {
+                val respuesta = trackApi.agregarCancion(
+                    albumId,
+                    CrearCancionDto(cancion.nombre, cancion.duracion)
+                )
+                if (!respuesta.isSuccessful) throw HttpException(respuesta)
+            }
+            val error = resultado.exceptionOrNull()
+            if (error is RecursoNoEncontrado) {
+                Result.failure(AlbumNoDisponible(error.cause))
+            } else {
+                resultado
+            }
+        }
 
     private suspend fun guardarCreado(creado: AlbumDto) {
         val fila = creado.aResumen()?.aEntidad() ?: return

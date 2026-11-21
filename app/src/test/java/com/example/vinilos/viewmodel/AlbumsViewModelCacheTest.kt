@@ -33,6 +33,10 @@ private class CatalogoConCacheFalso : AlbumRepository {
 
     override suspend fun obtenerAlbum(id: Int): Result<Album> = error("No se usa en esta prueba")
     override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> = error("No se usa en esta prueba")
+    override suspend fun agregarCancion(
+        albumId: Int,
+        cancion: com.example.vinilos.data.model.Cancion
+    ): Result<Unit> = error("No se usa en esta prueba")
 }
 
 /** Carga inicial con catálogo guardado (add-cache-catalogo, D5). */
