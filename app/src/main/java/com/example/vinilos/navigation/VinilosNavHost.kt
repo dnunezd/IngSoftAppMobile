@@ -21,19 +21,23 @@ import com.example.vinilos.data.repository.FavoriteRepository
 import com.example.vinilos.ui.artistas.PantallaArtistas
 import com.example.vinilos.ui.artistas.PantallaDetalleArtista
 import com.example.vinilos.ui.catalogo.PantallaCatalogo
+import com.example.vinilos.ui.crear.AccionesAgregarCancion
 import com.example.vinilos.ui.crear.AccionesCrearAlbum
+import com.example.vinilos.ui.crear.PantallaAgregarCancion
 import com.example.vinilos.ui.crear.PantallaCrearAlbum
 import com.example.vinilos.ui.detalle.PantallaDetalleAlbum
 import com.example.vinilos.ui.ingreso.PantallaColeccionistas
 import com.example.vinilos.ui.ingreso.PantallaIngreso
 import com.example.vinilos.ui.inicio.PantallaInicio
 import com.example.vinilos.viewmodel.AlbumViewModel
+import com.example.vinilos.viewmodel.AgregarCancionViewModel
 import com.example.vinilos.viewmodel.AlbumsViewModel
 import com.example.vinilos.viewmodel.ArtistaDetalleViewModel
 import com.example.vinilos.viewmodel.ArtistsViewModel
 import com.example.vinilos.viewmodel.CollectorsViewModel
 import com.example.vinilos.viewmodel.CrearAlbumViewModel
 import com.example.vinilos.viewmodel.EnvioAlbum
+import com.example.vinilos.viewmodel.EnvioCancion
 import com.example.vinilos.viewmodel.FavoritoViewModel
 import com.example.vinilos.viewmodel.SessionViewModel
 
@@ -53,13 +57,21 @@ object Rutas {
     /** Formulario para crear un álbum (HU07), solo para el Coleccionista. */
     const val CREAR_ALBUM = "crear-album"
 
+    /** Formulario para agregar una canción al álbum (HU08), solo para el Coleccionista. */
+    const val AGREGAR_CANCION = "album/{id}/agregar-cancion"
+
     fun detalleArtista(tipo: ArtistType, id: Int) = "artista/${tipo.name}/$id"
 
     fun detalleAlbum(id: Int) = "album/$id"
+
+    fun agregarCancion(id: Int) = "album/$id/agregar-cancion"
 }
 
 /** Clave con la que el formulario le entrega al catálogo el id del álbum creado. */
 private const val ClaveAlbumCreado = "album_creado"
+
+/** Resultado con el que el formulario solicita recargar y avisar en el detalle del álbum. */
+private const val ClaveCancionAgregada = "cancion_agregada"
 
 /** Clave con la que el detalle del artista avisa al listado que un favorito ya no está disponible. */
 private const val ClaveArtistaEliminado = "artista_eliminado"
@@ -88,6 +100,10 @@ fun VinilosNavHost(
     /** Dos toques rápidos no deben sacar también el catálogo. */
     fun cerrarFormulario() {
         if (navController.currentDestination?.route == Rutas.CREAR_ALBUM) navController.popBackStack()
+    }
+
+    fun cerrarFormularioCancion() {
+        if (navController.currentDestination?.route == Rutas.AGREGAR_CANCION) navController.popBackStack()
     }
 
     NavHost(
@@ -308,11 +324,58 @@ fun VinilosNavHost(
                 }
             )
             val estado by viewModel.uiState.collectAsStateWithLifecycle()
+            val session by sessionViewModel.session.collectAsStateWithLifecycle()
+            val cancionAgregada by entrada.savedStateHandle
+                .getStateFlow(ClaveCancionAgregada, false)
+                .collectAsStateWithLifecycle()
+            LaunchedEffect(cancionAgregada) {
+                if (cancionAgregada) viewModel.actualizar()
+            }
             PantallaDetalleAlbum(
                 estado = estado,
                 onAtras = { navController.popBackStack() },
                 onReintentar = viewModel::reintentar,
-                onAvisoMostrado = viewModel::avisoMostrado
+                onAvisoMostrado = viewModel::avisoMostrado,
+                session = session,
+                onAgregarCancion = { navController.navigate(Rutas.agregarCancion(id)) },
+                mostrarAvisoCancionAgregada = cancionAgregada,
+                onAvisoCancionAgregadaMostrado = {
+                    entrada.savedStateHandle[ClaveCancionAgregada] = false
+                }
+            )
+        }
+        composable(
+            Rutas.AGREGAR_CANCION,
+            arguments = listOf(navArgument("id") { type = NavType.IntType })
+        ) { entrada ->
+            val id = requireNotNull(entrada.arguments).getInt("id")
+            val session by sessionViewModel.session.collectAsStateWithLifecycle()
+            val viewModel: AgregarCancionViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer { AgregarCancionViewModel(id, albumRepository) }
+                }
+            )
+            val estado by viewModel.uiState.collectAsStateWithLifecycle()
+            LaunchedEffect(session) {
+                if (!session.collectorActionsEnabled) cerrarFormularioCancion()
+            }
+            LaunchedEffect(estado.envio) {
+                if (estado.envio == EnvioCancion.Agregada) {
+                    navController.previousBackStackEntry?.savedStateHandle
+                        ?.set(ClaveCancionAgregada, true)
+                    cerrarFormularioCancion()
+                }
+            }
+            PantallaAgregarCancion(
+                estado = estado,
+                session = session,
+                acciones = AccionesAgregarCancion(
+                    onNombre = viewModel::cambiarNombre,
+                    onDuracion = viewModel::cambiarDuracion,
+                    onGuardar = viewModel::guardar,
+                    onCancelar = ::cerrarFormularioCancion,
+                    onAtras = ::cerrarFormularioCancion
+                )
             )
         }
     }

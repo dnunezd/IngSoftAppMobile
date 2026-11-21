@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -36,19 +38,26 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.vinilos.R
+import com.example.vinilos.data.model.Session
 import com.example.vinilos.ui.ingreso.EncabezadoVinilo
 import com.example.vinilos.ui.ingreso.IndicadorActualizando
+
+const val TagAgregarCancionDetalle = "detalle_agregar_cancion"
+const val TagListaDetalleAlbum = "lista_detalle_album"
 
 @Composable
 fun ContenidoAlbum(
     presentacion: AlbumPresentacion,
     onAtras: () -> Unit,
     modifier: Modifier = Modifier,
-    actualizando: Boolean = false
+    actualizando: Boolean = false,
+    session: Session = Session.Visitor,
+    onAgregarCancion: () -> Unit = {}
 ) {
     val descripcionActualizando = stringResource(R.string.detalle_actualizando)
     LazyColumn(
         modifier = modifier.fillMaxSize()
+            .testTag(TagListaDetalleAlbum)
             .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.safeDrawing),
         contentPadding = PaddingValues(20.dp),
@@ -87,6 +96,16 @@ fun ContenidoAlbum(
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.primary
             )
+        }
+        if (session.collectorActionsEnabled) {
+            item {
+                Button(
+                    onClick = onAgregarCancion,
+                    modifier = Modifier.fillMaxWidth().testTag(TagAgregarCancionDetalle)
+                ) {
+                    Text(stringResource(R.string.detalle_agregar_cancion))
+                }
+            }
         }
         presentacion.mensajeCanciones?.let { mensaje ->
             item { Text(stringResource(mensaje), style = MaterialTheme.typography.bodyLarge) }

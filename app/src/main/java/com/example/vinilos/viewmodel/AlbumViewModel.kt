@@ -28,6 +28,11 @@ class AlbumViewModel(id: Int, private val repositorio: AlbumRepository) : ViewMo
         if (_uiState.value == AlbumUiState.Error) cargar()
     }
 
+    /** Refresca el detalle al regresar de una operación que modificó el álbum. */
+    fun actualizar() {
+        cargar()
+    }
+
     /** La pantalla ya mostró el aviso de que no se pudo actualizar el detalle guardado. */
     fun avisoMostrado() {
         val estado = _uiState.value
