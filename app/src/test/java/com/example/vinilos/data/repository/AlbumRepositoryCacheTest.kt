@@ -606,4 +606,38 @@ class AlbumRepositoryCacheTest {
         assertEquals(listOf("borrarAlbumesPorId[300]", "borrarDetallesPorId[300]"), dao.operaciones)
         assertEquals(listOf(200), dao.filas.map { it.id })
     }
+
+    // ---- Canción agregada (HU08, D7: no esperar el siguiente GET para reflejar un POST exitoso) ----
+
+    @Test
+    fun agregarUnaCancionActualizaDeInmediatoElDetalleYaGuardado() = runTest {
+        servidor.enqueue(respuesta(albumJson(200)))
+        repositorio.obtenerAlbum(200).getOrThrow()
+        dao.operaciones.clear()
+        servidor.enqueue(MockResponse().setResponseCode(200))
+
+        repositorio.agregarCancion(200, Cancion("Decisiones", "5:05")).getOrThrow()
+
+        assertEquals(listOf(Cancion("Decisiones", "5:05")), dao.detalles[200]?.canciones)
+        assertTrue("guardarDetalle[200]" in dao.operaciones)
+    }
+
+    @Test
+    fun agregarUnaCancionAUnAlbumSinDetalleGuardadoNoEscribeNada() = runTest {
+        servidor.enqueue(MockResponse().setResponseCode(200))
+
+        repositorio.agregarCancion(999, Cancion("Tema", "3:15")).getOrThrow()
+
+        assertEquals(emptyList<String>(), dao.operaciones)
+    }
+
+    @Test
+    fun siNoSePuedeGuardarLaCancionAgregadaLaAsociacionIgualEsExitosa() = runTest {
+        servidor.enqueue(respuesta(albumJson(200)))
+        repositorio.obtenerAlbum(200).getOrThrow()
+        dao.fallaAlEscribir = SQLiteException("disco lleno")
+        servidor.enqueue(MockResponse().setResponseCode(200))
+
+        assertTrue(repositorio.agregarCancion(200, Cancion("Decisiones", "5:05")).isSuccess)
+    }
 }

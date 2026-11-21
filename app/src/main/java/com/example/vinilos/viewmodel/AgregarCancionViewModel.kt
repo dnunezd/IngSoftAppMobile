@@ -59,13 +59,15 @@ class AgregarCancionViewModel(
     }
 
     /**
-     * Carga de mejor esfuerzo para la tarjeta "Álbum destino": si falla, se deja sin tarjeta y
-     * el formulario sigue usable. No debe confundirse con [EnvioCancion.AlbumNoDisponible], que
-     * solo lo dispara un fallo al guardar.
+     * Carga de mejor esfuerzo para la tarjeta "Álbum destino" desde la caché local (Room), sin red:
+     * la pantalla de detalle ya consultó `GET /albums/{id}` al abrirse, así que repetirla aquí
+     * duplicaría esa consulta (el mismo problema de "consultas que se lanzan dos veces" visto en
+     * HU02/HU10). Si no hay nada en caché, se deja sin tarjeta y el formulario sigue usable; esto
+     * no debe confundirse con [EnvioCancion.AlbumNoDisponible], que solo lo dispara un fallo al guardar.
      */
     private fun cargarInfoAlbum() {
         viewModelScope.launch {
-            repositorio.obtenerAlbum(albumId).onSuccess { album ->
+            repositorio.obtenerAlbumGuardado(albumId)?.let { album ->
                 val info = InfoAlbumDestino(
                     nombre = album.nombre,
                     portada = album.portada,

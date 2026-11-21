@@ -23,8 +23,12 @@ private class RepositorioAgregarCancionFalso : AlbumRepository {
     val envios = mutableListOf<Pair<Int, Cancion>>()
     private val respuestas = mutableListOf<CompletableDeferred<Result<Unit>>>()
 
-    /** Resultado para la carga (mejor esfuerzo) de la tarjeta de contexto del álbum destino. */
-    var album: Result<Album> = Result.failure(ErrorDeCarga())
+    /**
+     * Álbum ya guardado en caché (Room) para la tarjeta de contexto del formulario. La carga es de la
+     * caché local, no de la red: el álbum ya se consultó al abrir el detalle (add-cache-consultas),
+     * así que no hace falta repetir el `GET /albums/{id}` (evita la consulta duplicada de HU02/HU10).
+     */
+    var albumGuardado: Album? = null
 
     override suspend fun agregarCancion(albumId: Int, cancion: Cancion): Result<Unit> {
         envios += albumId to cancion
@@ -35,10 +39,11 @@ private class RepositorioAgregarCancionFalso : AlbumRepository {
         respuestas.last().complete(resultado)
     }
 
-    override suspend fun obtenerAlbum(id: Int): Result<Album> = album
+    override suspend fun obtenerAlbum(id: Int): Result<Album> =
+        error("La tarjeta de contexto no debe repetir el GET /albums/{id}; usar obtenerAlbumGuardado")
     override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> = error("No se usa en esta prueba")
     override suspend fun obtenerAlbumesGuardados(): List<AlbumResumen> = error("No se usa en esta prueba")
-    override suspend fun obtenerAlbumGuardado(id: Int): Album? = error("No se usa en esta prueba")
+    override suspend fun obtenerAlbumGuardado(id: Int): Album? = albumGuardado
     override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> = error("No se usa en esta prueba")
 }
 
@@ -148,21 +153,19 @@ class AgregarCancionViewModelTest {
     }
 
     @Test
-    fun cargaLaInformacionDelAlbumParaMostrarlaComoContextoDelFormulario() = runTest {
+    fun cargaLaInformacionDelAlbumGuardadoParaMostrarlaComoContextoDelFormularioSinRepetirLaConsultaDeRed() = runTest {
         val repositorio = RepositorioAgregarCancionFalso()
-        repositorio.album = Result.success(
-            Album(
-                id = 101,
-                nombre = "A Day at the Races",
-                portada = "https://ejemplo.com/portada.jpg",
-                descripcion = "",
-                genero = "Rock",
-                disquera = "EMI",
-                fechaLanzamiento = "1976-12-10T00:00:00.000Z",
-                canciones = emptyList(),
-                artistas = listOf(Artista("Queen", null)),
-                comentarios = emptyList()
-            )
+        repositorio.albumGuardado = Album(
+            id = 101,
+            nombre = "A Day at the Races",
+            portada = "https://ejemplo.com/portada.jpg",
+            descripcion = "",
+            genero = "Rock",
+            disquera = "EMI",
+            fechaLanzamiento = "1976-12-10T00:00:00.000Z",
+            canciones = emptyList(),
+            artistas = listOf(Artista("Queen", null)),
+            comentarios = emptyList()
         )
 
         val viewModel = AgregarCancionViewModel(101, repositorio)
@@ -175,9 +178,9 @@ class AgregarCancionViewModelTest {
     }
 
     @Test
-    fun siFallaLaCargaDelAlbumElFormularioSigueUsableSinTarjetaDeContexto() = runTest {
+    fun siNoHayAlbumGuardadoElFormularioSigueUsableSinTarjetaDeContexto() = runTest {
         val repositorio = RepositorioAgregarCancionFalso()
-        repositorio.album = Result.failure(AlbumNoDisponible())
+        repositorio.albumGuardado = null
 
         val viewModel = AgregarCancionViewModel(101, repositorio)
         advanceUntilIdle()

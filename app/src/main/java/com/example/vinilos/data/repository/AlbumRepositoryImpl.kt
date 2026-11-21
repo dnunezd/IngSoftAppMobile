@@ -213,6 +213,12 @@ class AlbumRepositoryImpl(
             .map { (id, _) -> id }
     }
 
+    /**
+     * Asocia una canción al álbum (HU08). El backend no devuelve el álbum actualizado, así que, a
+     * diferencia de [crearAlbum], no hay nada que guardar "tal cual"; aun así, si sale bien, el detalle
+     * guardado se actualiza con la canción nueva de inmediato, para no esperar el siguiente `GET
+     * /albums/{id}` (mismo principio de D7 que [guardarCreado]).
+     */
     override suspend fun agregarCancion(albumId: Int, cancion: Cancion): Result<Unit> =
         withContext(dispatcher) {
             val resultado = adaptador.llamar {
@@ -226,7 +232,7 @@ class AlbumRepositoryImpl(
             if (error is RecursoNoEncontrado) {
                 Result.failure(AlbumNoDisponible(error.cause))
             } else {
-                resultado
+                resultado.onSuccess { guardarCancionAgregada(albumId, cancion) }
             }
         }
 
@@ -243,6 +249,20 @@ class AlbumRepositoryImpl(
             // Regla 3 de D4: si el álbum se borra en el backend, la versión anterior del catálogo vuelve.
             versionCatalogo = null
             versionesDetalle.descartar(fila.id)
+        }
+    }
+
+    /**
+     * Si el álbum está guardado, le agrega la canción nueva (D7); si no, no hace nada: no hay un detalle
+     * que corregir y el siguiente `GET /albums/{id}` lo trae completo igual.
+     */
+    private suspend fun guardarCancionAgregada(albumId: Int, cancion: Cancion) = escribir {
+        detalle(albumId)?.let { actual ->
+            val actualizado = actual.copy(canciones = actual.canciones + cancion)
+            guardarDetalle(actualizado)
+            copiaDetalles.guardada(actualizado)
+            // La versión recordada ya no corresponde a lo guardado (igual que D4 cuando cambia el detalle).
+            versionesDetalle.descartar(albumId)
         }
     }
 
