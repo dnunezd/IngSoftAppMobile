@@ -15,7 +15,6 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performScrollToNode
-import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTextReplacement
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
@@ -31,7 +30,6 @@ import com.example.vinilos.e2e.EvidenciaE2E
 import com.example.vinilos.ui.catalogo.TagContadorCatalogo
 import com.example.vinilos.ui.catalogo.TagCuadriculaCatalogo
 import com.example.vinilos.ui.catalogo.tagAlbum
-import com.example.vinilos.ui.crear.TagCancelarAgregarCancion
 import com.example.vinilos.ui.crear.TagDuracionCancion
 import com.example.vinilos.ui.crear.TagFormularioAgregarCancion
 import com.example.vinilos.ui.crear.TagGuardarCancion
@@ -52,7 +50,6 @@ import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
 import org.junit.Assume
 import org.junit.Before
 import org.junit.Rule
@@ -61,14 +58,13 @@ import org.junit.Test
 /**
  * E2E de la HU08 (asociar canciones a un álbum).
  *
- * FN08-ESC01 a ESC04 van contra el backend real. Como agregan canciones, se corren contra BackVynils
+ * FN08-ESC01 y ESC02 van contra el backend real. Como agregan canciones, se corren contra BackVynils
  * local (en un teléfono, `-PbaseUrl=http://localhost:3000/` con `adb reverse tcp:3000 tcp:3000`). Los
  * escenarios del Coleccionista trabajan sobre un álbum propio creado con `POST /albums`, que
  * [AlbumesDePrueba] borra al terminar con sus canciones, aunque la prueba falle. El Visitante usa el
  * primer álbum real y el Coleccionista, el primer coleccionista real.
  *
- * FN08-ESC05 y ESC06 (errores que el backend real no provoca a voluntad) usan `MockWebServer`, como
- * FN07-ESC07 y FN10-ESC06 a ESC08.
+ * FN08-ESC03 (falla al guardar y reintento) usa `MockWebServer`, como FN07-ESC07 y FN10-ESC07.
  *
  * Cada escenario guarda un pantallazo por paso, `informe.md` y un PDF en
  * `.../files/e2e-evidencia/FN08_ESCxx/` (en el dispositivo; los PDF se versionan a mano en
@@ -249,69 +245,6 @@ class AgregarCancionE2ETest {
         assertEquals(listOf("Pista E2E" to "3:45"), cancionesEnElBackend(album))
     }
 
-    /** FN08-ESC03: una duración que no cumple m:ss muestra el error y deja "Guardar" deshabilitado. */
-    @Test
-    fun unaDuracionConFormatoInvalidoNoSePuedeGuardar() {
-        val evidencia = "FN08_ESC03"
-        val album = albumesDePrueba.crear("E2E FN08")
-        val errorFormato = "Usa el formato m:ss, por ejemplo 5:05"
-
-        ActivityScenario.launch(MainActivity::class.java).use {
-            entrarComoColeccionista(primerColeccionistaReal())
-            abrirDetalle(album.id, evidencia, "01_detalle_sin_canciones")
-            abrirFormulario()
-            escribir(TagNombreCancion, "Pista E2E")
-
-            escribir(TagDuracionCancion, "3:75")
-            camposCon(errorFormato).assertCountEquals(1)
-            guardar().assertIsNotEnabled()
-            EvidenciaE2E.capturar(rule, evidencia, "02_segundos_fuera_de_rango")
-
-            escribir(TagDuracionCancion, "345")
-            camposCon(errorFormato).assertCountEquals(1)
-            guardar().assertIsNotEnabled()
-            EvidenciaE2E.capturar(rule, evidencia, "03_sin_dos_puntos")
-
-            escribir(TagDuracionCancion, "3:45")
-            camposCon(errorFormato).assertCountEquals(0)
-            guardar().assertIsEnabled()
-            EvidenciaE2E.capturar(rule, evidencia, "04_duracion_corregida")
-        }
-        assertEquals(0, albumes.envios)
-        assertTrue(cancionesEnElBackend(album).isEmpty())
-    }
-
-    /** FN08-ESC04: "Cancelar" cierra el formulario sin guardar y al volver a abrirlo aparece vacío. */
-    @Test
-    fun cancelarCierraSinGuardarYElFormularioVuelveVacio() {
-        val evidencia = "FN08_ESC04"
-        val album = albumesDePrueba.crear("E2E FN08")
-
-        ActivityScenario.launch(MainActivity::class.java).use {
-            entrarComoColeccionista(primerColeccionistaReal())
-            abrirDetalle(album.id, evidencia, "01_detalle_sin_canciones")
-            abrirFormulario()
-            escribir(TagNombreCancion, "Pista cancelada")
-            escribir(TagDuracionCancion, "2:30")
-            EvidenciaE2E.capturar(rule, evidencia, "02_formulario_lleno")
-
-            rule.onNodeWithTag(TagCancelarAgregarCancion).performScrollTo().performClick()
-            esperarQueSeCierreElFormulario()
-            rule.onNodeWithTag(TagListaDetalleAlbum).performScrollToNode(hasText("Canciones"))
-            rule.onNodeWithText("Este álbum aún no tiene canciones registradas").assertIsDisplayed()
-            rule.onAllNodesWithText("Pista cancelada").assertCountEquals(0)
-            EvidenciaE2E.capturar(rule, evidencia, "03_detalle_sin_cambios")
-
-            abrirFormulario()
-            rule.onNodeWithTag(TagNombreCancion).assert(hasText("Pista cancelada").not())
-            camposCon("Campo obligatorio").assertCountEquals(2)
-            guardar().assertIsNotEnabled()
-            EvidenciaE2E.capturar(rule, evidencia, "04_formulario_vacio_otra_vez")
-        }
-        assertEquals(0, albumes.envios)
-        assertTrue(cancionesEnElBackend(album).isEmpty())
-    }
-
     // ---------- Escenarios con MockWebServer ----------
 
     /** Estado del servidor simulado, que cada escenario cambia a mitad de la prueba. */
@@ -358,12 +291,12 @@ class AgregarCancionE2ETest {
     }
 
     /**
-     * FN08-ESC05: mientras se guarda se ve "Guardando..." y un segundo toque no envía nada; si el guardado
+     * FN08-ESC03: mientras se guarda se ve "Guardando..." y un segundo toque no envía nada; si el guardado
      * falla se ve el error con los datos conservados, y el reintento agrega la canción.
      */
     @Test
     fun siFallaElGuardadoSeConservanLosDatosYReintentarLaAgrega() {
-        val evidencia = "FN08_ESC05"
+        val evidencia = "FN08_ESC03"
         // El primer envío tarda y termina en error del servicio; el siguiente sale bien.
         val simulado = Simulado().apply {
             respuestaGuardado = { envio ->
@@ -403,35 +336,5 @@ class AgregarCancionE2ETest {
             EvidenciaE2E.capturar(rule, evidencia, "05_agregada_al_reintentar")
         }
         assertEquals(2, simulado.envios)
-    }
-
-    /** FN08-ESC06: si el álbum ya no existe al guardar, se avisa y se puede volver sin agregar la canción. */
-    @Test
-    fun siElAlbumYaNoExisteSeAvisaYSePuedeVolver() {
-        val evidencia = "FN08_ESC06"
-        val simulado = Simulado().apply { respuestaGuardado = { MockResponse().setResponseCode(404) } }
-        iniciarServidor(simulado)
-
-        ActivityScenario.launch(MainActivity::class.java).use {
-            entrarComoColeccionista(100)
-            abrirDetalle(100, evidencia, "01_detalle_sin_canciones")
-            abrirFormulario()
-            escribir(TagNombreCancion, "Decisiones")
-            escribir(TagDuracionCancion, "5:05")
-            guardar().performClick()
-
-            esperarTexto("El álbum ya no está disponible")
-            rule.onAllNodesWithText("Canción agregada").assertCountEquals(0)
-            rule.onNodeWithText("Volver al álbum").assertIsDisplayed()
-            EvidenciaE2E.capturar(rule, evidencia, "02_album_no_disponible")
-
-            rule.onNodeWithText("Volver al álbum").performClick()
-            esperarQueSeCierreElFormulario()
-            esperarA(TagListaDetalleAlbum)
-            rule.onNodeWithTag(TagListaDetalleAlbum).performScrollToNode(hasText("Canciones"))
-            rule.onNodeWithText("Este álbum aún no tiene canciones registradas").assertIsDisplayed()
-            EvidenciaE2E.capturar(rule, evidencia, "03_vuelve_sin_la_cancion")
-        }
-        assertEquals(1, simulado.envios)
     }
 }

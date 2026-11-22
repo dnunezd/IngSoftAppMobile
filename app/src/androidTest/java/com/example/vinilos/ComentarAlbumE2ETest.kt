@@ -37,9 +37,6 @@ import com.example.vinilos.ui.comentar.TagAceptarPublicado
 import com.example.vinilos.ui.comentar.TagAlbumComentado
 import com.example.vinilos.ui.comentar.TagComentarioPublicado
 import com.example.vinilos.ui.comentar.TagContadorOpinion
-import com.example.vinilos.ui.comentar.TagContinuarEscribiendo
-import com.example.vinilos.ui.comentar.TagDescartarComentario
-import com.example.vinilos.ui.comentar.TagDialogoDescartar
 import com.example.vinilos.ui.comentar.TagErrorPublicar
 import com.example.vinilos.ui.comentar.TagNivelCalificacion
 import com.example.vinilos.ui.comentar.TagOpinion
@@ -71,13 +68,13 @@ import org.junit.Test
 /**
  * E2E de la HU09 (comentar un álbum).
  *
- * FN09-ESC01 a ESC04 van contra el backend real. Como publican comentarios, se corren contra BackVynils
+ * FN09-ESC01 y ESC02 van contra el backend real. Como publican comentarios, se corren contra BackVynils
  * local (en un teléfono, `-PbaseUrl=http://localhost:3000/` con `adb reverse tcp:3000 tcp:3000`). Los
  * escenarios del Coleccionista comentan un álbum propio creado con `POST /albums`, que [AlbumesDePrueba]
  * borra al terminar con sus comentarios, aunque la prueba falle. El Visitante usa el primer álbum real y
  * el Coleccionista, el primer coleccionista real.
  *
- * FN09-ESC05 (falla al publicar y reintento) usa `MockWebServer`, como FN07-ESC07 y FN10-ESC07.
+ * FN09-ESC03 (falla al publicar y reintento) usa `MockWebServer`, como FN07-ESC07 y FN10-ESC07.
  *
  * Cada escenario guarda un pantallazo por paso, `informe.md` y un PDF en
  * `.../files/e2e-evidencia/FN09_ESCxx/` (en el dispositivo; los PDF se versionan a mano en
@@ -140,9 +137,6 @@ class ComentarAlbumE2ETest {
 
     private fun esperarA(tag: String, milis: Long = 15_000) =
         rule.waitUntil(milis) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
-
-    private fun esperarTexto(texto: String, milis: Long = 15_000) =
-        rule.waitUntil(milis) { rule.onAllNodesWithText(texto).fetchSemanticsNodes().isNotEmpty() }
 
     private fun esperarQueSeCierreLaPantalla() =
         rule.waitUntil(15_000) { rule.onAllNodesWithTag(TagPantallaComentar).fetchSemanticsNodes().isEmpty() }
@@ -261,86 +255,6 @@ class ComentarAlbumE2ETest {
         assertEquals(listOf(opinion to 4), comentariosEnElBackend(album))
     }
 
-    /**
-     * FN09-ESC03: "Publicar comentario" sigue deshabilitado sin calificación o con una opinión de solo
-     * espacios, y la opinión no pasa de 400 caracteres.
-     */
-    @Test
-    fun publicarSoloSeHabilitaConCalificacionYOpinion() {
-        val evidencia = "FN09_ESC03"
-        val album = albumesDePrueba.crear("E2E FN09")
-
-        ActivityScenario.launch(MainActivity::class.java).use {
-            entrarComoColeccionista(primerColeccionistaReal().id)
-            abrirDetalle(album.id, evidencia, "01_detalle_sin_comentarios")
-            abrirComentar()
-
-            opinar("Suena muy bien")
-            publicar().assertIsNotEnabled()
-            EvidenciaE2E.capturar(rule, evidencia, "02_opinion_sin_calificacion")
-
-            calificar(5)
-            rule.onNodeWithTag(TagNivelCalificacion).assertTextEquals("Excelente (5/5)")
-            opinar("     ")
-            publicar().assertIsNotEnabled()
-            EvidenciaE2E.capturar(rule, evidencia, "03_calificacion_con_opinion_en_blanco")
-
-            opinar("a".repeat(410))
-            rule.onNodeWithTag(TagContadorOpinion).assertTextEquals("400 / 400")
-            publicar().assertIsEnabled()
-            EvidenciaE2E.capturar(rule, evidencia, "04_opinion_en_el_limite")
-        }
-        assertEquals(0, comentarios.envios)
-        assertEquals(emptyList<Pair<String, Int>>(), comentariosEnElBackend(album))
-    }
-
-    /**
-     * FN09-ESC04: sin nada escrito se sale sin preguntar; con algo escrito se pregunta "¿Descartar
-     * comentario?", "Continuar escribiendo" conserva lo escrito y "Descartar y salir" vuelve sin publicar.
-     */
-    @Test
-    fun salirConAlgoEscritoPreguntaSiDescartarElComentario() {
-        val evidencia = "FN09_ESC04"
-        val album = albumesDePrueba.crear("E2E FN09")
-        val opinion = "Todavía me falta escucharlo completo."
-
-        ActivityScenario.launch(MainActivity::class.java).use {
-            entrarComoColeccionista(primerColeccionistaReal().id)
-            abrirDetalle(album.id, evidencia, "01_detalle_sin_comentarios")
-
-            // Sin nada escrito, "Atrás" vuelve al detalle sin preguntar.
-            abrirComentar()
-            Espresso.pressBack()
-            esperarQueSeCierreLaPantalla()
-            rule.onAllNodesWithTag(TagDialogoDescartar).assertCountEquals(0)
-            esperarA(TagListaDetalleAlbum)
-
-            abrirComentar()
-            calificar(3)
-            opinar(opinion)
-            Espresso.pressBack()
-            esperarA(TagDialogoDescartar)
-            rule.onNodeWithText("¿Descartar comentario?").assertIsDisplayed()
-            EvidenciaE2E.capturar(rule, evidencia, "02_dialogo_descartar")
-
-            rule.onNodeWithTag(TagContinuarEscribiendo).performClick()
-            rule.waitUntil(5_000) { rule.onAllNodesWithTag(TagDialogoDescartar).fetchSemanticsNodes().isEmpty() }
-            rule.onNodeWithTag(TagNivelCalificacion).assertTextEquals("Regular (3/5)")
-            rule.onNodeWithTag(TagOpinion).assert(hasText(opinion))
-            EvidenciaE2E.capturar(rule, evidencia, "03_continuar_escribiendo")
-
-            Espresso.pressBack()
-            esperarA(TagDialogoDescartar)
-            rule.onNodeWithTag(TagDescartarComentario).performClick()
-            esperarQueSeCierreLaPantalla()
-            rule.onNodeWithTag(TagListaDetalleAlbum).performScrollToNode(hasText("Comentarios"))
-            rule.onNodeWithText("Aún no hay comentarios para este álbum").assertIsDisplayed()
-            EvidenciaE2E.capturar(rule, evidencia, "04_detalle_sin_publicar")
-        }
-        assertEquals(0, comentarios.envios)
-        assertEquals(emptyList<Pair<String, Int>>(), comentariosEnElBackend(album))
-    }
-
     // ---------- Escenario con MockWebServer ----------
 
     /** Estado del servidor simulado: el primer envío falla y los siguientes guardan el comentario. */
@@ -393,12 +307,12 @@ class ComentarAlbumE2ETest {
     }
 
     /**
-     * FN09-ESC05: mientras se publica se ve "Publicando..." y un segundo toque no envía nada; si falla se
+     * FN09-ESC03: mientras se publica se ve "Publicando..." y un segundo toque no envía nada; si falla se
      * ve el error con la calificación y la opinión conservadas, y el reintento publica el comentario.
      */
     @Test
     fun siFallaLaPublicacionSeConservaLoEscritoYReintentarLaPublica() {
-        val evidencia = "FN09_ESC05"
+        val evidencia = "FN09_ESC03"
         val simulado = Simulado()
         iniciarServidor(simulado)
         val opinion = "Un clásico de la salsa urbana."

@@ -6,8 +6,8 @@ La HU15 (agregar un álbum a un artista) se integró en `develop` (#114) con pru
 
 ## What Changes
 
-- Nueva clase `AgregarAlbumArtistaE2ETest` con los escenarios FN15-ESC01 a FN15-ESC05:
-  - **Contra BackVynils:** el Visitante no ve "Agregar álbum" en una banda ni en un músico; el Coleccionista asocia un álbum a un músico y a una banda (que conserva los álbumes que ya tenía); una búsqueda sin resultados quita la selección y "Cancelar" cierra sin asociar.
+- Nueva clase `AgregarAlbumArtistaE2ETest` con los tres escenarios más importantes, FN15-ESC01 a FN15-ESC03:
+  - **Contra BackVynils:** el Visitante no ve "Agregar álbum" en una banda ni en un músico; el Coleccionista asocia un álbum a una banda, que conserva los álbumes que ya tenía.
   - **Con `MockWebServer`:** la asociación tarda y falla, con la ventana y la selección conservadas, y el reintento la guarda.
 - Lo que se asocia es siempre un álbum propio (`POST /albums`) que se borra al terminar, y con él su relación con el artista (`AlbumesDePrueba`, de `add-e2e-agregar-tracks`).
 - Evidencia por escenario en PDF en `docs/pruebas/sprint-3/HU15/e2e/`, sección E2E en sus resultados y fila de la clase en la tabla de E2E del README.

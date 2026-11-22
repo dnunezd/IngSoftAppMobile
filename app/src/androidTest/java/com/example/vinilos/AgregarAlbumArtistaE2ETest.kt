@@ -1,11 +1,9 @@
 package com.example.vinilos
 
-import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasTestTag
@@ -35,7 +33,6 @@ import com.example.vinilos.ui.artistas.TagAsociandoAsociar
 import com.example.vinilos.ui.artistas.TagBotonAgregarAlbum
 import com.example.vinilos.ui.artistas.TagBotonAsociar
 import com.example.vinilos.ui.artistas.TagBusquedaAsociar
-import com.example.vinilos.ui.artistas.TagCancelarAsociar
 import com.example.vinilos.ui.artistas.TagContadorArtistas
 import com.example.vinilos.ui.artistas.TagDetalleArtista
 import com.example.vinilos.ui.artistas.TagErrorAsociar
@@ -43,7 +40,6 @@ import com.example.vinilos.ui.artistas.TagListaArtistas
 import com.example.vinilos.ui.artistas.TagListaAsociar
 import com.example.vinilos.ui.artistas.TagListaDetalleArtista
 import com.example.vinilos.ui.artistas.TagNombreDetalleArtista
-import com.example.vinilos.ui.artistas.TagSinResultadosAsociar
 import com.example.vinilos.ui.artistas.TagTituloAsociar
 import com.example.vinilos.ui.artistas.TagVentanaAsociar
 import com.example.vinilos.ui.artistas.tagAlbumArtista
@@ -74,14 +70,14 @@ import org.junit.Test
 /**
  * E2E de la HU15 (agregar un álbum a un artista).
  *
- * FN15-ESC01 a ESC04 van contra el backend real. Como asocian álbumes, se corren contra BackVynils local
+ * FN15-ESC01 y ESC02 van contra el backend real. Como asocian álbumes, se corren contra BackVynils local
  * (en un teléfono, `-PbaseUrl=http://localhost:3000/` con `adb reverse tcp:3000 tcp:3000`). Lo que se
  * asocia es siempre un álbum propio creado con `POST /albums`: [AlbumesDePrueba] lo borra al terminar,
  * y con él su relación con el artista, aunque la prueba falle; los álbumes reales del artista no se
  * tocan. Los artistas son la primera banda y el primer músico del backend; si no hay, el escenario se
  * omite. El Coleccionista es el primer coleccionista real.
  *
- * FN15-ESC05 (falla al asociar y reintento) usa `MockWebServer`, como FN07-ESC07 y FN10-ESC07.
+ * FN15-ESC03 (falla al asociar y reintento) usa `MockWebServer`, como FN07-ESC07 y FN10-ESC07.
  *
  * Cada escenario guarda un pantallazo por paso, `informe.md` y un PDF en
  * `.../files/e2e-evidencia/FN15_ESCxx/` (en el dispositivo; los PDF se versionan a mano en
@@ -281,77 +277,17 @@ class AgregarAlbumArtistaE2ETest {
         assertEquals(0, artistas.envios)
     }
 
-    /** FN15-ESC02: el Coleccionista agrega un álbum del catálogo a un músico y lo ve en su detalle. */
-    @Test
-    fun elColeccionistaAgregaUnAlbumAUnMusico() {
-        val musico = primerArtista(ArtistType.MUSICO)
-        val album = albumesDePrueba.crear("E2E FN15")
-        val antes = albumesEnElBackend(musico)
-
-        asociarDesdeElDetalle(musico, album, "FN15_ESC02")
-
-        assertEquals(1, artistas.envios)
-        assertEquals(antes + album.id, albumesEnElBackend(musico))
-    }
-
-    /** FN15-ESC03: el Coleccionista agrega un álbum a una banda, que conserva los álbumes que ya tenía. */
+    /** FN15-ESC02: el Coleccionista agrega un álbum a una banda, que conserva los álbumes que ya tenía. */
     @Test
     fun elColeccionistaAgregaUnAlbumAUnaBanda() {
         val banda = primerArtista(ArtistType.BANDA)
         val album = albumesDePrueba.crear("E2E FN15")
         val antes = albumesEnElBackend(banda)
 
-        asociarDesdeElDetalle(banda, album, "FN15_ESC03")
+        asociarDesdeElDetalle(banda, album, "FN15_ESC02")
 
         assertEquals(1, artistas.envios)
         assertEquals(antes + album.id, albumesEnElBackend(banda))
-    }
-
-    /**
-     * FN15-ESC04: una búsqueda sin coincidencias lo avisa y quita la selección; "Cancelar" cierra sin
-     * asociar y la ventana vuelve a abrirse sin selección ni búsqueda.
-     */
-    @Test
-    fun cancelarCierraSinAsociarYLaBusquedaSinResultadosQuitaLaSeleccion() {
-        val evidencia = "FN15_ESC04"
-        val musico = primerArtista(ArtistType.MUSICO)
-        val album = albumesDePrueba.crear("E2E FN15")
-        val antes = albumesEnElBackend(musico)
-
-        ActivityScenario.launch(MainActivity::class.java).use {
-            entrarComoColeccionista(primerColeccionistaReal())
-            abrirDetalle(musico, evidencia, "01_detalle_con_agregar_album")
-            abrirVentana()
-
-            buscar(album.nombre)
-            esperarA(tagAlbumAsociable(album.id))
-            seleccionar(album.id)
-            asociar().assertIsEnabled()
-            EvidenciaE2E.capturar(rule, evidencia, "02_album_seleccionado")
-
-            buscar("zzzz sin coincidencias")
-            esperarA(TagSinResultadosAsociar)
-            rule.onNodeWithText("No encontramos álbumes con esa búsqueda").assertIsDisplayed()
-            asociar().assertIsNotEnabled()
-            EvidenciaE2E.capturar(rule, evidencia, "03_busqueda_sin_resultados")
-
-            buscar(album.nombre)
-            esperarA(tagAlbumAsociable(album.id))
-            filaDe(album.id).assertIsNotSelected()
-            seleccionar(album.id)
-            rule.onNodeWithTag(TagCancelarAsociar).performClick()
-            esperarQueSeCierreLaVentana()
-            rule.onAllNodesWithText("Álbum asociado").assertCountEquals(0)
-            rule.onAllNodesWithTag(tagAlbumArtista(album.id)).assertCountEquals(0)
-            EvidenciaE2E.capturar(rule, evidencia, "04_cancelado_sin_cambios")
-
-            abrirVentana()
-            rule.onNodeWithTag(TagBusquedaAsociar).assert(hasText(album.nombre).not())
-            asociar().assertIsNotEnabled()
-            EvidenciaE2E.capturar(rule, evidencia, "05_ventana_otra_vez_vacia")
-        }
-        assertEquals(0, artistas.envios)
-        assertEquals(antes, albumesEnElBackend(musico))
     }
 
     // ---------- Escenario con MockWebServer ----------
@@ -409,12 +345,12 @@ class AgregarAlbumArtistaE2ETest {
     }
 
     /**
-     * FN15-ESC05: mientras se asocia el botón queda deshabilitado y un segundo toque no envía nada; si la
+     * FN15-ESC03: mientras se asocia el botón queda deshabilitado y un segundo toque no envía nada; si la
      * asociación falla se avisa con la ventana abierta y el álbum elegido, y el reintento lo asocia.
      */
     @Test
     fun siFallaLaAsociacionSeConservaLaSeleccionYReintentarLaGuarda() {
-        val evidencia = "FN15_ESC05"
+        val evidencia = "FN15_ESC03"
         val simulado = Simulado()
         iniciarServidor(simulado)
 

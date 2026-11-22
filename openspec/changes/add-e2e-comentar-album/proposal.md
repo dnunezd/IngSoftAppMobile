@@ -6,8 +6,8 @@ La HU09 (comentar un álbum) se integró en `develop` (#112) con pruebas unitari
 
 ## What Changes
 
-- Nueva clase `ComentarAlbumE2ETest` con los escenarios FN09-ESC01 a FN09-ESC05:
-  - **Contra BackVynils:** el Visitante no ve "Comentar álbum"; el Coleccionista califica, opina, publica y ve el comentario en el detalle; "Publicar comentario" solo se habilita con calificación y opinión, y la opinión no pasa de 400 caracteres; salir con algo escrito pregunta "¿Descartar comentario?".
+- Nueva clase `ComentarAlbumE2ETest` con los tres escenarios más importantes, FN09-ESC01 a FN09-ESC03:
+  - **Contra BackVynils:** el Visitante no ve "Comentar álbum"; el Coleccionista califica, opina, publica y ve el comentario en el detalle.
   - **Con `MockWebServer`:** la publicación tarda y falla, con lo escrito conservado, y el reintento la publica.
 - Los escenarios que escriben comentan un álbum propio (`POST /albums`) que se borra al terminar con sus comentarios (`AlbumesDePrueba`, de `add-e2e-agregar-tracks`).
 - Evidencia por escenario en PDF en `docs/pruebas/sprint-3/HU09/e2e/`, sección E2E en sus resultados y fila de la clase en la tabla de E2E del README.

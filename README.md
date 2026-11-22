@@ -179,11 +179,11 @@ Las E2E recorren la app contra el backend real. Cada escenario se nombra con el 
 | `ArtistaDetalleE2ETest`       | HU04     | `FN04-ESC01` a `ESC07`                                                        |
 | `CrearAlbumE2ETest`           | HU07     | `FN07-ESC01` a `ESC07` (crea y borra álbumes: correr contra BackVynils local) |
 | `ArtistasFavoritosE2ETest`    | HU10     | `FN10-ESC01` a `ESC08` (agrega favoritos: correr contra BackVynils local)     |
-| `AgregarCancionE2ETest`       | HU08     | `FN08-ESC01` a `ESC06` (agrega canciones: correr contra BackVynils local)     |
-| `ComentarAlbumE2ETest`        | HU09     | `FN09-ESC01` a `ESC05` (publica comentarios: correr contra BackVynils local)  |
-| `AgregarAlbumArtistaE2ETest`  | HU15     | `FN15-ESC01` a `ESC05` (asocia álbumes: correr contra BackVynils local)       |
+| `AgregarCancionE2ETest`       | HU08     | `FN08-ESC01` a `ESC03` (agrega canciones: correr contra BackVynils local)     |
+| `ComentarAlbumE2ETest`        | HU09     | `FN09-ESC01` a `ESC03` (publica comentarios: correr contra BackVynils local)  |
+| `AgregarAlbumArtistaE2ETest`  | HU15     | `FN15-ESC01` a `ESC03` (asocia álbumes: correr contra BackVynils local)       |
 
-Total: **57 pruebas E2E**. Para correrlas y traer la evidencia (con `connectedDebugAndroidTest` la app se desinstala al terminar y la evidencia se pierde):
+Total: **50 pruebas E2E**. Para correrlas y traer la evidencia (con `connectedDebugAndroidTest` la app se desinstala al terminar y la evidencia se pierde):
 
 ```bash
 ./gradlew installDebug installDebugAndroidTest -PbaseUrl=http://localhost:3000/
@@ -193,7 +193,7 @@ adb shell am instrument -w -e class com.example.vinilos.IngresoE2ETest,com.examp
 adb pull /storage/emulated/0/Android/data/com.example.vinilos/files/e2e-evidencia ./e2e-evidencia
 ```
 
-Debe terminar en `OK (57 tests)`. En Git Bash antepone `MSYS_NO_PATHCONV=1` a los `adb` que llevan rutas del dispositivo.
+Debe terminar en `OK (50 tests)`. En Git Bash antepone `MSYS_NO_PATHCONV=1` a los `adb` que llevan rutas del dispositivo.
 
 ## Problemas frecuentes
 
