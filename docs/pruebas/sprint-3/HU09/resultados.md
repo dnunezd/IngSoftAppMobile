@@ -56,6 +56,34 @@ El backend guardó el comentario con el coleccionista 101 (Jaime Monsalve) y la 
 | Faltaba la ilustración del vinilo en el éxito | Vinilo con la marca de publicado (`07_comentario_publicado.jpg`, recapturada) |
 | Imports | `Session` importado en `VinilosNavHost` y orden corregido en `VinilosNavHostTest` |
 
+## Pruebas E2E (T09-5)
+
+Clase `ComentarAlbumE2ETest` (cambio de OpenSpec [`add-e2e-comentar-album`](../../../../openspec/changes/add-e2e-comentar-album)). Recorre la app desde el ingreso, como la persona. ESC01 a ESC04 van contra BackVynils; como publican comentarios, se corren contra el backend **local**. Los escenarios del Coleccionista comentan un álbum propio (`POST /albums`) que se borra al terminar con sus comentarios. ESC05 usa `MockWebServer` para provocar el error.
+
+| ID         | Descripción del escenario                                                                         | Resultado esperado                                                                                                                                                                                           | Backend          | Evidencia                 |
+|------------|---------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------|---------------------------|
+| FN09-ESC01 | El Visitante abre el detalle de un álbum                                                          | No aparece el botón "Comentar álbum" y no se envía nada                                                                                                                                                      | BackVynils local | [PDF](e2e/FN09_ESC01.pdf) |
+| FN09-ESC02 | El Coleccionista califica con 4 estrellas, escribe su opinión y publica                           | La pantalla muestra el álbum y "<coleccionista> (Coleccionista)"; "Bueno (4/5)" y el contador; al publicar, "Comentario publicado"; al aceptar, el detalle muestra el comentario; el backend lo guarda con calificación 4 | BackVynils local | [PDF](e2e/FN09_ESC02.pdf) |
+| FN09-ESC03 | Escribe una opinión sin calificar, luego califica con la opinión en blanco y escribe 410 caracteres | "Publicar comentario" sigue deshabilitado sin calificación y con solo espacios; la opinión se corta en "400 / 400" y entonces se habilita; no se envía nada                                                  | BackVynils local | [PDF](e2e/FN09_ESC03.pdf) |
+| FN09-ESC04 | Sale sin escribir y luego sale con calificación y opinión                                         | Sin nada escrito vuelve al detalle sin preguntar; con algo escrito aparece "¿Descartar comentario?"; "Continuar escribiendo" conserva "Regular (3/5)" y la opinión; "Descartar y salir" vuelve sin publicar     | BackVynils local | [PDF](e2e/FN09_ESC04.pdf) |
+| FN09-ESC05 | Publica y la publicación tarda y falla                                                            | Mientras publica, "Publicando..." deshabilitado y un segundo toque no envía nada; luego "No se pudo publicar, intenta de nuevo" con "Excelente (5/5)" y la opinión conservados; al reintentar se publica y el detalle lo muestra | `MockWebServer`  | [PDF](e2e/FN09_ESC05.pdf) |
+
+Criterios de la HU09 cubiertos por las E2E:
+
+| #   | Criterio                                                                            | Escenarios   |
+|-----|-------------------------------------------------------------------------------------|--------------|
+| 1   | Solo el Coleccionista ve "Comentar álbum"                                           | ESC01, ESC02 |
+| 2   | La pantalla muestra el álbum y el coleccionista que comenta                         | ESC02        |
+| 3   | Calificación de 1 a 5 con su texto                                                  | ESC02, ESC03 |
+| 4   | Opinión con contador y máximo de 400 caracteres                                     | ESC02, ESC03 |
+| 5   | "Publicar comentario" deshabilitado sin calificación u opinión                      | ESC02, ESC03 |
+| 6   | Comentario publicado y visible en el detalle                                        | ESC02, ESC05 |
+| 7   | Mientras publica, "Publicando..." deshabilitado y un solo envío                     | ESC05        |
+| 8   | Error al publicar: mensaje y lo escrito conservado                                  | ESC05        |
+| 9   | Descartar el comentario al salir                                                    | ESC04        |
+
+Resultado (Samsung SM-S938B, Android 17, 2026-11-22, contra BackVynils local): `OK (16 tests)` junto con las E2E de HU08 y HU15, sin escenarios omitidos y con todas las capturas en "Ok"; el backend quedó sin álbumes ni comentarios de prueba. Para correrlas, ver la sección E2E de [HU08](../HU08/README.md#cómo-correrlas) con la clase `com.example.vinilos.ComentarAlbumE2ETest`.
+
 ## Sin verificar
 
 - Android 6 (API 23) y Android 17 (API 37).
