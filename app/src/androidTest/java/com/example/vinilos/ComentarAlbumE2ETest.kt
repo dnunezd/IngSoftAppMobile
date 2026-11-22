@@ -10,7 +10,6 @@ import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
-import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -23,7 +22,6 @@ import androidx.test.espresso.Espresso
 import com.example.vinilos.data.model.Collector
 import com.example.vinilos.data.model.ComentarioNuevo
 import com.example.vinilos.data.remote.ServiceAdapter
-import com.example.vinilos.data.repository.AlbumRepositoryImpl
 import com.example.vinilos.data.repository.CollectorRepositoryImpl
 import com.example.vinilos.data.repository.ComentarioRepository
 import com.example.vinilos.data.repository.ComentarioRepositoryImpl
@@ -37,6 +35,9 @@ import com.example.vinilos.ui.comentar.TagAceptarPublicado
 import com.example.vinilos.ui.comentar.TagAlbumComentado
 import com.example.vinilos.ui.comentar.TagComentarioPublicado
 import com.example.vinilos.ui.comentar.TagContadorOpinion
+import com.example.vinilos.ui.comentar.TagContinuarEscribiendo
+import com.example.vinilos.ui.comentar.TagDescartarComentario
+import com.example.vinilos.ui.comentar.TagDialogoDescartar
 import com.example.vinilos.ui.comentar.TagErrorPublicar
 import com.example.vinilos.ui.comentar.TagNivelCalificacion
 import com.example.vinilos.ui.comentar.TagOpinion
@@ -46,7 +47,6 @@ import com.example.vinilos.ui.comentar.tagEstrella
 import com.example.vinilos.ui.detalle.TagComentarAlbum
 import com.example.vinilos.ui.detalle.TagListaDetalleAlbum
 import com.example.vinilos.ui.ingreso.TagEntrarColeccionista
-import com.example.vinilos.ui.ingreso.TagEntrarVisitante
 import com.example.vinilos.ui.ingreso.TagListaColeccionistas
 import com.example.vinilos.ui.ingreso.tagColeccionista
 import com.example.vinilos.ui.inicio.TagInicio
@@ -60,7 +60,6 @@ import okhttp3.mockwebserver.RecordedRequest
 import org.json.JSONObject
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assume
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -70,9 +69,8 @@ import org.junit.Test
  *
  * FN09-ESC01 y ESC02 van contra el backend real. Como publican comentarios, se corren contra BackVynils
  * local (en un teléfono, `-PbaseUrl=http://localhost:3000/` con `adb reverse tcp:3000 tcp:3000`). Los
- * escenarios del Coleccionista comentan un álbum propio creado con `POST /albums`, que [AlbumesDePrueba]
- * borra al terminar con sus comentarios, aunque la prueba falle. El Visitante usa el primer álbum real y
- * el Coleccionista, el primer coleccionista real.
+ * escenarios comentan un álbum propio creado con `POST /albums`, que [AlbumesDePrueba] borra al terminar
+ * con sus comentarios, aunque la prueba falle. El Coleccionista es el primer coleccionista real.
  *
  * FN09-ESC03 (falla al publicar y reintento) usa `MockWebServer`, como FN07-ESC07 y FN10-ESC07.
  *
@@ -115,12 +113,6 @@ class ComentarAlbumE2ETest {
 
     // ---------- Datos reales ----------
 
-    private fun primerAlbumReal(): Int = runBlocking {
-        val album = AlbumRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL)).obtenerAlbumes().getOrThrow().firstOrNull()
-        Assume.assumeTrue("Sin datos en el backend: no hay álbumes", album != null)
-        album!!.id
-    }
-
     private fun primerColeccionistaReal(): Collector = runBlocking {
         CollectorRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL)).obtenerColeccionistas().getOrThrow().first()
     }
@@ -140,12 +132,6 @@ class ComentarAlbumE2ETest {
 
     private fun esperarQueSeCierreLaPantalla() =
         rule.waitUntil(15_000) { rule.onAllNodesWithTag(TagPantallaComentar).fetchSemanticsNodes().isEmpty() }
-
-    private fun entrarComoVisitante() {
-        esperarA(TagEntrarVisitante)
-        rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
-        esperarA(TagInicio)
-    }
 
     private fun entrarComoColeccionista(coleccionista: Int) {
         esperarA(TagEntrarColeccionista)
@@ -196,20 +182,51 @@ class ComentarAlbumE2ETest {
 
     // ---------- Escenarios contra el backend real ----------
 
-    /** FN09-ESC01: el Visitante no ve el botón "Comentar álbum" en el detalle de un álbum. */
+    /**
+     * FN09-ESC01: sin nada escrito se sale sin preguntar; con algo escrito se pregunta "¿Descartar
+     * comentario?", "Continuar escribiendo" conserva lo escrito y "Descartar y salir" vuelve sin publicar.
+     */
     @Test
-    fun elVisitanteNoVeElBotonDeComentar() {
+    fun salirConAlgoEscritoPreguntaSiDescartarElComentario() {
         val evidencia = "FN09_ESC01"
-        val album = primerAlbumReal()
+        val album = albumesDePrueba.crear("E2E FN09")
+        val opinion = "Todavía me falta escucharlo completo."
 
         ActivityScenario.launch(MainActivity::class.java).use {
-            entrarComoVisitante()
-            abrirDetalle(album, evidencia, "01_detalle_visitante")
-            rule.onAllNodesWithTag(TagComentarAlbum).assertCountEquals(0)
-            rule.onAllNodesWithText("Comentar álbum").assertCountEquals(0)
-            EvidenciaE2E.capturar(rule, evidencia, "02_detalle_sin_comentar")
+            entrarComoColeccionista(primerColeccionistaReal().id)
+            abrirDetalle(album.id, evidencia, "01_detalle_sin_comentarios")
+
+            // Sin nada escrito, "Atrás" vuelve al detalle sin preguntar.
+            abrirComentar()
+            Espresso.pressBack()
+            esperarQueSeCierreLaPantalla()
+            rule.onAllNodesWithTag(TagDialogoDescartar).assertCountEquals(0)
+            esperarA(TagListaDetalleAlbum)
+
+            abrirComentar()
+            calificar(3)
+            opinar(opinion)
+            Espresso.pressBack()
+            esperarA(TagDialogoDescartar)
+            rule.onNodeWithText("¿Descartar comentario?").assertIsDisplayed()
+            EvidenciaE2E.capturar(rule, evidencia, "02_dialogo_descartar")
+
+            rule.onNodeWithTag(TagContinuarEscribiendo).performClick()
+            rule.waitUntil(5_000) { rule.onAllNodesWithTag(TagDialogoDescartar).fetchSemanticsNodes().isEmpty() }
+            rule.onNodeWithTag(TagNivelCalificacion).assertTextEquals("Regular (3/5)")
+            rule.onNodeWithTag(TagOpinion).assert(hasText(opinion))
+            EvidenciaE2E.capturar(rule, evidencia, "03_continuar_escribiendo")
+
+            Espresso.pressBack()
+            esperarA(TagDialogoDescartar)
+            rule.onNodeWithTag(TagDescartarComentario).performClick()
+            esperarQueSeCierreLaPantalla()
+            rule.onNodeWithTag(TagListaDetalleAlbum).performScrollToNode(hasText("Comentarios"))
+            rule.onNodeWithText("Aún no hay comentarios para este álbum").assertIsDisplayed()
+            EvidenciaE2E.capturar(rule, evidencia, "04_detalle_sin_publicar")
         }
         assertEquals(0, comentarios.envios)
+        assertEquals(emptyList<Pair<String, Int>>(), comentariosEnElBackend(album))
     }
 
     /** FN09-ESC02: el Coleccionista califica, escribe su opinión, publica y ve el comentario en el detalle. */

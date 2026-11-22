@@ -3,7 +3,7 @@
 ## 1. Pruebas E2E de comentar un álbum (T09-5, issue #51)
 
 - [x] 1.1 Crear `ComentarAlbumE2ETest` con FN09-ESC01 y ESC02 contra el backend real y FN09-ESC03 con `MockWebServer`, usando `AlbumesDePrueba` (`add-e2e-agregar-tracks`); verificar que `:app:assembleDebugAndroidTest` compila.
-- [x] 1.2 Ejecutar la clase con `am instrument` en el Samsung SM-S938B contra BackVynils local. Resultado (2026-11-22): `OK (9 tests)` junto con las E2E de HU08 y HU15; el backend quedó sin álbumes ni comentarios de prueba. La primera versión tenía cinco escenarios; se dejaron los tres más importantes.
+- [x] 1.2 Ejecutar la clase con `am instrument` en el Samsung SM-S938B contra BackVynils local. Resultado (2026-11-22): `OK (9 tests)` junto con las E2E de HU08 y HU15; el backend quedó sin álbumes ni comentarios de prueba. La primera versión tenía cinco escenarios; se dejaron los tres más importantes, sin el del Visitante.
 
 ## 2. Evidencia y documentación
 

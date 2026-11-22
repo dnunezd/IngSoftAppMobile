@@ -37,7 +37,6 @@ import com.example.vinilos.ui.crear.TagNombreCancion
 import com.example.vinilos.ui.detalle.TagAgregarCancionDetalle
 import com.example.vinilos.ui.detalle.TagListaDetalleAlbum
 import com.example.vinilos.ui.ingreso.TagEntrarColeccionista
-import com.example.vinilos.ui.ingreso.TagEntrarVisitante
 import com.example.vinilos.ui.ingreso.TagListaColeccionistas
 import com.example.vinilos.ui.ingreso.tagColeccionista
 import com.example.vinilos.ui.inicio.TagInicio
@@ -50,7 +49,7 @@ import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.RecordedRequest
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assume
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -59,10 +58,9 @@ import org.junit.Test
  * E2E de la HU08 (asociar canciones a un álbum).
  *
  * FN08-ESC01 y ESC02 van contra el backend real. Como agregan canciones, se corren contra BackVynils
- * local (en un teléfono, `-PbaseUrl=http://localhost:3000/` con `adb reverse tcp:3000 tcp:3000`). Los
- * escenarios del Coleccionista trabajan sobre un álbum propio creado con `POST /albums`, que
- * [AlbumesDePrueba] borra al terminar con sus canciones, aunque la prueba falle. El Visitante usa el
- * primer álbum real y el Coleccionista, el primer coleccionista real.
+ * local (en un teléfono, `-PbaseUrl=http://localhost:3000/` con `adb reverse tcp:3000 tcp:3000`). Trabajan
+ * sobre un álbum propio creado con `POST /albums`, que [AlbumesDePrueba] borra al terminar con sus
+ * canciones, aunque la prueba falle. El Coleccionista es el primer coleccionista real.
  *
  * FN08-ESC03 (falla al guardar y reintento) usa `MockWebServer`, como FN07-ESC07 y FN10-ESC07.
  *
@@ -105,12 +103,6 @@ class AgregarCancionE2ETest {
 
     // ---------- Datos reales ----------
 
-    private fun primerAlbumReal(): Int = runBlocking {
-        val album = AlbumRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL)).obtenerAlbumes().getOrThrow().firstOrNull()
-        Assume.assumeTrue("Sin datos en el backend: no hay álbumes", album != null)
-        album!!.id
-    }
-
     private fun primerColeccionistaReal(): Int = runBlocking {
         CollectorRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL)).obtenerColeccionistas().getOrThrow().first().id
     }
@@ -133,12 +125,6 @@ class AgregarCancionE2ETest {
 
     private fun esperarQueSeCierreElFormulario() =
         rule.waitUntil(15_000) { rule.onAllNodesWithTag(TagFormularioAgregarCancion).fetchSemanticsNodes().isEmpty() }
-
-    private fun entrarComoVisitante() {
-        esperarA(TagEntrarVisitante)
-        rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
-        esperarA(TagInicio)
-    }
 
     private fun entrarComoColeccionista(coleccionista: Int) {
         esperarA(TagEntrarColeccionista)
@@ -192,21 +178,36 @@ class AgregarCancionE2ETest {
 
     // ---------- Escenarios contra el backend real ----------
 
-    /** FN08-ESC01: el Visitante no ve la acción "Agregar canción" en el detalle de un álbum. */
+    /** FN08-ESC01: una duración que no cumple m:ss muestra el error y deja "Guardar" deshabilitado. */
     @Test
-    fun elVisitanteNoVeLaAccionDeAgregarCancion() {
+    fun unaDuracionConFormatoInvalidoNoSePuedeGuardar() {
         val evidencia = "FN08_ESC01"
-        val album = primerAlbumReal()
+        val album = albumesDePrueba.crear("E2E FN08")
+        val errorFormato = "Usa el formato m:ss, por ejemplo 5:05"
 
         ActivityScenario.launch(MainActivity::class.java).use {
-            entrarComoVisitante()
-            abrirDetalle(album, evidencia, "01_detalle_seccion_canciones")
-            rule.onAllNodesWithTag(TagAgregarCancionDetalle).assertCountEquals(0)
-            rule.onNodeWithTag(TagListaDetalleAlbum).performScrollToNode(hasText("Comentarios"))
-            rule.onAllNodesWithTag(TagAgregarCancionDetalle).assertCountEquals(0)
-            EvidenciaE2E.capturar(rule, evidencia, "02_detalle_sin_agregar_cancion")
+            entrarComoColeccionista(primerColeccionistaReal())
+            abrirDetalle(album.id, evidencia, "01_detalle_sin_canciones")
+            abrirFormulario()
+            escribir(TagNombreCancion, "Pista E2E")
+
+            escribir(TagDuracionCancion, "3:75")
+            camposCon(errorFormato).assertCountEquals(1)
+            guardar().assertIsNotEnabled()
+            EvidenciaE2E.capturar(rule, evidencia, "02_segundos_fuera_de_rango")
+
+            escribir(TagDuracionCancion, "345")
+            camposCon(errorFormato).assertCountEquals(1)
+            guardar().assertIsNotEnabled()
+            EvidenciaE2E.capturar(rule, evidencia, "03_sin_dos_puntos")
+
+            escribir(TagDuracionCancion, "3:45")
+            camposCon(errorFormato).assertCountEquals(0)
+            guardar().assertIsEnabled()
+            EvidenciaE2E.capturar(rule, evidencia, "04_duracion_corregida")
         }
         assertEquals(0, albumes.envios)
+        assertTrue(cancionesEnElBackend(album).isEmpty())
     }
 
     /** FN08-ESC02: el Coleccionista agrega una canción válida y la ve en el detalle del álbum. */

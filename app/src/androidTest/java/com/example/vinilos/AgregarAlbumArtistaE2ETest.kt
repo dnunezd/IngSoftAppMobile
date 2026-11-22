@@ -1,9 +1,11 @@
 package com.example.vinilos
 
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsNotSelected
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasTestTag
@@ -33,6 +35,7 @@ import com.example.vinilos.ui.artistas.TagAsociandoAsociar
 import com.example.vinilos.ui.artistas.TagBotonAgregarAlbum
 import com.example.vinilos.ui.artistas.TagBotonAsociar
 import com.example.vinilos.ui.artistas.TagBusquedaAsociar
+import com.example.vinilos.ui.artistas.TagCancelarAsociar
 import com.example.vinilos.ui.artistas.TagContadorArtistas
 import com.example.vinilos.ui.artistas.TagDetalleArtista
 import com.example.vinilos.ui.artistas.TagErrorAsociar
@@ -40,15 +43,14 @@ import com.example.vinilos.ui.artistas.TagListaArtistas
 import com.example.vinilos.ui.artistas.TagListaAsociar
 import com.example.vinilos.ui.artistas.TagListaDetalleArtista
 import com.example.vinilos.ui.artistas.TagNombreDetalleArtista
+import com.example.vinilos.ui.artistas.TagSinResultadosAsociar
 import com.example.vinilos.ui.artistas.TagTituloAsociar
 import com.example.vinilos.ui.artistas.TagVentanaAsociar
 import com.example.vinilos.ui.artistas.tagAlbumArtista
 import com.example.vinilos.ui.artistas.tagAlbumAsociable
 import com.example.vinilos.ui.artistas.tagArtista
 import com.example.vinilos.ui.artistas.tagYaAsociado
-import com.example.vinilos.ui.ingreso.TagAtras
 import com.example.vinilos.ui.ingreso.TagEntrarColeccionista
-import com.example.vinilos.ui.ingreso.TagEntrarVisitante
 import com.example.vinilos.ui.ingreso.TagListaColeccionistas
 import com.example.vinilos.ui.ingreso.tagColeccionista
 import com.example.vinilos.ui.inicio.TagInicio
@@ -74,7 +76,7 @@ import org.junit.Test
  * (en un teléfono, `-PbaseUrl=http://localhost:3000/` con `adb reverse tcp:3000 tcp:3000`). Lo que se
  * asocia es siempre un álbum propio creado con `POST /albums`: [AlbumesDePrueba] lo borra al terminar,
  * y con él su relación con el artista, aunque la prueba falle; los álbumes reales del artista no se
- * tocan. Los artistas son la primera banda y el primer músico del backend; si no hay, el escenario se
+ * tocan. Los artistas son el primer músico y la primera banda del backend; si no hay, el escenario se
  * omite. El Coleccionista es el primer coleccionista real.
  *
  * FN15-ESC03 (falla al asociar y reintento) usa `MockWebServer`, como FN07-ESC07 y FN10-ESC07.
@@ -146,12 +148,6 @@ class AgregarAlbumArtistaE2ETest {
     private fun esperarQueSeCierreLaVentana() =
         rule.waitUntil(15_000) { rule.onAllNodesWithTag(TagVentanaAsociar).fetchSemanticsNodes().isEmpty() }
 
-    private fun entrarComoVisitante() {
-        esperarA(TagEntrarVisitante)
-        rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
-        esperarA(TagInicio)
-    }
-
     private fun entrarComoColeccionista(coleccionista: Int) {
         esperarA(TagEntrarColeccionista)
         rule.onNodeWithTag(TagEntrarColeccionista).performScrollTo().performClick()
@@ -175,14 +171,6 @@ class AgregarAlbumArtistaE2ETest {
         rule.onNodeWithTag(TagNombreDetalleArtista).assertTextEquals(artista.name)
         rule.onNodeWithTag(TagListaDetalleArtista).performScrollToNode(hasText("Álbumes"))
         EvidenciaE2E.capturar(rule, evidencia, paso)
-    }
-
-    /** Detalle -> listado -> inicio, con el botón atrás de cada pantalla. */
-    private fun volverAlInicio() {
-        rule.onNodeWithTag(TagAtras).performClick()
-        esperarA(TagContadorArtistas)
-        rule.onNodeWithTag(TagAtras).performClick()
-        esperarA(TagInicio)
     }
 
     /** "Agregar álbum" -> ventana abierta con el catálogo cargado. */
@@ -258,23 +246,51 @@ class AgregarAlbumArtistaE2ETest {
 
     // ---------- Escenarios contra el backend real ----------
 
-    /** FN15-ESC01: el Visitante no ve "Agregar álbum" en el detalle de una banda ni de un músico. */
+    /**
+     * FN15-ESC01: una búsqueda sin coincidencias lo avisa y quita la selección; "Cancelar" cierra sin
+     * asociar y la ventana vuelve a abrirse sin selección ni búsqueda.
+     */
     @Test
-    fun elVisitanteNoVeElBotonAgregarAlbum() {
+    fun cancelarCierraSinAsociarYLaBusquedaSinResultadosQuitaLaSeleccion() {
         val evidencia = "FN15_ESC01"
-        val banda = primerArtista(ArtistType.BANDA)
         val musico = primerArtista(ArtistType.MUSICO)
+        val album = albumesDePrueba.crear("E2E FN15")
+        val antes = albumesEnElBackend(musico)
 
         ActivityScenario.launch(MainActivity::class.java).use {
-            entrarComoVisitante()
-            abrirDetalle(banda, evidencia, "01_detalle_banda_sin_agregar_album")
-            rule.onAllNodesWithTag(TagBotonAgregarAlbum).assertCountEquals(0)
+            entrarComoColeccionista(primerColeccionistaReal())
+            abrirDetalle(musico, evidencia, "01_detalle_con_agregar_album")
+            abrirVentana()
 
-            volverAlInicio()
-            abrirDetalle(musico, evidencia, "02_detalle_musico_sin_agregar_album")
-            rule.onAllNodesWithTag(TagBotonAgregarAlbum).assertCountEquals(0)
+            buscar(album.nombre)
+            esperarA(tagAlbumAsociable(album.id))
+            seleccionar(album.id)
+            asociar().assertIsEnabled()
+            EvidenciaE2E.capturar(rule, evidencia, "02_album_seleccionado")
+
+            buscar("zzzz sin coincidencias")
+            esperarA(TagSinResultadosAsociar)
+            rule.onNodeWithText("No encontramos álbumes con esa búsqueda").assertIsDisplayed()
+            asociar().assertIsNotEnabled()
+            EvidenciaE2E.capturar(rule, evidencia, "03_busqueda_sin_resultados")
+
+            buscar(album.nombre)
+            esperarA(tagAlbumAsociable(album.id))
+            filaDe(album.id).assertIsNotSelected()
+            seleccionar(album.id)
+            rule.onNodeWithTag(TagCancelarAsociar).performClick()
+            esperarQueSeCierreLaVentana()
+            rule.onAllNodesWithText("Álbum asociado").assertCountEquals(0)
+            rule.onAllNodesWithTag(tagAlbumArtista(album.id)).assertCountEquals(0)
+            EvidenciaE2E.capturar(rule, evidencia, "04_cancelado_sin_cambios")
+
+            abrirVentana()
+            rule.onNodeWithTag(TagBusquedaAsociar).assert(hasText(album.nombre).not())
+            asociar().assertIsNotEnabled()
+            EvidenciaE2E.capturar(rule, evidencia, "05_ventana_otra_vez_vacia")
         }
         assertEquals(0, artistas.envios)
+        assertEquals(antes, albumesEnElBackend(musico))
     }
 
     /** FN15-ESC02: el Coleccionista agrega un álbum a una banda, que conserva los álbumes que ya tenía. */

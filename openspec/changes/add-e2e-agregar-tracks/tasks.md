@@ -4,7 +4,7 @@
 
 - [x] 1.1 Crear `AlbumesDePrueba` (álbum propio por escenario y borrado con sus canciones y comentarios, D2) y ajustar `EvidenciaE2E` para capturar con una ventana emergente abierta (D4); verificar con curl contra BackVynils local que el álbum se borra y que los artistas conservan sus álbumes.
 - [x] 1.2 Crear `AgregarCancionE2ETest` con FN08-ESC01 y ESC02 contra el backend real y FN08-ESC03 con `MockWebServer`; verificar que `:app:assembleDebugAndroidTest` compila.
-- [x] 1.3 Ejecutar la clase con `am instrument` en el Samsung SM-S938B contra BackVynils local. Resultado (2026-11-22): `OK (9 tests)` junto con las E2E de HU09 y HU15; el backend quedó con sus 4 álbumes de ejemplo y ningún álbum de prueba. La primera versión tenía seis escenarios; se dejaron los tres más importantes.
+- [x] 1.3 Ejecutar la clase con `am instrument` en el Samsung SM-S938B contra BackVynils local. Resultado (2026-11-22): `OK (9 tests)` junto con las E2E de HU09 y HU15; el backend quedó con sus 4 álbumes de ejemplo y ningún álbum de prueba. La primera versión tenía seis escenarios; se dejaron los tres más importantes, sin el del Visitante.
 
 ## 2. Evidencia y documentación
 

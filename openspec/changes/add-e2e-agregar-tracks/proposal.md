@@ -7,7 +7,7 @@ La HU08 (asociar canciones a un álbum) tiene pruebas unitarias y de Compose UI 
 ## What Changes
 
 - Nueva clase `AgregarCancionE2ETest` con los tres escenarios más importantes, FN08-ESC01 a FN08-ESC03:
-  - **Contra BackVynils:** el Visitante no ve "Agregar canción"; el Coleccionista agrega una canción y la ve en el detalle.
+  - **Contra BackVynils:** una duración con formato inválido no se puede guardar; el Coleccionista agrega una canción y la ve en el detalle.
   - **Con `MockWebServer`:** el guardado tarda y falla, con los datos conservados, y el reintento agrega la canción.
 - Los escenarios que escriben trabajan sobre un álbum propio (`POST /albums`) que se borra al terminar con sus canciones (`AlbumesDePrueba`, compartido con las E2E de HU09 y HU15).
 - `EvidenciaE2E` captura la pantalla completa cuando hay una ventana emergente abierta.

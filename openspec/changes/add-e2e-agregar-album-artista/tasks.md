@@ -3,7 +3,7 @@
 ## 1. Pruebas E2E de agregar un álbum a un artista (T15-5, issue #56)
 
 - [x] 1.1 Crear `AgregarAlbumArtistaE2ETest` con FN15-ESC01 y ESC02 contra el backend real y FN15-ESC03 con `MockWebServer`, usando `AlbumesDePrueba` (`add-e2e-agregar-tracks`); verificar que `:app:assembleDebugAndroidTest` compila.
-- [x] 1.2 Ejecutar la clase con `am instrument` en el Samsung SM-S938B contra BackVynils local. Resultado (2026-11-22): `OK (9 tests)` junto con las E2E de HU08 y HU09; el músico 100 quedó con los álbumes 100 y 101 y la banda 101 con los álbumes 102 y 103, como antes de la corrida. La primera versión tenía cinco escenarios; se dejaron los tres más importantes.
+- [x] 1.2 Ejecutar la clase con `am instrument` en el Samsung SM-S938B contra BackVynils local. Resultado (2026-11-22): `OK (9 tests)` junto con las E2E de HU08 y HU09; el músico 100 quedó con los álbumes 100 y 101 y la banda 101 con los álbumes 102 y 103, como antes de la corrida. La primera versión tenía cinco escenarios; se dejaron los tres más importantes, sin el del Visitante.
 
 ## 2. Evidencia y documentación
 
