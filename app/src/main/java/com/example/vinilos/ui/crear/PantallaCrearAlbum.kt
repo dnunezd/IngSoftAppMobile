@@ -16,7 +16,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
@@ -67,6 +67,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -99,6 +105,8 @@ import com.example.vinilos.viewmodel.EnvioAlbum
 import com.example.vinilos.viewmodel.ErrorCampo
 import com.example.vinilos.viewmodel.LimiteDescripcion
 import com.example.vinilos.viewmodel.portadaValida
+import com.example.vinilos.ui.ingreso.decorativo
+import com.example.vinilos.ui.ingreso.encabezado
 import java.util.Locale
 import java.util.TimeZone
 
@@ -191,7 +199,11 @@ fun PantallaCrearAlbum(
 @Composable
 private fun Titular() {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(
+            modifier = Modifier.encabezado(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Text(
                 text = stringResource(R.string.crear_titular_1),
                 style = MaterialTheme.typography.headlineLarge,
@@ -277,6 +289,7 @@ private fun TarjetaCampos(estado: CrearAlbumUiState, acciones: AccionesCrearAlbu
     ) {
         Campo(stringResource(R.string.crear_nombre), estado, CampoAlbum.Nombre) {
             CampoTexto(
+                etiqueta = stringResource(R.string.crear_campo_anuncio, stringResource(R.string.crear_nombre)),
                 valor = estado.nombre,
                 onCambio = acciones.onNombre,
                 indicacion = stringResource(R.string.crear_nombre_indicacion),
@@ -293,6 +306,7 @@ private fun TarjetaCampos(estado: CrearAlbumUiState, acciones: AccionesCrearAlbu
         Campo(stringResource(R.string.crear_portada), estado, CampoAlbum.Portada) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 CampoTexto(
+                    etiqueta = stringResource(R.string.crear_campo_anuncio, stringResource(R.string.crear_portada)),
                     valor = estado.portada,
                     onCambio = acciones.onPortada,
                     indicacion = stringResource(R.string.crear_portada_indicacion),
@@ -322,10 +336,17 @@ private fun TarjetaCampos(estado: CrearAlbumUiState, acciones: AccionesCrearAlbu
             }
         }
         Campo(stringResource(R.string.crear_fecha), estado, CampoAlbum.Fecha) {
-            CampoFecha(estado.fechaMillis, CampoAlbum.Fecha in estado.errores, habilitado, acciones.onFecha)
+            CampoFecha(
+                etiqueta = stringResource(R.string.crear_campo_anuncio, stringResource(R.string.crear_fecha)),
+                fechaMillis = estado.fechaMillis,
+                conError = CampoAlbum.Fecha in estado.errores,
+                habilitado = habilitado,
+                onFecha = acciones.onFecha
+            )
         }
         Campo(stringResource(R.string.crear_genero), estado, CampoAlbum.Genero) {
             CampoOpciones(
+                etiqueta = stringResource(R.string.crear_campo_anuncio, stringResource(R.string.crear_genero)),
                 valor = estado.genero,
                 opciones = GenerosAlbum,
                 indicacion = stringResource(R.string.crear_genero_indicacion),
@@ -338,6 +359,7 @@ private fun TarjetaCampos(estado: CrearAlbumUiState, acciones: AccionesCrearAlbu
         }
         Campo(stringResource(R.string.crear_disquera), estado, CampoAlbum.Disquera) {
             CampoOpciones(
+                etiqueta = stringResource(R.string.crear_campo_anuncio, stringResource(R.string.crear_disquera)),
                 valor = estado.disquera,
                 opciones = DisquerasAlbum,
                 indicacion = stringResource(R.string.crear_disquera_indicacion),
@@ -362,6 +384,7 @@ private fun TarjetaCampos(estado: CrearAlbumUiState, acciones: AccionesCrearAlbu
             }
         ) {
             CampoDescripcion(
+                etiqueta = stringResource(R.string.crear_campo_anuncio, stringResource(R.string.crear_descripcion)),
                 valor = estado.descripcion,
                 onCambio = acciones.onDescripcion,
                 conError = CampoAlbum.Descripcion in estado.errores,
@@ -388,7 +411,9 @@ private fun Campo(
                     withStyle(SpanStyle(color = MaterialTheme.colorScheme.primary)) { append(" *") }
                 },
                 style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface,
+                // El campo ya anuncia su etiqueta y que es obligatorio: no se lee aparte.
+                modifier = Modifier.decorativo()
             )
             Spacer(Modifier.weight(1f))
             extra()
@@ -435,11 +460,11 @@ private fun Pildora(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(52.dp)
+            .heightIn(min = 52.dp)
             .clip(CircleShape)
             .background(MaterialTheme.colorScheme.surface)
             .border(1.dp, bordeDe(conError), CircleShape)
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -462,13 +487,13 @@ private fun TextoIndicacion(texto: String) {
     Text(
         text = texto,
         style = MaterialTheme.typography.bodyLarge,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        maxLines = 1
+        color = MaterialTheme.colorScheme.onSurfaceVariant
     )
 }
 
 @Composable
 private fun CampoTexto(
+    etiqueta: String,
     valor: String,
     onCambio: (String) -> Unit,
     indicacion: String,
@@ -486,7 +511,9 @@ private fun CampoTexto(
         textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         keyboardOptions = teclado,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .semantics { contentDescription = etiqueta },
         decorationBox = { campo ->
             Pildora(conError) {
                 IconoCampo(icono)
@@ -501,6 +528,7 @@ private fun CampoTexto(
 
 @Composable
 private fun CampoDescripcion(
+    etiqueta: String,
     valor: String,
     onCambio: (String) -> Unit,
     conError: Boolean,
@@ -516,6 +544,7 @@ private fun CampoDescripcion(
         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
         modifier = Modifier
             .fillMaxWidth()
+            .semantics { contentDescription = etiqueta }
             .testTag(TagDescripcionAlbum),
         decorationBox = { campo ->
             Box(
@@ -543,18 +572,31 @@ private fun CampoDescripcion(
 /** Campo de solo lectura: la fecha únicamente se elige en el selector. */
 @Composable
 private fun CampoFecha(
+    etiqueta: String,
     fechaMillis: Long?,
     conError: Boolean,
     habilitado: Boolean,
     onFecha: (Long) -> Unit
 ) {
     var abierto by rememberSaveable { mutableStateOf(false) }
+    // La descripción incluye el valor: sin ella TalkBack leería solo la etiqueta y no la fecha elegida.
+    val descripcion = "$etiqueta, ${fechaMillis?.let { fechaVisible(it) } ?: stringResource(R.string.crear_fecha_indicacion)}"
     Pildora(
         conError = conError,
         modifier = Modifier
             .clip(CircleShape)
             .clickable(enabled = habilitado, role = Role.Button) { abierto = true }
             .testTag(TagFechaAlbum)
+            // Un solo elemento: sin esto TalkBack lee la descripción y luego el texto de adentro.
+            .clearAndSetSemantics {
+                contentDescription = descripcion
+                role = Role.Button
+                if (!habilitado) disabled()
+                onClick {
+                    if (habilitado) abierto = true
+                    true
+                }
+            }
     ) {
         Icon(
             imageVector = Icons.Filled.DateRange,
@@ -684,6 +726,7 @@ private fun EnEspanol(contenido: @Composable () -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CampoOpciones(
+    etiqueta: String,
     valor: String?,
     opciones: List<String>,
     indicacion: String,
@@ -694,6 +737,7 @@ private fun CampoOpciones(
     tag: String
 ) {
     var abierto by rememberSaveable { mutableStateOf(false) }
+    val descripcion = "$etiqueta, ${valor ?: indicacion}"
     ExposedDropdownMenuBox(
         expanded = abierto,
         onExpandedChange = { if (habilitado) abierto = it }
@@ -703,6 +747,17 @@ private fun CampoOpciones(
             modifier = Modifier
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, habilitado)
                 .testTag(tag)
+                // El ancla es un solo elemento con su rol: TalkBack se detenía en el texto de adentro
+                // y solo decía el valor, sin la etiqueta ni que es una lista.
+                .clearAndSetSemantics {
+                    contentDescription = descripcion
+                    role = Role.DropdownList
+                    if (!habilitado) disabled()
+                    onClick {
+                        if (habilitado) abierto = true
+                        true
+                    }
+                }
         ) {
             IconoCampo(icono)
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
@@ -748,7 +803,7 @@ private fun Botones(estado: CrearAlbumUiState, acciones: AccionesCrearAlbum) {
             ),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp)
+                .heightIn(min = 52.dp)
                 .testTag(TagCrearAlbum)
         ) {
             when (estado.envio) {
@@ -786,7 +841,7 @@ private fun Botones(estado: CrearAlbumUiState, acciones: AccionesCrearAlbum) {
             ),
             modifier = Modifier
                 .fillMaxWidth()
-                .height(52.dp)
+                .heightIn(min = 52.dp)
                 .testTag(TagCancelarCrear)
         ) {
             Text(stringResource(R.string.crear_cancelar), style = MaterialTheme.typography.labelLarge)

@@ -23,8 +23,8 @@ android {
         applicationId = "com.example.vinilos"
         minSdk = 23
         targetSdk = 37
-        versionCode = 5
-        versionName = "2.2.0"
+        versionCode = 6
+        versionName = "3.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -107,6 +107,14 @@ dependencies {
     androidTestImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
+    androidTestImplementation(libs.androidx.ui.test.junit4.accessibility)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
+}
+
+// El framework de pruebas de accesibilidad trae Guava, que ya incluye `ListenableFuture`; así no choca
+// con el `listenablefuture:1.0` fijado por la resolución consistente ni con `concurrent-futures`.
+configurations.matching { it.name.contains("AndroidTest", ignoreCase = true) }.configureEach {
+    exclude(group = "com.google.guava", module = "listenablefuture")
+    resolutionStrategy.force("androidx.concurrent:concurrent-futures:1.2.0")
 }

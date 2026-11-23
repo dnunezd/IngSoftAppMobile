@@ -11,6 +11,8 @@ import com.example.vinilos.data.repository.ArtistRepository
 import com.example.vinilos.data.repository.ArtistRepositoryImpl
 import com.example.vinilos.data.repository.CollectorRepository
 import com.example.vinilos.data.repository.CollectorRepositoryImpl
+import com.example.vinilos.data.repository.ComentarioRepository
+import com.example.vinilos.data.repository.ComentarioRepositoryImpl
 import com.example.vinilos.data.repository.FavoriteRepository
 import com.example.vinilos.data.repository.FavoriteRepositoryImpl
 import kotlinx.coroutines.CoroutineDispatcher
@@ -27,6 +29,7 @@ class AppContainer(
     artistasRepositorio: ArtistRepository? = null,
     albumesRepositorio: AlbumRepository? = null,
     favoritosRepositorio: FavoriteRepository? = null,
+    comentariosRepositorio: ComentarioRepository? = null,
     /** Caché del catálogo y del detalle de álbum. Sin él, solo se usa la red, como antes. */
     albumDao: AlbumDao? = null,
     /** Caché del selector de coleccionistas (add-cache-consultas). */
@@ -66,4 +69,8 @@ class AppContainer(
      */
     val favoriteRepository: FavoriteRepository =
         favoritosRepositorio ?: FavoriteRepositoryImpl(serviceAdapter, favoritoDao = favoritoDao, dispatcher = dispatcher)
+
+    /** Comentarios de los álbumes (HU09). Se puede reemplazar con `comentariosRepositorio` en las pruebas. */
+    val comentarioRepository: ComentarioRepository =
+        comentariosRepositorio ?: ComentarioRepositoryImpl(serviceAdapter, dispatcher = dispatcher)
 }

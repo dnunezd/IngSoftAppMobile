@@ -65,7 +65,7 @@ class ContenidoAlbumTest {
             VinilosTheme { ContenidoAlbum(presentacion, onAtras = {}) }
         }
 
-        val imagen = rule.onNodeWithContentDescription("Portada del álbum")
+        val imagen = rule.onNodeWithContentDescription("Portada del álbum, Buscando América")
             .assertIsDisplayed().fetchSemanticsNode()
         val nombre = rule.onNodeWithText("Buscando América").fetchSemanticsNode()
         org.junit.Assert.assertTrue(imagen.boundsInRoot.bottom <= nombre.boundsInRoot.top)
@@ -78,8 +78,8 @@ class ContenidoAlbumTest {
             VinilosTheme { ContenidoAlbum(presentacion, onAtras = {}) }
         }
 
-        rule.onAllNodesWithContentDescription("Portada del álbum").assertCountEquals(1)
-        rule.onNodeWithContentDescription("Portada del álbum").assertIsDisplayed()
+        rule.onAllNodesWithContentDescription("Portada del álbum, Buscando América").assertCountEquals(1)
+        rule.onNodeWithContentDescription("Portada del álbum, Buscando América").assertIsDisplayed()
     }
 
     @Test
@@ -139,7 +139,8 @@ class ContenidoAlbumTest {
 
         rule.onNodeWithText("Estreno").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("1 de agosto de 1984").performScrollTo().assertIsDisplayed()
-        rule.onNodeWithText("★★★★☆").performScrollTo().assertIsDisplayed()
+        // El promedio y sus estrellas son un solo elemento para TalkBack: "4,0 de 5 estrellas".
+        rule.onNodeWithContentDescription("4,0 de 5 estrellas").performScrollTo().assertIsDisplayed()
     }
 
     @Test
@@ -195,8 +196,8 @@ class ContenidoAlbumTest {
         rule.onNodeWithText("Buen sonido").assertIsDisplayed()
         lista.performScrollToNode(hasContentDescription("4 / 5"))
         rule.onNodeWithContentDescription("4 / 5").assertIsDisplayed()
-        lista.performScrollToNode(hasText("4,5"))
-        rule.onNodeWithText("4,5").assertIsDisplayed()
+        lista.performScrollToNode(hasContentDescription("4,5 de 5 estrellas"))
+        rule.onNodeWithContentDescription("4,5 de 5 estrellas").assertIsDisplayed()
         rule.onNodeWithText("Aún no hay comentarios para este álbum").assertDoesNotExist()
         rule.onNodeWithText("Sin calificaciones").assertDoesNotExist()
         rule.onNodeWithText("Autor", substring = true).assertDoesNotExist()

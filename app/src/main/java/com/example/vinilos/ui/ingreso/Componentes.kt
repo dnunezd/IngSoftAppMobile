@@ -6,7 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -32,6 +32,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.example.vinilos.R
 
@@ -51,7 +54,8 @@ fun EncabezadoVinilo(
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .height(64.dp),
+            .heightIn(min = 64.dp)
+            .padding(vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
@@ -136,3 +140,17 @@ fun ChipEtiqueta(
             .padding(horizontal = 12.dp, vertical = 4.dp)
     )
 }
+
+/**
+ * Marca un adorno puramente decorativo (etiquetas, franjas y titulares de ambientación): no expone
+ * ningún texto a los lectores de pantalla. Se usa `clearAndSetSemantics` y no `invisibleToUser`
+ * porque algunos lectores (Voice Assistant de Samsung) siguen leyendo los nodos marcados como
+ * invisibles. Debe ir al final de la cadena de modificadores para no borrar un `testTag`.
+ */
+fun Modifier.decorativo(): Modifier = clearAndSetSemantics { }
+
+/**
+ * Marca un título de pantalla o de sección como encabezado para TalkBack. Une los descendientes para
+ * que un titular partido en varios textos ("Nuevo" + "álbum") se lea como un solo encabezado.
+ */
+fun Modifier.encabezado(): Modifier = semantics(mergeDescendants = true) { heading() }
