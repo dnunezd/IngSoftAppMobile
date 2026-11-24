@@ -178,14 +178,35 @@ class AgregarCancionViewModelTest {
     }
 
     @Test
-    fun siNoHayAlbumGuardadoElFormularioSigueUsableSinTarjetaDeContexto() = runTest {
+    fun editarDespuesDeUnFalloOcultaElBannerDeErrorAntesDeVolverAGuardar() = runTest {
         val repositorio = RepositorioAgregarCancionFalso()
-        repositorio.albumGuardado = null
-
         val viewModel = AgregarCancionViewModel(101, repositorio)
+        viewModel.cambiarNombre("Decisiones")
+        viewModel.cambiarDuracion("5:05")
+        viewModel.guardar()
+        advanceUntilIdle()
+        repositorio.responder(Result.failure(ErrorDeCarga()))
+        advanceUntilIdle()
+        assertEquals(EnvioCancion.Fallida, viewModel.uiState.value.envio)
+
+        viewModel.cambiarNombre("Decisiones (editada)")
+
+        assertEquals(EnvioCancion.Editando, viewModel.uiState.value.envio)
+    }
+
+    @Test
+    fun unFalloNoReconocidoNoTumbaLaAppYQuedaComoFallidaReintentable() = runTest {
+        val repositorio = RepositorioAgregarCancionFalso()
+        val viewModel = AgregarCancionViewModel(101, repositorio)
+        viewModel.cambiarNombre("Decisiones")
+        viewModel.cambiarDuracion("5:05")
+        viewModel.guardar()
         advanceUntilIdle()
 
-        assertEquals(null, viewModel.uiState.value.albumInfo)
-        assertEquals(EnvioCancion.Editando, viewModel.uiState.value.envio)
+        repositorio.responder(Result.failure(IllegalStateException("Fallo inesperado del backend")))
+        advanceUntilIdle()
+
+        assertEquals(EnvioCancion.Fallida, viewModel.uiState.value.envio)
+        assertTrue(viewModel.uiState.value.puedeGuardar)
     }
 }

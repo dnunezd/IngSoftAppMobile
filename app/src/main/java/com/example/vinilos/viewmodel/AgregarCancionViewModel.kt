@@ -3,7 +3,6 @@ package com.example.vinilos.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.vinilos.data.model.Cancion
-import com.example.vinilos.data.remote.ErrorDeCarga
 import com.example.vinilos.data.repository.AlbumNoDisponible
 import com.example.vinilos.data.repository.AlbumRepository
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -91,7 +90,12 @@ class AgregarCancionViewModel(
                 estado
             } else {
                 val actualizado = estado.cambio()
-                actualizado.copy(errores = validarCancion(actualizado.nombre, actualizado.duracion))
+                actualizado.copy(
+                    errores = validarCancion(actualizado.nombre, actualizado.duracion),
+                    // Si el banner de "no se pudo agregar" seguía visible, editar ya lo invalida:
+                    // solo se vuelve a mostrar en el próximo intento fallido de guardar.
+                    envio = if (estado.envio == EnvioCancion.Fallida) EnvioCancion.Editando else estado.envio
+                )
             }
         }
     }
@@ -115,10 +119,11 @@ class AgregarCancionViewModel(
             val envio = repositorio.agregarCancion(albumId, cancion).fold(
                 onSuccess = { EnvioCancion.Agregada },
                 onFailure = {
+                    // Cualquier falla no reconocida se trata igual que un error de carga (reintentable
+                    // desde el banner) en vez de relanzarla y tumbar la app.
                     when (it) {
                         is AlbumNoDisponible -> EnvioCancion.AlbumNoDisponible
-                        is ErrorDeCarga -> EnvioCancion.Fallida
-                        else -> throw it
+                        else -> EnvioCancion.Fallida
                     }
                 }
             )
