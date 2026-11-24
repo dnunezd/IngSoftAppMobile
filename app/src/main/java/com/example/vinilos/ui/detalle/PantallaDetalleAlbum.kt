@@ -29,6 +29,7 @@ import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarVisuals
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -54,6 +55,21 @@ const val TagComentarAlbum = "detalle_comentar"
 
 /** Verde del ícono de confirmación en el aviso "Canción agregada" (no forma parte de la paleta de marca). */
 private val VerdeConfirmacion = Color(0xFF2ECC71)
+
+/**
+ * Visuals propias del aviso "Canción agregada", para no depender de [SnackbarVisuals.actionLabel]
+ * (pensado para una acción real, no para transportar un subtítulo) al decidir en el [SnackbarHost]
+ * si se dibuja con el estilo de éxito.
+ */
+private data class AvisoCancionAgregadaVisuals(
+    val mensaje: String,
+    val subtitulo: String
+) : SnackbarVisuals {
+    override val message: String get() = mensaje
+    override val actionLabel: String? = null
+    override val withDismissAction: Boolean = true
+    override val duration: SnackbarDuration = SnackbarDuration.Short
+}
 
 @Composable
 fun PantallaDetalleAlbum(
@@ -82,13 +98,8 @@ fun PantallaDetalleAlbum(
         val detalleCancionAgregada = stringResource(R.string.agregar_cancion_exito_detalle, estado.album.nombre)
         LaunchedEffect(mostrarAvisoCancionAgregada) {
             if (mostrarAvisoCancionAgregada) {
-                // El subtítulo ("Se asoció a <álbum>") viaja en actionLabel: no se usa como acción,
-                // solo distingue este aviso del resto para pintarlo con el estilo de éxito.
                 avisos.showSnackbar(
-                    message = mensajeCancionAgregada,
-                    actionLabel = detalleCancionAgregada,
-                    withDismissAction = true,
-                    duration = SnackbarDuration.Short
+                    AvisoCancionAgregadaVisuals(mensaje = mensajeCancionAgregada, subtitulo = detalleCancionAgregada)
                 )
                 onAvisoCancionAgregadaMostrado()
             }
@@ -121,9 +132,9 @@ fun PantallaDetalleAlbum(
                 avisos,
                 Modifier.align(Alignment.BottomCenter).windowInsetsPadding(WindowInsets.safeDrawing)
             ) { datos ->
-                val subtitulo = datos.visuals.actionLabel
-                if (subtitulo != null) {
-                    AvisoExito(titulo = datos.visuals.message, subtitulo = subtitulo, onCerrar = datos::dismiss)
+                val visuals = datos.visuals
+                if (visuals is AvisoCancionAgregadaVisuals) {
+                    AvisoExito(titulo = visuals.message, subtitulo = visuals.subtitulo, onCerrar = datos::dismiss)
                 } else {
                     Snackbar(snackbarData = datos)
                 }
