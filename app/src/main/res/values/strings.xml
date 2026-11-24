@@ -223,7 +223,7 @@
     <string name="agregar_cancion_exito_detalle">Se asoció a %1$s</string>
     <string name="agregar_cancion_cerrar_aviso">Cerrar aviso</string>
     <string name="agregar_cancion_album_no_disponible">El álbum ya no está disponible</string>
-    <string name="agregar_cancion_volver">Volver al álbum</string>
+    <string name="agregar_cancion_volver">Volver</string>
     <string name="agregar_cancion_album_destino">Álbum destino</string>
     <string name="agregar_cancion_datos_cancion">Datos de la canción</string>
 
