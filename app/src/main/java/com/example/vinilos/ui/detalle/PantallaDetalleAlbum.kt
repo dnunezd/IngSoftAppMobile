@@ -98,10 +98,15 @@ fun PantallaDetalleAlbum(
         val detalleCancionAgregada = stringResource(R.string.agregar_cancion_exito_detalle, estado.album.nombre)
         LaunchedEffect(mostrarAvisoCancionAgregada) {
             if (mostrarAvisoCancionAgregada) {
-                avisos.showSnackbar(
-                    AvisoCancionAgregadaVisuals(mensaje = mensajeCancionAgregada, subtitulo = detalleCancionAgregada)
-                )
-                onAvisoCancionAgregadaMostrado()
+                try {
+                    avisos.showSnackbar(
+                        AvisoCancionAgregadaVisuals(mensaje = mensajeCancionAgregada, subtitulo = detalleCancionAgregada)
+                    )
+                } finally {
+                    // Igual que AvisoUnaVez: si la pantalla sale antes de terminar, queda como mostrado
+                    // y no vuelve a aparecer al regresar (ni se reinicia al girar).
+                    onAvisoCancionAgregadaMostrado()
+                }
             }
         }
         Box(modifier.fillMaxSize()) {

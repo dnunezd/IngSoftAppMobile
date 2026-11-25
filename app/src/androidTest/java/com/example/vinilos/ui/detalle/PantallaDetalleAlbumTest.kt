@@ -1,5 +1,6 @@
 package com.example.vinilos.ui.detalle
 
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -119,5 +120,32 @@ class PantallaDetalleAlbumTest {
         rule.onNodeWithText("No pudimos cargar el álbum").assertDoesNotExist()
         rule.onNodeWithTag(TagActualizandoDetalle).assertDoesNotExist()
         rule.waitUntil(10_000) { avisos == 1 }
+    }
+
+    // ---------- Aviso "Canción agregada" (revisión de PR) ----------
+
+    @Test
+    fun elAvisoDeCancionAgregadaSeMarcaComoMostradoAunSiSeSaleAntesDeQueTermine() {
+        var marcados = 0
+        val mostrarPantalla = mutableStateOf(true)
+        rule.setContent {
+            VinilosTheme {
+                if (mostrarPantalla.value) {
+                    PantallaDetalleAlbum(
+                        AlbumUiState.Exito(guardado),
+                        onAtras = {},
+                        onReintentar = {},
+                        mostrarAvisoCancionAgregada = true,
+                        onAvisoCancionAgregadaMostrado = { marcados++ }
+                    )
+                }
+            }
+        }
+
+        rule.onNodeWithText("Canción agregada").assertIsDisplayed()
+        // Simula salir del detalle (p. ej. abrir "Agregar canción" y cancelar) antes de que
+        // el aviso termine de mostrarse: su LaunchedEffect se cancela a mitad de camino.
+        mostrarPantalla.value = false
+        rule.waitUntil(10_000) { marcados == 1 }
     }
 }
