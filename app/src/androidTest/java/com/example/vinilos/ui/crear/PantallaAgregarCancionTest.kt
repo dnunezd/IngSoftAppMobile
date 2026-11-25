@@ -64,7 +64,7 @@ class PantallaAgregarCancionTest {
             VinilosTheme { PantallaAgregarCancion(estado, sesion, AccionesAgregarCancion()) }
         }
 
-        rule.onNodeWithText("Guardando...").assertIsDisplayed()
+        rule.onNodeWithText("Guardando…").assertIsDisplayed()
         rule.onNodeWithTag(TagGuardarCancion).assertIsNotEnabled()
         rule.onNodeWithTag(TagCancelarAgregarCancion).assertIsNotEnabled()
     }

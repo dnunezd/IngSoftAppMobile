@@ -20,6 +20,12 @@ private val EsquemaClaro = lightColorScheme(
     surfaceTint = Superficie,
     onSurface = TextoPrincipal,
     surfaceVariant = SuperficieVariante,
+    // Diálogos, menús y hojas toman la paleta y no el lila por defecto de Material 3.
+    surfaceContainerLowest = Superficie,
+    surfaceContainerLow = Fondo,
+    surfaceContainer = Fondo,
+    surfaceContainerHigh = Superficie,
+    surfaceContainerHighest = SuperficieVariante,
     onSurfaceVariant = TextoSecundario,
     outline = Contorno,
     error = ErrorFormulario,

@@ -42,6 +42,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -65,6 +66,8 @@ import com.example.vinilos.ui.catalogo.EncabezadoConRol
 import com.example.vinilos.ui.detalle.PortadaAlbum
 import com.example.vinilos.ui.ingreso.ChipEtiqueta
 import com.example.vinilos.ui.ingreso.iniciales
+import com.example.vinilos.ui.theme.coloresBotonPrincipal
+import com.example.vinilos.ui.ingreso.encabezado
 import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.CargaAlbum
 import com.example.vinilos.viewmodel.ComentarAlbumUiState
@@ -208,7 +211,7 @@ private fun Formulario(album: Album, coleccionista: String, estado: ComentarAlbu
             stringResource(R.string.comentar_pregunta),
             style = MaterialTheme.typography.titleLarge,
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().encabezado()
         )
         Text(
             stringResource(R.string.comentar_subtitulo),
@@ -245,6 +248,7 @@ private fun TarjetaAlbum(album: Album, coleccionista: String) {
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
             PortadaAlbum(
                 url = album.portada,
+                contentDescription = stringResource(R.string.detalle_portada_con_nombre, album.nombre),
                 modifier = Modifier
                     .size(88.dp)
                     .clip(RoundedCornerShape(12.dp))
@@ -322,6 +326,28 @@ private fun Estrellas(
     }
 }
 
+/** Estrellas del resumen publicado: no son accionables y se anuncian como un solo elemento ("4 de 5 estrellas"). */
+@Composable
+private fun EstrellasSoloLectura(calificacion: Int?) {
+    val valor = calificacion ?: 0
+    val descripcion = stringResource(R.string.comentar_estrella, valor)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clearAndSetSemantics { contentDescription = descripcion },
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+    ) {
+        for (estrella in 1..5) {
+            Icon(
+                imageVector = Icons.Filled.Star,
+                contentDescription = null,
+                tint = if (estrella <= valor) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                modifier = Modifier.size(24.dp)
+            )
+        }
+    }
+}
+
 @Composable
 private fun TextoNivel(calificacion: Int?) {
     val nivel = nivelCalificacion(calificacion) ?: return
@@ -362,13 +388,19 @@ private fun Opinion(estado: ComentarAlbumUiState, onOpinion: (String) -> Unit) {
         Text(
             stringResource(R.string.comentar_publico),
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f)
         )
+        // Sin salto de línea: con la fuente al 200 % el contador quedaba apilado en vertical.
         Text(
             stringResource(R.string.comentar_contador, estado.opinion.length, LimiteOpinion),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.testTag(TagContadorOpinion)
+            maxLines = 1,
+            softWrap = false,
+            modifier = Modifier
+                .padding(start = 8.dp)
+                .testTag(TagContadorOpinion)
         )
     }
 }
@@ -399,14 +431,7 @@ private fun BotonPublicar(estado: ComentarAlbumUiState, onPublicar: () -> Unit) 
     Button(
         onClick = onPublicar,
         enabled = estado.puedePublicar,
-        colors = if (estado.enviando) {
-            ButtonDefaults.buttonColors(
-                disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-                disabledContentColor = MaterialTheme.colorScheme.onPrimary
-            )
-        } else {
-            ButtonDefaults.buttonColors()
-        },
+        colors = coloresBotonPrincipal(enviando = estado.enviando),
         modifier = Modifier
             .fillMaxWidth()
             .height(52.dp)
@@ -467,11 +492,11 @@ private fun ContenidoPublicado(album: Album, coleccionista: String, estado: Come
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+            Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = MaterialTheme.colorScheme.onPrimaryContainer)
             Text(
                 stringResource(R.string.comentar_publicado),
                 style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.primary
+                color = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
         IlustracionPublicado(Modifier.align(Alignment.CenterHorizontally))
@@ -479,7 +504,7 @@ private fun ContenidoPublicado(album: Album, coleccionista: String, estado: Come
             stringResource(R.string.comentar_publicado_titulo),
             style = MaterialTheme.typography.titleLarge,
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().encabezado()
         )
         Text(
             stringResource(R.string.comentar_publicado_texto),
@@ -499,6 +524,7 @@ private fun ContenidoPublicado(album: Album, coleccionista: String, estado: Come
         ) {
             PortadaAlbum(
                 url = album.portada,
+                contentDescription = stringResource(R.string.detalle_portada_con_nombre, album.nombre),
                 modifier = Modifier
                     .size(64.dp)
                     .clip(RoundedCornerShape(8.dp))
@@ -522,11 +548,11 @@ private fun ContenidoPublicado(album: Album, coleccionista: String, estado: Come
                         .background(MaterialTheme.colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(iniciales(coleccionista), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
+                    Text(iniciales(coleccionista), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onPrimaryContainer)
                 }
                 Text(coleccionista, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
             }
-            Estrellas(estado.calificacion, habilitadas = false, onCalificar = {}, tamano = 24)
+            EstrellasSoloLectura(estado.calificacion)
             Text(
                 "«${estado.opinion.trim()}»",
                 style = MaterialTheme.typography.bodyMedium,

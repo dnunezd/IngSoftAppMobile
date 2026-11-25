@@ -195,7 +195,7 @@
     <string name="detalle_comentarios">Comentarios</string>
     <string name="detalle_agregar_cancion">Agregar canción</string>
     <string name="detalle_promedio">Promedio de calificaciones</string>
-    <string name="detalle_promedio_estrellas">%1$s de 5 estrellas</string>
+    <string name="detalle_promedio_estrellas">de 5 estrellas</string>
     <string name="detalle_calificacion">%1$d / 5</string>
     <string name="detalle_portada">Portada del álbum</string>
     <string name="detalle_portada_con_nombre">Portada del álbum, %1$s</string>
@@ -216,7 +216,7 @@
     <string name="agregar_cancion_campo_obligatorio">Campo obligatorio</string>
     <string name="agregar_cancion_error_formato">Usa el formato m:ss, por ejemplo 5:05</string>
     <string name="agregar_cancion_guardar">Guardar</string>
-    <string name="agregar_cancion_guardando">Guardando...</string>
+    <string name="agregar_cancion_guardando">Guardando…</string>
     <string name="agregar_cancion_cancelar">Cancelar</string>
     <string name="agregar_cancion_error_envio">No se pudo agregar la canción, intenta de nuevo</string>
     <string name="agregar_cancion_exito">Canción agregada</string>

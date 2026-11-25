@@ -74,6 +74,9 @@ import com.example.vinilos.ui.detalle.PortadaAlbum
 import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.AsociarAlbumUiState
 import com.example.vinilos.viewmodel.ListadoAsociable
+import androidx.compose.material3.BottomSheetDefaults
+import androidx.compose.ui.platform.LocalDensity
+import com.example.vinilos.ui.theme.coloresBotonPrincipal
 
 const val TagBotonAgregarAlbum = "asociar_boton_agregar"
 const val TagVentanaAsociar = "asociar_ventana"
@@ -124,7 +127,9 @@ fun VentanaAsociarAlbum(estado: AsociarAlbumUiState, nombreArtista: String, acci
     ModalBottomSheet(
         onDismissRequest = acciones.onCancelar,
         sheetState = hoja,
-        containerColor = MaterialTheme.colorScheme.surface
+        containerColor = MaterialTheme.colorScheme.surface,
+        // El asa visible sigue midiendo 32 dp; el margen lleva su área táctil a 48 × 48 dp.
+        dragHandle = { BottomSheetDefaults.DragHandle(modifier = Modifier.padding(horizontal = 8.dp)) }
     ) {
         ContenidoAsociar(estado, nombreArtista, acciones)
     }
@@ -324,6 +329,7 @@ private fun FilaAsociable(
         else -> MaterialTheme.colorScheme.surface
     }
     // `primary` y no `Naranja`: sobre `primaryContainer` el radio y el borde necesitan 3:1 (revisión del PR #114).
+    val fuenteAmpliada = LocalDensity.current.fontScale > FuenteAmpliadaAsociar
     val borde = if (elegido) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
     Row(
         modifier = Modifier
@@ -368,19 +374,10 @@ private fun FilaAsociable(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
+            // Con la fuente ampliada la etiqueta va debajo del año: al lado dejaba el título truncado.
+            if (yaAsociado && fuenteAmpliada) EtiquetaYaAsociado(album.id)
         }
-        if (yaAsociado) {
-            Text(
-                text = stringResource(R.string.asociar_ya_asociado),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surface)
-                    .padding(horizontal = 10.dp, vertical = 4.dp)
-                    .testTag(tagYaAsociado(album.id))
-            )
-        }
+        if (yaAsociado && !fuenteAmpliada) EtiquetaYaAsociado(album.id)
         RadioButton(
             selected = elegido,
             onClick = null,
@@ -423,6 +420,7 @@ private fun Botones(estado: AsociarAlbumUiState, acciones: AccionesAsociarAlbum)
     Button(
         onClick = acciones.onAsociar,
         enabled = estado.puedeAsociar,
+        colors = coloresBotonPrincipal(enviando = estado.asociando),
         shape = Pildora,
         modifier = Modifier
             .fillMaxWidth()
@@ -511,3 +509,20 @@ private fun PreviewCargando() = Previa(AsociarAlbumUiState(abierta = true))
 @Preview(showBackground = true)
 @Composable
 private fun PreviewErrorListado() = Previa(AsociarAlbumUiState(abierta = true, listado = ListadoAsociable.Error))
+
+/** Escala de fuente a partir de la cual la etiqueta "Ya asociado" pasa debajo del año. */
+private const val FuenteAmpliadaAsociar = 1.15f
+
+@Composable
+private fun EtiquetaYaAsociado(id: Int) {
+    Text(
+        text = stringResource(R.string.asociar_ya_asociado),
+        style = MaterialTheme.typography.labelMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier
+            .clip(CircleShape)
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(horizontal = 10.dp, vertical = 4.dp)
+            .testTag(tagYaAsociado(id))
+    )
+}
