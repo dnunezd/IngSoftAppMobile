@@ -70,6 +70,7 @@ fun PantallaAgregarCancion(
     modifier: Modifier = Modifier
 ) {
     if (estado.envio == EnvioCancion.AlbumNoDisponible) {
+        BackHandler { acciones.onAlbumNoDisponible() }
         Column(
             modifier = modifier
                 .fillMaxSize()
