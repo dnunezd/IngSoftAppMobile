@@ -4,6 +4,7 @@ import com.example.vinilos.MainDispatcherRule
 import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.AlbumNuevo
 import com.example.vinilos.data.model.AlbumResumen
+import com.example.vinilos.data.model.Cancion
 import com.example.vinilos.data.model.ComentarioNuevo
 import com.example.vinilos.data.remote.ErrorDeCarga
 import com.example.vinilos.data.repository.AlbumNoDisponible
@@ -44,6 +45,7 @@ private class AlbumesFalsos : AlbumRepository {
     override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> = error("No se usa en esta prueba")
     override suspend fun obtenerAlbumesGuardados(): List<AlbumResumen> = error("No se usa en esta prueba")
     override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> = error("No se usa en esta prueba")
+    override suspend fun agregarCancion(albumId: Int, cancion: Cancion): Result<Unit> = error("No se usa en esta prueba")
 }
 
 /** Cada publicación queda pendiente hasta que la prueba la completa. */

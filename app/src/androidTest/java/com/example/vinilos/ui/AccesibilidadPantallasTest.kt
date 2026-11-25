@@ -8,9 +8,11 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasScrollToNodeAction
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.test.junit4.accessibility.enableAccessibilityChecks
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -31,19 +33,27 @@ import com.example.vinilos.data.model.Session
 import com.example.vinilos.ui.artistas.PantallaArtistas
 import com.example.vinilos.ui.artistas.PantallaDetalleArtista
 import com.example.vinilos.ui.catalogo.PantallaCatalogo
+import com.example.vinilos.ui.crear.AccionesAgregarCancion
 import com.example.vinilos.ui.crear.AccionesCrearAlbum
+import com.example.vinilos.ui.crear.PantallaAgregarCancion
 import com.example.vinilos.ui.crear.PantallaCrearAlbum
 import com.example.vinilos.ui.detalle.ContenidoAlbum
+import com.example.vinilos.ui.detalle.TagAgregarCancionDetalle
+import com.example.vinilos.ui.detalle.TagListaDetalleAlbum
 import com.example.vinilos.ui.detalle.presentarAlbum
 import com.example.vinilos.ui.ingreso.PantallaColeccionistas
 import com.example.vinilos.ui.ingreso.PantallaIngreso
 import com.example.vinilos.ui.inicio.PantallaInicio
 import com.example.vinilos.ui.theme.VinilosTheme
+import com.example.vinilos.viewmodel.AgregarCancionUiState
 import com.example.vinilos.viewmodel.AlbumsUiState
 import com.example.vinilos.viewmodel.ArtistaDetalleUiState
 import com.example.vinilos.viewmodel.ArtistsUiState
 import com.example.vinilos.viewmodel.CollectorsUiState
 import com.example.vinilos.viewmodel.CrearAlbumUiState
+import com.example.vinilos.viewmodel.EnvioCancion
+import com.example.vinilos.viewmodel.InfoAlbumDestino
+import com.example.vinilos.viewmodel.validarCancion
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -216,5 +226,72 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
             session = Session.Collector(Collector(100, "Manolo Bellon", "manollo@caracol.com.co")),
             acciones = AccionesCrearAlbum()
         )
+    }
+
+    private val coleccionista = Session.Collector(Collector(100, "Manolo Bellon", "manollo@caracol.com.co"))
+
+    // ---------- HU08: agregar canción (revisión de PR) ----------
+
+    @Test
+    fun agregarCancionFormularioVacioConTarjetaDeAlbumDestino() = verificar("Agregar canción") {
+        PantallaAgregarCancion(
+            estado = AgregarCancionUiState(
+                albumInfo = InfoAlbumDestino("Buscando América", null, "Rubén Blades")
+            ),
+            session = coleccionista,
+            acciones = AccionesAgregarCancion()
+        )
+    }
+
+    @Test
+    fun agregarCancionConErrorDeFormatoYEnvioFallido() = verificar("Agregar canción") {
+        PantallaAgregarCancion(
+            estado = AgregarCancionUiState(
+                nombre = "Decisiones",
+                duracion = "abc",
+                errores = validarCancion("Decisiones", "abc"),
+                envio = EnvioCancion.Fallida
+            ),
+            session = coleccionista,
+            acciones = AccionesAgregarCancion()
+        )
+    }
+
+    @Test
+    fun agregarCancionGuardando() = verificar("Agregar canción") {
+        PantallaAgregarCancion(
+            estado = AgregarCancionUiState(
+                nombre = "Decisiones",
+                duracion = "5:05",
+                errores = emptyMap(),
+                envio = EnvioCancion.Guardando
+            ),
+            session = coleccionista,
+            acciones = AccionesAgregarCancion()
+        )
+    }
+
+    @Test
+    fun agregarCancionAlbumNoDisponible() = verificar("Agregar canción") {
+        PantallaAgregarCancion(
+            estado = AgregarCancionUiState(envio = EnvioCancion.AlbumNoDisponible),
+            session = coleccionista,
+            acciones = AccionesAgregarCancion()
+        )
+    }
+
+    @Test
+    fun detalleDeAlbumConBotonAgregarCancionParaElColeccionista() {
+        rule.enableAccessibilityChecks()
+        rule.setContent {
+            ConEscala {
+                VinilosTheme {
+                    ContenidoAlbum(presentarAlbum(album), onAtras = {}, session = coleccionista)
+                }
+            }
+        }
+        rule.onNodeWithTag(TagListaDetalleAlbum).performScrollToNode(hasTestTag(TagAgregarCancionDetalle))
+        rule.onNodeWithTag(TagAgregarCancionDetalle).assertExists()
+        rule.onRoot().tryPerformAccessibilityChecks()
     }
 }

@@ -26,13 +26,16 @@ import com.example.vinilos.ui.artistas.PantallaDetalleArtista
 import com.example.vinilos.ui.catalogo.PantallaCatalogo
 import com.example.vinilos.ui.comentar.AccionesComentarAlbum
 import com.example.vinilos.ui.comentar.PantallaComentarAlbum
+import com.example.vinilos.ui.crear.AccionesAgregarCancion
 import com.example.vinilos.ui.crear.AccionesCrearAlbum
+import com.example.vinilos.ui.crear.PantallaAgregarCancion
 import com.example.vinilos.ui.crear.PantallaCrearAlbum
 import com.example.vinilos.ui.detalle.PantallaDetalleAlbum
 import com.example.vinilos.ui.ingreso.PantallaColeccionistas
 import com.example.vinilos.ui.ingreso.PantallaIngreso
 import com.example.vinilos.ui.inicio.PantallaInicio
 import com.example.vinilos.viewmodel.AlbumViewModel
+import com.example.vinilos.viewmodel.AgregarCancionViewModel
 import com.example.vinilos.viewmodel.AlbumsViewModel
 import com.example.vinilos.viewmodel.ArtistaDetalleViewModel
 import com.example.vinilos.viewmodel.ArtistsViewModel
@@ -41,6 +44,7 @@ import com.example.vinilos.viewmodel.CollectorsViewModel
 import com.example.vinilos.viewmodel.ComentarAlbumViewModel
 import com.example.vinilos.viewmodel.CrearAlbumViewModel
 import com.example.vinilos.viewmodel.EnvioAlbum
+import com.example.vinilos.viewmodel.EnvioCancion
 import com.example.vinilos.viewmodel.FavoritoViewModel
 import com.example.vinilos.viewmodel.SessionViewModel
 
@@ -60,6 +64,9 @@ object Rutas {
     /** Formulario para crear un álbum (HU07), solo para el Coleccionista. */
     const val CREAR_ALBUM = "crear-album"
 
+    /** Formulario para agregar una canción al álbum (HU08), solo para el Coleccionista. */
+    const val AGREGAR_CANCION = "album/{id}/agregar-cancion"
+
     /** Comentar un álbum (HU09), solo para el Coleccionista. */
     const val COMENTAR_ALBUM = "album/{id}/comentar"
 
@@ -67,17 +74,25 @@ object Rutas {
 
     fun detalleAlbum(id: Int) = "album/$id"
 
+    fun agregarCancion(id: Int) = "album/$id/agregar-cancion"
+
     fun comentarAlbum(id: Int) = "album/$id/comentar"
 }
 
 /** Clave con la que el formulario le entrega al catálogo el id del álbum creado. */
 private const val ClaveAlbumCreado = "album_creado"
 
+/** Resultado con el que el formulario solicita recargar y avisar en el detalle del álbum. */
+private const val ClaveCancionAgregada = "cancion_agregada"
+
 /** Clave con la que la pantalla de comentar le avisa al detalle que debe actualizarse (add-comentar-album, D7). */
 private const val ClaveComentarioPublicado = "comentario_publicado"
 
 /** Clave con la que el detalle del artista avisa al listado que un favorito ya no está disponible. */
 private const val ClaveArtistaEliminado = "artista_eliminado"
+
+/** Clave con la que el formulario de agregar canción avisa al detalle que el álbum ya no existe. */
+private const val ClaveAlbumEliminado = "album_eliminado"
 
 /**
  * Grafo de navegación: ingreso -> (coleccionistas) -> inicio -> catálogo -> detalle del álbum |
@@ -104,6 +119,10 @@ fun VinilosNavHost(
     /** Dos toques rápidos no deben sacar también el catálogo. */
     fun cerrarFormulario() {
         if (navController.currentDestination?.route == Rutas.CREAR_ALBUM) navController.popBackStack()
+    }
+
+    fun cerrarFormularioCancion() {
+        if (navController.currentDestination?.route == Rutas.AGREGAR_CANCION) navController.popBackStack()
     }
 
     /** Igual que [cerrarFormulario]: solo se cierra si comentar sigue siendo la pantalla actual. */
@@ -355,6 +374,20 @@ fun VinilosNavHost(
             )
             val estado by viewModel.uiState.collectAsStateWithLifecycle()
             val session by sessionViewModel.session.collectAsStateWithLifecycle()
+            val cancionAgregadaViewModel by viewModel.avisoCancionAgregada.collectAsStateWithLifecycle()
+            val cancionAgregada by entrada.savedStateHandle
+                .getStateFlow(ClaveCancionAgregada, false)
+                .collectAsStateWithLifecycle()
+            LaunchedEffect(cancionAgregada) {
+                if (cancionAgregada) {
+                    // Se borra de inmediato (no cuando el aviso termina de mostrarse) para que girar
+                    // la pantalla mientras se ve "Canción agregada" no repita el GET /albums/{id}.
+                    // El aviso en sí lo controla el ViewModel (ver AlbumViewModel.cancionAgregada),
+                    // que sí sobrevive a la rotación.
+                    viewModel.cancionAgregada()
+                    entrada.savedStateHandle[ClaveCancionAgregada] = false
+                }
+            }
             val comentarioPublicado by entrada.savedStateHandle
                 .getStateFlow(ClaveComentarioPublicado, false)
                 .collectAsStateWithLifecycle()
@@ -365,17 +398,75 @@ fun VinilosNavHost(
                     entrada.savedStateHandle[ClaveComentarioPublicado] = false
                 }
             }
+            val albumEliminado by entrada.savedStateHandle
+                .getStateFlow(ClaveAlbumEliminado, false)
+                .collectAsStateWithLifecycle()
+            LaunchedEffect(albumEliminado) {
+                if (albumEliminado) {
+                    // El álbum ya no existe en el backend (lo supo el formulario al guardar): se
+                    // vuelve a consultar para que el detalle pase a "no disponible" en vez de seguir
+                    // mostrando el álbum en caché con "Agregar canción" habilitado.
+                    viewModel.actualizar()
+                    entrada.savedStateHandle[ClaveAlbumEliminado] = false
+                }
+            }
             PantallaDetalleAlbum(
                 estado = estado,
                 onAtras = { navController.popBackStack() },
                 onReintentar = viewModel::reintentar,
                 onAvisoMostrado = viewModel::avisoMostrado,
+                session = session,
+                onAgregarCancion = { navController.navigate(Rutas.agregarCancion(id)) },
+                mostrarAvisoCancionAgregada = cancionAgregadaViewModel,
+                onAvisoCancionAgregadaMostrado = viewModel::avisoCancionAgregadaMostrado,
                 // El Visitante no ve el botón de comentar (add-comentar-album, D8).
                 onComentar = if (session.collectorActionsEnabled) {
                     { navController.navigate(Rutas.comentarAlbum(id)) { launchSingleTop = true } }
                 } else {
                     null
                 }
+            )
+        }
+        composable(
+            Rutas.AGREGAR_CANCION,
+            arguments = listOf(navArgument("id") { type = NavType.IntType })
+        ) { entrada ->
+            val id = requireNotNull(entrada.arguments).getInt("id")
+            val session by sessionViewModel.session.collectAsStateWithLifecycle()
+            val viewModel: AgregarCancionViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer { AgregarCancionViewModel(id, albumRepository) }
+                }
+            )
+            val estado by viewModel.uiState.collectAsStateWithLifecycle()
+            LaunchedEffect(session) {
+                if (!session.collectorActionsEnabled) cerrarFormularioCancion()
+            }
+            LaunchedEffect(estado.envio) {
+                if (estado.envio == EnvioCancion.Agregada) {
+                    navController.previousBackStackEntry?.savedStateHandle
+                        ?.set(ClaveCancionAgregada, true)
+                    cerrarFormularioCancion()
+                }
+            }
+            PantallaAgregarCancion(
+                estado = estado,
+                session = session,
+                acciones = AccionesAgregarCancion(
+                    onNombre = viewModel::cambiarNombre,
+                    onDuracion = viewModel::cambiarDuracion,
+                    onGuardar = viewModel::guardar,
+                    onCancelar = ::cerrarFormularioCancion,
+                    onAtras = ::cerrarFormularioCancion,
+                    onAlbumNoDisponible = {
+                        // A diferencia de "cancelar", el álbum ya no existe: se le avisa al detalle
+                        // para que se actualice y deje de mostrarlo como disponible (en vez de volver
+                        // a su caché desactualizada con "Agregar canción" aún habilitado).
+                        navController.previousBackStackEntry?.savedStateHandle
+                            ?.set(ClaveAlbumEliminado, true)
+                        cerrarFormularioCancion()
+                    }
+                )
             )
         }
         composable(

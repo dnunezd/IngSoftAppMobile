@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -38,9 +40,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.vinilos.R
+import com.example.vinilos.data.model.Session
 import com.example.vinilos.ui.ingreso.EncabezadoVinilo
 import com.example.vinilos.ui.ingreso.IndicadorActualizando
 import com.example.vinilos.ui.ingreso.encabezado
+
+const val TagAgregarCancionDetalle = "detalle_agregar_cancion"
+const val TagListaDetalleAlbum = "lista_detalle_album"
 
 @Composable
 fun ContenidoAlbum(
@@ -48,12 +54,15 @@ fun ContenidoAlbum(
     onAtras: () -> Unit,
     modifier: Modifier = Modifier,
     actualizando: Boolean = false,
+    session: Session = Session.Visitor,
+    onAgregarCancion: () -> Unit = {},
     /** Espacio extra al final para que un botón flotante no tape el último comentario (HU09). */
     margenInferior: Dp = 0.dp
 ) {
     val descripcionActualizando = stringResource(R.string.detalle_actualizando)
     LazyColumn(
         modifier = modifier.fillMaxSize()
+            .testTag(TagListaDetalleAlbum)
             .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.safeDrawing),
         contentPadding = PaddingValues(start = 20.dp, top = 20.dp, end = 20.dp, bottom = 20.dp + margenInferior),
@@ -95,6 +104,16 @@ fun ContenidoAlbum(
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.encabezado()
             )
+        }
+        if (session.collectorActionsEnabled) {
+            item {
+                Button(
+                    onClick = onAgregarCancion,
+                    modifier = Modifier.fillMaxWidth().testTag(TagAgregarCancionDetalle)
+                ) {
+                    Text(stringResource(R.string.detalle_agregar_cancion))
+                }
+            }
         }
         presentacion.mensajeCanciones?.let { mensaje ->
             item { Text(stringResource(mensaje), style = MaterialTheme.typography.bodyLarge) }
