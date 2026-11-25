@@ -50,6 +50,7 @@ import com.example.vinilos.ui.ingreso.ChipEtiqueta
 import com.example.vinilos.ui.ingreso.EncabezadoVinilo
 import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.ui.ingreso.encabezado
+import com.example.vinilos.ui.idiomaDeLaApp
 
 const val TagInicio = "inicio"
 const val TagVerAlbumes = "ver_albumes"
@@ -128,7 +129,7 @@ private fun TitularInicio(session: Session) {
                     modifier = Modifier.size(20.dp)
                 )
                 Text(
-                    text = stringResource(R.string.inicio_chip).uppercase(),
+                    text = stringResource(R.string.inicio_chip).uppercase(idiomaDeLaApp()),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )

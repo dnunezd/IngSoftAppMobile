@@ -1,4 +1,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Idioma en que la app muestra sus textos: los formatos de fecha y número lo siguen (internacionalizar-ingles). -->
+    <string name="idioma">es</string>
     <string name="app_name">Vinilos</string>
     <string name="marca">Vinilo</string>
     <string name="logo_descripcion">Logo de Vinilo</string>

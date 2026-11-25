@@ -37,6 +37,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.example.vinilos.R
+import com.example.vinilos.ui.idiomaDeLaApp
 
 const val TagAtras = "atras"
 
@@ -131,7 +132,7 @@ fun ChipEtiqueta(
     contenido: Color = MaterialTheme.colorScheme.primary
 ) {
     Text(
-        text = texto.uppercase(),
+        text = texto.uppercase(idiomaDeLaApp()),
         style = MaterialTheme.typography.labelSmall,
         color = contenido,
         modifier = modifier

@@ -66,6 +66,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -109,6 +110,7 @@ import com.example.vinilos.ui.ingreso.decorativo
 import com.example.vinilos.ui.ingreso.encabezado
 import java.util.Locale
 import java.util.TimeZone
+import com.example.vinilos.ui.idiomaDeLaApp
 
 const val TagFormularioCrear = "crear_formulario"
 const val TagNombreAlbum = "crear_nombre"
@@ -628,16 +630,16 @@ private fun CampoFecha(
 
 /**
  * El estado del calendario toma el idioma al crearse (Material 3 1.4), así que todo el selector,
- * estado incluido, queda dentro de [EnEspanol].
+ * estado incluido, queda dentro de [EnIdiomaDeLaApp].
  */
 @Composable
 private fun SelectorFecha(fechaMillis: Long?, onAceptar: (Long) -> Unit, onCerrar: () -> Unit) {
-    EnEspanol { SelectorFechaEnEspanol(fechaMillis, onAceptar, onCerrar) }
+    EnIdiomaDeLaApp { SelectorFechaEnIdioma(fechaMillis, onAceptar, onCerrar) }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SelectorFechaEnEspanol(fechaMillis: Long?, onAceptar: (Long) -> Unit, onCerrar: () -> Unit) {
+private fun SelectorFechaEnIdioma(fechaMillis: Long?, onAceptar: (Long) -> Unit, onCerrar: () -> Unit) {
     val hoy = remember { hoyEnUtc(System.currentTimeMillis(), TimeZone.getDefault()) }
     val selector = rememberDatePickerState(
         initialSelectedDateMillis = fechaMillis,
@@ -700,24 +702,30 @@ private fun SelectorFechaEnEspanol(fechaMillis: Long?, onAceptar: (Long) -> Unit
 }
 
 /**
- * La app solo existe en español, pero el selector toma el idioma del dispositivo: en un teléfono en
- * inglés mezclaría "Selected date" con los textos propios. El aviso de lint se refiere a la descarga
- * de idiomas de los App Bundle; aquí se entrega un APK con un solo idioma.
+ * El selector toma el idioma del dispositivo, que puede no ser el de la app (por ejemplo, un teléfono en
+ * francés con la app en español): se le aplica el idioma de la app para no mezclar idiomas
+ * (internacionalizar-ingles, D4). El aviso de lint se refiere a la descarga de idiomas de los App
+ * Bundle; aquí se entrega un APK con todos los idiomas.
  */
 @SuppressLint("AppBundleLocaleChanges")
 @Composable
-private fun EnEspanol(contenido: @Composable () -> Unit) {
+private fun EnIdiomaDeLaApp(contenido: @Composable () -> Unit) {
     val configuracion = LocalConfiguration.current
     val contexto = LocalContext.current
-    if (ConfigurationCompat.getLocales(configuracion)[0]?.language == "es") {
+    val idioma = idiomaDeLaApp()
+    if (ConfigurationCompat.getLocales(configuracion)[0]?.language == idioma.language) {
         contenido()
     } else {
-        val espanol = remember(configuracion) {
-            Configuration(configuracion).apply { setLocale(Locale.forLanguageTag("es")) }
+        val ajustada = remember(configuracion, idioma) {
+            Configuration(configuracion).apply { setLocale(idioma) }
         }
+        // Los textos de Material y stringResource leen LocalResources: sin él, el título del selector
+        // ("Selected date") quedaba en el idioma del dispositivo.
+        val contextoAjustado = remember(contexto, ajustada) { contexto.createConfigurationContext(ajustada) }
         CompositionLocalProvider(
-            LocalConfiguration provides espanol,
-            LocalContext provides contexto.createConfigurationContext(espanol),
+            LocalConfiguration provides ajustada,
+            LocalContext provides contextoAjustado,
+            LocalResources provides contextoAjustado.resources,
             content = contenido
         )
     }

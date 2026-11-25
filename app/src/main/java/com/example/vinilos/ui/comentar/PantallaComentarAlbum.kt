@@ -75,6 +75,7 @@ import com.example.vinilos.viewmodel.EnvioComentario
 import com.example.vinilos.viewmodel.LimiteOpinion
 import com.example.vinilos.viewmodel.NivelCalificacion
 import com.example.vinilos.viewmodel.nivelCalificacion
+import com.example.vinilos.ui.idiomaDeLaApp
 
 const val TagPantallaComentar = "comentar_pantalla"
 const val TagAlbumComentado = "comentar_album"
@@ -255,7 +256,7 @@ private fun TarjetaAlbum(album: Album, coleccionista: String) {
             )
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
-                    stringResource(R.string.comentar_calificando).uppercase(),
+                    stringResource(R.string.comentar_calificando).uppercase(idiomaDeLaApp()),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -531,7 +532,7 @@ private fun ContenidoPublicado(album: Album, coleccionista: String, estado: Come
             )
             Column {
                 Text(
-                    stringResource(R.string.comentar_album_resenado).uppercase(),
+                    stringResource(R.string.comentar_album_resenado).uppercase(idiomaDeLaApp()),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.secondary
                 )

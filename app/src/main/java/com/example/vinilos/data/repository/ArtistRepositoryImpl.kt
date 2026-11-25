@@ -30,6 +30,8 @@ import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 import retrofit2.Response
 import java.text.ParseException
+import com.example.vinilos.data.model.Espanol
+import java.util.Locale
 
 /**
  * Artistas del backend. Con [artistaDao], el listado y cada detalle abierto además se guardan en el
@@ -42,7 +44,9 @@ class ArtistRepositoryImpl(
     private val adaptador: ServiceAdapter,
     private val api: ArtistApi = adaptador.api(),
     private val artistaDao: ArtistaDao? = null,
-    private val dispatcher: CoroutineDispatcher = Dispatchers.Default
+    private val dispatcher: CoroutineDispatcher = Dispatchers.Default,
+    /** Idioma de la app para las fechas (internacionalizar-ingles); se lee en cada conversión. */
+    private val idioma: () -> Locale = { Espanol }
 ) : ArtistRepository {
 
     /** Protege la comparación, la escritura y la actualización de lo que sigue (optimizar-cache-e-imagenes, D4). */
@@ -213,7 +217,7 @@ class ArtistRepositoryImpl(
         imagen = image,
         descripcion = description.conTexto(),
         tipo = tipo,
-        fecha = fechaEnEspanol(if (tipo == ArtistType.MUSICO) birthDate else creationDate),
+        fecha = fechaEnIdioma(if (tipo == ArtistType.MUSICO) birthDate else creationDate),
         integrantes = musicians.orEmpty().mapNotNull { dto ->
             IntegranteArtista(
                 dto.id ?: return@mapNotNull null,
@@ -222,7 +226,7 @@ class ArtistRepositoryImpl(
             )
         },
         albumes = albums.orEmpty().mapNotNull { dto ->
-            val fecha = dto.releaseDate?.takeIf { fechaEnEspanol(it) != null }
+            val fecha = dto.releaseDate?.takeIf { fechaEnIdioma(it) != null }
             AlbumArtista(
                 dto.id ?: return@mapNotNull null,
                 dto.name.conTexto() ?: return@mapNotNull null,
@@ -240,7 +244,7 @@ class ArtistRepositoryImpl(
         val premioPorPremiacion = premiaciones.associateBy { it.id }
         return delArtista.mapNotNull { dto ->
             val premio = premioPorPremiacion[dto.id]?.prize ?: return@mapNotNull null
-            val fecha = fechaEnEspanol(dto.premiationDate)
+            val fecha = fechaEnIdioma(dto.premiationDate)
             PremioArtista(
                 dto.id ?: return@mapNotNull null,
                 premio.name.conTexto() ?: return@mapNotNull null,
@@ -252,11 +256,11 @@ class ArtistRepositoryImpl(
 
     private fun String?.conTexto(): String? = this?.takeIf(String::isNotBlank)
 
-    /** Fecha en español; una ausente o que no se pueda interpretar se trata como ausente. */
-    private fun fechaEnEspanol(fechaIso: String?): String? =
+    /** Fecha en el idioma de la app; una ausente o que no se pueda interpretar se trata como ausente. */
+    private fun fechaEnIdioma(fechaIso: String?): String? =
         fechaIso?.let {
             try {
-                formatearFechaLanzamiento(it)
+                formatearFechaLanzamiento(it, idioma())
             } catch (_: ParseException) {
                 null
             }

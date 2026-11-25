@@ -18,6 +18,8 @@ import com.example.vinilos.data.repository.FavoriteRepositoryImpl
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import java.io.File
+import com.example.vinilos.data.model.Espanol
+import java.util.Locale
 
 /**
  * Contenedor de dependencias manual: crea una sola vez el [ServiceAdapter] y los repositorios
@@ -44,7 +46,9 @@ class AppContainer(
      * Carpeta de la caché HTTP de la API (optimizar-cache-e-imagenes, D2). Sin ella, el cliente no guarda
      * respuestas, que es lo que usan las pruebas.
      */
-    carpetaCacheHttp: File? = null
+    carpetaCacheHttp: File? = null,
+    /** Idioma de la app para las fechas que arma la capa de datos (internacionalizar-ingles). */
+    idioma: () -> Locale = { Espanol }
 ) {
 
     val serviceAdapter: ServiceAdapter = ServiceAdapter(baseUrl, ServiceAdapter.clientePorDefecto(carpetaCacheHttp))
@@ -59,7 +63,7 @@ class AppContainer(
 
     /** Se puede reemplazar con `artistasRepositorio` en las pruebas instrumentadas. */
     val artistRepository: ArtistRepository =
-        artistasRepositorio ?: ArtistRepositoryImpl(serviceAdapter, artistaDao = artistaDao, dispatcher = dispatcher)
+        artistasRepositorio ?: ArtistRepositoryImpl(serviceAdapter, artistaDao = artistaDao, dispatcher = dispatcher, idioma = idioma)
 
     /**
      * Se puede reemplazar con `favoritosRepositorio` en las pruebas instrumentadas (p. ej. con

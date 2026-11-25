@@ -47,6 +47,7 @@ import com.example.vinilos.viewmodel.ErrorCancion
 import com.example.vinilos.viewmodel.InfoAlbumDestino
 import com.example.vinilos.ui.ingreso.encabezado
 import com.example.vinilos.ui.theme.coloresBotonPrincipal
+import com.example.vinilos.ui.idiomaDeLaApp
 
 const val TagFormularioAgregarCancion = "agregar_cancion_formulario"
 const val TagNombreCancion = "agregar_cancion_nombre"
@@ -226,7 +227,7 @@ private fun TarjetaAlbumDestino(info: InfoAlbumDestino) {
         )
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
-                text = stringResource(R.string.agregar_cancion_album_destino).uppercase(),
+                text = stringResource(R.string.agregar_cancion_album_destino).uppercase(idiomaDeLaApp()),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
