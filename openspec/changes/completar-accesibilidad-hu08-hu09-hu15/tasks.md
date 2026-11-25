@@ -35,4 +35,4 @@
 
 - [x] 7.1 Repetir el Accessibility Scanner en todas las pantallas y estados de la revisión; confirmar que solo quedan las sugerencias de portadas del backend y del fondo oscurecido de la hoja inferior
 - [x] 7.2 Ejecutar `testDebugUnitTest`, `lintDebug` y la suite instrumentada completa en API 35
-- [ ] 7.3 Actualizar la página "Sprint 3 · Adopción de accesibilidad" de la wiki con el reporte de HU08, HU09 y HU15
+- [x] 7.3 Actualizar la página "Sprint 3 · Adopción de accesibilidad" de la wiki con el reporte de HU08, HU09 y HU15
