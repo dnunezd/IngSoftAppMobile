@@ -57,7 +57,9 @@ data class AccionesAgregarCancion(
     val onDuracion: (String) -> Unit = {},
     val onGuardar: () -> Unit = {},
     val onCancelar: () -> Unit = {},
-    val onAtras: () -> Unit = {}
+    val onAtras: () -> Unit = {},
+    /** El álbum ya no existe en el backend: a diferencia de [onAtras], le avisa al detalle. */
+    val onAlbumNoDisponible: () -> Unit = {}
 )
 
 @Composable
@@ -68,28 +70,35 @@ fun PantallaAgregarCancion(
     modifier: Modifier = Modifier
 ) {
     if (estado.envio == EnvioCancion.AlbumNoDisponible) {
+        BackHandler { acciones.onAlbumNoDisponible() }
         Column(
             modifier = modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colorScheme.background)
                 .windowInsetsPadding(WindowInsets.safeDrawing)
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
         ) {
             EncabezadoConRol(
                 session = session,
                 titulo = stringResource(R.string.agregar_cancion_titulo),
-                onAtras = acciones.onAtras,
+                onAtras = acciones.onAlbumNoDisponible,
                 atrasHabilitado = true
             )
-            Text(
-                stringResource(R.string.agregar_cancion_album_no_disponible),
-                style = MaterialTheme.typography.titleLarge,
-                color = MaterialTheme.colorScheme.error
-            )
-            Button(onClick = acciones.onAtras, modifier = Modifier.padding(top = 16.dp)) {
-                Text(stringResource(R.string.agregar_cancion_volver))
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    stringResource(R.string.agregar_cancion_album_no_disponible),
+                    style = MaterialTheme.typography.titleLarge,
+                    color = MaterialTheme.colorScheme.error
+                )
+                Button(onClick = acciones.onAlbumNoDisponible, modifier = Modifier.padding(top = 16.dp)) {
+                    Text(stringResource(R.string.agregar_cancion_volver))
+                }
             }
         }
         return

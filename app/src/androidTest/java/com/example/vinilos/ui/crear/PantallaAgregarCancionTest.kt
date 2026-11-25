@@ -94,13 +94,31 @@ class PantallaAgregarCancionTest {
                 PantallaAgregarCancion(
                     estado,
                     sesion,
-                    AccionesAgregarCancion(onAtras = { regresos++ })
+                    AccionesAgregarCancion(onAlbumNoDisponible = { regresos++ })
                 )
             }
         }
 
         rule.onNodeWithText("El álbum ya no está disponible").assertIsDisplayed()
-        rule.onNodeWithText("Volver al álbum").performClick()
+        rule.onNodeWithText("Volver").performClick()
+        assertEquals(1, regresos)
+    }
+
+    @Test
+    fun albumNoDisponibleConAtrasDelSistemaTambienNotifica() {
+        var regresos = 0
+        val estado = AgregarCancionUiState(envio = EnvioCancion.AlbumNoDisponible)
+        rule.setContent {
+            VinilosTheme {
+                PantallaAgregarCancion(
+                    estado,
+                    sesion,
+                    AccionesAgregarCancion(onAlbumNoDisponible = { regresos++ })
+                )
+            }
+        }
+
+        androidx.test.espresso.Espresso.pressBack()
         assertEquals(1, regresos)
     }
 }

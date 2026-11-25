@@ -20,6 +20,25 @@ class AlbumViewModel(id: Int, private val repositorio: AlbumRepository) : ViewMo
     private var carga: Job? = null
     private var consultaVigente = 0L
 
+    /**
+     * Dueño del aviso "Canción agregada": vive en el ViewModel (sobrevive a una rotación) en vez de
+     * depender de la clave de navegación, que se borra apenas se dispara [actualizar] (ver [cancionAgregada]).
+     * Así, si la Activity se recrea mientras el aviso está en pantalla, no se repite el GET /albums/{id}.
+     */
+    private val _avisoCancionAgregada = MutableStateFlow(false)
+    val avisoCancionAgregada = _avisoCancionAgregada.asStateFlow()
+
+    /** Se llama una sola vez al volver del formulario de agregar canción con éxito. */
+    fun cancionAgregada() {
+        _avisoCancionAgregada.value = true
+        actualizar()
+    }
+
+    /** La pantalla ya mostró el aviso de "Canción agregada". */
+    fun avisoCancionAgregadaMostrado() {
+        _avisoCancionAgregada.value = false
+    }
+
     fun cargarAlbum(id: Int) {
         idActual = id
         cargar()
