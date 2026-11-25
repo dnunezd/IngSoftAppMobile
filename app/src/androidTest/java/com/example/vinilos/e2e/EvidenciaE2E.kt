@@ -9,6 +9,7 @@ import android.graphics.pdf.PdfDocument
 import android.os.Build
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onRoot
 import androidx.test.platform.app.InstrumentationRegistry
@@ -66,9 +67,13 @@ object EvidenciaE2E {
      * pantalla completa con `UiAutomation` (disponible desde API 18, sin dependencias nuevas); esa
      * captura incluye la barra de estado y los botones de navegación, a diferencia de la de
      * `captureToImage()`.
+     *
+     * Con una ventana emergente abierta (un diálogo o una hoja inferior) hay más de una raíz Compose y
+     * `onRoot()` no sabe cuál capturar; también se usa entonces la pantalla completa, que muestra la
+     * ventana sobre la pantalla de fondo.
      */
     private fun capturarBitmap(rule: ComposeTestRule): Bitmap =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && rule.onAllNodes(isRoot()).fetchSemanticsNodes().size == 1) {
             rule.onRoot().captureToImage().asAndroidBitmap()
         } else {
             // La pantalla del dispositivo puede ir un cuadro por detrás del árbol Compose (tras
