@@ -29,6 +29,7 @@ import com.example.vinilos.R
 import com.example.vinilos.ui.theme.ChipTexto
 import com.example.vinilos.ui.theme.TextoTenue
 import com.example.vinilos.ui.theme.VinilosTheme
+import com.example.vinilos.ui.idiomaDeLaApp
 
 const val TagFranjaAudioWave = "franja_audio_wave"
 
@@ -51,7 +52,7 @@ fun FranjaAudioWave(modifier: Modifier = Modifier) {
         verticalAlignment = Alignment.CenterVertically
     ) {
         Text(
-            text = stringResource(R.string.ingreso_audio_wave).uppercase(),
+            text = stringResource(R.string.ingreso_audio_wave).uppercase(idiomaDeLaApp()),
             style = MaterialTheme.typography.labelSmall.copy(
                 fontWeight = FontWeight.SemiBold,
                 lineHeight = 16.5.sp

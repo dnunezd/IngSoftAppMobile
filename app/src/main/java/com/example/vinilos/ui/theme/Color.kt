@@ -40,3 +40,8 @@ val AvatarGris = Color(0xFF45444A)
 // Listado de artistas (HU03): etiquetas "Músico" y "Banda" del mockup.
 val EtiquetaBandaFondo = Color(0xFFDDE4FF)
 val EtiquetaBandaTexto = Color(0xFF0050CC)
+
+// Botón principal deshabilitado (completar-accesibilidad-hu08-hu09-hu15): los colores por defecto de
+// Material (texto al 38 % sobre fondo al 12 %) no llegan a 4,5:1. Este par da unos 5,1:1.
+val BotonDesactivadoFondo = SuperficieVariante
+val BotonDesactivadoTexto = TextoTenue

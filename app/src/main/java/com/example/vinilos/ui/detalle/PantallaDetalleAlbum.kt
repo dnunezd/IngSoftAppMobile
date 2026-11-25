@@ -49,6 +49,7 @@ import com.example.vinilos.data.model.Session
 import com.example.vinilos.ui.ingreso.AvisoUnaVez
 import com.example.vinilos.ui.ingreso.EncabezadoVinilo
 import com.example.vinilos.viewmodel.AlbumUiState
+import com.example.vinilos.ui.idiomaDeLaApp
 
 const val TagActualizandoDetalle = "detalle_actualizando"
 const val TagComentarAlbum = "detalle_comentar"
@@ -86,7 +87,8 @@ fun PantallaDetalleAlbum(
     onComentar: (() -> Unit)? = null
 ) {
     if (estado is AlbumUiState.Exito) {
-        val presentacion = remember(estado.album) { presentarAlbum(estado.album) }
+        val idioma = idiomaDeLaApp()
+        val presentacion = remember(estado.album, idioma) { presentarAlbum(estado.album, idioma) }
         val avisos = remember { SnackbarHostState() }
         AvisoUnaVez(
             mostrar = estado.errorAlActualizar,

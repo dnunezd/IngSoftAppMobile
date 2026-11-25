@@ -51,6 +51,19 @@ class ContrasteDePaletaTest {
     }
 
     @Test
+    fun elBotonDeshabilitadoCumple() {
+        exigir("BotonDesactivadoTexto sobre BotonDesactivadoFondo", BotonDesactivadoTexto, BotonDesactivadoFondo)
+    }
+
+    @Test
+    fun lasAccionesDeDialogosSobreLosContenedoresDeSuperficieCumplen() {
+        // surfaceContainerHigh (diálogos) es Superficie; surfaceContainer (menús) es Fondo.
+        exigir("NaranjaContraste sobre Superficie", NaranjaContraste, Superficie)
+        exigir("NaranjaContraste sobre Fondo", NaranjaContraste, Fondo)
+        exigir("NaranjaOscuro sobre NaranjaSuave (chip y avatar del comentario publicado)", NaranjaOscuro, NaranjaSuave)
+    }
+
+    @Test
     fun elTitularGrisSobreElFondoCumple() {
         exigir("TitularGris sobre Fondo", TitularGris, Fondo)
     }

@@ -45,7 +45,7 @@ class ArtistaDaoTest {
         nombre = nombre,
         imagen = null,
         descripcion = "Banda británica",
-        fecha = "1 de enero de 1970",
+        fecha = "1970-01-01T00:00:00.000Z",
         integrantes = listOf(IntegranteArtista(1, "Freddie Mercury", null)),
         albumes = listOf(AlbumArtista(100, "A Night at the Opera", "https://img.example/100.jpg", "1975")),
         premios = listOf(PremioArtista(7, "Grammy", "Academia", null))

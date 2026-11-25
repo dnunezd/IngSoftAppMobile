@@ -66,6 +66,7 @@ import com.example.vinilos.ui.theme.TextoTenue
 import com.example.vinilos.ui.theme.TitularGris
 import com.example.vinilos.ui.theme.TitularIngreso
 import com.example.vinilos.ui.theme.VinilosTheme
+import com.example.vinilos.ui.idiomaDeLaApp
 
 const val TagEntrarVisitante = "entrar_visitante"
 const val TagEntrarColeccionista = "entrar_coleccionista"
@@ -450,7 +451,7 @@ private fun TarjetaPerfil(
                 ) {
                     Image(painter = painterResource(chipIcono), contentDescription = null, modifier = Modifier.size(10.dp))
                     Text(
-                        text = chip.uppercase(),
+                        text = chip.uppercase(idiomaDeLaApp()),
                         style = MaterialTheme.typography.labelSmall.copy(
                             fontWeight = FontWeight.SemiBold,
                             lineHeight = 16.5.sp,

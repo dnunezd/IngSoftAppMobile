@@ -57,7 +57,7 @@ En la revisión del PR se corrió la clase 3 veces por dispositivo en un Motorol
 ```bash
 ./gradlew installDebug installDebugAndroidTest -PbaseUrl=http://10.0.2.2:3000/
 adb shell rm -rf /sdcard/Android/data/com.example.vinilos/files/e2e-evidencia
-adb shell am instrument -w -e class com.example.vinilos.CrearAlbumE2ETest com.example.vinilos.test/androidx.test.runner.AndroidJUnitRunner
+adb shell am instrument -w -e class com.example.vinilos.CrearAlbumE2ETest com.example.vinilos.test/com.example.vinilos.VinilosTestRunner
 adb pull /sdcard/Android/data/com.example.vinilos/files/e2e-evidencia ./e2e-evidencia
 ```
 

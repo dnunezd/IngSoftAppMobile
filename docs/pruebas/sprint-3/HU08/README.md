@@ -55,6 +55,6 @@ Samsung SM-S938B (Android 17), 2026-11-25, contra BackVynils local: `OK (13 test
 ./gradlew installDebug installDebugAndroidTest -PbaseUrl=http://localhost:3000/   # BackVynils local
 adb reverse tcp:3000 tcp:3000                                                     # solo en un teléfono
 adb shell rm -rf /sdcard/Android/data/com.example.vinilos/files/e2e-evidencia
-adb shell am instrument -w -e class com.example.vinilos.AgregarCancionE2ETest com.example.vinilos.test/androidx.test.runner.AndroidJUnitRunner
+adb shell am instrument -w -e class com.example.vinilos.AgregarCancionE2ETest com.example.vinilos.test/com.example.vinilos.VinilosTestRunner
 adb pull /sdcard/Android/data/com.example.vinilos/files/e2e-evidencia ./e2e-evidencia
 ```
