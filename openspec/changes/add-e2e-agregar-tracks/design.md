@@ -12,7 +12,7 @@ Criterios de la HU08 (spec `agregar-tracks` de `add-agregar-tracks`) y escenario
 | 2   | El formulario abre vacío con "Campo obligatorio" en ambos campos y "Guardar" deshabilitado                | ESC02, ESC05        |
 | 3   | La duración cumple `m:ss`; si no, "Usa el formato m:ss, por ejemplo 5:05" y "Guardar" deshabilitado       | ESC01, ESC06        |
 | 4   | Al guardar, "Canción agregada", vuelve al detalle y la lista muestra la canción con su duración           | ESC02, ESC03, ESC06 |
-| 5   | Mientras guarda, "Guardando..." deshabilitado y una sola petición                                         | ESC03               |
+| 5   | Mientras guarda, "Guardando…" deshabilitado y una sola petición                                         | ESC03               |
 | 6   | "Cancelar" cierra sin guardar y el formulario vuelve vacío                                                | ESC05               |
 | 7   | Si falla, "No se pudo agregar la canción, intenta de nuevo", conserva los valores y permite reintentar    | ESC03               |
 | 8   | Si el álbum no existe, "El álbum ya no está disponible" y permite regresar                                | ESC07               |

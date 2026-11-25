@@ -456,7 +456,7 @@ class AgregarCancionE2ETest {
     }
 
     /**
-     * FN08-ESC03: mientras se guarda se ve "Guardando..." y un segundo toque no envía nada; si el guardado
+     * FN08-ESC03: mientras se guarda se ve "Guardando…" y un segundo toque no envía nada; si el guardado
      * falla se ve el error con los datos conservados, y el reintento agrega la canción.
      */
     @Test
@@ -481,14 +481,14 @@ class AgregarCancionE2ETest {
 
             guardar().performClick()
             rule.waitUntil(2_000) {
-                rule.onAllNodes(hasTestTag(TagGuardarCancion) and hasText("Guardando...")).fetchSemanticsNodes().isNotEmpty()
+                rule.onAllNodes(hasTestTag(TagGuardarCancion) and hasText("Guardando…")).fetchSemanticsNodes().isNotEmpty()
             }
             guardar().assertIsNotEnabled()
             EvidenciaE2E.capturar(rule, evidencia, "03_guardando")
             guardar().performClick()
 
             esperarTexto("No se pudo agregar la canción, intenta de nuevo")
-            assertEquals("El toque durante \"Guardando...\" no debe enviar otra petición", 1, simulado.envios)
+            assertEquals("El toque durante \"Guardando…\" no debe enviar otra petición", 1, simulado.envios)
             rule.onNodeWithTag(TagNombreCancion).assert(hasText("Decisiones"))
             rule.onNodeWithTag(TagDuracionCancion).assert(hasText("5:05"))
             guardar().assertIsEnabled()
