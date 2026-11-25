@@ -24,4 +24,4 @@
 
 - [x] 5.1 Capturas en inglés de las pantallas principales en el emulador, con la fuente normal y al 200 %; revisar que no haya textos recortados
 - [x] 5.2 Ejecutar `testDebugUnitTest`, `lintDebug` y la suite instrumentada completa en API 35
-- [ ] 5.3 Actualizar "Pendiente: internacionalización" en la wiki y la descripción del PR #120
+- [x] 5.3 Actualizar "Pendiente: internacionalización" en la wiki y la descripción del PR #120
