@@ -434,7 +434,7 @@ private fun Botones(estado: AsociarAlbumUiState, acciones: AccionesAsociarAlbum)
                     .semantics { contentDescription = descripcionAsociando }
                     .testTag(TagAsociandoAsociar),
                 strokeWidth = 2.dp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                color = MaterialTheme.colorScheme.onPrimary
             )
         } else {
             Icon(

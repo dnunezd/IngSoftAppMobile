@@ -7,20 +7,27 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.accessibility.enableAccessibilityChecks
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.tryPerformAccessibilityChecks
 import com.example.vinilos.data.model.Album
+import com.example.vinilos.data.model.ArtistType
+import com.example.vinilos.data.model.ArtistaDetalle
 import com.example.vinilos.data.model.Cancion
 import com.example.vinilos.data.model.Collector
 import com.example.vinilos.data.model.Comentario
+import com.example.vinilos.data.model.PremioArtista
 import com.example.vinilos.data.model.Session
+import com.example.vinilos.ui.artistas.PantallaDetalleArtista
+import com.example.vinilos.ui.artistas.TagFechaDetalleArtista
 import com.example.vinilos.ui.comentar.AccionesComentarAlbum
 import com.example.vinilos.ui.comentar.PantallaComentarAlbum
 import com.example.vinilos.ui.crear.AccionesCrearAlbum
@@ -30,12 +37,13 @@ import com.example.vinilos.ui.detalle.presentarAlbum
 import com.example.vinilos.ui.ingreso.PantallaIngreso
 import com.example.vinilos.ui.inicio.PantallaInicio
 import com.example.vinilos.ui.theme.VinilosTheme
+import com.example.vinilos.viewmodel.ArtistaDetalleUiState
 import com.example.vinilos.viewmodel.CargaAlbum
 import com.example.vinilos.viewmodel.ComentarAlbumUiState
 import com.example.vinilos.viewmodel.CrearAlbumUiState
+import java.util.Locale
 import org.junit.Rule
 import org.junit.Test
-import java.util.Locale
 
 /**
  * Pantallas en inglés (internacionalizar-ingles, D8): textos y descripciones traducidos, formatos del
@@ -116,5 +124,29 @@ class PantallasEnInglesTest {
         }
         rule.onNodeWithText("What did you think of this vinyl?").assertExists()
         rule.onNodeWithContentDescription("4 out of 5 stars").assertExists()
+    }
+
+    /**
+     * El detalle guardado (por ejemplo, abierto antes en español) trae la fecha en ISO y sale en inglés,
+     * también sin conexión: no queda una fecha en español guardada en Room.
+     */
+    @Test
+    fun detalleDeArtistaGuardadoEnIngles() {
+        val queen = ArtistaDetalle(
+            101, "Queen", null, "British band", ArtistType.BANDA, "1970-01-01T00:00:00.000Z",
+            emptyList(), emptyList(), listOf(PremioArtista(1, "Grammy Award", "NARAS", "1978-12-10T00:00:00.000Z"))
+        )
+        mostrar {
+            PantallaDetalleArtista(
+                estado = ArtistaDetalleUiState.Exito(queen, errorAlActualizar = true),
+                onSeleccionarAlbum = {},
+                onReintentar = {},
+                onAtras = {},
+                onAvisoMostrado = {}
+            )
+        }
+        rule.onNodeWithTag(TagFechaDetalleArtista).assertTextEquals("January 1, 1970")
+        rule.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("December 10, 1978"))
+        rule.onNodeWithText("December 10, 1978").assertExists()
     }
 }

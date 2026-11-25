@@ -11,7 +11,7 @@ La revisión de accesibilidad dejó la internacionalización como pendiente: la 
   - La app sigue el idioma del dispositivo: español o inglés, y español para cualquier otro.
   - En Android 13 o superior también se puede elegir por aplicación en los ajustes del sistema, mediante `localeConfig`.
 - **Formatos por idioma:**
-  - La fecha larga sigue el idioma de la app: "1 de enero de 1970" o "January 1, 1970". Hoy se fija en español, en `FechaLanzamiento` y en el repositorio de artistas.
+  - La fecha larga sigue el idioma de la app: "1 de enero de 1970" o "January 1, 1970". Hoy se fija en español, en `FechaLanzamiento` y en el repositorio de artistas, que la guarda ya formateada.
   - El promedio sigue el idioma de la app: "4,5" o "4.5".
   - El selector de fecha se muestra en el idioma de la app, no en el del sistema.
   - Las mayúsculas de las etiquetas usan el idioma de la app.
@@ -41,10 +41,10 @@ Ninguna. Los requisitos funcionales de cada HU no cambian; cambia el idioma en q
   - `AndroidManifest.xml` (`android:localeConfig`).
   - Un texto nuevo `idioma` en cada idioma, para que la app sepa en qué idioma muestra sus textos.
 - **Código:**
-  - `data/model/FechaLanzamiento.kt` y `ArtistRepositoryImpl` (fecha larga por idioma).
+  - `data/model/FechaLanzamiento.kt` (fecha larga por idioma).
+  - `ArtistRepositoryImpl`, `PantallaDetalleArtista` y `VinilosDb` (fechas del artista en ISO, formateadas en la pantalla; Room a la versión 3).
   - `ui/detalle/PromedioCalificaciones.kt` (separador decimal).
   - `ui/crear/PantallaCrearAlbum.kt` (selector de fecha).
-  - `AppContainer.kt` (pasa el idioma al repositorio).
   - Los `uppercase()` de etiquetas.
 - **Pruebas:**
   - `app/build.gradle.kts` (runner de pruebas instrumentadas).

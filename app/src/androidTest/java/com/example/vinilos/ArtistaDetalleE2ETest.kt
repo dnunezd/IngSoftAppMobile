@@ -24,6 +24,7 @@ import androidx.test.espresso.Espresso
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.ArtistaDetalle
+import com.example.vinilos.data.model.formatearFechaLanzamiento
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.ArtistRepository
 import com.example.vinilos.data.repository.ArtistRepositoryImpl
@@ -199,7 +200,7 @@ class ArtistaDetalleE2ETest {
         detalle.fecha?.let { fecha ->
             val rotulo = if (detalle.tipo == ArtistType.BANDA) "FECHA DE CREACIÓN" else "FECHA DE NACIMIENTO"
             rule.onNodeWithText(rotulo).assertIsDisplayed()
-            rule.onNodeWithTag(TagFechaDetalleArtista).assertTextEquals(fecha)
+            rule.onNodeWithTag(TagFechaDetalleArtista).assertTextEquals(formatearFechaLanzamiento(fecha))
         }
         detalle.descripcion?.let { rule.onNodeWithTag(TagDescripcionDetalleArtista).assertTextEquals(it) }
     }
@@ -250,7 +251,7 @@ class ArtistaDetalleE2ETest {
         detalle.premios.forEach { premio ->
             verTexto(premio.nombre)
             verTexto(premio.organizacion)
-            premio.fecha?.let { verTexto(it) }
+            premio.fecha?.let { verTexto(formatearFechaLanzamiento(it)) }
         }
     }
 

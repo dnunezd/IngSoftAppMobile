@@ -7,7 +7,6 @@ import coil.disk.DiskCache
 import com.example.vinilos.data.local.VinilosDb
 import com.example.vinilos.data.remote.AgenteDeUsuarioInterceptor
 import okhttp3.OkHttpClient
-import com.example.vinilos.ui.idiomaDeLaApp
 
 class VinilosApplication : Application(), ImageLoaderFactory {
     /**
@@ -26,8 +25,7 @@ class VinilosApplication : Application(), ImageLoaderFactory {
             artistaDao = db.artistaDao(),
             favoritoDao = db.favoritoDao(),
             // Separada de `image_cache`: OkHttp y Coil no pueden compartir la carpeta de su caché de disco.
-            carpetaCacheHttp = cacheDir.resolve("http"),
-            idioma = { idiomaDeLaApp(this) }
+            carpetaCacheHttp = cacheDir.resolve("http")
         )
     }
 

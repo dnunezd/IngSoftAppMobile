@@ -70,3 +70,16 @@ fun formatearFechaLanzamiento(fechaIso: String, idioma: Locale = Espanol): Strin
         timeZone = Utc
     }.format(fecha)
 }
+
+/**
+ * Como [formatearFechaLanzamiento], pero una fecha ausente o que no se pueda interpretar da `null`. El
+ * repositorio la usa para descartar fechas inválidas y la pantalla para mostrarlas en el idioma de la app.
+ */
+fun formatearFechaONula(fechaIso: String?, idioma: Locale = Espanol): String? =
+    fechaIso?.let {
+        try {
+            formatearFechaLanzamiento(it, idioma)
+        } catch (_: ParseException) {
+            null
+        }
+    }

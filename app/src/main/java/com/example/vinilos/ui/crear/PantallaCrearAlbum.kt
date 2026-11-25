@@ -111,6 +111,7 @@ import com.example.vinilos.ui.ingreso.encabezado
 import java.util.Locale
 import java.util.TimeZone
 import com.example.vinilos.ui.idiomaDeLaApp
+import com.example.vinilos.ui.theme.coloresBotonPrincipal
 
 const val TagFormularioCrear = "crear_formulario"
 const val TagNombreAlbum = "crear_nombre"
@@ -630,7 +631,7 @@ private fun CampoFecha(
 
 /**
  * El estado del calendario toma el idioma al crearse (Material 3 1.4), así que todo el selector,
- * estado incluido, queda dentro de [EnIdiomaDeLaApp].
+ * estado incluido, queda dentro de [EnIdiomaDeLaApp]. El contenido del Dialog se envuelve otra vez.
  */
 @Composable
 private fun SelectorFecha(fechaMillis: Long?, onAceptar: (Long) -> Unit, onCerrar: () -> Unit) {
@@ -653,47 +654,51 @@ private fun SelectorFechaEnIdioma(fechaMillis: Long?, onAceptar: (Long) -> Unit,
     )
     // No se usa DatePickerDialog: no limita su altura y en horizontal deja afuera sus botones. Aquí el
     // calendario se desplaza y los botones quedan siempre visibles.
+    // Dialog abre otra composición que vuelve a proveer el contexto y los recursos del dispositivo: el
+    // idioma de la app se aplica también adentro, o los textos de Material salen en el del dispositivo.
     Dialog(onDismissRequest = onCerrar, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(
-            shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.surface,
-            modifier = Modifier
-                .padding(8.dp)
-                .widthIn(max = 360.dp)
-        ) {
-            Column {
-                Box(
-                    modifier = Modifier
-                        .weight(1f, fill = false)
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    // El modo por defecto permite escribir la fecha; el criterio exige elegirla.
-                    DatePicker(
-                        state = selector,
-                        showModeToggle = false,
-                        title = {
-                            Text(
-                                text = stringResource(R.string.crear_fecha_titulo),
-                                style = MaterialTheme.typography.labelLarge,
-                                modifier = Modifier.padding(start = 24.dp, end = 12.dp, top = 16.dp)
-                            )
-                        }
-                    )
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(onClick = onCerrar) {
-                        Text(stringResource(R.string.crear_cancelar), style = MaterialTheme.typography.labelLarge)
-                    }
-                    TextButton(
-                        onClick = { selector.selectedDateMillis?.let(onAceptar) },
-                        enabled = selector.selectedDateMillis != null
+        EnIdiomaDeLaApp {
+            Surface(
+                shape = RoundedCornerShape(28.dp),
+                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier
+                    .padding(8.dp)
+                    .widthIn(max = 360.dp)
+            ) {
+                Column {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f, fill = false)
+                            .verticalScroll(rememberScrollState())
                     ) {
-                        Text(stringResource(R.string.crear_fecha_aceptar), style = MaterialTheme.typography.labelLarge)
+                        // El modo por defecto permite escribir la fecha; el criterio exige elegirla.
+                        DatePicker(
+                            state = selector,
+                            showModeToggle = false,
+                            title = {
+                                Text(
+                                    text = stringResource(R.string.crear_fecha_titulo),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    modifier = Modifier.padding(start = 24.dp, end = 12.dp, top = 16.dp)
+                                )
+                            }
+                        )
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(onClick = onCerrar) {
+                            Text(stringResource(R.string.crear_cancelar), style = MaterialTheme.typography.labelLarge)
+                        }
+                        TextButton(
+                            onClick = { selector.selectedDateMillis?.let(onAceptar) },
+                            enabled = selector.selectedDateMillis != null
+                        ) {
+                            Text(stringResource(R.string.crear_fecha_aceptar), style = MaterialTheme.typography.labelLarge)
+                        }
                     }
                 }
             }
@@ -805,10 +810,7 @@ private fun Botones(estado: CrearAlbumUiState, acciones: AccionesCrearAlbum) {
         Button(
             onClick = acciones.onCrear,
             enabled = !estado.enviando,
-            colors = ButtonDefaults.buttonColors(
-                disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-                disabledContentColor = MaterialTheme.colorScheme.onPrimary
-            ),
+            colors = coloresBotonPrincipal(enviando = true),
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 52.dp)

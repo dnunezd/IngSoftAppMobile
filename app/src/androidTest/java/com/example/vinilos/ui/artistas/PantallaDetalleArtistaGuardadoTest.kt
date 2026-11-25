@@ -1,6 +1,7 @@
 package com.example.vinilos.ui.artistas
 
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -19,7 +20,7 @@ class PantallaDetalleArtistaGuardadoTest {
     val rule = createComposeRule()
 
     private val queen = ArtistaDetalle(
-        101, "Queen", null, "Banda británica", ArtistType.BANDA, "1 de enero de 1970",
+        101, "Queen", null, "Banda británica", ArtistType.BANDA, "1970-01-01T00:00:00.000Z",
         emptyList(), emptyList(), emptyList()
     )
 
@@ -57,5 +58,13 @@ class PantallaDetalleArtistaGuardadoTest {
         rule.onNodeWithTag(TagNombreDetalleArtista).assertIsDisplayed()
         rule.onNodeWithText("No se pudo cargar el artista").assertDoesNotExist()
         rule.waitUntil(10_000) { avisos == 1 }
+    }
+
+    /** La fecha se guarda en ISO y la pantalla la muestra en el idioma de la app (internacionalizar-ingles). */
+    @Test
+    fun laFechaGuardadaSeMuestraEnElIdiomaDeLaApp() {
+        mostrar(ArtistaDetalleUiState.Exito(queen))
+
+        rule.onNodeWithTag(TagFechaDetalleArtista).assertTextEquals("1 de enero de 1970")
     }
 }

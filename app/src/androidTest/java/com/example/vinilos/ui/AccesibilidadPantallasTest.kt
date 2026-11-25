@@ -261,7 +261,7 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
         PantallaDetalleArtista(
             estado = ArtistaDetalleUiState.Exito(
                 ArtistaDetalle(
-                    101, "Queen", null, "Banda británica", ArtistType.BANDA, "1 de enero de 1970",
+                    101, "Queen", null, "Banda británica", ArtistType.BANDA, "1970-01-01T00:00:00.000Z",
                     emptyList(), listOf(AlbumArtista(100, "Bailando con lobos", null, "2020")), emptyList()
                 )
             ),

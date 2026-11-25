@@ -23,7 +23,7 @@ class ConversoresTest {
 
     @Test
     fun leerDosVecesElMismoJsonDaListasIguales() {
-        val json = conversores.dePremios(listOf(PremioArtista(7, "Grammy", "Academia", "10 de diciembre de 1978")))
+        val json = conversores.dePremios(listOf(PremioArtista(7, "Grammy", "Academia", "1978-12-10T00:00:00.000Z")))
 
         val primera = conversores.aPremios(json)
         val segunda = conversores.aPremios(json)
@@ -58,7 +58,7 @@ class ConversoresTest {
 
     @Test
     fun premiosConFechaNula() {
-        val premios = listOf(PremioArtista(7, "Grammy", "Academia", null), PremioArtista(8, "Brit", "BPI", "1 de enero de 1990"))
+        val premios = listOf(PremioArtista(7, "Grammy", "Academia", null), PremioArtista(8, "Brit", "BPI", "1990-01-01T00:00:00.000Z"))
         assertEquals(premios, conversores.aPremios(conversores.dePremios(premios)))
     }
 

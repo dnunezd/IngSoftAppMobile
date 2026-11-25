@@ -75,6 +75,8 @@ import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.ArtistaDetalle
 import com.example.vinilos.data.model.IntegranteArtista
 import com.example.vinilos.data.model.PremioArtista
+import com.example.vinilos.data.model.formatearFechaONula
+import com.example.vinilos.ui.idiomaDeLaApp
 import com.example.vinilos.ui.detalle.PortadaAlbum
 import com.example.vinilos.ui.ingreso.AvisoUnaVez
 import com.example.vinilos.ui.ingreso.IndicadorActualizando
@@ -323,7 +325,9 @@ private fun TarjetaPrincipal(
             modifier = Modifier.testTag(TagNombreDetalleArtista)
         )
         EtiquetaTipo(detalle.tipo, Modifier.testTag(TagTipoDetalleArtista))
-        detalle.fecha?.let { BloqueFecha(detalle.tipo, it) }
+        val idioma = idiomaDeLaApp()
+        remember(detalle.fecha, idioma) { formatearFechaONula(detalle.fecha, idioma) }
+            ?.let { BloqueFecha(detalle.tipo, it) }
         detalle.descripcion?.let {
             Text(
                 text = it,
@@ -771,7 +775,8 @@ private fun FilaPremio(premio: PremioArtista) {
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-            premio.fecha?.let {
+            val idioma = idiomaDeLaApp()
+            remember(premio.fecha, idioma) { formatearFechaONula(premio.fecha, idioma) }?.let {
                 Text(
                     text = it,
                     style = MaterialTheme.typography.bodySmall,
@@ -859,13 +864,13 @@ private val BandaDeEjemplo = ArtistaDetalle(
     imagen = null,
     descripcion = "Banda británica de rock formada en Londres en 1970.",
     tipo = ArtistType.BANDA,
-    fecha = "1 de enero de 1970",
+    fecha = "1970-01-01T00:00:00.000Z",
     integrantes = listOf(IntegranteArtista(1, "Brian May", null), IntegranteArtista(2, "Roger Taylor", null)),
     albumes = listOf(
         AlbumArtista(103, "A Day at the Races", null, "1976"),
         AlbumArtista(102, "A Night at the Opera", null, "1975")
     ),
-    premios = listOf(PremioArtista(1, "Grammy Award", "NARAS", "10 de diciembre de 1978"))
+    premios = listOf(PremioArtista(1, "Grammy Award", "NARAS", "1978-12-10T00:00:00.000Z"))
 )
 
 @Preview(showBackground = true, heightDp = 1100, name = "Banda con datos")
@@ -880,7 +885,7 @@ private fun PreviewSinDatos() = VinilosTheme {
     val musico = BandaDeEjemplo.copy(
         nombre = "Rubén Blades",
         tipo = ArtistType.MUSICO,
-        fecha = "16 de julio de 1948",
+        fecha = "1948-07-16T00:00:00.000Z",
         integrantes = emptyList(),
         albumes = emptyList(),
         premios = emptyList()

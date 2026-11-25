@@ -7,13 +7,14 @@ import androidx.compose.runtime.Composable
 
 /**
  * Colores del botón principal de un formulario. Deshabilitado usa un par de la paleta con contraste
- * suficiente; mientras se envía ([enviando]) conserva el naranja atenuado con el texto blanco.
+ * suficiente; mientras se envía ([enviando]) conserva el naranja pleno con el texto blanco (4,86:1), porque
+ * el naranja atenuado bajaba a 3,08:1.
  */
 @Composable
 fun coloresBotonPrincipal(enviando: Boolean = false): ButtonColors =
     if (enviando) {
         ButtonDefaults.buttonColors(
-            disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
+            disabledContainerColor = MaterialTheme.colorScheme.primary,
             disabledContentColor = MaterialTheme.colorScheme.onPrimary
         )
     } else {
