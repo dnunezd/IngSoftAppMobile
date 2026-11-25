@@ -45,6 +45,9 @@ import com.example.vinilos.viewmodel.CampoCancion
 import com.example.vinilos.viewmodel.EnvioCancion
 import com.example.vinilos.viewmodel.ErrorCancion
 import com.example.vinilos.viewmodel.InfoAlbumDestino
+import com.example.vinilos.ui.ingreso.encabezado
+import com.example.vinilos.ui.theme.coloresBotonPrincipal
+import com.example.vinilos.ui.idiomaDeLaApp
 
 const val TagFormularioAgregarCancion = "agregar_cancion_formulario"
 const val TagNombreCancion = "agregar_cancion_nombre"
@@ -143,7 +146,8 @@ fun PantallaAgregarCancion(
                 Text(
                     stringResource(R.string.agregar_cancion_datos_cancion),
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.encabezado()
                 )
                 CampoTextoCancion(
                     valor = estado.nombre,
@@ -168,6 +172,7 @@ fun PantallaAgregarCancion(
             Button(
                 onClick = acciones.onGuardar,
                 enabled = estado.puedeGuardar,
+                colors = coloresBotonPrincipal(enviando = estado.guardando),
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp)
@@ -214,6 +219,7 @@ private fun TarjetaAlbumDestino(info: InfoAlbumDestino) {
     ) {
         PortadaAlbum(
             url = info.portada,
+            contentDescription = stringResource(R.string.detalle_portada_con_nombre, info.nombre),
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .size(56.dp)
@@ -221,7 +227,7 @@ private fun TarjetaAlbumDestino(info: InfoAlbumDestino) {
         )
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
-                text = stringResource(R.string.agregar_cancion_album_destino).uppercase(),
+                text = stringResource(R.string.agregar_cancion_album_destino).uppercase(idiomaDeLaApp()),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

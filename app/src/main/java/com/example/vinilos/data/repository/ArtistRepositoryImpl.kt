@@ -10,7 +10,7 @@ import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.ArtistaDetalle
 import com.example.vinilos.data.model.IntegranteArtista
 import com.example.vinilos.data.model.PremioArtista
-import com.example.vinilos.data.model.formatearFechaLanzamiento
+import com.example.vinilos.data.model.formatearFechaONula
 import com.example.vinilos.data.remote.ArtistApi
 import com.example.vinilos.data.remote.ArtistaDetalleDto
 import com.example.vinilos.data.remote.IdAlbumDto
@@ -29,7 +29,6 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import retrofit2.HttpException
 import retrofit2.Response
-import java.text.ParseException
 
 /**
  * Artistas del backend. Con [artistaDao], el listado y cada detalle abierto además se guardan en el
@@ -213,7 +212,7 @@ class ArtistRepositoryImpl(
         imagen = image,
         descripcion = description.conTexto(),
         tipo = tipo,
-        fecha = fechaEnEspanol(if (tipo == ArtistType.MUSICO) birthDate else creationDate),
+        fecha = fechaValida(if (tipo == ArtistType.MUSICO) birthDate else creationDate),
         integrantes = musicians.orEmpty().mapNotNull { dto ->
             IntegranteArtista(
                 dto.id ?: return@mapNotNull null,
@@ -222,7 +221,7 @@ class ArtistRepositoryImpl(
             )
         },
         albumes = albums.orEmpty().mapNotNull { dto ->
-            val fecha = dto.releaseDate?.takeIf { fechaEnEspanol(it) != null }
+            val fecha = fechaValida(dto.releaseDate)
             AlbumArtista(
                 dto.id ?: return@mapNotNull null,
                 dto.name.conTexto() ?: return@mapNotNull null,
@@ -240,27 +239,23 @@ class ArtistRepositoryImpl(
         val premioPorPremiacion = premiaciones.associateBy { it.id }
         return delArtista.mapNotNull { dto ->
             val premio = premioPorPremiacion[dto.id]?.prize ?: return@mapNotNull null
-            val fecha = fechaEnEspanol(dto.premiationDate)
+            val fecha = fechaValida(dto.premiationDate)
             PremioArtista(
                 dto.id ?: return@mapNotNull null,
                 premio.name.conTexto() ?: return@mapNotNull null,
                 premio.organization.conTexto() ?: return@mapNotNull null,
                 fecha
-            ) to dto.premiationDate?.takeIf { fecha != null }
+            ) to fecha
         }.masRecientesPrimero()
     }
 
     private fun String?.conTexto(): String? = this?.takeIf(String::isNotBlank)
 
-    /** Fecha en español; una ausente o que no se pueda interpretar se trata como ausente. */
-    private fun fechaEnEspanol(fechaIso: String?): String? =
-        fechaIso?.let {
-            try {
-                formatearFechaLanzamiento(it)
-            } catch (_: ParseException) {
-                null
-            }
-        }
+    /**
+     * La fecha se guarda en ISO y la pantalla la formatea en el idioma de la app: así lo guardado sirve en
+     * cualquier idioma, también sin conexión. Una ausente o que no se pueda interpretar se trata como ausente.
+     */
+    private fun fechaValida(fechaIso: String?): String? = fechaIso?.takeIf { formatearFechaONula(it) != null }
 
     /** Ordena por la fecha ISO que acompaña a cada elemento, con los que no tienen fecha al final. */
     private fun <T> List<Pair<T, String?>>.masRecientesPrimero(): List<T> =

@@ -39,4 +39,16 @@ class PromedioCalificacionesTest {
         assertEquals(4, estrellasLlenas("4,3"))
         assertEquals(0, estrellasLlenas(null))
     }
+
+    @Test
+    fun elPromedioUsaElSeparadorDecimalDelIdioma() {
+        val comentarios = listOf(
+            com.example.vinilos.data.model.Comentario("a", 4),
+            com.example.vinilos.data.model.Comentario("b", 5)
+        )
+        assertEquals("4,5", promedioCalificaciones(comentarios))
+        assertEquals("4.5", promedioCalificaciones(comentarios, java.util.Locale.ENGLISH))
+        assertEquals(5, estrellasLlenas("4.5"))
+        assertEquals(5, estrellasLlenas("4,5"))
+    }
 }

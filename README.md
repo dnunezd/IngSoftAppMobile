@@ -186,11 +186,13 @@ Total: **41 pruebas E2E**. Para correrlas y traer la evidencia (con `connectedDe
 ./gradlew installDebug installDebugAndroidTest -PbaseUrl=http://localhost:3000/
 adb reverse tcp:3000 tcp:3000                    # solo en un teléfono
 adb shell rm -rf /storage/emulated/0/Android/data/com.example.vinilos/files/e2e-evidencia
-adb shell am instrument -w -e class com.example.vinilos.IngresoE2ETest,com.example.vinilos.CatalogoE2ETest,com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest,com.example.vinilos.ArtistasE2ETest,com.example.vinilos.ArtistaDetalleE2ETest,com.example.vinilos.CrearAlbumE2ETest,com.example.vinilos.ArtistasFavoritosE2ETest com.example.vinilos.test/androidx.test.runner.AndroidJUnitRunner
+adb shell am instrument -w -e class com.example.vinilos.IngresoE2ETest,com.example.vinilos.CatalogoE2ETest,com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest,com.example.vinilos.ArtistasE2ETest,com.example.vinilos.ArtistaDetalleE2ETest,com.example.vinilos.CrearAlbumE2ETest,com.example.vinilos.ArtistasFavoritosE2ETest com.example.vinilos.test/com.example.vinilos.VinilosTestRunner
 adb pull /storage/emulated/0/Android/data/com.example.vinilos/files/e2e-evidencia ./e2e-evidencia
 ```
 
 Debe terminar en `OK (41 tests)`. En Git Bash antepone `MSYS_NO_PATHCONV=1` a los `adb` que llevan rutas del dispositivo.
+
+Las pruebas buscan textos en español. El runner `VinilosTestRunner` deja la app en español en Android 13 o superior aunque el sistema esté en inglés; por debajo de API 33 el dispositivo debe estar en español.
 
 ## Problemas frecuentes
 

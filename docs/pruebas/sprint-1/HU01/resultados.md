@@ -41,7 +41,7 @@ adb logcat -b crash -d | Select-String "FATAL EXCEPTION"
 # Deja una carpeta FN01_ESC01 ... FN01_ESC05 por escenario, cada una con sus capturas, informe.md y PDF.
 .\gradlew.bat installDebug installDebugAndroidTest
 adb shell rm -rf /sdcard/Android/data/com.example.vinilos/files/e2e-evidencia
-adb shell am instrument -w -e class com.example.vinilos.CatalogoE2ETest com.example.vinilos.test/androidx.test.runner.AndroidJUnitRunner
+adb shell am instrument -w -e class com.example.vinilos.CatalogoE2ETest com.example.vinilos.test/com.example.vinilos.VinilosTestRunner
 adb pull /sdcard/Android/data/com.example.vinilos/files/e2e-evidencia .
 ```
 

@@ -1,0 +1,275 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Inglés (internacionalizar-ingles). El español de values/ es el idioma por defecto. -->
+    <string name="idioma">en</string>
+    <string name="app_name">Vinilos</string>
+    <string name="marca">Vinilo</string>
+    <string name="logo_descripcion">Vinilo logo</string>
+    <string name="atras_descripcion">Back</string>
+
+    <!-- Pantalla de ingreso -->
+    <string name="ingreso_hero_1">Make Endless</string>
+    <string name="ingreso_hero_2">Beats,</string>
+    <string name="ingreso_hero_pill">Sound</string>
+    <string name="ingreso_hero_3">Amazing</string>
+    <string name="ingreso_chip_superior">Beats &amp; Sound</string>
+    <string name="ingreso_subtitulo">Choose your access profile for the music library and dive into the world of vinyl.</string>
+    <string name="ingreso_audio_wave">Audio Wave</string>
+    <string name="ingreso_bpm">94 BPM</string>
+    <string name="ingreso_visitante">Visitor</string>
+    <string name="ingreso_visitante_etiqueta">Free Access</string>
+    <string name="ingreso_visitante_chip">Explore &amp; Learn</string>
+    <string name="ingreso_coleccionista">Collector</string>
+    <string name="ingreso_coleccionista_etiqueta">PRO</string>
+    <string name="ingreso_coleccionista_chip">My Vault &amp; Vinyls</string>
+    <string name="ingreso_entrar">Enter</string>
+    <string name="ingreso_entrar_como">Enter as %1$s</string>
+
+    <!-- Selector de coleccionista -->
+    <string name="coleccionistas_chip_curado">Curated Vinyls</string>
+    <string name="coleccionistas_chip_explora">Explore Sounds</string>
+    <string name="coleccionistas_audio_feed">Audio Feed</string>
+    <string name="coleccionistas_titulo_1">Who</string>
+    <string name="coleccionistas_titulo_2">are you?</string>
+    <string name="coleccionistas_subtitulo">Choose your registered collector profile to continue.</string>
+    <string name="coleccionistas_buscar">Search collector…</string>
+    <string name="coleccionistas_sin_resultados">We found no collectors matching that search</string>
+    <string name="coleccionistas_error">We couldn\'t load the collectors</string>
+    <string name="coleccionistas_error_actualizar">We couldn\'t refresh the collectors</string>
+    <string name="coleccionistas_actualizando">Refreshing collectors</string>
+    <string name="coleccionistas_reintentar">Retry</string>
+    <string name="coleccionistas_ingresar_visitante">Enter as Visitor</string>
+    <string name="coleccionistas_vacio">There are no registered collectors yet</string>
+    <string name="coleccionistas_volver">Back</string>
+    <string name="coleccionistas_cargando_descripcion">Loading collectors</string>
+    <string name="coleccionistas_seleccionar_descripcion">Enter as %1$s</string>
+
+    <!-- Pantalla de inicio (secciones) -->
+    <string name="inicio_chip">Vinilo Club</string>
+    <string name="inicio_saludo">Hello, music lover!</string>
+    <string name="inicio_saludo_nombre">Hello, %1$s!</string>
+    <string name="inicio_titular">Discover music in its purest format</string>
+    <string name="inicio_subtitulo">Choose what you want to explore today in your collection and travel through analog sound.</string>
+    <string name="inicio_albumes_etiqueta">Full catalog · LPs</string>
+    <string name="inicio_albumes_titulo">Album Catalog</string>
+    <string name="inicio_albumes_descripcion">Explore hundreds of classic records, vintage gems and limited editions on 33 RPM vinyl.</string>
+    <string name="inicio_albumes_boton">View albums</string>
+    <string name="inicio_artistas_etiqueta">Legends &amp; Bands</string>
+    <string name="inicio_artistas_titulo">Artist List</string>
+    <string name="inicio_artistas_descripcion">Learn about the careers, bands, discographies and awards of your favorite musicians.</string>
+    <string name="inicio_artistas_boton">View artists</string>
+
+    <!-- Listado de artistas (HU03) -->
+    <string name="artistas_titulo">Artists</string>
+    <string name="artistas_chip">Legends &amp; Bands</string>
+    <string name="artistas_titular_1">Explore</string>
+    <string name="artistas_titular_2">artists</string>
+    <string name="artistas_subtitulo">Musicians and bands in the catalog, in alphabetical order.</string>
+    <string name="artistas_buscar">Search artist by name…</string>
+    <string name="artistas_lista">Artists</string>
+    <string name="artistas_lista_descripcion">Artists, list</string>
+    <plurals name="artistas_contador">
+        <item quantity="one">%d artist</item>
+        <item quantity="other">%d artists</item>
+    </plurals>
+    <string name="artistas_tipo_musico">Musician</string>
+    <string name="artistas_tipo_banda">Band</string>
+    <string name="artistas_vacio">No artists found</string>
+    <string name="artistas_error">The artist list couldn\'t be loaded</string>
+    <string name="artistas_error_actualizar">The artist list couldn\'t be refreshed</string>
+    <string name="artistas_actualizando">Refreshing artists</string>
+    <string name="artistas_reintentar">Retry</string>
+    <string name="artistas_cargando">Loading artists…</string>
+    <string name="artistas_sin_coincidencias">Try another name.</string>
+    <string name="artistas_imagen_descripcion">Image of %1$s</string>
+    <string name="artistas_seleccionar_descripcion">View details of %1$s</string>
+
+    <!-- Detalle del artista (HU04) -->
+    <string name="artista_titulo">Artist</string>
+    <string name="artista_cargando">Loading artist…</string>
+    <string name="artista_error">The artist couldn\'t be loaded</string>
+    <string name="artista_error_actualizar">The artist couldn\'t be refreshed</string>
+    <string name="artista_actualizando">Refreshing artist</string>
+    <string name="artista_fecha_nacimiento">DATE OF BIRTH</string>
+    <string name="artista_fecha_creacion">FORMATION DATE</string>
+    <string name="artista_integrantes">Members</string>
+    <string name="artista_sin_integrantes">No members</string>
+    <plurals name="artista_integrantes_contador">
+        <item quantity="one">%d member</item>
+        <item quantity="other">%d members</item>
+    </plurals>
+    <string name="artista_albumes">Albums</string>
+    <string name="artista_sin_albumes">No albums</string>
+    <plurals name="artista_albumes_contador">
+        <item quantity="one">%d album</item>
+        <item quantity="other">%d albums</item>
+    </plurals>
+    <string name="artista_premios">Awards</string>
+    <string name="artista_sin_premios">No awards</string>
+    <plurals name="artista_premios_contador">
+        <item quantity="one">%d award</item>
+        <item quantity="other">%d awards</item>
+    </plurals>
+
+    <!-- Botón de favorito en el detalle del artista (HU10) -->
+    <string name="favoritos_agregar">Add Favorite</string>
+    <string name="favoritos_guardando">Saving…</string>
+    <string name="favoritos_favorito">Favorite</string>
+    <string name="favoritos_bloqueado_nota">This artist is already in your favorites.</string>
+    <string name="favoritos_reintentar">Retry</string>
+    <string name="favoritos_reintentar_guardado">Retry saving</string>
+    <string name="favoritos_error_comprobacion">We couldn\'t check whether it\'s your favorite</string>
+    <string name="favoritos_error_guardado">The favorite couldn\'t be saved, please try again</string>
+    <string name="favoritos_no_disponible">The artist is no longer available</string>
+    <string name="favoritos_no_disponible_descripcion">The selected artist is no longer in the catalog or was removed from the collection.</string>
+    <string name="favoritos_volver_artistas">Back to the artist list</string>
+    <string name="favoritos_confirmacion">%1$s was added to your favorites</string>
+
+    <!-- Catálogo de álbumes (HU01) -->
+    <string name="catalogo_encabezado">Albums</string>
+    <string name="catalogo_etiqueta_visitante">Visitor</string>
+    <string name="catalogo_etiqueta_coleccionista">Collector</string>
+    <string name="catalogo_chip">Vinilo Catalog</string>
+    <string name="catalogo_titular_1">Explore</string>
+    <string name="catalogo_titular_2">albums</string>
+    <string name="catalogo_subtitulo">High-fidelity record archive for music lovers and curators.</string>
+    <string name="catalogo_lista">Catalog</string>
+    <plurals name="catalogo_contador">
+        <item quantity="one">%d release</item>
+        <item quantity="other">%d releases</item>
+    </plurals>
+    <string name="catalogo_cargando">Loading vinyl catalog…</string>
+    <string name="catalogo_actualizando">Refreshing catalog</string>
+    <string name="catalogo_error">We couldn\'t load the catalog</string>
+    <string name="catalogo_error_actualizar">We couldn\'t refresh the catalog</string>
+    <string name="catalogo_reintentar">Retry</string>
+    <string name="catalogo_vacio">There are no albums in the catalog yet</string>
+    <string name="catalogo_genero_anio">%1$s · %2$s</string>
+    <string name="catalogo_portada_descripcion">Cover of %1$s</string>
+    <string name="catalogo_seleccionar_descripcion">View details of %1$s</string>
+    <string name="catalogo_album_creado">Album created</string>
+    <string name="catalogo_nuevo">New</string>
+
+    <!-- Crear un álbum (HU07) -->
+    <string name="crear_encabezado">Create</string>
+    <string name="crear_titular_1">New</string>
+    <string name="crear_titular_2">album</string>
+    <string name="crear_subtitulo">Enter the details to catalog your vinyl in the central archive.</string>
+    <string name="crear_campo_anuncio">%1$s, required</string>
+    <string name="crear_nombre">Album name</string>
+    <string name="crear_nombre_indicacion">E.g. Abbey Road</string>
+    <string name="crear_portada">Cover (URL)</string>
+    <string name="crear_portada_indicacion">https://</string>
+    <string name="crear_portada_vista_previa">Cover preview</string>
+    <string name="crear_fecha">Release date</string>
+    <string name="crear_fecha_indicacion">DD/MM/YYYY</string>
+    <string name="crear_fecha_titulo">Select the release date</string>
+    <string name="crear_fecha_aceptar">OK</string>
+    <string name="crear_genero">Genre</string>
+    <string name="crear_genero_indicacion">Select a genre</string>
+    <string name="crear_disquera">Record label</string>
+    <string name="crear_disquera_indicacion">Select a record label</string>
+    <string name="crear_descripcion">Description</string>
+    <string name="crear_descripcion_indicacion">Write details about the album</string>
+    <string name="crear_contador">%1$d / %2$d</string>
+    <string name="crear_campo_obligatorio">Required field</string>
+    <string name="crear_url_invalida">Enter a valid URL</string>
+    <string name="crear_aviso_titulo">Attention required</string>
+    <string name="crear_aviso_detalle">Fix the highlighted fields to continue with the registration.</string>
+    <string name="crear_album">Create album</string>
+    <string name="crear_enviando">Creating…</string>
+    <string name="crear_reintentar">Retry creation</string>
+    <string name="crear_cancelar">Cancel</string>
+    <string name="crear_error_envio">The album couldn\'t be created, please try again</string>
+
+    <string name="detalle_sin_canciones">This album has no tracks registered yet</string>
+    <string name="detalle_sin_comentarios">There are no comments for this album yet</string>
+    <string name="detalle_sin_calificaciones">No ratings</string>
+    <string name="detalle_canciones">Tracks</string>
+    <string name="detalle_comentarios">Comments</string>
+    <string name="detalle_agregar_cancion">Add track</string>
+    <string name="detalle_promedio">Average rating</string>
+    <string name="detalle_promedio_estrellas">out of 5 stars</string>
+    <string name="detalle_calificacion">%1$d / 5</string>
+    <string name="detalle_portada">Album cover</string>
+    <string name="detalle_portada_con_nombre">Album cover, %1$s</string>
+    <string name="detalle_artistas">Artists</string>
+    <string name="detalle_artista_imagen">Image of %1$s</string>
+    <string name="detalle_estreno">Release</string>
+    <string name="detalle_cargando">Loading album</string>
+    <string name="detalle_no_disponible">The album is no longer available</string>
+    <string name="detalle_volver_catalogo">Back to the catalog</string>
+    <string name="detalle_error">We couldn\'t load the album</string>
+    <string name="detalle_error_actualizar">We couldn\'t refresh the album</string>
+    <string name="detalle_actualizando">Refreshing album</string>
+    <string name="detalle_reintentar">Retry</string>
+    <!-- Agregar canción a un álbum (HU08) -->
+    <string name="agregar_cancion_titulo">Add track</string>
+    <string name="agregar_cancion_nombre">Name</string>
+    <string name="agregar_cancion_duracion">Duration</string>
+    <string name="agregar_cancion_campo_obligatorio">Required field</string>
+    <string name="agregar_cancion_error_formato">Use the m:ss format, for example 5:05</string>
+    <string name="agregar_cancion_guardar">Save</string>
+    <string name="agregar_cancion_guardando">Saving…</string>
+    <string name="agregar_cancion_cancelar">Cancel</string>
+    <string name="agregar_cancion_error_envio">The track couldn\'t be added, please try again</string>
+    <string name="agregar_cancion_exito">Track added</string>
+    <string name="agregar_cancion_exito_detalle">Added to %1$s</string>
+    <string name="agregar_cancion_cerrar_aviso">Close notice</string>
+    <string name="agregar_cancion_album_no_disponible">The album is no longer available</string>
+    <string name="agregar_cancion_volver">Back</string>
+    <string name="agregar_cancion_album_destino">Target album</string>
+    <string name="agregar_cancion_datos_cancion">Track details</string>
+
+    <string name="detalle_comentar">Comment on album</string>
+    <!-- Comentar un álbum (HU09) -->
+    <string name="comentar_encabezado">Comment on album</string>
+    <string name="comentar_calificando">Rating album</string>
+    <string name="comentar_coleccionista">%1$s (Collector)</string>
+    <string name="comentar_pregunta">What did you think of this vinyl?</string>
+    <string name="comentar_subtitulo">Your experience with the master, pressing and audio</string>
+    <!-- "out of 5 stars" no cambia con el número: no es un plural. -->
+    <string name="comentar_estrella" tools:ignore="PluralsCandidate">%1$d out of 5 stars</string>
+    <string name="comentar_nivel">%1$s (%2$d/5)</string>
+    <string name="comentar_nivel_1">Very bad</string>
+    <string name="comentar_nivel_2">Bad</string>
+    <string name="comentar_nivel_3">Fair</string>
+    <string name="comentar_nivel_4">Good</string>
+    <string name="comentar_nivel_5">Excellent</string>
+    <string name="comentar_opinion">Write your review</string>
+    <string name="comentar_publico">Public comment for the community</string>
+    <string name="comentar_contador">%1$d / %2$d</string>
+    <string name="comentar_publicar">Post comment</string>
+    <string name="comentar_publicando">Posting…</string>
+    <string name="comentar_error">The comment couldn\'t be posted, please try again</string>
+    <string name="comentar_cargando">Loading album</string>
+    <string name="comentar_error_album">We couldn\'t load the album</string>
+    <string name="comentar_reintentar">Retry</string>
+    <string name="comentar_descartar_titulo">Discard comment?</string>
+    <string name="comentar_descartar_texto">You have a comment in progress. If you leave now, the changes you wrote will be lost.</string>
+    <string name="comentar_continuar">Keep writing</string>
+    <string name="comentar_descartar">Discard and leave</string>
+    <string name="comentar_publicado">Comment posted</string>
+    <string name="comentar_publicado_titulo">Comment posted successfully!</string>
+    <string name="comentar_publicado_texto">Your audiophile review is now part of this vinyl\'s living log.</string>
+    <string name="comentar_ilustracion">Vinyl with the posted mark</string>
+    <string name="comentar_album_resenado">Reviewed album</string>
+    <string name="comentar_aceptar">OK</string>
+
+    <!-- Agregar un álbum a un artista (HU15) -->
+    <string name="asociar_agregar_album">Add album</string>
+    <string name="asociar_titulo">Link album to %1$s</string>
+    <string name="asociar_buscar">Search album by title…</string>
+    <string name="asociar_limpiar_busqueda">Clear search</string>
+    <string name="asociar_cerrar">Close</string>
+    <string name="asociar_ya_asociado">Already linked</string>
+    <string name="asociar_asociar">Link</string>
+    <string name="asociar_cancelar">Cancel</string>
+    <string name="asociar_asociando">Linking album</string>
+    <string name="asociar_album_asociado">Album linked</string>
+    <string name="asociar_sin_albumes">There are no albums to link</string>
+    <string name="asociar_sin_resultados">We found no albums matching that search</string>
+    <string name="asociar_error">The album couldn\'t be linked, please try again</string>
+    <string name="asociar_cargando">Loading albums…</string>
+    <string name="asociar_error_listado">We couldn\'t load the albums</string>
+    <string name="asociar_reintentar">Retry</string>
+</resources>

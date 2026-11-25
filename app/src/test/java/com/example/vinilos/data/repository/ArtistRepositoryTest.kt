@@ -204,7 +204,7 @@ class ArtistRepositoryTest {
                 imagen = "https://img/ruben.jpg",
                 descripcion = "Cantante",
                 tipo = ArtistType.MUSICO,
-                fecha = "16 de julio de 1948",
+                fecha = "1948-07-16T00:00:00.000Z",
                 integrantes = emptyList(),
                 albumes = listOf(AlbumArtista(100, "Buscando América", "https://img/ba.jpg", "1984")),
                 premios = emptyList()
@@ -236,7 +236,7 @@ class ArtistRepositoryTest {
                 imagen = "https://img/queen.jpg",
                 descripcion = "Banda británica",
                 tipo = ArtistType.BANDA,
-                fecha = "1 de enero de 1970",
+                fecha = "1970-01-01T00:00:00.000Z",
                 integrantes = listOf(IntegranteArtista(100, "Freddie Mercury", "https://img/freddie.jpg")),
                 albumes = emptyList(),
                 premios = emptyList()
@@ -275,7 +275,7 @@ class ArtistRepositoryTest {
         val detalle = repositorio.obtenerDetalle(ArtistType.MUSICO, 100).getOrThrow()
 
         assertEquals(
-            listOf(PremioArtista(100, "Grammy Award", "NARAS", "10 de diciembre de 1978")),
+            listOf(PremioArtista(100, "Grammy Award", "NARAS", "1978-12-10T00:00:00.000Z")),
             detalle.premios
         )
     }
@@ -433,7 +433,7 @@ class ArtistRepositoryTest {
 
         assertEquals(listOf("De 1985", "De 1978", "Sin fecha", "Malformada"), premios.map { it.nombre })
         assertEquals(
-            listOf("26 de febrero de 1985", "10 de diciembre de 1978", null, null),
+            listOf("1985-02-26T00:00:00.000Z", "1978-12-10T00:00:00.000Z", null, null),
             premios.map { it.fecha }
         )
     }
