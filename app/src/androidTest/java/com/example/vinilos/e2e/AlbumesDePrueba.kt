@@ -38,10 +38,19 @@ class AlbumesDePrueba(private val baseUrl: String = BuildConfig.BASE_URL) {
             .put("recordLabel", "EMI")
             .toString()
             .toRequestBody("application/json".toMediaType())
-        val id = http.newCall(Request.Builder().url("${baseUrl}albums").post(cuerpo).build()).execute()
-            .use { JSONObject(requireNotNull(it.body).string()).getInt("id") }
-        synchronized(creados) { creados += id }
-        return AlbumDePrueba(id, nombre)
+        // La secuencia de ids de `album` arranca en 1, pero los datos de ejemplo usan los ids 100 a 103: cuando
+        // llega a ellos, BackVynils responde 500 por clave duplicada. Cada intento fallido avanza la secuencia,
+        // así que basta con reintentar hasta pasar los ids ocupados.
+        repeat(INTENTOS) {
+            val id = http.newCall(Request.Builder().url("${baseUrl}albums").post(cuerpo).build()).execute().use { respuesta ->
+                if (respuesta.isSuccessful) JSONObject(requireNotNull(respuesta.body).string()).getInt("id") else null
+            }
+            if (id != null) {
+                synchronized(creados) { creados += id }
+                return AlbumDePrueba(id, nombre)
+            }
+        }
+        error("BackVynils no creó el álbum de prueba después de $INTENTOS intentos")
     }
 
     fun album(id: Int): JSONObject =
@@ -53,6 +62,12 @@ class AlbumesDePrueba(private val baseUrl: String = BuildConfig.BASE_URL) {
         val albumes = http.newCall(Request.Builder().url("$baseUrl$ruta/$artistaId").build()).execute()
             .use { JSONObject(requireNotNull(it.body).string()).getJSONArray("albums") }
         return ids(albumes)
+    }
+
+    /** Borra un álbum sin canciones ni comentarios a mitad de la prueba, como si otra persona lo eliminara. */
+    fun borrar(album: AlbumDePrueba) {
+        borrar("albums/${album.id}")
+        synchronized(creados) { creados -= album.id }
     }
 
     fun borrarTodos() {
@@ -68,6 +83,11 @@ class AlbumesDePrueba(private val baseUrl: String = BuildConfig.BASE_URL) {
 
     private fun borrar(ruta: String) =
         http.newCall(Request.Builder().url("$baseUrl$ruta").delete().build()).execute().close()
+
+    private companion object {
+        /** Más que los álbumes de ejemplo (ids 100 a 103) que la secuencia puede encontrarse seguidos. */
+        const val INTENTOS = 10
+    }
 
     private fun ids(lista: JSONArray): Set<Int> = (0 until lista.length()).map { lista.getJSONObject(it).getInt("id") }.toSet()
 }
