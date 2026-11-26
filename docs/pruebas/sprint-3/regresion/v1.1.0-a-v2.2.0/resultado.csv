@@ -1,0 +1,15 @@
+pantalla,porcentaje_distinto,desplazamiento_px,estado
+01_ingreso,0.00,0,Igual
+02_ingreso_tarjeta_coleccionista,0.00,0,Igual
+03_selector_coleccionistas,0.00,0,Igual
+04_selector_busqueda,0.00,0,Igual
+05_inicio_coleccionista,0.00,0,Igual
+06_catalogo_coleccionista,21.98,0,Cambió
+08_detalle_album,0.41,0,Cambió
+09_detalle_album_canciones,0.41,17,Cambió
+10_inicio_tarjeta_artistas,0.00,0,Igual
+11_artistas,0.00,0,Igual
+12_artistas_busqueda,0.00,0,Igual
+13_detalle_artista,12.73,0,Cambió
+15_inicio_visitante,0.00,0,Igual
+16_catalogo_visitante,20.19,0,Cambió
