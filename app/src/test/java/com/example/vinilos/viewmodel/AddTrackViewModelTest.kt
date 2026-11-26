@@ -24,9 +24,10 @@ private class RepositorioAddTrackFalso : AlbumRepository {
     private val respuestas = mutableListOf<CompletableDeferred<Result<Unit>>>()
 
     /**
-     * Álbum ya guardado en caché (Room) para la tarjeta de contexto del formulario. La carga es de la
-     * caché local, no de la red: el álbum ya se consultó al abrir el detalle (add-cache-consultas),
-     * así que no hace falta repetir el `GET /albums/{id}` (evita la consulta duplicada de HU02/HU10).
+     * Album already saved in cache (Room) for the form's context card. The load comes from the
+     * local cache, not the network: the album was already queried when opening the detail screen
+     * (add-cache-consultas), so there's no need to repeat the `GET /albums/{id}` (avoids the
+     * duplicate query from HU02/HU10).
      */
     var albumGuardado: Album? = null
 

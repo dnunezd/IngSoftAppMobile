@@ -43,16 +43,16 @@ import java.util.concurrent.Executors
 import kotlin.coroutines.CoroutineContext
 
 /**
- * Cada método de los repositorios corre en el dispatcher que recibe (en la app, `Dispatchers.Default`),
- * no en el de quien lo llama, que en los ViewModel es el hilo principal.
+ * Each repository method runs on the dispatcher it receives (in the app, `Dispatchers.Default`),
+ * not on the caller's, which in ViewModels is the main thread.
  *
- * Las APIs y el DAO falsos anotan el hilo en que se les llama y responden sin suspender, así que la
- * conversión que sigue a cada respuesta corre en ese mismo hilo: si la llamada ocurre en el hilo del
- * dispatcher, la conversión también.
+ * The fake APIs and DAO record the thread they're called on and respond without suspending, so the
+ * conversion that follows each response runs on that same thread: if the call happens on the
+ * dispatcher's thread, the conversion does too.
  */
 class RepositoriosDispatcherTest {
 
-    /** Corre todo en un hilo con nombre propio. */
+    /** Runs everything on a thread with its own name. */
     private class DispatcherDePrueba : CoroutineDispatcher() {
         private val hilo = Executors.newSingleThreadExecutor { Thread(it, NOMBRE_HILO) }
 
@@ -66,7 +66,7 @@ class RepositoriosDispatcherTest {
         hilos += hiloActual()
     }
 
-    /** En modo depuración, kotlinx agrega " @coroutine#N" al nombre del hilo. */
+    /** In debug mode, kotlinx appends " @coroutine#N" to the thread name. */
     private fun hiloActual() = Thread.currentThread().name.substringBefore(" @")
 
     private val dispatcher = DispatcherDePrueba()
@@ -75,14 +75,14 @@ class RepositoriosDispatcherTest {
     @After
     fun terminar() = dispatcher.cerrar()
 
-    /** Al menos una llamada a la API o al DAO, y todas en el hilo del dispatcher. */
+    /** At least one call to the API or DAO, and all of them on the dispatcher's thread. */
     private fun assertTodoEnElDispatcher() {
         assertTrue("La prueba debe llegar a la API o al DAO", hilos.isNotEmpty())
         assertEquals(listOf(NOMBRE_HILO), hilos.distinct())
         assertNotEquals("Quien llama no corre en el dispatcher", NOMBRE_HILO, hiloActual())
     }
 
-    // ---------- Falsos ----------
+    // ---------- Fakes ----------
 
     private val albumDto = AlbumDto(
         id = 100, name = "Buscando América", cover = null, description = "Salsa urbana", genre = "Salsa",
@@ -180,7 +180,7 @@ class RepositoriosDispatcherTest {
 
     private fun comentarios() = CommentRepositoryImpl(adaptador, comentarioApi, dispatcher)
 
-    // ---------- Álbumes ----------
+    // ---------- Albums ----------
 
     @Test
     fun getAlbumCorreEnElDispatcher() = runTest {
@@ -208,7 +208,7 @@ class RepositoriosDispatcherTest {
         assertTodoEnElDispatcher()
     }
 
-    // ---------- Artistas ----------
+    // ---------- Artists ----------
 
     @Test
     fun getArtistsCorreEnElDispatcher() = runTest {
@@ -230,7 +230,7 @@ class RepositoriosDispatcherTest {
         assertTodoEnElDispatcher()
     }
 
-    // ---------- Coleccionistas y favoritos ----------
+    // ---------- Collectors and favorites ----------
 
     @Test
     fun getCollectorsCorreEnElDispatcher() = runTest {
@@ -257,7 +257,7 @@ class RepositoriosDispatcherTest {
         assertTodoEnElDispatcher()
     }
 
-    // ---------- Lecturas de lo guardado (add-cache-consultas) ----------
+    // ---------- Reading saved data (add-cache-consultas) ----------
 
     @Test
     fun getCachedAlbumCorreEnElDispatcher() = runTest {

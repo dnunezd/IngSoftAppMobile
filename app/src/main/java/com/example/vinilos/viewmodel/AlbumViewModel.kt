@@ -21,20 +21,20 @@ class AlbumViewModel(id: Int, private val repositorio: AlbumRepository) : ViewMo
     private var consultaVigente = 0L
 
     /**
-     * Dueño del aviso "Canción agregada": vive en el ViewModel (sobrevive a una rotación) en vez de
-     * depender de la clave de navegación, que se borra apenas se dispara [actualizar] (ver [cancionAgregada]).
-     * Así, si la Activity se recrea mientras el aviso está en pantalla, no se repite el GET /albums/{id}.
+     * Owner of the "Track added" notice: it lives in the ViewModel (survives a rotation) instead of
+     * depending on the navigation key, which is cleared as soon as [actualizar] fires (see [cancionAgregada]).
+     * This way, if the Activity is recreated while the notice is on screen, the GET /albums/{id} isn't repeated.
      */
     private val _avisoTrackAgregada = MutableStateFlow(false)
     val avisoTrackAgregada = _avisoTrackAgregada.asStateFlow()
 
-    /** Se llama una sola vez al volver del formulario de agregar canción con éxito. */
+    /** Called only once upon returning from the add-track form with success. */
     fun cancionAgregada() {
         _avisoTrackAgregada.value = true
         actualizar()
     }
 
-    /** La pantalla ya mostró el aviso de "Canción agregada". */
+    /** The screen already showed the "Track added" notice. */
     fun avisoTrackAgregadaMostrado() {
         _avisoTrackAgregada.value = false
     }
@@ -48,7 +48,7 @@ class AlbumViewModel(id: Int, private val repositorio: AlbumRepository) : ViewMo
         if (_uiState.value == AlbumUiState.Error) cargar()
     }
 
-    /** La pantalla ya mostró el aviso de que no se pudo actualizar el detalle guardado. */
+    /** The screen already showed the notice that the saved detail couldn't be refreshed. */
     fun avisoMostrado() {
         val estado = _uiState.value
         if (estado is AlbumUiState.Success && estado.errorAlActualizar) {
@@ -57,9 +57,9 @@ class AlbumViewModel(id: Int, private val repositorio: AlbumRepository) : ViewMo
     }
 
     /**
-     * Vuelve a consultar el álbum manteniendo a la vista el que ya se muestra, por ejemplo después de
-     * agregarle una canción o comentarlo (add-comentar-album, D7). Sin álbum a la vista, carga como al
-     * empezar.
+     * Re-queries the album while keeping the one already on screen visible, for example after
+     * adding a track to it or commenting on it (add-comentar-album, D7). With no album on screen, it loads as at
+     * the start.
      */
     fun actualizar() {
         cargar(visible = (_uiState.value as? AlbumUiState.Success)?.album)
@@ -70,9 +70,9 @@ class AlbumViewModel(id: Int, private val repositorio: AlbumRepository) : ViewMo
     }
 
     /**
-     * Con un detalle guardado, lo muestra de inmediato mientras consulta, y un fallo de la consulta solo
-     * activa el aviso. Sin nada guardado, se comporta como antes: `Cargando` y `Error` si falla. Un 404
-     * siempre lleva a `NoDisponible` (add-cache-consultas, D5).
+     * With a saved detail, it's shown immediately while querying, and a query failure only
+     * triggers the notice. With nothing saved, it behaves as before: `Loading` and `Error` if it fails. A 404
+     * always leads to `NotAvailable` (add-cache-consultas, D5).
      */
     private fun cargar(visible: Album? = null) {
         val consulta = ++consultaVigente
@@ -80,7 +80,7 @@ class AlbumViewModel(id: Int, private val repositorio: AlbumRepository) : ViewMo
         carga?.cancel()
         _uiState.value = visible?.let { AlbumUiState.Success(it, actualizando = true) } ?: AlbumUiState.Loading
         carga = viewModelScope.launch {
-            // Con un álbum a la vista, ese hace las veces de lo guardado.
+            // With an album already on screen, it stands in for the saved one.
             val guardado = visible ?: repositorio.getCachedAlbum(id)
             if (consulta != consultaVigente) return@launch
             if (visible == null && guardado != null) _uiState.value = AlbumUiState.Success(guardado, actualizando = true)

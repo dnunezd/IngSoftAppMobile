@@ -60,19 +60,19 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * E2E de la HU08 (asociar canciones a un álbum).
+ * E2E for HU08 (associating tracks with an album).
  *
- * FN08-ESC01, ESC02 y ESC04 a ESC07 van contra el backend real. Como agregan canciones, se corren contra
- * BackVynils local (en un teléfono, `-PbaseUrl=http://localhost:3000/` con `adb reverse tcp:3000 tcp:3000`).
- * Los del Coleccionista trabajan sobre un álbum propio creado con `POST /albums`, que [AlbumesDePrueba]
- * borra al terminar con sus canciones, aunque la prueba falle; ESC07 lo borra a mitad de la prueba para
- * guardar sobre un álbum ya eliminado. El Visitante usa el primer álbum real y el Coleccionista, el primer
- * coleccionista real.
+ * FN08-ESC01, ESC02, and ESC04 through ESC07 run against the real backend. Since they add tracks, they
+ * run against a local BackVynils (on a phone, `-PbaseUrl=http://localhost:3000/` with `adb reverse
+ * tcp:3000 tcp:3000`). The Collector scenarios work on their own album created with `POST /albums`,
+ * which [AlbumesDePrueba] deletes at the end along with its tracks, even if the test fails; ESC07
+ * deletes it midway through the test to attempt a save against an already-deleted album. The Visitor
+ * uses the first real album, and the Collector uses the first real collector.
  *
- * FN08-ESC03 (falla al guardar y reintento) usa `MockWebServer`, como FN07-ESC07 y FN10-ESC07.
+ * FN08-ESC03 (save failure and retry) uses `MockWebServer`, like FN07-ESC07 and FN10-ESC07.
  *
- * Cada escenario guarda un pantallazo por paso, `informe.md` y un PDF en
- * `.../files/e2e-evidencia/FN08_ESCxx/` (en el dispositivo; los PDF se versionan a mano en
+ * Each scenario saves a screenshot per step, `informe.md` and a PDF in
+ * `.../files/e2e-evidencia/FN08_ESCxx/` (on the device; the PDFs are versioned by hand in
  * `docs/pruebas/sprint-3/HU08/e2e/`).
  */
 class AddTrackE2ETest {
@@ -80,7 +80,7 @@ class AddTrackE2ETest {
     @get:Rule
     val rule = createEmptyComposeRule()
 
-    /** El repositorio real de la app, que además cuenta los envíos de canciones. */
+    /** The app's real repository, which also counts the track submissions. */
     private class AlbumesReales(
         private val real: AlbumRepository = AlbumRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL))
     ) : AlbumRepository by real {
@@ -108,7 +108,7 @@ class AddTrackE2ETest {
         albumesDePrueba.borrarTodos()
     }
 
-    // ---------- Datos reales ----------
+    // ---------- Real data ----------
 
     private fun primerAlbumReal(): Int = runBlocking {
         val album = AlbumRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL)).getAlbums().getOrThrow().firstOrNull()
@@ -120,7 +120,7 @@ class AddTrackE2ETest {
         CollectorRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL)).getCollectors().getOrThrow().first().id
     }
 
-    /** Canciones del álbum según el backend, como pares nombre-duración. */
+    /** The album's tracks according to the backend, as name-duration pairs. */
     private fun cancionesEnElBackend(album: AlbumDePrueba): List<Pair<String, String>> {
         val canciones = albumesDePrueba.album(album.id).getJSONArray("tracks")
         return (0 until canciones.length()).map {
@@ -128,7 +128,7 @@ class AddTrackE2ETest {
         }
     }
 
-    // ---------- Navegación ----------
+    // ---------- Navigation ----------
 
     private fun esperarA(tag: String, milis: Long = 15_000) =
         rule.waitUntil(milis) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
@@ -157,13 +157,13 @@ class AddTrackE2ETest {
         esperarA(TagInicio)
     }
 
-    /** Inicio -> "Ver álbumes" -> detalle del álbum [id], cargado. */
+    /** Home -> "Ver álbumes" -> detail of album [id], loaded. */
     private fun abrirDetalle(id: Int, evidencia: String, paso: String) {
         rule.onNodeWithTag(TagVerAlbumes).performScrollTo().performClick()
         esperarA(TagContadorCatalogo)
         rule.onNodeWithTag(TagCuadriculaCatalogo).performScrollToNode(hasTestTag(tagAlbum(id)))
         rule.onNodeWithTag(tagAlbum(id)).performClick()
-        // La sección puede estar más abajo, aún sin componer: se espera a que el detalle cargue y se llegue a ella.
+        // The section may be further down, still not composed: wait for the detail to load and scroll to it.
         rule.waitUntil(15_000) {
             runCatching { rule.onNodeWithTag(TagListaDetalleAlbum).performScrollToNode(hasText("Canciones")) }.isSuccess
         }
@@ -181,12 +181,12 @@ class AddTrackE2ETest {
         Espresso.closeSoftKeyboard()
     }
 
-    /** Cuántos campos muestran [mensaje] debajo (el texto de apoyo está dentro del campo). */
+    /** How many fields show [mensaje] below (the supporting text is inside the field). */
     private fun camposCon(mensaje: String) = rule.onAllNodesWithText(mensaje, useUnmergedTree = true)
 
     private fun save() = rule.onNodeWithTag(TagGuardarTrack).performScrollTo()
 
-    /** La canción [nombre] aparece en la lista del detalle con su [duracion]. */
+    /** The track [nombre] appears in the detail's list with its [duracion]. */
     private fun verTrackEnElDetalle(nombre: String, duracion: String) {
         rule.waitUntil(15_000) {
             runCatching { rule.onNodeWithTag(TagListaDetalleAlbum).performScrollToNode(hasText(nombre)) }.isSuccess
@@ -195,7 +195,7 @@ class AddTrackE2ETest {
         rule.onNodeWithText(duracion).assertIsDisplayed()
     }
 
-    /** Gira la pantalla de verdad (no solo recrea la Activity), para que la evidencia se vea girada. */
+    /** Actually rotates the screen (not just recreating the Activity), so the evidence appears rotated. */
     private fun girar(escenario: ActivityScenario<MainActivity>, horizontal: Boolean) {
         escenario.onActivity {
             it.requestedOrientation =
@@ -211,9 +211,9 @@ class AddTrackE2ETest {
         rule.waitForIdle()
     }
 
-    // ---------- Escenarios contra el backend real ----------
+    // ---------- Scenarios against the real backend ----------
 
-    /** FN08-ESC01: una duración que no cumple m:ss muestra el error y deja "Guardar" deshabilitado. */
+    /** FN08-ESC01: a duration that doesn't follow m:ss shows the error and leaves "Guardar" disabled. */
     @Test
     fun unaDuracionConFormatoInvalidoNoSePuedeGuardar() {
         val evidencia = "FN08_ESC01"
@@ -245,7 +245,7 @@ class AddTrackE2ETest {
         assertTrue(cancionesEnElBackend(album).isEmpty())
     }
 
-    /** FN08-ESC02: el Coleccionista agrega una canción válida y la ve en el detalle del álbum. */
+    /** FN08-ESC02: the Collector adds a valid track and sees it in the album's detail. */
     @Test
     fun elColeccionistaAgregaUnaTrackAlAlbum() {
         val evidencia = "FN08_ESC02"
@@ -281,7 +281,7 @@ class AddTrackE2ETest {
         assertEquals(listOf("Pista E2E" to "3:45"), cancionesEnElBackend(album))
     }
 
-    /** FN08-ESC04: el Visitante no ve la acción "Agregar canción" en el detalle de un álbum. */
+    /** FN08-ESC04: the Visitor doesn't see the "Agregar canción" action in an album's detail. */
     @Test
     fun elVisitanteNoVeLaAccionDeAddTrack() {
         val evidencia = "FN08_ESC04"
@@ -298,7 +298,7 @@ class AddTrackE2ETest {
         assertEquals(0, albumes.envios)
     }
 
-    /** FN08-ESC05: "Cancelar" cierra el formulario sin guardar y al volver a abrirlo aparece vacío. */
+    /** FN08-ESC05: "Cancelar" closes the form without saving, and reopening it shows it empty. */
     @Test
     fun cancelarCierraSinGuardarYElFormularioVuelveEmpty() {
         val evidencia = "FN08_ESC05"
@@ -330,8 +330,8 @@ class AddTrackE2ETest {
     }
 
     /**
-     * FN08-ESC06: al girar la pantalla el formulario conserva lo escrito y el error de la duración; tras
-     * corregirla y volver a girar, se guarda una sola vez.
+     * FN08-ESC06: when the screen is rotated, the form preserves what was written and the duration
+     * error; after fixing it and rotating back, it saves only once.
      */
     @Test
     fun alGirarLaPantallaElFormularioConservaLoEscritoYSeGuardaUnaVez() {
@@ -374,8 +374,8 @@ class AddTrackE2ETest {
     }
 
     /**
-     * FN08-ESC07: si el álbum se elimina en el backend mientras el formulario está abierto, al guardar se
-     * avisa que ya no está disponible y, al volver, el detalle también lo muestra como no disponible.
+     * FN08-ESC07: if the album is deleted on the backend while the form is open, saving warns that it is
+     * no longer available and, on returning, the detail also shows it as unavailable.
      */
     @Test
     fun saveSobreUnAlbumYaEliminadoAvisaQueNoEstaDisponible() {
@@ -390,7 +390,7 @@ class AddTrackE2ETest {
             escribir(TagDuracionTrack, "2:10")
             EvidenciaE2E.capturar(rule, evidencia, "02_formulario_lleno")
 
-            // Otra persona elimina el álbum en el backend antes de que se guarde la canción.
+            // Someone else deletes the album on the backend before the track is saved.
             albumesDePrueba.borrar(album)
             save().performClick()
 
@@ -401,7 +401,7 @@ class AddTrackE2ETest {
 
             rule.onNodeWithText("Volver").performClick()
             esperarQueSeCierreElFormulario()
-            // El detalle se vuelve a consultar y pasa a "no disponible" en lugar de mostrar el álbum viejo.
+            // The detail is re-queried and switches to "unavailable" instead of showing the old album.
             esperarTexto("Volver al catálogo")
             rule.onNodeWithText("El álbum ya no está disponible").assertIsDisplayed()
             rule.onAllNodesWithTag(TagAddTrackDetalle).assertCountEquals(0)
@@ -410,16 +410,16 @@ class AddTrackE2ETest {
         assertEquals(1, albumes.envios)
     }
 
-    // ---------- Escenarios con MockWebServer ----------
+    // ---------- Scenarios with MockWebServer ----------
 
-    /** Estado del servidor simulado, que cada escenario cambia a mitad de la prueba. */
+    /** State of the simulated server, which each scenario changes midway through the test. */
     private class Simulado {
         @Volatile var respuestaGuardado: (envio: Int) -> MockResponse = { MockResponse().setBody("{}") }
         @Volatile var envios = 0
         val canciones = mutableListOf<String>()
     }
 
-    /** Coleccionista 100 y el álbum 100 "Buscando América", sin canciones hasta que se guarda una. */
+    /** Collector 100 and album 100 "Buscando América", with no tracks until one is saved. */
     private fun iniciarServidor(simulado: Simulado) {
         fun album() = """
             {"id": 100, "name": "Buscando América", "cover": null, "description": "Salsa urbana",
@@ -450,19 +450,19 @@ class AddTrackE2ETest {
             start()
         }
         servidor = nuevo
-        // "localhost" es uno de los hosts con HTTP permitido en network_security_config.xml.
+        // "localhost" is one of the hosts allowed over HTTP in network_security_config.xml.
         ApplicationProvider.getApplicationContext<VinilosApplication>().container =
             AppContainer(baseUrl = "http://localhost:${nuevo.port}/")
     }
 
     /**
-     * FN08-ESC03: mientras se guarda se ve "Guardando…" y un segundo toque no envía nada; si el guardado
-     * falla se ve el error con los datos conservados, y el reintento agrega la canción.
+     * FN08-ESC03: while saving, "Guardando…" is shown and a second tap sends nothing; if the save fails,
+     * the error is shown with the data preserved, and retrying adds the track.
      */
     @Test
     fun siFallaElGuardadoSeConservanLosDatosYReintentarLaAgrega() {
         val evidencia = "FN08_ESC03"
-        // El primer envío tarda y termina en error del servicio; el siguiente sale bien.
+        // The first submission takes a while and ends in a server error; the next one succeeds.
         val simulado = Simulado().apply {
             respuestaGuardado = { envio ->
                 if (envio == 1) MockResponse().setResponseCode(500).setHeadersDelay(3, TimeUnit.SECONDS)

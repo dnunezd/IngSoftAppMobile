@@ -23,10 +23,10 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * Con un idioma sin traducción (francés), la app cae al español y el selector de fecha también debe
- * salir en español, incluidos los textos propios de Material ("Fecha seleccionada"). El Dialog del
- * selector abre otra composición con el contexto del dispositivo; sin aplicar ahí el idioma de la app,
- * esos textos salían en francés (internacionalizar-ingles, D4).
+ * With an untranslated language (French), the app falls back to Spanish, and the date picker must
+ * also appear in Spanish, including Material's own text ("Fecha seleccionada"). The picker's Dialog
+ * opens another composition using the device's context; without applying the app's language there,
+ * those texts came out in French (internacionalizar-ingles, D4).
  */
 class SelectorFechaEnOtroIdiomaTest {
 

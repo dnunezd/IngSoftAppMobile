@@ -52,7 +52,7 @@ class ArtistsScreenTest {
                     estado = estado,
                     onBuscar = {
                         buscado = it
-                        // Como el ViewModel: la búsqueda solo cambia el estado cuando ya hay datos.
+                        // Like the ViewModel: searching only changes the state once there is data.
                         (estado as? ArtistsUiState.Success)?.let { actual -> estado = actual.copy(consulta = it) }
                     },
                     onReintentar = { reintentos++ },
@@ -64,7 +64,7 @@ class ArtistsScreenTest {
         }
     }
 
-    /** En pantallas bajas la lista solo compone lo que se ve: hay que desplazarla hasta el nodo. */
+    /** On short screens the list only composes what is visible: it must be scrolled to the node. */
     private fun verEnLista(nodo: SemanticsMatcher) =
         rule.onNodeWithTag(TagListaArtistas).performScrollToNode(nodo)
 
@@ -95,10 +95,10 @@ class ArtistsScreenTest {
     @Test
     fun lasFilasRespetanElOrdenDelEstado() {
         mostrar(ArtistsUiState.Success(todos))
-        // Con la primera fila arriba, la segunda también queda compuesta.
+        // With the first row at the top, the second one also ends up composed.
         verEnLista(hasTestTag(tagArtista(queen)))
 
-        // onAllNodes devuelve los nodos en el orden del árbol, que es el orden en pantalla.
+        // onAllNodes returns the nodes in tree order, which is the order on screen.
         val filas = rule.onAllNodes(hasTestTag(tagArtista(queen)) or hasTestTag(tagArtista(ruben)))
         filas.assertCountEquals(2)
         filas[0].assert(hasTestTag(tagArtista(queen)))
@@ -192,7 +192,7 @@ class ArtistsScreenTest {
         assertEquals(1, atras)
     }
 
-    // ---------- Listado guardado (add-cache-consultas, D6) ----------
+    // ---------- Saved listing (add-cache-consultas, D6) ----------
 
     @Test
     fun conElListadoGuardadoActualizandoseMuestraElIndicadorPequenoYLaLista() {

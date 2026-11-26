@@ -64,21 +64,22 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * E2E de la HU10 (agregar artistas favoritos), con los escenarios de la T10-5.
+ * E2E for HU10 (add favorite artists), with the scenarios from T10-5.
  *
- * FN10-ESC01 a ESC05 van contra el backend real. Como agregan favoritos, se corren contra BackVynils
- * local (`-PbaseUrl=http://10.0.2.2:3000/` en el emulador; en un teléfono, `http://localhost:3000/` con
- * `adb reverse tcp:3000 tcp:3000`). Cada escenario que agrega favoritos crea su propio coleccionista con
- * `POST /collectors` y lo borra en [borrarColeccionistasDePrueba] con `DELETE /collectors/{id}`, que
- * también borra sus favoritos, aunque la prueba falle. No se usa `DELETE /collectors/{id}/bands/{id}`
- * ni `.../musicians/{id}`: en BackVynils responden 204 sin quitar el favorito. Los artistas se eligen de
- * los datos reales; si no hay una banda o un músico, el escenario se omite.
+ * FN10-ESC01 through ESC05 run against the real backend. Since they add favorites, they are run
+ * against local BackVynils (`-PbaseUrl=http://10.0.2.2:3000/` on the emulator; on a phone,
+ * `http://localhost:3000/` with `adb reverse tcp:3000 tcp:3000`). Each scenario that adds favorites
+ * creates its own collector with `POST /collectors` and deletes it in [borrarColeccionistasDePrueba]
+ * with `DELETE /collectors/{id}`, which also deletes its favorites, even if the test fails.
+ * `DELETE /collectors/{id}/bands/{id}` and `.../musicians/{id}` are not used: in BackVynils they
+ * respond 204 without removing the favorite. Artists are chosen from the real data; if there is no
+ * band or musician, the scenario is skipped.
  *
- * FN10-ESC06 a ESC08 (errores que el backend real no provoca a voluntad) usan `MockWebServer`, como
- * FN03-ESC05 y FN07-ESC07.
+ * FN10-ESC06 through ESC08 (errors that the real backend does not trigger on demand) use
+ * `MockWebServer`, like FN03-ESC05 and FN07-ESC07.
  *
- * Cada escenario guarda un pantallazo por paso, `informe.md` y un PDF en
- * `.../files/e2e-evidencia/FN10_ESCxx/` (en el dispositivo; los PDF se versionan a mano en
+ * Each scenario saves a screenshot per step, `informe.md`, and a PDF in
+ * `.../files/e2e-evidencia/FN10_ESCxx/` (on the device; the PDFs are versioned by hand in
  * `docs/pruebas/sprint-2/HU10/e2e/`).
  */
 class ArtistasFavoritosE2ETest {
@@ -86,7 +87,7 @@ class ArtistasFavoritosE2ETest {
     @get:Rule
     val rule = createEmptyComposeRule()
 
-    /** El repositorio real de la app, que además cuenta las consultas y los envíos (design.md, D1). */
+    /** The app's real repository, which also counts queries and submissions (design.md, D1). */
     private class FavoritosReales(
         private val real: FavoriteRepository = FavoriteRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL))
     ) : FavoriteRepository by real {
@@ -108,7 +109,7 @@ class ArtistasFavoritosE2ETest {
 
     private val http = OkHttpClient()
 
-    /** Coleccionistas creados por la prueba: se borran al terminar, con sus favoritos (D2). */
+    /** Collectors created by the test: deleted at the end, along with their favorites (D2). */
     private val coleccionistasDePrueba = mutableListOf<Int>()
 
     private var servidor: MockWebServer? = null
@@ -127,20 +128,20 @@ class ArtistasFavoritosE2ETest {
         }
     }
 
-    // ---------- Datos reales (design.md, D3) ----------
+    // ---------- Real data (design.md, D3) ----------
 
     private fun artistasReales(): List<Artist> = runBlocking {
         ArtistRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL)).getArtists().getOrThrow()
     }
 
-    /** La primera banda o el primer músico del backend; si no hay, el escenario se omite. */
+    /** The first band or the first musician from the backend; if there is none, the scenario is skipped. */
     private fun primerArtista(tipo: ArtistType): Artist {
         val artista = artistasReales().firstOrNull { it.type == tipo }
         Assume.assumeTrue("Sin datos en el backend: no hay ningún artista de tipo $tipo", artista != null)
         return artista!!
     }
 
-    /** Crea un coleccionista sin favoritos con `POST /collectors` y lo registra para borrarlo (D2). */
+    /** Creates a collector with no favorites via `POST /collectors` and registers it for deletion (D2). */
     private fun createColeccionista(): Int {
         val marca = System.currentTimeMillis()
         val cuerpo = JSONObject()
@@ -155,7 +156,7 @@ class ArtistasFavoritosE2ETest {
         return id
     }
 
-    /** Agrega el favorito directo en el backend, sin pasar por la app (preparación de ESC05). */
+    /** Adds the favorite directly in the backend, without going through the app (setup for ESC05). */
     private fun agregarEnElBackend(coleccionista: Int, artista: Artist) {
         val ruta = if (artista.type == ArtistType.BANDA) "bands" else "musicians"
         val vacio = "".toRequestBody(null)
@@ -164,7 +165,7 @@ class ArtistasFavoritosE2ETest {
         ).execute().use { assertTrue("No se pudo preparar el favorito", it.isSuccessful) }
     }
 
-    /** Ids de los favoritos del coleccionista según `GET /collectors/{id}/performers`. */
+    /** Ids of the collector's favorites according to `GET /collectors/{id}/performers`. */
     private fun favoritosEnElBackend(coleccionista: Int): Set<Int> {
         val respuesta = http.newCall(
             Request.Builder().url("${BuildConfig.BASE_URL}collectors/$coleccionista/performers").build()
@@ -173,16 +174,16 @@ class ArtistasFavoritosE2ETest {
         return (0 until lista.length()).map { lista.getJSONObject(it).getInt("id") }.toSet()
     }
 
-    // ---------- Navegación ----------
+    // ---------- Navigation ----------
 
     private fun esperarA(tag: String, milis: Long = 15_000) =
         rule.waitUntil(milis) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
 
-    /** La confirmación del favorito se oculta sola a los 2,5 s; se le dan hasta 10 s. */
+    /** The favorite confirmation hides itself after 2.5s; it's given up to 10s. */
     private fun esperarQueSeOculteLaConfirmacion() =
         rule.waitUntil(10_000) { rule.onAllNodesWithTag(TagConfirmacionFavorito).fetchSemanticsNodes().isEmpty() }
 
-    /** Espera a que el botón de favorito muestre [texto]. */
+    /** Waits for the favorite button to show [texto]. */
     private fun esperarBoton(texto: String, milis: Long = 15_000) = rule.waitUntil(milis) {
         rule.onAllNodesWithTag(TagBotonFavorito).fetchSemanticsNodes().isNotEmpty() &&
             rule.onAllNodes(hasTestTag(TagBotonFavorito) and hasText(texto)).fetchSemanticsNodes().isNotEmpty()
@@ -197,7 +198,7 @@ class ArtistasFavoritosE2ETest {
     private fun entrarComoColeccionista(coleccionista: Int) {
         esperarA(TagEntrarColeccionista)
         rule.onNodeWithTag(TagEntrarColeccionista).performScrollTo().performClick()
-        // El coleccionista de la prueba suele quedar al final: se espera a que la lista cargue y se llegue a él.
+        // The test's collector usually ends up at the bottom: it waits for the list to load and reaches it.
         rule.waitUntil(15_000) {
             runCatching {
                 rule.onNodeWithTag(TagListaColeccionistas).performScrollToNode(hasTestTag(tagColeccionista(coleccionista)))
@@ -207,16 +208,16 @@ class ArtistasFavoritosE2ETest {
         esperarA(TagInicio)
     }
 
-    /** Inicio -> "Ver artistas" -> fila de [artista], visible en el listado. */
+    /** Home -> "Ver artistas" -> row for [artista], visible in the list. */
     private fun verListado(artista: Artist, evidencia: String, paso: String) {
         rule.onNodeWithTag(TagVerArtistas).performScrollTo().performClick()
-        // El contador aparece cuando el listado cargó; la fila puede estar más abajo, aún sin componer.
+        // The counter appears once the list has loaded; the row may be further down, not yet composed.
         esperarA(TagContadorArtistas)
         rule.onNodeWithTag(TagListaArtistas).performScrollToNode(hasTestTag(tagArtista(artista)))
         EvidenciaE2E.capturar(rule, evidencia, paso)
     }
 
-    /** Inicio -> listado -> detalle de [artista] cargado. */
+    /** Home -> list -> [artista]'s detail loaded. */
     private fun abrirDetalle(artista: Artist, evidencia: String, pasoListado: String) {
         verListado(artista, evidencia, pasoListado)
         rule.onNodeWithTag(tagArtista(artista)).performClick()
@@ -225,7 +226,7 @@ class ArtistasFavoritosE2ETest {
         rule.onNodeWithTag(TagNombreArtistDetail).assertTextEquals(artista.name)
     }
 
-    /** Detalle -> listado -> inicio, con el botón atrás de cada pantalla. */
+    /** Detail -> list -> home, using each screen's back button. */
     private fun volverAlInicio() {
         rule.onNodeWithTag(TagAtras).performClick()
         esperarA(TagContadorArtistas)
@@ -235,7 +236,7 @@ class ArtistasFavoritosE2ETest {
 
     private fun boton() = rule.onNodeWithTag(TagBotonFavorito).performScrollTo()
 
-    /** Toca "Agregar Favorito" y comprueba que queda "Favorito" con la confirmación, que se oculta sola. */
+    /** Taps "Agregar Favorito" and checks that it stays "Favorito" with the confirmation, which hides itself. */
     private fun agregarYVerConfirmacion(artista: Artist, evidencia: String, pasoDespues: String) {
         esperarBoton("Agregar Favorito")
         boton().assertIsEnabled()
@@ -247,14 +248,14 @@ class ArtistasFavoritosE2ETest {
         boton().assert(hasText("Favorito")).assertIsNotEnabled()
         EvidenciaE2E.capturar(rule, evidencia, pasoDespues)
 
-        // El mensaje es breve: desaparece solo y el botón sigue como "Favorito".
+        // The message is brief: it disappears on its own and the button stays as "Favorito".
         esperarQueSeOculteLaConfirmacion()
         boton().assert(hasText("Favorito")).assertIsNotEnabled()
     }
 
-    // ---------- Escenarios contra el backend real ----------
+    // ---------- Scenarios against the real backend ----------
 
-    /** FN10-ESC01: el Visitante no ve el botón de favorito en el detalle de una banda ni de un músico. */
+    /** FN10-ESC01: the Visitor does not see the favorite button in the detail of a band or a musician. */
     @Test
     fun elVisitanteNoVeElBotonDeFavorito() {
         val evidencia = "FN10_ESC01"
@@ -275,7 +276,7 @@ class ArtistasFavoritosE2ETest {
         }
     }
 
-    /** FN10-ESC02: el Coleccionista agrega una banda; el botón pasa a "Favorito" y el backend la guarda. */
+    /** FN10-ESC02: the Collector adds a band; the button becomes "Favorito" and the backend saves it. */
     @Test
     fun elColeccionistaAgregaUnaBandaComoFavorita() {
         val evidencia = "FN10_ESC02"
@@ -292,7 +293,7 @@ class ArtistasFavoritosE2ETest {
         assertTrue("El backend debe devolver la banda como favorita", banda.id in favoritosEnElBackend(coleccionista))
     }
 
-    /** FN10-ESC03: el Coleccionista agrega un músico; el botón pasa a "Favorito" y el backend lo guarda. */
+    /** FN10-ESC03: the Collector adds a musician; the button becomes "Favorito" and the backend saves it. */
     @Test
     fun elColeccionistaAgregaUnMusicoComoFavorito() {
         val evidencia = "FN10_ESC03"
@@ -309,7 +310,7 @@ class ArtistasFavoritosE2ETest {
         assertTrue("El backend debe devolver el músico como favorito", musico.id in favoritosEnElBackend(coleccionista))
     }
 
-    /** FN10-ESC04: tras agregar un favorito y volver a abrir la app, el botón sigue como "Favorito". */
+    /** FN10-ESC04: after adding a favorite and reopening the app, the button still shows "Favorito". */
     @Test
     fun alVolverAAbrirLaAppElBotonSigueComoFavorito() {
         val evidencia = "FN10_ESC04"
@@ -323,7 +324,7 @@ class ArtistasFavoritosE2ETest {
         }
         val consultasAntes = favoritos.consultas
 
-        // Se cierra la app y se vuelve a abrir: hay que ingresar de nuevo con el mismo coleccionista (D4).
+        // The app is closed and reopened: you have to log in again with the same collector (D4).
         ActivityScenario.launch(MainActivity::class.java).use {
             entrarComoColeccionista(coleccionista)
             EvidenciaE2E.capturar(rule, evidencia, "04_app_abierta_de_nuevo")
@@ -337,7 +338,7 @@ class ArtistasFavoritosE2ETest {
         assertEquals(1, favoritos.envios)
     }
 
-    /** FN10-ESC05: un artista que ya es favorito aparece como "Favorito" y desactivado, sin enviar nada. */
+    /** FN10-ESC05: an artist that is already a favorite shows up as "Favorito" and disabled, without sending anything. */
     @Test
     fun unArtistaQueYaEsFavoritoApareceDesactivado() {
         val evidencia = "FN10_ESC05"
@@ -358,12 +359,12 @@ class ArtistasFavoritosE2ETest {
         assertEquals(0, favoritos.envios)
     }
 
-    // ---------- Escenarios con MockWebServer (design.md, D5) ----------
+    // ---------- Scenarios with MockWebServer (design.md, D5) ----------
 
     private val ruben = Artist(100, "Rubén Blades Bellido de Luna", null, ArtistType.MUSICO)
     private val queen = Artist(101, "Queen", null, ArtistType.BANDA)
 
-    /** Estado del servidor simulado, que cada escenario cambia a mitad de la prueba. */
+    /** State of the simulated server, which each scenario changes halfway through the test. */
     private class Simulado {
         @Volatile var comprobacionCaida = false
         @Volatile var respuestaGuardado: () -> MockResponse = { MockResponse().setBody("""{"id": 100}""") }
@@ -371,7 +372,7 @@ class ArtistasFavoritosE2ETest {
         @Volatile var envios = 0
     }
 
-    /** Coleccionista 100 sin favoritos, Rubén Blades (músico) y Queen (banda). */
+    /** Collector 100 with no favorites, Rubén Blades (musician), and Queen (band). */
     private fun iniciarServidor(simulado: Simulado) {
         val musicos = { if (simulado.rubenExiste) """[{"id": 100, "name": "${ruben.name}", "image": null}]""" else "[]" }
         val detalleRuben = """
@@ -401,12 +402,12 @@ class ArtistasFavoritosE2ETest {
             start()
         }
         servidor = nuevo
-        // "localhost" es uno de los hosts con HTTP permitido en network_security_config.xml.
+        // "localhost" is one of the hosts allowed over HTTP in network_security_config.xml.
         ApplicationProvider.getApplicationContext<VinilosApplication>().container =
             AppContainer(baseUrl = "http://localhost:${nuevo.port}/")
     }
 
-    /** FN10-ESC06: si no se puede comprobar el favorito, el botón queda desactivado y "Reintentar" lo recupera. */
+    /** FN10-ESC06: if the favorite cannot be checked, the button stays disabled and "Reintentar" recovers it. */
     @Test
     fun siNoSePuedeComprobarElBotonQuedaDesactivadoYReintentarLoRecupera() {
         val evidencia = "FN10_ESC06"
@@ -422,7 +423,7 @@ class ArtistasFavoritosE2ETest {
             rule.onNodeWithTag(TagReintentarFavorito).performScrollTo().assertIsDisplayed()
             EvidenciaE2E.capturar(rule, evidencia, "02_no_se_pudo_comprobar")
 
-            // El backend "vuelve" y la persona reintenta.
+            // The backend "comes back" and the person retries.
             simulado.comprobacionCaida = false
             rule.onNodeWithTag(TagReintentarFavorito).performClick()
             esperarBoton("Agregar Favorito")
@@ -434,13 +435,13 @@ class ArtistasFavoritosE2ETest {
     }
 
     /**
-     * FN10-ESC07: mientras se guarda se ve "Guardando..." y un segundo toque no envía nada; si el guardado
-     * falla aparece el error sin confirmación, y el reintento lo guarda.
+     * FN10-ESC07: while saving, "Guardando..." is shown and a second tap doesn't send anything; if saving
+     * fails the error appears without confirmation, and retrying saves it.
      */
     @Test
     fun siFallaElGuardadoSeVeElErrorYReintentarLoGuarda() {
         val evidencia = "FN10_ESC07"
-        // El primer envío tarda (D6) y termina en error del servicio; los siguientes salen bien.
+        // The first submission takes time (D6) and ends in a service error; the following ones succeed.
         val simulado = Simulado().apply {
             respuestaGuardado = {
                 if (envios == 1) MockResponse().setResponseCode(500).setHeadersDelay(3, TimeUnit.SECONDS)
@@ -477,12 +478,12 @@ class ArtistasFavoritosE2ETest {
         assertEquals(2, simulado.envios)
     }
 
-    /** FN10-ESC08: si el artista ya no existe, se avisa y "Volver al listado" lo muestra sin ese artista. */
+    /** FN10-ESC08: if the artist no longer exists, it warns and "Volver al listado" shows it without that artist. */
     @Test
     fun siElArtistaYaNoExisteSeAvisaYElListadoSeActualiza() {
         val evidencia = "FN10_ESC08"
         val simulado = Simulado()
-        // Al guardar, el backend ya no tiene al artista: responde 404 y deja de listarlo.
+        // When saving, the backend no longer has the artist: it responds 404 and stops listing it.
         simulado.respuestaGuardado = {
             simulado.rubenExiste = false
             MockResponse().setResponseCode(404)

@@ -30,8 +30,8 @@ class AlbumsViewModel(private val repositorio: AlbumRepository) : ViewModel() {
     }
 
     /**
-     * Deslizar para actualizar: solo con el catálogo ya cargado (lista o vacío). La lista sigue a la
-     * vista mientras se consulta y, si la consulta falla, se conserva y se activa el aviso.
+     * Pull-to-refresh: only once the catalog is already loaded (list or empty). The list stays
+     * visible while the query runs and, if the query fails, it's kept and the notice is shown.
      */
     fun actualizar() {
         val anterior = _uiState.value
@@ -40,11 +40,11 @@ class AlbumsViewModel(private val repositorio: AlbumRepository) : ViewModel() {
     }
 
     /**
-     * Se creó un álbum en el formulario. Este ViewModel siguió vivo en la pila, así que hay que volver
-     * a consultar. Con el catálogo a la vista, el repositorio ya guardó el álbum creado: se muestra lo
-     * guardado de inmediato, con el indicador de actualización, y la consulta lo revalida
-     * (optimizar-cache-e-imagenes, D7). Si lo guardado no lo trae, se actualiza como al deslizar. Con el
-     * catálogo en error o cargando se carga de nuevo, y la carga también empieza por lo guardado.
+     * An album was created in the form. This ViewModel stayed alive on the stack, so it needs to query
+     * again. With the catalog on screen, the repository has already saved the created album: what's
+     * saved is shown immediately, with the refresh indicator, and the query revalidates it
+     * (optimizar-cache-e-imagenes, D7). If what's saved doesn't include it, it refreshes as on pull-to-refresh. With the
+     * catalog in error or loading it's loaded again, and that load also starts from what's saved.
      */
     fun albumCreado(id: Int) {
         _albumNuevo.value = NewAlbumCatalogo(id)
@@ -72,7 +72,7 @@ class AlbumsViewModel(private val repositorio: AlbumRepository) : ViewModel() {
         _albumNuevo.value = _albumNuevo.value?.copy(desplazamientoPendiente = false)
     }
 
-    /** La pantalla ya mostró el aviso de que falló la actualización. */
+    /** The screen already showed the notice that the refresh failed. */
     fun avisoMostrado() {
         val estado = _uiState.value
         val actualizando = (estado as? AlbumsUiState.Success)?.actualizando
@@ -80,7 +80,7 @@ class AlbumsViewModel(private val repositorio: AlbumRepository) : ViewModel() {
         _uiState.value = estado.conIndicadores(actualizando, errorAlActualizar = false)!!
     }
 
-    /** Copia de [AlbumsUiState.Exito] o [AlbumsUiState.Vacio] con otros indicadores; null en los demás. */
+    /** Copy of [AlbumsUiState.Exito] or [AlbumsUiState.Vacio] with other indicators; null for the rest. */
     private fun AlbumsUiState.conIndicadores(actualizando: Boolean, errorAlActualizar: Boolean) =
         when (this) {
             is AlbumsUiState.Success -> copy(actualizando = actualizando, errorAlActualizar = errorAlActualizar)
@@ -89,9 +89,9 @@ class AlbumsViewModel(private val repositorio: AlbumRepository) : ViewModel() {
         }
 
     /**
-     * Carga inicial (add-cache-catalogo, D5): si hay un catálogo guardado se muestra de inmediato como
-     * si se estuviera deslizando para actualizar, y un fallo de la consulta solo activa el aviso. Sin
-     * nada guardado, se comporta como antes: `Cargando` y `Error` si falla.
+     * Initial load (add-cache-catalogo, D5): if there's a saved catalog it's shown immediately as
+     * if a pull-to-refresh were in progress, and a query failure only triggers the notice. With
+     * nothing saved, it behaves as before: `Loading` and `Error` if it fails.
      */
     private fun cargar() {
         _uiState.value = AlbumsUiState.Loading
@@ -111,7 +111,7 @@ class AlbumsViewModel(private val repositorio: AlbumRepository) : ViewModel() {
 
     private fun consultar(alFallar: AlbumsUiState) = lanzar { consulta -> consultarAhora(consulta, alFallar) }
 
-    /** Cancela lo que esté en curso y lanza [bloque] como la carga vigente. */
+    /** Cancels whatever is in progress and launches [bloque] as the current load. */
     private fun lanzar(bloque: suspend (consulta: Long) -> Unit) {
         val consulta = ++consultaVigente
         carga?.cancel()

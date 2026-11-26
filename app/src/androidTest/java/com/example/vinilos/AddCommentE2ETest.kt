@@ -65,17 +65,17 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * E2E de la HU09 (comentar un álbum).
+ * E2E for HU09 (commenting on an album).
  *
- * FN09-ESC01 y ESC02 van contra el backend real. Como publican comentarios, se corren contra BackVynils
- * local (en un teléfono, `-PbaseUrl=http://localhost:3000/` con `adb reverse tcp:3000 tcp:3000`). Los
- * escenarios comentan un álbum propio creado con `POST /albums`, que [AlbumesDePrueba] borra al terminar
- * con sus comentarios, aunque la prueba falle. El Coleccionista es el primer coleccionista real.
+ * FN09-ESC01 and ESC02 run against the real backend. Since they publish comments, they run against a
+ * local BackVynils (on a phone, `-PbaseUrl=http://localhost:3000/` with `adb reverse tcp:3000 tcp:3000`).
+ * The scenarios comment on their own album created with `POST /albums`, which [AlbumesDePrueba] deletes
+ * at the end along with its comments, even if the test fails. The Collector is the first real collector.
  *
- * FN09-ESC03 (falla al publicar y reintento) usa `MockWebServer`, como FN07-ESC07 y FN10-ESC07.
+ * FN09-ESC03 (publish failure and retry) uses `MockWebServer`, like FN07-ESC07 and FN10-ESC07.
  *
- * Cada escenario guarda un pantallazo por paso, `informe.md` y un PDF en
- * `.../files/e2e-evidencia/FN09_ESCxx/` (en el dispositivo; los PDF se versionan a mano en
+ * Each scenario saves a screenshot per step, `informe.md` and a PDF in
+ * `.../files/e2e-evidencia/FN09_ESCxx/` (on the device; the PDFs are versioned by hand in
  * `docs/pruebas/sprint-3/HU09/e2e/`).
  */
 class AddCommentE2ETest {
@@ -83,7 +83,7 @@ class AddCommentE2ETest {
     @get:Rule
     val rule = createEmptyComposeRule()
 
-    /** El repositorio real de la app, que además cuenta los comentarios enviados. */
+    /** The app's real repository, which also counts the comments sent. */
     private class CommentsReales(
         private val real: CommentRepository = CommentRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL))
     ) : CommentRepository by real {
@@ -111,13 +111,13 @@ class AddCommentE2ETest {
         albumesDePrueba.borrarTodos()
     }
 
-    // ---------- Datos reales ----------
+    // ---------- Real data ----------
 
     private fun primerColeccionistaReal(): Collector = runBlocking {
         CollectorRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL)).getCollectors().getOrThrow().first()
     }
 
-    /** Comentarios del álbum según el backend, como pares opinión-calificación. */
+    /** The album's comments according to the backend, as opinion-rating pairs. */
     private fun comentariosEnElBackend(album: AlbumDePrueba): List<Pair<String, Int>> {
         val lista = albumesDePrueba.album(album.id).getJSONArray("comments")
         return (0 until lista.length()).map {
@@ -125,7 +125,7 @@ class AddCommentE2ETest {
         }
     }
 
-    // ---------- Navegación ----------
+    // ---------- Navigation ----------
 
     private fun esperarA(tag: String, milis: Long = 15_000) =
         rule.waitUntil(milis) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
@@ -145,13 +145,13 @@ class AddCommentE2ETest {
         esperarA(TagInicio)
     }
 
-    /** Inicio -> "Ver álbumes" -> detalle del álbum [id], cargado y en la sección de comentarios. */
+    /** Home -> "Ver álbumes" -> detail of album [id], loaded and scrolled to the comments section. */
     private fun abrirDetalle(id: Int, evidencia: String, paso: String) {
         rule.onNodeWithTag(TagVerAlbumes).performScrollTo().performClick()
         esperarA(TagContadorCatalogo)
         rule.onNodeWithTag(TagCuadriculaCatalogo).performScrollToNode(hasTestTag(tagAlbum(id)))
         rule.onNodeWithTag(tagAlbum(id)).performClick()
-        // La sección puede estar más abajo, aún sin componer: se espera a que el detalle cargue y se llegue a ella.
+        // The section may be further down, still not composed: wait for the detail to load and scroll to it.
         rule.waitUntil(15_000) {
             runCatching { rule.onNodeWithTag(TagListaDetalleAlbum).performScrollToNode(hasText("Comentarios")) }.isSuccess
         }
@@ -172,7 +172,7 @@ class AddCommentE2ETest {
 
     private fun post() = rule.onNodeWithTag(TagPublicarComment).performScrollTo()
 
-    /** El comentario [opinion] aparece en la lista del detalle. */
+    /** The comment [opinion] appears in the detail's list. */
     private fun verCommentEnElDetalle(opinion: String) {
         rule.waitUntil(15_000) {
             runCatching { rule.onNodeWithTag(TagListaDetalleAlbum).performScrollToNode(hasText(opinion)) }.isSuccess
@@ -180,11 +180,12 @@ class AddCommentE2ETest {
         rule.onNodeWithText(opinion).assertIsDisplayed()
     }
 
-    // ---------- Escenarios contra el backend real ----------
+    // ---------- Scenarios against the real backend ----------
 
     /**
-     * FN09-ESC01: sin nada escrito se sale sin preguntar; con algo escrito se pregunta "¿Descartar
-     * comentario?", "Continuar escribiendo" conserva lo escrito y "Descartar y salir" vuelve sin publicar.
+     * FN09-ESC01: with nothing written, exiting happens without a prompt; with something written, it
+     * asks "¿Descartar comentario?", "Continuar escribiendo" keeps what was written, and "Descartar y
+     * salir" returns without publishing.
      */
     @Test
     fun salirConAlgoEscritoPreguntaSiDescartarElComment() {
@@ -196,7 +197,7 @@ class AddCommentE2ETest {
             entrarComoColeccionista(primerColeccionistaReal().id)
             abrirDetalle(album.id, evidencia, "01_detalle_sin_comentarios")
 
-            // Sin nada escrito, "Atrás" vuelve al detalle sin preguntar.
+            // With nothing written, "Atrás" returns to the detail without asking.
             abrirComentar()
             Espresso.pressBack()
             esperarQueSeCierreLaPantalla()
@@ -229,7 +230,7 @@ class AddCommentE2ETest {
         assertEquals(emptyList<Pair<String, Int>>(), comentariosEnElBackend(album))
     }
 
-    /** FN09-ESC02: el Coleccionista califica, escribe su opinión, publica y ve el comentario en el detalle. */
+    /** FN09-ESC02: the Collector rates, writes an opinion, publishes it, and sees the comment in the detail. */
     @Test
     fun elColeccionistaPublicaUnComment() {
         val evidencia = "FN09_ESC02"
@@ -244,7 +245,7 @@ class AddCommentE2ETest {
 
             abrirComentar()
             rule.onNodeWithTag(TagAlbumComentado).assertTextEquals(album.nombre)
-            // La etiqueta del coleccionista se dibuja en mayúsculas.
+            // The collector's label is drawn in uppercase.
             rule.onNodeWithText("${coleccionista.name} (Coleccionista)", ignoreCase = true).performScrollTo().assertIsDisplayed()
             rule.onAllNodesWithTag(TagRatingLevel).assertCountEquals(0)
             post().assertIsNotEnabled()
@@ -272,15 +273,15 @@ class AddCommentE2ETest {
         assertEquals(listOf(opinion to 4), comentariosEnElBackend(album))
     }
 
-    // ---------- Escenario con MockWebServer ----------
+    // ---------- Scenario with MockWebServer ----------
 
-    /** Estado del servidor simulado: el primer envío falla y los siguientes guardan el comentario. */
+    /** State of the simulated server: the first submission fails and the following ones save the comment. */
     private class Simulado {
         @Volatile var envios = 0
         val comentarios = mutableListOf<String>()
     }
 
-    /** Coleccionista 100 y el álbum 100 "Buscando América", sin comentarios hasta que se publica uno. */
+    /** Collector 100 and album 100 "Buscando América", with no comments until one is published. */
     private fun iniciarServidor(simulado: Simulado) {
         fun album() = """
             {"id": 100, "name": "Buscando América", "cover": null, "description": "Salsa urbana",
@@ -298,7 +299,7 @@ class AddCommentE2ETest {
                     request.path == "/albums/100/comments" && request.method == "POST" -> {
                         simulado.envios++
                         if (simulado.envios == 1) {
-                            // El primer envío tarda (para ver "Publicando...") y termina en error del servicio.
+                            // The first submission takes a while (to see "Publicando...") and ends in a server error.
                             MockResponse().setResponseCode(500).setHeadersDelay(3, TimeUnit.SECONDS)
                         } else {
                             val enviado = JSONObject(request.body.readUtf8())
@@ -318,14 +319,14 @@ class AddCommentE2ETest {
             start()
         }
         servidor = nuevo
-        // "localhost" es uno de los hosts con HTTP permitido en network_security_config.xml.
+        // "localhost" is one of the hosts allowed over HTTP in network_security_config.xml.
         ApplicationProvider.getApplicationContext<VinilosApplication>().container =
             AppContainer(baseUrl = "http://localhost:${nuevo.port}/")
     }
 
     /**
-     * FN09-ESC03: mientras se publica se ve "Publicando..." y un segundo toque no envía nada; si falla se
-     * ve el error con la calificación y la opinión conservadas, y el reintento publica el comentario.
+     * FN09-ESC03: while publishing, "Publicando..." is shown and a second tap sends nothing; if it fails,
+     * the error is shown with the rating and opinion preserved, and retrying publishes the comment.
      */
     @Test
     fun siFallaLaPublicacionSeConservaLoEscritoYReintentarLaPublica() {

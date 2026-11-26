@@ -10,9 +10,9 @@ import okhttp3.OkHttpClient
 
 class VinilosApplication : Application(), ImageLoaderFactory {
     /**
-     * Reemplazable en las pruebas instrumentadas, antes de abrir la Activity. Se crea en [onCreate] y no
-     * al declararla, porque la base local necesita un `Context` que aún no existe al construir la
-     * aplicación (add-cache-catalogo, D6).
+     * Replaceable in instrumented tests, before opening the Activity. Created in [onCreate] and not
+     * at declaration time, because the local database needs a `Context` that doesn't exist yet when the
+     * application is constructed (add-cache-catalogo, D6).
      */
     lateinit var container: AppContainer
 
@@ -24,17 +24,17 @@ class VinilosApplication : Application(), ImageLoaderFactory {
             coleccionistaDao = db.coleccionistaDao(),
             artistaDao = db.artistaDao(),
             favoritoDao = db.favoritoDao(),
-            // Separada de `image_cache`: OkHttp y Coil no pueden compartir la carpeta de su caché de disco.
+            // Separate from `image_cache`: OkHttp and Coil can't share their disk cache folder.
             carpetaCacheHttp = cacheDir.resolve("http")
         )
     }
 
     /**
-     * Cargador de imágenes de Coil que usan todas las pantallas (portadas y fotos de artistas).
+     * Coil image loader used by all screens (covers and artist photos).
      *
-     * La caché de disco tiene los mismos valores que Coil usa por defecto, pero se declara para que la
-     * decisión quede escrita: con el catálogo guardado en Room, las portadas que ya se vieron se muestran
-     * sin conexión desde esta caché, y Room solo guarda su URL (add-cache-catalogo, D8).
+     * The disk cache has the same values Coil uses by default, but it's declared explicitly so the
+     * decision is documented: with the catalog saved in Room, covers that were already seen are shown
+     * offline from this cache, and Room only stores its URL (add-cache-catalogo, D8).
      */
     override fun newImageLoader(): ImageLoader =
         ImageLoader.Builder(this)

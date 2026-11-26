@@ -7,8 +7,8 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
 /**
- * Base local de la app: caché de solo lectura de las consultas al backend. Versión 1, el catálogo
- * (add-cache-catalogo); versión 2, coleccionistas, detalle de álbum, artistas y favoritos
+ * App's local database: a read-only cache of backend queries. Version 1, the catalog
+ * (add-cache-catalogo); version 2, collectors, album detail, artists and favorites
  * (add-cache-consultas).
  */
 @Database(
@@ -35,9 +35,9 @@ abstract class VinilosDb : RoomDatabase() {
         private const val NOMBRE = "vinilos.db"
 
         /**
-         * La base es una caché que la siguiente consulta vuelve a llenar, así que un cambio de esquema
-         * la borra en lugar de migrar datos (add-cache-catalogo D6, add-cache-consultas D1). La versión 3 guarda
- * las fechas del artista en ISO en lugar de en español (internacionalizar-ingles).
+         * The database is a cache that the next query fills again, so a schema change wipes it
+         * instead of migrating data (add-cache-catalogo D6, add-cache-consultas D1). Version 3 stores
+ * the artist's dates in ISO instead of in Spanish (internacionalizar-ingles).
          */
         fun create(context: Context): VinilosDb =
             Room.databaseBuilder(context, VinilosDb::class.java, NOMBRE)

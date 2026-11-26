@@ -6,7 +6,7 @@ import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.IntegranteArtista
 import com.example.vinilos.data.model.ArtistPrize
 
-/** Detalle de un artista que el usuario abrió (HU04), con los mismos campos que `ArtistaDetalle`. */
+/** Detail of an artist the user opened (HU04), with the same fields as `ArtistaDetalle`. */
 @Entity(tableName = "artista_detalle", primaryKeys = ["tipo", "id"])
 data class ArtistDetailEntity(
     val tipo: ArtistType,

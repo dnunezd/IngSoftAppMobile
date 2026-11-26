@@ -4,13 +4,13 @@ import retrofit2.http.Body
 import retrofit2.http.POST
 import retrofit2.http.Path
 
-/** Comentarios de un álbum (HU09). Va aparte de [AlbumApi] (add-comentar-album, D1). */
+/** Comments on an album (HU09). Kept separate from [AlbumApi] (add-comentar-album, D1). */
 interface CommentApi {
     @POST("albums/{id}/comments")
     suspend fun postComment(@Path("id") albumId: Int, @Body comentario: NewCommentDto): CommentDto
 }
 
-/** Cuerpo de `POST /albums/{id}/comments`: el backend valida `description`, `rating` y el id de `collector`. */
+/** Body of `POST /albums/{id}/comments`: the backend validates `description`, `rating` and the `collector` id. */
 data class NewCommentDto(
     val description: String,
     val rating: Int,

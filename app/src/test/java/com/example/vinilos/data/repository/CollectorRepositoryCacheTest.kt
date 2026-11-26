@@ -17,17 +17,17 @@ import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 
-/** Coleccionistas guardados en el repositorio (add-cache-consultas, D4), con un DAO falso en memoria. */
+/** Cached collectors in the repository (add-cache-consultas, D4), with a fake in-memory DAO. */
 class CollectorRepositoryCacheTest {
 
-    /** Guarda en una lista; [fallaAlLeer] y [fallaAlEscribir] simulan un almacenamiento que no responde. */
+    /** Stores in a list; [fallaAlLeer] and [fallaAlEscribir] simulate a storage that doesn't respond. */
     private class CollectorDaoFalso : CollectorDao() {
         var filas: List<CollectorEntity> = emptyList()
         var fallaAlLeer: Throwable? = null
         var fallaAlEscribir: Throwable? = null
         var escrituras = 0
 
-        /** Cada escritura que recibió, en orden, con las claves que tocó (optimizar-cache-e-imagenes). */
+        /** Every write it received, in order, with the keys it touched (optimizar-cache-e-imagenes). */
         val operaciones = mutableListOf<String>()
 
         private fun anotar(operacion: String, claves: List<Any> = emptyList()) {
@@ -78,7 +78,7 @@ class CollectorRepositoryCacheTest {
         servidor.shutdown()
     }
 
-    // El backend no los entrega ordenados por id ni por nombre: el selector conserva su orden.
+    // The backend doesn't return them sorted by id or name: the selector preserves their order.
     private val respuesta = """
         [
           {"id": 105, "name": "Zoe Ruiz", "email": "zoe@a.com"},
@@ -168,7 +168,7 @@ class CollectorRepositoryCacheTest {
         }
     }
 
-    // ---------- Escribir solo lo que cambió (optimizar-cache-e-imagenes, D4 y D5) ----------
+    // ---------- Write only what changed (optimizar-cache-e-imagenes, D4 and D5) ----------
 
     private fun coleccionistas(vararg pares: Pair<Int, String>, version: String? = null) = MockResponse()
         .setBody(pares.joinToString(prefix = "[", postfix = "]") { (id, nombre) ->

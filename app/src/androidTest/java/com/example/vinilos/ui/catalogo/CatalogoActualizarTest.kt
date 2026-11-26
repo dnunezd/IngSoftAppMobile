@@ -16,7 +16,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
-/** Criterio 10: deslizar la lista hacia abajo actualiza el catálogo sin reiniciar la app. */
+/** Criterion 10: swiping the list down refreshes the catalog without restarting the app. */
 class CatalogoActualizarTest {
 
     @get:Rule
@@ -89,7 +89,7 @@ class CatalogoActualizarTest {
         deslizarHaciaAbajo()
         assertEquals(1, repositorio.consultasCatalogo)
 
-        // En pantallas bajas el botón queda debajo del borde y hay que desplazarse para tocarlo.
+        // On short screens the button sits below the fold and must be scrolled to before tapping.
         rule.onNodeWithTag(TagReintentarCatalogo).performScrollTo().performClick()
         rule.waitUntil(timeoutMillis = 5_000) { repositorio.consultasCatalogo == 2 }
         rule.onNodeWithTag(tagAlbum(races.id)).assertIsDisplayed()

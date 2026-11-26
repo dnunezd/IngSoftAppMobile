@@ -4,8 +4,8 @@ import okhttp3.Interceptor
 import okhttp3.Response
 
 /**
- * Identifica a la app en cada petición. Algunos servidores de imágenes, como Wikimedia, rechazan
- * con 403 el agente de usuario genérico de OkHttp.
+ * Identifies the app on every request. Some image servers, like Wikimedia, reject
+ * OkHttp's generic user agent with a 403.
  */
 class UserAgentInterceptor(private val agente: String) : Interceptor {
     override fun intercept(chain: Interceptor.Chain): Response =

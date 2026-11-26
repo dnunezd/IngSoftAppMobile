@@ -55,7 +55,7 @@ fun AlbumContent(
     actualizando: Boolean = false,
     session: Session = Session.Visitor,
     onAddTrack: () -> Unit = {},
-    /** Espacio extra al final para que un botón flotante no tape el último comentario (HU09). */
+    /** Extra bottom space so a floating button doesn't cover the last comment (HU09). */
     margenInferior: Dp = 0.dp
 ) {
     val descripcionActualizando = stringResource(R.string.detalle_actualizando)
@@ -190,9 +190,9 @@ private fun PromedioConEstrellas(promedio: String?) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         } else {
-            // La columna ya es un solo elemento ("Promedio de calificaciones, 5,0, de 5 estrellas"). El número
-            // queda expuesto como texto (si no, el Scanner lo marca como texto no expuesto) y las estrellas
-            // se describen sin repetirlo.
+            // The column is already a single element ("Average rating, 5.0, out of 5 stars"). The number
+            // is exposed as text (otherwise the Scanner flags it as unexposed text), and the stars
+            // are described without repeating it.
             val descripcionEstrellas = stringResource(R.string.detalle_promedio_estrellas)
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(promedio, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
@@ -205,7 +205,7 @@ private fun PromedioConEstrellas(promedio: String?) {
     }
 }
 
-/** Dibuja de 0 a 5 estrellas llenas con texto (sin depender de iconos adicionales). */
+/** Draws 0 to 5 filled stars with text (without relying on additional icons). */
 @Composable
 private fun TextoEstrellas(llenas: Int, modifier: Modifier = Modifier) {
     Text(
@@ -218,8 +218,8 @@ private fun TextoEstrellas(llenas: Int, modifier: Modifier = Modifier) {
 
 @Composable
 private fun FilaArtista(artista: com.example.vinilos.data.model.Artista) {
-    // Silueta vectorial de HU03 (optimizar-cache-e-imagenes, D1). El artista del álbum no trae su tipo, así
-    // que no se distingue la banda.
+    // Vector silhouette from HU03 (optimizar-cache-e-imagenes, D1). The album's artist doesn't include
+    // its type, so the band can't be distinguished.
     val porDefecto = painterResource(R.drawable.ic_artista_por_defecto)
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -246,8 +246,8 @@ private fun FilaTrack(numero: Int, cancion: com.example.vinilos.data.model.Track
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        // Un solo elemento por pista ("03, Prueba, 3:07"): con número, nombre y duración sueltos, dos
-        // canciones con el mismo nombre o duración quedaban como descripciones duplicadas.
+        // A single element per track ("03, Test, 3:07"): with number, name, and duration as separate
+        // elements, two tracks with the same name or duration ended up as duplicate descriptions.
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -277,8 +277,8 @@ private fun TarjetaComment(comentario: com.example.vinilos.data.model.Comment) {
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        // Un solo elemento por comentario (texto y calificación): dos comentarios con la misma nota
-        // dejaban la calificación como descripción duplicada.
+        // A single element per comment (text and rating): two comments with the same rating used to
+        // leave the rating as a duplicate description.
         Column(
             Modifier
                 .semantics(mergeDescendants = true) {}

@@ -2,7 +2,7 @@ package com.example.vinilos.ui.ingreso
 
 import java.util.Locale
 
-/** Iniciales de las dos primeras palabras del nombre, en mayúsculas ("Manolo Bellon" -> "MB"). */
+/** Initials from the first two words of the name, uppercase ("Manolo Bellon" -> "MB"). */
 fun iniciales(nombre: String): String =
     nombre.trim()
         .split(Regex("\\s+"))

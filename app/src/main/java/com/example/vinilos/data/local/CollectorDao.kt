@@ -6,7 +6,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Upsert
 
-/** Coleccionistas del selector (HU00): siempre la última respuesta completa, en el orden del backend. */
+/** Collectors for the selector (HU00): always the latest full response, in the backend's order. */
 @Dao
 abstract class CollectorDao {
 
@@ -25,7 +25,7 @@ abstract class CollectorDao {
         insertar(coleccionistas)
     }
 
-    // ---------- Escrituras incrementales (optimizar-cache-e-imagenes, D6) ----------
+    // ---------- Incremental writes (optimizar-cache-e-imagenes, D6) ----------
 
     @Upsert
     abstract suspend fun save(coleccionistas: List<CollectorEntity>)
@@ -33,7 +33,7 @@ abstract class CollectorDao {
     @Query("DELETE FROM coleccionistas WHERE id IN (:ids)")
     abstract suspend fun borrarPorId(ids: List<Int>)
 
-    /** Aplica lo que cambió del listado; una fila cambia también si cambió su posición. */
+    /** Applies what changed in the listing; a row also changes if its position changed. */
     @Transaction
     open suspend fun aplicar(cambios: TableChanges<Int, CollectorEntity>) {
         if (cambios.reemplazarTodo) {

@@ -67,17 +67,17 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * E2E de la HU07 (crear un álbum), con los escenarios de la T07-5.
+ * E2E for HU07 (create an album), with the scenarios from T07-5.
  *
- * FN07-ESC01 a ESC06 van contra el backend real. Como crean datos, se corren contra BackVynils local
- * (`-PbaseUrl=http://10.0.2.2:3000/` en el emulador; en un teléfono, `http://localhost:3000/` con
- * `adb reverse tcp:3000 tcp:3000`). Todo álbum creado se borra en [borrarAlbumesCreados] con
- * `DELETE /albums/{id}`, aunque la prueba falle. El coleccionista se elige de los datos reales.
+ * FN07-ESC01 through ESC06 run against the real backend. Since they create data, they run against the local BackVynils
+ * (`-PbaseUrl=http://10.0.2.2:3000/` on the emulator; on a phone, `http://localhost:3000/` with
+ * `adb reverse tcp:3000 tcp:3000`). Every album created is deleted in [borrarAlbumesCreados] with
+ * `DELETE /albums/{id}`, even if the test fails. The collector is picked from the real data.
  *
- * FN07-ESC07 (backend caído y reintento) usa `MockWebServer`, como FN01-ESC03 y FN03-ESC05.
+ * FN07-ESC07 (backend down and retry) uses `MockWebServer`, like FN01-ESC03 and FN03-ESC05.
  *
- * Cada escenario guarda un pantallazo por paso, `informe.md` y un PDF en
- * `.../files/e2e-evidencia/FN07_ESCxx/` (en el dispositivo; los PDF se versionan a mano en
+ * Each scenario saves a screenshot per step, an `informe.md`, and a PDF in
+ * `.../files/e2e-evidencia/FN07_ESCxx/` (on the device; the PDFs are versioned by hand in
  * `docs/pruebas/sprint-2/HU07/e2e/`).
  */
 class CreateAlbumE2ETest {
@@ -85,7 +85,7 @@ class CreateAlbumE2ETest {
     @get:Rule
     val rule = createEmptyComposeRule()
 
-    /** El repositorio real de la app, que además registra cuántas veces se crea y qué ids devolvió. */
+    /** The app's real repository, which also records how many times a create happened and what ids it returned. */
     private class AlbumesReales(
         private val real: AlbumRepository = AlbumRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL))
     ) : AlbumRepository by real {
@@ -121,7 +121,7 @@ class CreateAlbumE2ETest {
         }
     }
 
-    /** Datos válidos del formulario; el nombre lleva la hora para no confundirse con otro álbum. */
+    /** Valid form data; the name carries the timestamp so it isn't confused with another album. */
     private data class Formulario(
         val nombre: String = "E2E FN07 ${System.currentTimeMillis()}",
         val portada: String = "https://upload.wikimedia.org/wikipedia/en/4/42/Beatles_-_Abbey_Road.jpg",
@@ -130,9 +130,9 @@ class CreateAlbumE2ETest {
         val descripcion: String = "Álbum creado por la prueba E2E de la HU07."
     )
 
-    // ---------- Fecha ----------
+    // ---------- Date ----------
 
-    /** El día 1 del mes actual (según el día local), que el selector siempre permite elegir. */
+    /** Day 1 of the current month (based on the local day), which the picker always allows choosing. */
     private val primerDiaDelMes: Calendar = Calendar.getInstance().apply { set(Calendar.DAY_OF_MONTH, 1) }
 
     private val fechaVisibleEsperada = String.format(
@@ -143,12 +143,12 @@ class CreateAlbumE2ETest {
         Locale.ROOT, "%d-%02d-01T00:00:00.000Z", primerDiaDelMes.get(Calendar.YEAR), primerDiaDelMes.get(Calendar.MONTH) + 1
     )
 
-    // ---------- Navegación ----------
+    // ---------- Navigation ----------
 
     private fun esperarA(tag: String, milis: Long = 15_000) =
         rule.waitUntil(milis) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
 
-    /** La insignia NUEVO está dentro de la tarjeta (que fusiona su contenido): se busca sin fusionar. */
+    /** The NEW badge is inside the card (which merges its content): it is searched for without merging. */
     private fun esperarInsigniaNuevo(id: Int, milis: Long = 15_000) = rule.waitUntil(milis) {
         rule.onAllNodesWithTag(tagNewAlbum(id), useUnmergedTree = true).fetchSemanticsNodes().isNotEmpty()
     }
@@ -159,7 +159,7 @@ class CreateAlbumE2ETest {
     private fun esperarQueSeCierreElFormulario() =
         rule.waitUntil(15_000) { rule.onAllNodesWithTag(TagFormularioCrear).fetchSemanticsNodes().isEmpty() }
 
-    /** Inicio -> "Ver álbumes" -> catálogo cargado. */
+    /** Home -> "Ver álbumes" -> catalog loaded. */
     private fun verCatalogo(evidencia: String, paso: String) {
         esperarA(TagInicio)
         rule.onNodeWithTag(TagVerAlbumes).performScrollTo().performClick()
@@ -167,7 +167,7 @@ class CreateAlbumE2ETest {
         EvidenciaE2E.capturar(rule, evidencia, paso)
     }
 
-    /** Ingreso -> Coleccionista [idColeccionista] -> catálogo. */
+    /** Login -> Collector [idColeccionista] -> catalog. */
     private fun entrarComoColeccionista(idColeccionista: Int, evidencia: String) {
         esperarA(TagEntrarColeccionista)
         rule.onNodeWithTag(TagEntrarColeccionista).performScrollTo().performClick()
@@ -187,11 +187,11 @@ class CreateAlbumE2ETest {
         EvidenciaE2E.capturar(rule, evidencia, "02_formulario_vacio")
     }
 
-    // ---------- Formulario ----------
+    // ---------- Form ----------
 
     private fun escribir(tag: String, texto: String) {
         rule.onNodeWithTag(tag).performScrollTo().performTextInput(texto)
-        // En API 23 el teclado abierto puede tapar el siguiente campo o botón y el toque se pierde.
+        // On API 23, the open keyboard can cover the next field or button and the tap gets lost.
         Espresso.closeSoftKeyboard()
     }
 
@@ -202,11 +202,11 @@ class CreateAlbumE2ETest {
         rule.waitForIdle()
     }
 
-    /** Abre el selector, toca el día 1 del mes que muestra (el actual) y pulsa "Aceptar". */
+    /** Opens the picker, taps day 1 of the shown month (the current one) and presses "Aceptar". */
     private fun elegirPrimerDiaDelMes() {
         rule.onNodeWithTag(TagFechaAlbum).performScrollTo().performClick()
         esperarTexto("Aceptar")
-        // Cada día se expone con su fecha completa ("domingo, 1 de noviembre de 2026"), no solo con el número.
+        // Each day is exposed with its full date ("domingo, 1 de noviembre de 2026"), not just the number.
         rule.onNode(hasText(", 1 de ", substring = true) and hasClickAction()).performClick()
         rule.onNodeWithText("Aceptar").performClick()
         rule.waitForIdle()
@@ -221,13 +221,13 @@ class CreateAlbumE2ETest {
         escribir(TagDescripcionAlbum, formulario.descripcion)
     }
 
-    /** Un campo de selección (fecha, género o disquera) muestra [valor]. */
+    /** A selection field (date, genre, or label) shows [valor]. */
     private fun seleccionMuestra(tag: String, valor: String) {
         val campo = hasTestTag(tag) and hasAnyDescendant(hasText(valor))
         rule.onNode(campo, useUnmergedTree = true).performScrollTo().assertExists()
     }
 
-    /** Todos los campos conservan lo que se escribió o eligió. */
+    /** All fields keep what was typed or chosen. */
     private fun formularioConserva(formulario: Formulario) {
         rule.onNodeWithTag(TagNombreAlbum).performScrollTo().assertTextEquals(formulario.nombre)
         rule.onNodeWithTag(TagAlbumCover).performScrollTo().assertTextEquals(formulario.portada)
@@ -237,7 +237,7 @@ class CreateAlbumE2ETest {
         rule.onNodeWithTag(TagDescripcionAlbum).performScrollTo().assertTextEquals(formulario.descripcion)
     }
 
-    /** El campo muestra [mensaje] debajo. */
+    /** The field shows [mensaje] below it. */
     private fun campoMarcado(campo: AlbumField, mensaje: String) {
         val error = hasTestTag(tagFieldError(campo)) and hasAnyDescendant(hasText(mensaje))
         rule.onNode(error, useUnmergedTree = true).performScrollTo().assertIsDisplayed()
@@ -261,9 +261,9 @@ class CreateAlbumE2ETest {
         return respuesta.use { JSONObject(requireNotNull(it.body).string()) }
     }
 
-    // ---------- Escenarios contra el backend real ----------
+    // ---------- Scenarios against the real backend ----------
 
-    /** FN07-ESC01: el Visitante no ve "Crear álbum"; el Coleccionista sí. */
+    /** FN07-ESC01: the Visitor does not see "Crear álbum"; the Collector does. */
     @Test
     fun elVisitanteNoVeLaOpcionDeCrearYElColeccionistaSi() {
         val evidencia = "FN07_ESC01"
@@ -276,7 +276,7 @@ class CreateAlbumE2ETest {
             rule.onNodeWithTag(TagRolActivo).assertTextEquals("VISITANTE")
             rule.onAllNodesWithTag(TagCreateAlbumCatalogo).assertCountEquals(0)
 
-            // Volver al ingreso (catálogo -> inicio -> ingreso) con el botón atrás y entrar como Coleccionista.
+            // Go back to login (catalog -> home -> login) with the back button and enter as a Collector.
             Espresso.pressBack()
             esperarA(TagInicio)
             rule.waitForIdle()
@@ -290,7 +290,7 @@ class CreateAlbumE2ETest {
         }
     }
 
-    /** FN07-ESC02: un álbum válido se guarda, aparece "Álbum creado" y el álbum en el catálogo como NUEVO. */
+    /** FN07-ESC02: a valid album is saved, "Álbum creado" appears, and the album shows up in the catalog as NEW. */
     @Test
     fun createUnAlbumValidoLoGuardaYLoMuestraEnElCatalogo() {
         val evidencia = "FN07_ESC02"
@@ -315,7 +315,7 @@ class CreateAlbumE2ETest {
             rule.onAllNodesWithText(formulario.nombre)[0].assertIsDisplayed()
             EvidenciaE2E.capturar(rule, evidencia, "05_album_nuevo_en_el_catalogo")
 
-            // El backend guardó el álbum una sola vez, con el día elegido (sin correrse por la zona horaria).
+            // The backend saved the album exactly once, with the chosen day (not shifted by timezone).
             assertEquals(1, albumes.envios)
             assertEquals(antes + 1, albumesEnElBackend())
             val guardado = albumDelBackend(id)
@@ -326,7 +326,7 @@ class CreateAlbumE2ETest {
         }
     }
 
-    /** FN07-ESC03: "Cancelar" con el formulario lleno cierra sin guardar ni enviar nada. */
+    /** FN07-ESC03: "Cancelar" with the form filled in closes it without saving or sending anything. */
     @Test
     fun cancelarUnFormularioConDatosNoGuardaNada() {
         val evidencia = "FN07_ESC03"
@@ -350,7 +350,7 @@ class CreateAlbumE2ETest {
         }
     }
 
-    /** FN07-ESC04: con el formulario vacío, cada campo se marca con "Campo obligatorio" y no se envía nada. */
+    /** FN07-ESC04: with an empty form, every field is marked "Campo obligatorio" and nothing is sent. */
     @Test
     fun conCamposEmptysSeMarcaCadaUnoYNoSeEnviaNada() {
         val evidencia = "FN07_ESC04"
@@ -375,7 +375,7 @@ class CreateAlbumE2ETest {
         }
     }
 
-    /** FN07-ESC05: una portada que no empieza con http:// o https:// muestra "Ingresa una URL válida". */
+    /** FN07-ESC05: a cover that doesn't start with http:// or https:// shows "Ingresa una URL válida". */
     @Test
     fun unaPortadaInvalidaMuestraElMensajeYNoSeEnviaNada() {
         val evidencia = "FN07_ESC05"
@@ -391,7 +391,7 @@ class CreateAlbumE2ETest {
             campoMarcado(AlbumField.Portada, "Ingresa una URL válida")
             EvidenciaE2E.capturar(rule, evidencia, "03_url_invalida")
 
-            // Solo la portada queda marcada: los demás campos son válidos.
+            // Only the cover ends up marked: the other fields are valid.
             AlbumField.entries.filter { it != AlbumField.Portada }.forEach {
                 rule.onAllNodesWithTag(tagFieldError(it), useUnmergedTree = true).assertCountEquals(0)
             }
@@ -400,7 +400,7 @@ class CreateAlbumE2ETest {
         }
     }
 
-    /** FN07-ESC06: al girar la pantalla, el formulario lleno conserva todo lo escrito y elegido. */
+    /** FN07-ESC06: when rotating the screen, the filled form keeps everything typed and chosen. */
     @Test
     fun alGirarLaPantallaElFormularioConservaLoEscritoYElegido() {
         val evidencia = "FN07_ESC06"
@@ -412,7 +412,7 @@ class CreateAlbumE2ETest {
             llenar(formulario)
             EvidenciaE2E.capturar(rule, evidencia, "03_antes_de_girar")
 
-            // Girar de verdad (no solo recrear la Activity) para que la evidencia se vea en horizontal.
+            // Actually rotate (not just recreate the Activity) so the evidence shows up in landscape.
             escenario.onActivity { it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE }
             rule.waitUntil(5_000) {
                 var horizontal = false
@@ -431,9 +431,9 @@ class CreateAlbumE2ETest {
         }
     }
 
-    // ---------- Escenario con MockWebServer ----------
+    // ---------- Scenario with MockWebServer ----------
 
-    /** FN07-ESC07: con el backend caído se ve el error, se conservan los datos y el reintento crea el álbum. */
+    /** FN07-ESC07: with the backend down, the error is shown, the data is kept, and retrying creates the album. */
     @Test
     fun conElBackendCaidoSeConservanLosDatosYReintentarCreaElAlbum() {
         val evidencia = "FN07_ESC07"
@@ -472,7 +472,7 @@ class CreateAlbumE2ETest {
             start()
         }
         servidor = nuevo
-        // "localhost" es uno de los hosts con HTTP permitido en network_security_config.xml.
+        // "localhost" is one of the hosts allowed over HTTP in network_security_config.xml.
         ApplicationProvider.getApplicationContext<VinilosApplication>().container =
             AppContainer(baseUrl = "http://localhost:${nuevo.port}/")
 
@@ -492,7 +492,7 @@ class CreateAlbumE2ETest {
             formularioConserva(formulario)
             EvidenciaE2E.capturar(rule, evidencia, "04_datos_conservados")
 
-            // El backend "vuelve" y la persona reintenta.
+            // The backend "comes back" and the user retries.
             caido = false
             pulsar(TagCreateAlbum)
             esperarQueSeCierreElFormulario()

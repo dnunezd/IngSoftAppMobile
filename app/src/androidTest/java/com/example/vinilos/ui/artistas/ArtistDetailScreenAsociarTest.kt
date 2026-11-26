@@ -18,7 +18,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
-/** Acceso a "Agregar álbum" desde el detalle del artista (HU15, criterios 2, 7 y 11). */
+/** Access to "Add album" from the artist detail screen (HU15, criteria 2, 7 and 11). */
 class ArtistDetailScreenAsociarTest {
     @get:Rule
     val rule = createComposeRule()
@@ -53,7 +53,7 @@ class ArtistDetailScreenAsociarTest {
         rule.onNodeWithTag(TagListaArtistDetail).performScrollToNode(hasTestTag(TagBotonAgregarAlbum))
     }
 
-    // Criterio 11
+    // Criterion 11
     @Test
     fun elVisitanteNoVeAgregarAlbum() {
         mostrar(ArtistDetailUiState.Success(ruben), estadoAsociar = null)
@@ -62,7 +62,7 @@ class ArtistDetailScreenAsociarTest {
         rule.onNodeWithText("Agregar álbum").assertDoesNotExist()
     }
 
-    // Criterio 2
+    // Criterion 2
     @Test
     fun elColeccionistaVeAgregarAlbum() {
         mostrar(ArtistDetailUiState.Success(ruben), estadoAsociar = AssociateAlbumUiState())
@@ -100,7 +100,7 @@ class ArtistDetailScreenAsociarTest {
         rule.onNodeWithText("Asociar álbum a Rubén Blades").assertIsDisplayed()
     }
 
-    // Criterio 7
+    // Criterion 7
     @Test
     fun alAsociarMuestraElMensajeAlbumAsociado() {
         mostrar(ArtistDetailUiState.Success(ruben, mostrarAlbumAsociado = true), estadoAsociar = AssociateAlbumUiState())

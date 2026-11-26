@@ -21,8 +21,8 @@ import org.junit.Test
 import java.util.concurrent.TimeUnit
 
 /**
- * Asociar un álbum a un artista (HU15, add-agregar-album-artista D1). Los cuerpos de respuesta imitan los
- * de BackVynils verificados el 2026-11-19: el `POST` de músico devuelve el álbum y el `PUT` de banda la banda.
+ * Associate an album with an artist (HU15, add-agregar-album-artista D1). The response bodies mimic those
+ * from BackVynils verified on 2026-11-19: the musician's `POST` returns the album and the band's `PUT` returns the band.
  */
 class ArtistRepositoryAsociarTest {
 
@@ -67,7 +67,7 @@ class ArtistRepositoryAsociarTest {
 
     private fun cuerpoDelPut() = synchronized(peticiones) { peticiones.single { it.method == "PUT" }.body.readUtf8() }
 
-    // ---------- Músico ----------
+    // ---------- Musician ----------
 
     @Test
     fun aUnMusicoLoAsociaConElPostDelMusico() = runTest {
@@ -90,7 +90,7 @@ class ArtistRepositoryAsociarTest {
 
     @Test
     fun unMusicoOAlbumInexistenteEsLoadError() = runTest {
-        // Sin respuesta configurada, el servidor falso responde 404, como BackVynils.
+        // Without a configured response, the fake server responds with 404, like BackVynils.
         val error = repositorio.associateAlbum(ArtistType.MUSICO, 999, 102).exceptionOrNull()
 
         assertTrue("Fue $error", error is LoadError)
@@ -105,7 +105,7 @@ class ArtistRepositoryAsociarTest {
         assertTrue("Fue $error", error is LoadError)
     }
 
-    // ---------- Banda ----------
+    // ---------- Band ----------
 
     @Test
     fun aUnaBandaLaAsociaConSusAlbumesActualesMasElNuevo() = runTest {
@@ -161,7 +161,7 @@ class ArtistRepositoryAsociarTest {
 
     @Test
     fun siLaBandaLlegaSinListaDeAlbumesNoEnviaElPut() = runTest {
-        // Sin "albums" no se sabe qué tiene la banda: un PUT solo con el nuevo le borraría los demás.
+        // Without "albums" there's no way to know what the band has: a PUT with only the new one would erase the rest.
         respuestas["GET /bands/101"] = MockResponse().setBody("""{"id": 101, "name": "Queen"}""")
 
         val error = repositorio.associateAlbum(ArtistType.BANDA, 101, 100).exceptionOrNull()
@@ -192,7 +192,7 @@ class ArtistRepositoryAsociarTest {
         assertTrue("Fue $error", error is LoadError)
     }
 
-    // ---------- Cancelación ----------
+    // ---------- Cancellation ----------
 
     @Test
     fun laCancelacionSePropagaSinConvertirseEnLoadError() = runTest {

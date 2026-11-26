@@ -2,13 +2,13 @@ package com.example.vinilos.viewmodel
 
 import com.example.vinilos.data.model.ArtistDetail
 
-/** Un solo estado de error: el artista que ya no existe y el fallo de carga llevan al mismo mensaje. */
+/** A single error state: the artist that no longer exists and the load failure lead to the same message. */
 sealed interface ArtistDetailUiState {
     data object Loading : ArtistDetailUiState
     /**
-     * [actualizando]: se muestra el detalle guardado mientras se consulta el backend.
-     * [errorAlActualizar]: esa consulta falló y la pantalla debe avisarlo una vez (add-cache-consultas, D5).
-     * [mostrarAlbumAsociado]: se acaba de asociar un álbum y la pantalla debe avisarlo una vez (HU15).
+     * [actualizando]: the cached detail is shown while the backend is queried.
+     * [errorAlActualizar]: that query failed and the screen must report it once (add-cache-consultas, D5).
+     * [mostrarAlbumAsociado]: an album was just associated and the screen must report it once (HU15).
      */
     data class Success(
         val detalle: ArtistDetail,

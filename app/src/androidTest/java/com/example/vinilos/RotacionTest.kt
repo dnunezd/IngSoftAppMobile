@@ -44,7 +44,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
-/** Recrea la Activity (lo que pasa al girar la pantalla) y comprueba que no se pierde nada. */
+/** Recreates the Activity (what happens when the screen is rotated) and checks that nothing is lost. */
 class RotacionTest {
 
     @get:Rule

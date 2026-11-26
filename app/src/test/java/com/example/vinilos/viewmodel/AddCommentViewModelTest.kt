@@ -27,7 +27,7 @@ private val album = Album(
     artistas = emptyList(), comentarios = emptyList()
 )
 
-/** Álbumes: lo guardado responde de inmediato y cada consulta por red queda pendiente hasta que la prueba la completa. */
+/** Albums: the saved one responds immediately and each network query stays pending until the test completes it. */
 private class AlbumesFalsos : AlbumRepository {
     val guardados = mutableMapOf<Int, Album>()
     val consultas = mutableListOf<Pair<Int, CompletableDeferred<Result<Album>>>>()
@@ -48,7 +48,7 @@ private class AlbumesFalsos : AlbumRepository {
     override suspend fun addTrack(albumId: Int, cancion: Track): Result<Unit> = error("No se usa en esta prueba")
 }
 
-/** Cada publicación queda pendiente hasta que la prueba la completa. */
+/** Each post stays pending until the test completes it. */
 private class CommentsFalsos : CommentRepository {
     val envios = mutableListOf<Pair<Int, NewComment>>()
     private val respuestas = mutableListOf<CompletableDeferred<Result<Unit>>>()
@@ -81,7 +81,7 @@ class AddCommentViewModelTest {
         cambiarOpinion(" Gran prensado ")
     }
 
-    // ---------- Álbum (D3) ----------
+    // ---------- Album (D3) ----------
 
     @Test
     fun muestraElAlbumGuardadoSinConsultarElBackend() = runTest {
@@ -148,7 +148,7 @@ class AddCommentViewModelTest {
         assertTrue(albumes.consultas.isEmpty())
     }
 
-    // ---------- Edición ----------
+    // ---------- Editing ----------
 
     @Test
     fun calificarGuardaLaEstrellaElegida() = runTest {
@@ -179,7 +179,7 @@ class AddCommentViewModelTest {
         assertEquals("a".repeat(400), viewModel.uiState.value.opinion)
     }
 
-    // ---------- Publicar (D4) ----------
+    // ---------- Post (D4) ----------
 
     @Test
     fun publicaLaOpinionSinEspaciosLaCalificacionYElColeccionista() = runTest {
@@ -315,7 +315,7 @@ class AddCommentViewModelTest {
         assertEquals(1, comentarios.envios.size)
     }
 
-    // ---------- Salir (D5) ----------
+    // ---------- Exit (D5) ----------
 
     @Test
     fun sinNadaEscritoSaleSinPreguntar() = runTest {

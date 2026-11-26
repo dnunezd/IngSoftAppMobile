@@ -18,7 +18,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Caché del catálogo (add-cache-catalogo, D2): la tabla siempre es la última respuesta completa. */
+/** Catalog cache (add-cache-catalogo, D2): the table always holds the latest full response. */
 @RunWith(AndroidJUnit4::class)
 class AlbumDaoTest {
 
@@ -80,7 +80,7 @@ class AlbumDaoTest {
 
     @Test
     fun guardaYLeeUnCatalogoDelTamanoDelBackend() = runTest {
-        // El backend de los tutores tenía 274 álbumes al medir M4 (add-crear-album/design.md).
+        // The tutors' backend had 274 albums when measured at M4 (add-crear-album/design.md).
         val albumes = (1..274).map { album(it) }
 
         dao.reemplazar(albumes)
@@ -89,7 +89,7 @@ class AlbumDaoTest {
         assertEquals(albumes.toSet(), dao.todos().toSet())
     }
 
-    // ---------- Detalle (add-cache-consultas, D1 y D4) ----------
+    // ---------- Detail (add-cache-consultas, D1 and D4) ----------
 
     private fun detalle(id: Int, nombre: String = "Álbum $id") = AlbumDetailEntity(
         id = id,
@@ -140,7 +140,7 @@ class AlbumDaoTest {
     fun reemplazarCatalogoReemplazaLasDosTablas() = runTest {
         dao.reemplazarCatalogo(listOf(album(100), album(101)), listOf(detalle(100), detalle(101)))
 
-        // El 102 no pasó la validación estricta: está en el catálogo pero no tiene detalle.
+        // 102 didn't pass strict validation: it's in the catalog but has no detail.
         dao.reemplazarCatalogo(listOf(album(101), album(102)), listOf(detalle(101, nombre = "Nuevo")))
 
         assertEquals(setOf(album(101), album(102)), dao.todos().toSet())
@@ -179,7 +179,7 @@ class AlbumDaoTest {
         }
     }
 
-    // ---------- Escrituras incrementales (optimizar-cache-e-imagenes, D6) ----------
+    // ---------- Incremental writes (optimizar-cache-e-imagenes, D6) ----------
 
     @Test
     fun saveAlbumsCambiaSoloLasFilasRecibidas() = runTest {
@@ -240,12 +240,12 @@ class AlbumDaoTest {
         try {
             dao.aplicarCatalogo(
                 TableChanges.diferencias(listOf(album(101)), listOf(100)),
-                // Un id repetido hace fallar la inserción después de cambiar el catálogo.
+                // A duplicate id makes the insertion fail after the catalog has already changed.
                 TableChanges.reemplazar(listOf(detalle(1), detalle(1)))
             )
             fail("La inserción con un id repetido debía fallar")
         } catch (e: SQLiteConstraintException) {
-            // Esperado.
+            // Expected.
         }
 
         assertEquals(listOf(album(100)), dao.todos())

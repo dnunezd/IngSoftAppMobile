@@ -29,7 +29,7 @@ class CreateAlbumViewModel(private val repositorio: AlbumRepository) : ViewModel
     fun cambiarDescripcion(valor: String) =
         editar(AlbumField.Descripcion) { copy(descripcion = valor.take(LimiteDescripcion)) }
 
-    /** Editar un campo borra solo su error; durante el envío o tras crear los datos ya no cambian. */
+    /** Editing a field clears only its own error; while submitting or after creation the data no longer changes. */
     private fun editar(campo: AlbumField, cambio: CreateAlbumUiState.() -> CreateAlbumUiState) {
         _uiState.update { estado ->
             if (estado.enviando || estado.envio is EnvioAlbum.Creado) estado
@@ -38,8 +38,8 @@ class CreateAlbumViewModel(private val repositorio: AlbumRepository) : ViewModel
     }
 
     /**
-     * Valida y envía. El backend no impide álbumes repetidos, así que esta guarda (y no solo el botón
-     * desactivado) es la que evita enviar dos veces con dos toques seguidos.
+     * Validates and submits. The backend doesn't prevent duplicate albums, so this guard (and not just
+     * the disabled button) is what prevents submitting twice with two quick taps.
      */
     fun create() {
         val estado = _uiState.value

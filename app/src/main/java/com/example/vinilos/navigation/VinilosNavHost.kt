@@ -55,19 +55,19 @@ object Routes {
     const val CATALOGO = "catalogo"
     const val ARTISTAS = "artistas"
 
-    /** Detalle del artista (HU04). El tipo distingue a un músico de una banda con el mismo id. */
+    /** Artist detail (HU04). The type distinguishes a musician from a band with the same id. */
     const val DETALLE_ARTISTA = "artista/{tipo}/{id}"
 
-    /** Detalle del álbum (HU02). */
+    /** Album detail (HU02). */
     const val DETALLE_ALBUM = "album/{id}"
 
-    /** Formulario para crear un álbum (HU07), solo para el Coleccionista. */
+    /** Form to create an album (HU07), only for the Collector. */
     const val CREAR_ALBUM = "crear-album"
 
-    /** Formulario para agregar una canción al álbum (HU08), solo para el Coleccionista. */
+    /** Form to add a track to the album (HU08), only for the Collector. */
     const val AGREGAR_CANCION = "album/{id}/agregar-cancion"
 
-    /** Comentar un álbum (HU09), solo para el Coleccionista. */
+    /** Comment on an album (HU09), only for the Collector. */
     const val COMENTAR_ALBUM = "album/{id}/comentar"
 
     fun detalleArtista(tipo: ArtistType, id: Int) = "artista/${tipo.name}/$id"
@@ -79,25 +79,25 @@ object Routes {
     fun addComment(id: Int) = "album/$id/comentar"
 }
 
-/** Clave con la que el formulario le entrega al catálogo el id del álbum creado. */
+/** Key with which the form delivers to the catalog the id of the created album. */
 private const val ClaveAlbumCreado = "album_creado"
 
-/** Resultado con el que el formulario solicita recargar y avisar en el detalle del álbum. */
+/** Result with which the form requests a reload and notifies the album detail screen. */
 private const val ClaveTrackAgregada = "cancion_agregada"
 
-/** Clave con la que la pantalla de comentar le avisa al detalle que debe actualizarse (add-comentar-album, D7). */
+/** Key with which the comment screen notifies the detail screen that it must be refreshed (add-comentar-album, D7). */
 private const val ClaveCommentPublicado = "comentario_publicado"
 
-/** Clave con la que el detalle del artista avisa al listado que un favorito ya no está disponible. */
+/** Key with which the artist detail screen notifies the list that a favorite is no longer available. */
 private const val ClaveArtistaEliminado = "artista_eliminado"
 
-/** Clave con la que el formulario de agregar canción avisa al detalle que el álbum ya no existe. */
+/** Key with which the add-track form notifies the detail screen that the album no longer exists. */
 private const val ClaveAlbumEliminado = "album_eliminado"
 
 /**
- * Grafo de navegación: ingreso -> (coleccionistas) -> inicio -> catálogo -> detalle del álbum |
- * crear álbum, artistas -> detalle del artista -> detalle del álbum, y detalle del álbum -> comentar. Al entrar al
- * inicio el ingreso queda en la pila (para poder cambiar de perfil) y el selector sale de ella.
+ * Navigation graph: entry -> (collectors) -> home -> catalog -> album detail |
+ * create album, artists -> artist detail -> album detail, and album detail -> comment. On entering
+ * home, entry stays on the stack (to be able to switch profile) and the selector is popped off it.
  */
 @Composable
 fun VinilosNavHost(
@@ -116,7 +116,7 @@ fun VinilosNavHost(
         }
     }
 
-    /** Dos toques rápidos no deben sacar también el catálogo. */
+    /** Two quick taps shouldn't also pop the catalog. */
     fun cerrarFormulario() {
         if (navController.currentDestination?.route == Routes.CREAR_ALBUM) navController.popBackStack()
     }
@@ -125,7 +125,7 @@ fun VinilosNavHost(
         if (navController.currentDestination?.route == Routes.AGREGAR_CANCION) navController.popBackStack()
     }
 
-    /** Igual que [cerrarFormulario]: solo se cierra si comentar sigue siendo la pantalla actual. */
+    /** Same as [cerrarFormulario]: only closes if comment screen is still the current destination. */
     fun cerrarComentar() {
         if (navController.currentDestination?.route == Routes.COMENTAR_ALBUM) navController.popBackStack()
     }
@@ -136,7 +136,7 @@ fun VinilosNavHost(
         modifier = modifier
     ) {
         composable(Routes.INGRESO) {
-            // Volver al ingreso (desde el selector o el inicio) deja la sesión sin perfil.
+            // Returning to entry (from the selector or home) leaves the session without a profile.
             LaunchedEffect(Unit) { sessionViewModel.clear() }
             EntryScreen(
                 onVisitante = {
@@ -192,7 +192,7 @@ fun VinilosNavHost(
             LaunchedEffect(albumCreado) {
                 albumCreado?.let { id ->
                     viewModel.albumCreado(id)
-                    // Se borra para que girar la pantalla no repita el aviso ni la consulta.
+                    // Cleared so rotating the screen doesn't repeat the notice or the query.
                     entrada.savedStateHandle[ClaveAlbumCreado] = null
                 }
             }
@@ -220,7 +220,7 @@ fun VinilosNavHost(
                 }
             )
             val estado by viewModel.uiState.collectAsStateWithLifecycle()
-            // La pila se restaura al morir el proceso, pero la sesión no.
+            // The stack is restored when the process dies, but the session is not.
             LaunchedEffect(session) {
                 if (!session.collectorActionsEnabled) cerrarFormulario()
             }
@@ -258,8 +258,8 @@ fun VinilosNavHost(
                 .collectAsStateWithLifecycle()
             LaunchedEffect(artistaEliminado) {
                 if (artistaEliminado) {
-                    // El artista ya no existe en el backend: se vuelve a consultar para que el
-                    // listado no lo siga mostrando (popBackStack por sí solo no alcanza).
+                    // The artist no longer exists on the backend: it's re-fetched so the
+                    // list stops showing it (popBackStack alone isn't enough).
                     viewModel.retry()
                     entrada.savedStateHandle[ClaveArtistaEliminado] = false
                 }
@@ -287,7 +287,7 @@ fun VinilosNavHost(
             val argumentos = requireNotNull(entrada.arguments)
             val tipo = ArtistType.valueOf(requireNotNull(argumentos.getString("tipo")))
             val artistId = argumentos.getInt("id")
-            // Ligado a la entrada de navegación: sobrevive a la rotación y a la ida y vuelta al álbum.
+            // Bound to the navigation entry: survives rotation and going back and forth to the album.
             val viewModel: ArtistDetailViewModel = viewModel(
                 factory = viewModelFactory {
                     initializer { ArtistDetailViewModel(tipo, artistId, artistRepository) }
@@ -297,7 +297,7 @@ fun VinilosNavHost(
             val session by sessionViewModel.session.collectAsStateWithLifecycle()
             val coleccionista = (session as? Session.Collector)?.collector
             if (coleccionista != null) {
-                // Solo el Coleccionista comprueba y guarda favoritos; el Visitante no ve el botón.
+                // Only the Collector checks and saves favorites; the Visitor doesn't see the button.
                 val favoritoViewModel: FavoriteViewModel = viewModel(
                     key = "favorito-$artistId",
                     factory = viewModelFactory {
@@ -307,8 +307,8 @@ fun VinilosNavHost(
                     }
                 )
                 val estadoFavorito by favoritoViewModel.uiState.collectAsStateWithLifecycle()
-                // HU15: la ventana vive en la misma entrada que el detalle, así que el álbum asociado se
-                // entrega directo al ViewModel del detalle, sin savedStateHandle (add-agregar-album-artista, D5).
+                // HU15: the sheet lives in the same entry as the detail screen, so the associated album is
+                // delivered directly to the detail ViewModel, without savedStateHandle (add-agregar-album-artista, D5).
                 val associateViewModel: AssociateAlbumViewModel = viewModel(
                     key = "asociar-$tipo-$artistId",
                     factory = viewModelFactory {
@@ -380,10 +380,10 @@ fun VinilosNavHost(
                 .collectAsStateWithLifecycle()
             LaunchedEffect(cancionAgregada) {
                 if (cancionAgregada) {
-                    // Se borra de inmediato (no cuando el aviso termina de mostrarse) para que girar
-                    // la pantalla mientras se ve "Canción agregada" no repita el GET /albums/{id}.
-                    // El aviso en sí lo controla el ViewModel (ver AlbumViewModel.cancionAgregada),
-                    // que sí sobrevive a la rotación.
+                    // Cleared immediately (not when the notice finishes showing) so rotating
+                    // the screen while "Track added" is visible doesn't repeat the GET /albums/{id}.
+                    // The notice itself is controlled by the ViewModel (see AlbumViewModel.cancionAgregada),
+                    // which does survive rotation.
                     viewModel.cancionAgregada()
                     entrada.savedStateHandle[ClaveTrackAgregada] = false
                 }
@@ -394,7 +394,7 @@ fun VinilosNavHost(
             LaunchedEffect(comentarioPublicado) {
                 if (comentarioPublicado) {
                     viewModel.actualizar()
-                    // Se borra para que girar la pantalla no repita la consulta.
+                    // Cleared so rotating the screen doesn't repeat the query.
                     entrada.savedStateHandle[ClaveCommentPublicado] = false
                 }
             }
@@ -403,9 +403,9 @@ fun VinilosNavHost(
                 .collectAsStateWithLifecycle()
             LaunchedEffect(albumEliminado) {
                 if (albumEliminado) {
-                    // El álbum ya no existe en el backend (lo supo el formulario al guardar): se
-                    // vuelve a consultar para que el detalle pase a "no disponible" en vez de seguir
-                    // mostrando el álbum en caché con "Agregar canción" habilitado.
+                    // The album no longer exists on the backend (the form found out while saving): it's
+                    // re-fetched so the detail screen shows "not available" instead of continuing to
+                    // show the cached album with "Add track" enabled.
                     viewModel.actualizar()
                     entrada.savedStateHandle[ClaveAlbumEliminado] = false
                 }
@@ -419,7 +419,7 @@ fun VinilosNavHost(
                 onAddTrack = { navController.navigate(Routes.addTrack(id)) },
                 mostrarAvisoTrackAgregada = cancionAgregadaViewModel,
                 onAvisoTrackAgregadaMostrado = viewModel::avisoTrackAgregadaMostrado,
-                // El Visitante no ve el botón de comentar (add-comentar-album, D8).
+                // The Visitor doesn't see the comment button (add-comentar-album, D8).
                 onComentar = if (session.collectorActionsEnabled) {
                     { navController.navigate(Routes.addComment(id)) { launchSingleTop = true } }
                 } else {
@@ -459,9 +459,9 @@ fun VinilosNavHost(
                     onCancelar = ::cerrarFormularioTrack,
                     onAtras = ::cerrarFormularioTrack,
                     onAlbumNotAvailable = {
-                        // A diferencia de "cancelar", el álbum ya no existe: se le avisa al detalle
-                        // para que se actualice y deje de mostrarlo como disponible (en vez de volver
-                        // a su caché desactualizada con "Agregar canción" aún habilitado).
+                        // Unlike "cancel", the album no longer exists: the detail screen is notified
+                        // so it refreshes and stops showing it as available (instead of falling back
+                        // to its stale cache with "Add track" still enabled).
                         navController.previousBackStackEntry?.savedStateHandle
                             ?.set(ClaveAlbumEliminado, true)
                         cerrarFormularioTrack()
@@ -475,7 +475,7 @@ fun VinilosNavHost(
         ) {
             val session by sessionViewModel.session.collectAsStateWithLifecycle()
             val coleccionista = (session as? Session.Collector)?.collector
-            // La pila se restaura al morir el proceso, pero la sesión no.
+            // The stack is restored when the process dies, but the session is not.
             if (coleccionista == null) {
                 LaunchedEffect(Unit) { cerrarComentar() }
                 return@composable

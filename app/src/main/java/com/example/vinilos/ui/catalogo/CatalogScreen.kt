@@ -73,7 +73,7 @@ import com.example.vinilos.viewmodel.NewAlbumCatalogo
 import com.example.vinilos.viewmodel.AlbumsUiState
 import com.example.vinilos.ui.ingreso.encabezado
 
-/** `catalogo` y `catalogo_rol` son los tags que ya usaban las pruebas de ingreso y rotación (HU00). */
+/** `catalogo` and `catalogo_rol` are the tags already used by the login and rotation tests (HU00). */
 const val TagCatalogo = "catalogo"
 const val TagRolActivo = "catalogo_rol"
 const val TagCuadriculaCatalogo = "catalogo_cuadricula"
@@ -89,14 +89,14 @@ fun tagAlbum(id: Int) = "album_$id"
 
 fun tagNewAlbum(id: Int) = "album_nuevo_$id"
 
-/** Elementos de la cuadrícula antes del primer álbum: el titular y el encabezado de la lista. */
+/** Grid items before the first album: the title and the list header. */
 private const val ElementosAntesDeAlbumes = 2
 
 /**
- * Catálogo de álbumes (HU01): cuadrícula con portada, nombre y género, deslizar hacia abajo para
- * actualizar y estados de carga, vacío y error. Los álbumes son los mismos para el Visitante y el
- * Coleccionista; este último ve además el botón "Crear álbum" (HU07), y al volver de crear uno se
- * avisa, se desplaza hasta él y se marca como nuevo.
+ * Album catalog (HU01): grid with cover, name and genre, pull down to
+ * refresh, and loading, empty and error states. The albums are the same for the Visitor and the
+ * Collector; the latter also sees the "Create album" button (HU07), and when returning from creating one
+ * it is notified, scrolled to it, and marked as new.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -115,8 +115,8 @@ fun CatalogScreen(
     onDesplazadoAlNuevo: () -> Unit = {}
 ) {
     val cargado = estado is AlbumsUiState.Success || estado is AlbumsUiState.Empty
-    // El progreso de la actualización se muestra junto al encabezado de la lista, así que el
-    // indicador de deslizar nunca queda girando (isRefreshing = false) y vuelve a ocultarse solo.
+    // The refresh progress is shown next to the list header, so the
+    // pull-to-refresh indicator never keeps spinning (isRefreshing = false) and hides itself again.
     val deslizar = rememberPullToRefreshState()
 
     val avisos = remember { SnackbarHostState() }
@@ -125,8 +125,8 @@ fun CatalogScreen(
         (estado as? AlbumsUiState.Empty)?.errorAlActualizar == true
     LaunchedEffect(conAviso) {
         if (conAviso) {
-            // finally: si la pantalla sale antes de que termine (tocar un álbum, girar), el aviso
-            // queda como mostrado y no se repite al volver.
+            // finally: if the screen exits before it finishes (tapping an album, rotating), the notice
+            // stays marked as shown and doesn't repeat when coming back.
             try {
                 avisos.showSnackbar(mensajeAviso)
             } finally {
@@ -148,7 +148,7 @@ fun CatalogScreen(
     }
 
     val cuadricula = rememberLazyGridState()
-    // El álbum nuevo puede quedar lejos por el orden alfabético. Se espera a que la lista lo contenga.
+    // The new album may end up far away due to alphabetical order. It waits for the list to contain it.
     val indiceNuevo = (estado as? AlbumsUiState.Success)?.albumes
         ?.indexOfFirst { it.id == albumNuevo?.id }
         ?.takeIf { it >= 0 && albumNuevo?.desplazamientoPendiente == true }
@@ -171,8 +171,8 @@ fun CatalogScreen(
             .testTag(TagCatalogo)
     ) {
         HeaderWithRole(session, stringResource(R.string.catalogo_encabezado), onAtras)
-        // clipToBounds: el indicador de deslizar espera oculto sobre la lista y no debe verse
-        // encima del encabezado.
+        // clipToBounds: the pull-to-refresh indicator waits hidden over the list and must not show
+        // above the header.
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -228,7 +228,7 @@ fun CatalogScreen(
             if (puedeCrear) {
                 ExtendedFloatingActionButton(
                     onClick = onCreateAlbum,
-                    // Material oculta el texto a la accesibilidad, así que el nombre lo da el ícono.
+                    // Material hides the text from accessibility, so the icon provides the name.
                     icon = {
                         Icon(
                             imageVector = Icons.Filled.Add,
@@ -257,7 +257,7 @@ fun CatalogScreen(
     }
 }
 
-/** Espacio que deja libre el botón "Crear álbum": su alto de 56 dp más los márgenes. */
+/** Space left free by the "Create album" button: its 56 dp height plus margins. */
 private val EspacioBotonCrear = 88.dp
 
 private fun LazyGridScope.anchoCompleto(clave: String, contenido: @Composable () -> Unit) =
@@ -358,7 +358,7 @@ private fun TarjetaAlbum(album: AlbumSummary, esNuevo: Boolean, onSeleccionar: (
             .clickable { onSeleccionar(album.id) }
     ) {
         Box {
-            // Si la URL falta, no responde o no es una imagen, se ve la portada genérica.
+            // If the URL is missing, doesn't respond, or isn't an image, the generic cover is shown.
             AlbumCover(
                 url = album.portada,
                 contentDescription = stringResource(R.string.catalogo_portada_descripcion, album.nombre),
@@ -367,7 +367,7 @@ private fun TarjetaAlbum(album: AlbumSummary, esNuevo: Boolean, onSeleccionar: (
                     .fillMaxWidth()
                     .aspectRatio(1f)
             )
-            // El año sigue visible junto al género, así que la insignia ocupa su lugar.
+            // The year remains visible next to the genre, so the badge takes its place.
             if (esNuevo) {
                 ChipEtiqueta(
                     texto = stringResource(R.string.catalogo_nuevo),
@@ -465,7 +465,7 @@ private fun Loading() {
     }
 }
 
-/** Tarjeta de relleno mientras carga, con la misma forma que una tarjeta de álbum. */
+/** Placeholder card while loading, with the same shape as an album card. */
 @Composable
 private fun TarjetaEsqueleto() {
     Column(
@@ -550,7 +550,7 @@ private fun Error(onReintentar: () -> Unit) {
     }
 }
 
-/** Tarjeta centrada de los estados vacío y error, con la forma de las tarjetas de álbum. */
+/** Centered card for the empty and error states, with the shape of the album cards. */
 @Composable
 private fun TarjetaEstado(contenido: @Composable ColumnScope.() -> Unit) {
     Column(
@@ -565,7 +565,7 @@ private fun TarjetaEstado(contenido: @Composable ColumnScope.() -> Unit) {
     )
 }
 
-/** Ícono grande sobre un círculo de fondo suave, como en los estados de artistas. */
+/** Large icon over a soft background circle, like in the artist states. */
 @Composable
 private fun CirculoIcono(icono: Int, tinte: Color) {
     Box(

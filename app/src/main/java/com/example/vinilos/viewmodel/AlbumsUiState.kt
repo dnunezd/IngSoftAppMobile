@@ -3,8 +3,8 @@ package com.example.vinilos.viewmodel
 import com.example.vinilos.data.model.AlbumSummary
 
 /**
- * Álbum recién creado (HU07). El backend no entrega fecha de creación, así que la marca es local y
- * dura lo que dure el catálogo. Va aparte de [AlbumsUiState] porque también existe mientras carga.
+ * Newly created album (HU07). The backend doesn't provide a creation date, so the marker is local and
+ * lasts as long as the catalog does. It's kept apart from [AlbumsUiState] because it also exists while loading.
  */
 data class NewAlbumCatalogo(
     val id: Int,
@@ -16,9 +16,9 @@ sealed interface AlbumsUiState {
     data object Loading : AlbumsUiState
 
     /**
-     * [albumes] ya viene ordenado por nombre. [actualizando] indica que se está deslizando para
-     * actualizar sin quitar la lista; [errorAlActualizar], que esa actualización falló y la
-     * pantalla debe avisarlo una vez.
+     * [albumes] already comes sorted by name. [actualizando] indicates that a pull-to-refresh is
+     * in progress without clearing the list; [errorAlActualizar], that the refresh failed and the
+     * screen must report it once.
      */
     data class Success(
         val albumes: List<AlbumSummary>,

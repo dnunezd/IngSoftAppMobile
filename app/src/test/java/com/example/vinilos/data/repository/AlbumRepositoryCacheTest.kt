@@ -23,17 +23,17 @@ import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 
-/** Caché del catálogo en el repositorio (add-cache-catalogo, D4 y D7), con un DAO falso en memoria. */
+/** Catalog cache in the repository (add-cache-catalogo, D4 and D7), with a fake in-memory DAO. */
 class AlbumRepositoryCacheTest {
 
-    /** Guarda en una lista; [fallaAlLeer] y [fallaAlEscribir] simulan un almacenamiento que no responde. */
+    /** Stores into a list; [fallaAlLeer] and [fallaAlEscribir] simulate storage that isn't responding. */
     private class AlbumDaoFalso(inicial: List<AlbumEntity> = emptyList()) : AlbumDao() {
         var filas: List<AlbumEntity> = inicial
         var fallaAlLeer: Throwable? = null
         var fallaAlEscribir: Throwable? = null
         var escrituras = 0
 
-        /** Cada escritura que recibió, en orden, con los ids que tocó (optimizar-cache-e-imagenes). */
+        /** Every write it received, in order, with the ids it touched (optimizar-cache-e-imagenes). */
         val operaciones = mutableListOf<String>()
 
         private fun anotar(operacion: String, ids: List<Int> = emptyList()) {
@@ -57,7 +57,7 @@ class AlbumRepositoryCacheTest {
             escrituras++
         }
 
-        /** Detalles guardados por id (add-cache-consultas). */
+        /** Details stored by id (add-cache-consultas). */
         var detalles: Map<Int, AlbumDetailEntity> = emptyMap()
 
         override suspend fun detalle(id: Int): AlbumDetailEntity? {
@@ -210,7 +210,7 @@ class AlbumRepositoryCacheTest {
         assertEquals(listOf(nightAtTheOpera, buscandoAmerica), sinCache.getAlbums().getOrThrow())
     }
 
-    // ---- Fallos del almacenamiento (D7): la caché es una mejora, nunca una condición ----
+    // ---- Storage failures (D7): the cache is an enhancement, never a precondition ----
 
     @Test
     fun siNoSePuedeLeerLaCacheNoHayNadaGuardado() = runTest {
@@ -253,7 +253,7 @@ class AlbumRepositoryCacheTest {
         }
     }
 
-    // ---- Detalle guardado (add-cache-consultas, D4) ----
+    // ---- Stored detail (add-cache-consultas, D4) ----
 
     private val albumCompletoJson = """
         {"id": 200, "name": "Buscando América", "cover": "https://example.com/200.jpg",
@@ -280,7 +280,7 @@ class AlbumRepositoryCacheTest {
 
     @Test
     fun elCatalogoGuardaElDetalleDeLosAlbumesCompletosSinPeticionesNuevas() = runTest {
-        // El 102 no tiene descripción, disquera ni fecha: queda en el catálogo, pero sin detalle.
+        // 102 has no description, record label, or date: it stays in the catalog, but without a detail.
         servidor.enqueue(MockResponse().setBody("[$albumCompletoJson, {\"id\": 102, \"name\": \"A Night at the Opera\", \"genre\": \"Rock\"}]"))
 
         repositorio.getAlbums().getOrThrow()
@@ -366,7 +366,7 @@ class AlbumRepositoryCacheTest {
         assertTrue(repositorio.getAlbum(200).exceptionOrNull() is AlbumNotAvailable)
     }
 
-    // ---- Escribir solo lo que cambió (optimizar-cache-e-imagenes, D4 y D5) ----
+    // ---- Writing only what changed (optimizar-cache-e-imagenes, D4 and D5) ----
 
     private fun albumJson(id: Int, nombre: String = "Álbum $id", descripcion: String = "Descripción $id") = """
         {"id": $id, "name": "$nombre", "cover": "https://example.com/$id.jpg", "description": "$descripcion",
@@ -380,7 +380,7 @@ class AlbumRepositoryCacheTest {
     private fun catalogo(vararg albumes: String, version: String? = null) =
         respuesta(albumes.joinToString(prefix = "[", postfix = "]"), version)
 
-    /** Hace una consulta del catálogo que deja la copia completa y limpia el registro de escrituras. */
+    /** Performs a catalog query that leaves the full copy stored and clears the write log. */
     private suspend fun catalogoYaGuardado(vararg albumes: String, version: String? = null) {
         servidor.enqueue(catalogo(*albumes, version = version))
         repositorio.getAlbums().getOrThrow()
@@ -479,7 +479,7 @@ class AlbumRepositoryCacheTest {
             assertEquals("cancelada", e.message)
         }
         dao.fallaAlEscribir = null
-        // El backend vuelve a la versión anterior: sin descartar lo recordado, no se escribiría nada.
+        // The backend reverts to the previous version: without discarding what's remembered, nothing would be written.
         servidor.enqueue(catalogo(albumJson(200), version = "W/\"c1\""))
 
         repositorio.getAlbums().getOrThrow()
@@ -514,7 +514,7 @@ class AlbumRepositoryCacheTest {
         servidor.enqueue(respuesta(albumJson(200, descripcion = "Descripción nueva"), "W/\"d1\""))
         repositorio.getAlbum(200).getOrThrow()
         dao.operaciones.clear()
-        // El backend vuelve a la versión anterior del catálogo.
+        // The backend reverts to the catalog's previous version.
         servidor.enqueue(catalogo(albumJson(200), version = "W/\"c1\""))
 
         repositorio.getAlbums().getOrThrow()
@@ -530,7 +530,7 @@ class AlbumRepositoryCacheTest {
         servidor.enqueue(catalogo(albumJson(200, descripcion = "Descripción nueva"), version = "W/\"c1\""))
         repositorio.getAlbums().getOrThrow()
         dao.operaciones.clear()
-        // El backend vuelve a la versión anterior del detalle.
+        // The backend reverts to the detail's previous version.
         servidor.enqueue(respuesta(albumJson(200), "W/\"d1\""))
 
         repositorio.getAlbum(200).getOrThrow()
@@ -553,7 +553,7 @@ class AlbumRepositoryCacheTest {
         assertEquals(listOf(200), dao.filas.map { it.id })
     }
 
-    // ---- Álbum creado (optimizar-cache-e-imagenes, D7) ----
+    // ---- Created album (optimizar-cache-e-imagenes, D7) ----
 
     private val nuevo = com.example.vinilos.data.model.NewAlbum(
         nombre = "Abbey Road",
@@ -598,7 +598,7 @@ class AlbumRepositoryCacheTest {
         servidor.enqueue(respuesta(albumJson(300, "Abbey Road")))
         repositorio.createAlbum(nuevo).getOrThrow()
         dao.operaciones.clear()
-        // Alguien borró el álbum creado en el backend: el catálogo vuelve a la versión de antes.
+        // Someone deleted the created album on the backend: the catalog reverts to its earlier version.
         servidor.enqueue(catalogo(albumJson(200), version = "W/\"c1\""))
 
         repositorio.getAlbums().getOrThrow()
@@ -607,7 +607,7 @@ class AlbumRepositoryCacheTest {
         assertEquals(listOf(200), dao.filas.map { it.id })
     }
 
-    // ---- Canción agregada (HU08, D7: no esperar el siguiente GET para reflejar un POST exitoso) ----
+    // ---- Added track (HU08, D7: don't wait for the next GET to reflect a successful POST) ----
 
     @Test
     fun agregarUnaTrackActualizaDeInmediatoElDetalleYaGuardado() = runTest {

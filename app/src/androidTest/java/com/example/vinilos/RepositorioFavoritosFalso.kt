@@ -3,11 +3,11 @@ package com.example.vinilos
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.repository.FavoriteRepository
 
-/** Repositorio de favoritos sin red para las pruebas de navegación (HU10). */
+/** Network-free favorite repository for navigation tests (HU10). */
 class RepositorioFavoritosFalso(
     var esFavorito: Result<Boolean> = Result.success(false),
     var agregarResultado: Result<Unit> = Result.success(Unit),
-    /** Favoritos confirmados guardados (add-cache-consultas); ninguno, sin caché, como antes. */
+    /** Saved confirmed favorites (add-cache-consultas); none, no cache, as before. */
     var favoritosGuardados: Set<Pair<Int, Int>> = emptySet()
 ) : FavoriteRepository {
     var consultas = 0

@@ -12,7 +12,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Coleccionistas guardados (add-cache-consultas, D1): la tabla es la última respuesta, en su orden. */
+/** Saved collectors (add-cache-consultas, D1): the table holds the latest response, in its original order. */
 @RunWith(AndroidJUnit4::class)
 class CollectorDaoTest {
 
@@ -41,7 +41,7 @@ class CollectorDaoTest {
 
     @Test
     fun seLeenEnElOrdenDeLaPosicionNoDelId() = runTest {
-        // El backend no los entrega ordenados por id; el selector conserva su orden.
+        // The backend doesn't deliver them sorted by id; the selector preserves their order.
         val enOrden = listOf(coleccionista(105, 0), coleccionista(100, 1), coleccionista(103, 2))
 
         dao.reemplazar(enOrden.reversed())
@@ -67,7 +67,7 @@ class CollectorDaoTest {
         assertTrue(dao.todos().isEmpty())
     }
 
-    // ---------- Escrituras incrementales (optimizar-cache-e-imagenes, D6) ----------
+    // ---------- Incremental writes (optimizar-cache-e-imagenes, D6) ----------
 
     @Test
     fun aplicarGuardaLasFilasCambiadasYBorraLasQueNoLlegan() = runTest {

@@ -31,9 +31,9 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * Recuperación ante fallos del backend, sin pasos manuales ni infraestructura: la app usa su pila
- * de red real (Retrofit y OkHttp) contra un servidor local que la prueba hace caer y volver con
- * `MockWebServer`. Corre solo con el dispositivo, sin Docker ni `adb reverse`.
+ * Recovery from backend failures, with no manual steps or infrastructure: the app uses its real
+ * network stack (Retrofit and OkHttp) against a local server that the test brings down and back up
+ * with `MockWebServer`. Runs with just the device, no Docker or `adb reverse` needed.
  */
 class RecuperacionTest {
 
@@ -52,7 +52,7 @@ class RecuperacionTest {
     @Before
     fun iniciarServidor() {
         servidor = MockWebServer().apply { start() }
-        // "localhost" es uno de los hosts con HTTP permitido en network_security_config.xml.
+        // "localhost" is one of the hosts with HTTP allowed in network_security_config.xml.
         ApplicationProvider.getApplicationContext<VinilosApplication>().container =
             AppContainer(baseUrl = "http://localhost:${servidor.port}/")
     }
@@ -62,7 +62,7 @@ class RecuperacionTest {
         servidor.shutdown()
     }
 
-    /** El servidor corta la conexión: es lo que ve la app cuando el backend está caído. */
+    /** The server cuts the connection: this is what the app sees when the backend is down. */
     private fun servidorCaido() =
         servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
 
@@ -96,7 +96,7 @@ class RecuperacionTest {
             rule.onNodeWithText("No pudimos cargar los coleccionistas").assertIsDisplayed()
             rule.onNodeWithTag(TagVisitanteError).assertIsDisplayed()
 
-            // El servidor "vuelve" y la persona pulsa Reintentar.
+            // The server "comes back" and the person taps Retry.
             servidorSano()
             retry()
 
@@ -136,7 +136,7 @@ class RecuperacionTest {
             esperarPeticiones(1)
             esperarA(TagMensajeError)
 
-            // Cada reintento fallido vuelve a mostrar el mensaje de error con "Reintentar".
+            // Each failed retry shows the error message with "Reintentar" again.
             repeat(2) { vez ->
                 retry()
                 esperarPeticiones(vez + 2)

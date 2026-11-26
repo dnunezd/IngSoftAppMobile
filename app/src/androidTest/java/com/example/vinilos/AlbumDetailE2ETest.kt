@@ -33,29 +33,29 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * E2E de la HU02 (detalle del álbum) contra el backend real BackVynils: entra como visitante,
- * abre el catálogo, toca el primer álbum disponible y revisa que su detalle muestre exactamente
- * los datos que el backend devolvió para ese álbum.
+ * E2E for HU02 (album detail) against the real BackVynils backend: logs in as a visitor, opens the
+ * catalog, taps the first available album, and checks that its detail shows exactly the data the
+ * backend returned for that album.
  *
- * A diferencia de una versión anterior, esta prueba no asume un álbum ni un dataset fijo (como el
- * álbum 100 de `sql/data.sql`): envuelve el repositorio real para capturar la respuesta real del
- * backend (catálogo y detalle) y calcula las aserciones a partir de esos datos capturados,
- * reutilizando `formatearFechaLanzamiento` (el mismo formateador de producción) para la fecha. Así
- * la prueba es coherente tanto con el backend local (Docker, `sql/data.sql`) como con el
- * desplegado por los tutores, sin importar qué álbumes tenga cada uno.
+ * Unlike an earlier version, this test doesn't assume a fixed album or dataset (like album 100 from
+ * `sql/data.sql`): it wraps the real repository to capture the backend's real response (catalog and
+ * detail) and computes the assertions from that captured data, reusing `formatearFechaLanzamiento`
+ * (the same production formatter) for the date. This way the test is consistent both with the local
+ * backend (Docker, `sql/data.sql`) and with the one deployed by the tutors, regardless of which
+ * albums each has.
  *
- * Requiere el backend en el PC y el teléfono con `adb reverse tcp:3000 tcp:3000`, instalando la
- * app con `-PbaseUrl=http://localhost:3000/` (o sin flags, si se usa el backend desplegado).
+ * Requires the backend on the PC and the phone with `adb reverse tcp:3000 tcp:3000`, installing the
+ * app with `-PbaseUrl=http://localhost:3000/` (or without flags, if using the deployed backend).
  *
- * Cada paso guarda un pantallazo y una fila en el informe de
- * `.../files/e2e-evidencia/FN02_ESC01/informe.md` (solo en el dispositivo, no en el repo). El PDF
- * resultante es la evidencia del escenario FN02_ESC01 (flujo completo exitoso de la HU02).
+ * Each step saves a screenshot and a row in the report at
+ * `.../files/e2e-evidencia/FN02_ESC01/informe.md` (only on the device, not in the repo). The
+ * resulting PDF is the evidence for scenario FN02_ESC01 (full successful flow of HU02).
  */
 class AlbumDetailE2ETest {
 
     private val carpetaEvidencia = "FN02_ESC01"
 
-    /** Repositorio real que además guarda el catálogo y el detalle que el backend devolvió. */
+    /** Real repository that also stores the catalog and detail the backend returned. */
     private class AlbumRepositorioQueCaptura(
         private val real: AlbumRepository = AlbumRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL))
     ) : AlbumRepository by real {
@@ -83,7 +83,7 @@ class AlbumDetailE2ETest {
     private fun esperarA(tag: String, milis: Long = 15_000) =
         rule.waitUntil(milis) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
 
-    /** Desplaza la lista del detalle hasta encontrar [texto] y confirma que se muestra. */
+    /** Scrolls the detail list until it finds [texto] and confirms it is displayed. */
     private fun scrollYVerificar(texto: String) {
         rule.onNode(hasScrollToNodeAction()).performScrollToNode(hasText(texto))
         rule.onNodeWithText(texto).assertIsDisplayed()
@@ -100,8 +100,8 @@ class AlbumDetailE2ETest {
             esperarA(TagCatalogo)
             EvidenciaE2E.capturar(rule, carpetaEvidencia, "02_catalogo")
 
-            // Se espera a que el backend real responda con el catálogo (sin asumir cuántos ni
-            // cuáles álbumes trae) y se toma el primero para abrir su detalle.
+            // Waits for the real backend to respond with the catalog (without assuming how many or
+            // which albums it has) and takes the first one to open its detail.
             rule.waitUntil(15_000) { repositorio.catalogo != null }
             val primerAlbum = requireNotNull(repositorio.catalogo).first()
 
@@ -109,24 +109,24 @@ class AlbumDetailE2ETest {
                 .performScrollToNode(hasTestTag(tagAlbum(primerAlbum.id)))
             rule.onNodeWithTag(tagAlbum(primerAlbum.id)).performClick()
 
-            // Espera la consulta real al backend del detalle de ese álbum en particular.
+            // Waits for the real backend query for that particular album's detail.
             rule.waitUntil(15_000) { repositorio.detalle?.id == primerAlbum.id }
             val detalle = requireNotNull(repositorio.detalle)
 
-            // Metadatos reales del álbum consultado: lo que el backend haya devuelto.
+            // Real metadata of the queried album: whatever the backend returned.
             scrollYVerificar(detalle.nombre)
             scrollYVerificar(detalle.genero)
             scrollYVerificar(detalle.disquera)
             scrollYVerificar(formatearReleaseDate(detalle.fechaLanzamiento))
             EvidenciaE2E.capturar(rule, carpetaEvidencia, "03_detalle_metadatos")
 
-            // Artistas reales del álbum, si tiene alguno, cada uno con su imagen.
+            // Real artists of the album, if it has any, each with its image.
             detalle.artistas.forEach { artista ->
                 scrollYVerificar(artista.nombre)
                 rule.onNodeWithContentDescription("Imagen de ${artista.nombre}").assertIsDisplayed()
             }
 
-            // Canciones reales, o el mensaje de vacío si el álbum no tiene ninguna registrada.
+            // Real tracks, or the empty-state message if the album has none registered.
             if (detalle.canciones.isEmpty()) {
                 scrollYVerificar("Este álbum aún no tiene canciones registradas")
             } else {
@@ -134,7 +134,7 @@ class AlbumDetailE2ETest {
             }
             EvidenciaE2E.capturar(rule, carpetaEvidencia, "04_detalle_artista_canciones")
 
-            // Comentarios reales (sin autor), o el mensaje de vacío si el álbum no tiene ninguno.
+            // Real comments (without author), or the empty-state message if the album has none.
             if (detalle.comentarios.isEmpty()) {
                 scrollYVerificar("Aún no hay comentarios para este álbum")
                 scrollYVerificar("Sin calificaciones")
@@ -144,8 +144,8 @@ class AlbumDetailE2ETest {
             rule.onNodeWithText("Autor").assertDoesNotExist()
             EvidenciaE2E.capturar(rule, carpetaEvidencia, "05_detalle_comentario")
 
-            // La flecha de regreso (encabezado) puede haber salido de la zona compuesta por el
-            // scroll anterior; se vuelve a buscar antes de pulsarla.
+            // The back arrow (header) may have scrolled out of the composed area from the previous
+            // scroll; it is searched for again before tapping it.
             rule.onNode(hasScrollToNodeAction()).performScrollToNode(hasTestTag(TagAtras))
             rule.onNodeWithTag(TagAtras).performClick()
             esperarA(TagCatalogo)

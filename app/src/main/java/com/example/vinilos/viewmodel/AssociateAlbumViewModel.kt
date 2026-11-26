@@ -14,8 +14,8 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 /**
- * Ventana para agregar un álbum a un artista (HU15). Vive en la entrada de navegación del detalle del
- * artista, así que la ventana abierta, la búsqueda y la selección sobreviven a la rotación (D2).
+ * Sheet to add an album to an artist (HU15). It lives in the artist detail screen's navigation
+ * entry, so the open sheet, the search, and the selection survive rotation (D2).
  */
 class AssociateAlbumViewModel(
     private val tipo: ArtistType,
@@ -29,7 +29,7 @@ class AssociateAlbumViewModel(
 
     private var carga: Job? = null
 
-    /** Abre la ventana desde cero con los álbumes que el artista ya tiene y carga el catálogo. */
+    /** Opens the sheet from scratch with the albums the artist already has and loads the catalog. */
     fun abrir(asociados: Set<Int>) {
         _uiState.value = AssociateAlbumUiState(abierta = true, asociados = asociados)
         cargar()
@@ -45,7 +45,7 @@ class AssociateAlbumViewModel(
         }
     }
 
-    /** Cierra sin asociar. Mientras se envía no se puede cancelar: el backend ya pudo recibirlo. */
+    /** Closes without associating. It can't be canceled while submitting: the backend may have already received it. */
     fun cancelar() {
         if (_uiState.value.asociando) return
         carga?.cancel()
@@ -81,8 +81,8 @@ class AssociateAlbumViewModel(
     }
 
     /**
-     * Mismo enfoque que el catálogo (D3): lo guardado se muestra de inmediato; si la consulta falla, se
-     * conserva, y sin nada guardado se muestra el error con "Reintentar".
+     * Same approach as the catalog (D3): what's saved is shown immediately; if the query fails, it's
+     * kept, and with nothing saved the error is shown with "Retry".
      */
     private fun cargar() {
         carga?.cancel()

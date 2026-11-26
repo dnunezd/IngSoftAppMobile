@@ -41,7 +41,7 @@ class HomeScreenTest {
 
         rule.onNodeWithText("¡Hola, Manolo Bellon!").assertIsDisplayed()
         rule.onNodeWithText("¡Hola, melómano!").assertDoesNotExist()
-        // El resto de la pantalla es igual que para el visitante.
+        // The rest of the screen is the same as for the visitor.
         rule.onNodeWithText("Descubre música en su formato más puro").assertIsDisplayed()
     }
 

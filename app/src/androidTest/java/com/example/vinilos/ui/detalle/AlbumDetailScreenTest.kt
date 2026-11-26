@@ -80,7 +80,7 @@ class AlbumDetailScreenTest {
         org.junit.Assert.assertEquals(1, reintentos)
     }
 
-    // ---------- Detalle guardado (add-cache-consultas, D6) ----------
+    // ---------- Cached detail (add-cache-consultas, D6) ----------
 
     private val guardado = Album(
         100, "Buscando América", null, "Salsa", "Salsa", "Elektra",
@@ -122,7 +122,7 @@ class AlbumDetailScreenTest {
         rule.waitUntil(10_000) { avisos == 1 }
     }
 
-    // ---------- Aviso "Canción agregada" (revisión de PR) ----------
+    // ---------- "Track added" notice (PR review) ----------
 
     @Test
     fun elAvisoDeTrackAgregadaSeMarcaComoMostradoAunSiSeSaleAntesDeQueTermine() {
@@ -143,8 +143,8 @@ class AlbumDetailScreenTest {
         }
 
         rule.onNodeWithText("Canción agregada").assertIsDisplayed()
-        // Simula salir del detalle (p. ej. abrir "Agregar canción" y cancelar) antes de que
-        // el aviso termine de mostrarse: su LaunchedEffect se cancela a mitad de camino.
+        // Simulates leaving the detail screen (e.g. opening "Add track" and cancelling) before
+        // the notice finishes showing: its LaunchedEffect gets cancelled midway through.
         mostrarPantalla.value = false
         rule.waitUntil(10_000) { marcados == 1 }
     }

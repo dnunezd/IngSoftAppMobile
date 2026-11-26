@@ -13,7 +13,7 @@ import com.example.vinilos.viewmodel.ArtistDetailUiState
 import org.junit.Rule
 import org.junit.Test
 
-/** Detalle de artista guardado (add-cache-consultas, D6): indicador de actualización y aviso. */
+/** Saved artist detail (add-cache-consultas, D6): update indicator and notice. */
 class ArtistDetailScreenGuardadoTest {
 
     @get:Rule
@@ -60,7 +60,7 @@ class ArtistDetailScreenGuardadoTest {
         rule.waitUntil(10_000) { avisos == 1 }
     }
 
-    /** La fecha se guarda en ISO y la pantalla la muestra en el idioma de la app (internacionalizar-ingles). */
+    /** The date is stored in ISO format and the screen displays it in the app's language (internacionalizar-ingles). */
     @Test
     fun laFechaGuardadaSeMuestraEnElAppLanguage() {
         mostrar(ArtistDetailUiState.Success(queen))

@@ -30,7 +30,7 @@ class ArtistRepositoryTest {
     private lateinit var servidor: MockWebServer
     private lateinit var repositorio: ArtistRepository
 
-    // Respuesta de cada ruta; las dos consultas van en paralelo, así que se responde por ruta y no en orden.
+    // Response for each route; the two requests run in parallel, so responses are dispatched by path rather than order.
     private var musicos: MockResponse = MockResponse().setBody("[]")
     private var bandas: MockResponse = MockResponse().setBody("[]")
     private val otrasRoutes = mutableMapOf<String, MockResponse>()
@@ -496,7 +496,7 @@ class ArtistRepositoryTest {
             servidor.takeRequest()
             consulta.cancelAndJoin()
 
-            // Si el adaptador se tragara la cancelación, la consulta terminaría con un resultado.
+            // If the adapter swallowed the cancellation, the request would finish with a result.
             assertEquals(null, resultado)
         }
     }

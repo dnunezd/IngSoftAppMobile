@@ -50,29 +50,29 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * E2E de la HU01 (catálogo de álbumes) contra el backend real BackVynils.
+ * E2E for HU01 (album catalog) against the real BackVynils backend.
  *
- * No asume un dataset fijo (como los 4 álbumes de `sql/data.sql`): envuelve el repositorio real
- * para capturar el catálogo que el backend realmente devuelve y calcula las aserciones (cantidad,
- * orden, nombre/género/año de cada álbum) a partir de esos datos capturados. Así la prueba es
- * coherente tanto con el backend local (Docker) como con el desplegado por los tutores, sin
- * importar cuántos álbumes tenga cada uno.
+ * It does not assume a fixed dataset (like the 4 albums in `sql/data.sql`): it wraps the real
+ * repository to capture the catalog that the backend actually returns and computes the assertions
+ * (count, order, name/genre/year of each album) from that captured data. This way the test is
+ * consistent with both the local backend (Docker) and the one deployed by the tutors, regardless
+ * of how many albums each one has.
  *
- * FN01-ESC03 (backend caído) sigue usando `MockWebServer` con datos fabricados por la prueba,
- * porque apagar el backend real dentro de la prueba no es confiable y ese caso no depende del
- * dataset real; no necesitaba cambiar.
+ * FN01-ESC03 (backend down) still uses `MockWebServer` with data fabricated by the test, because
+ * shutting down the real backend within the test is not reliable and that case does not depend on
+ * the real dataset; it did not need to change.
  *
- * En un teléfono requiere `adb reverse tcp:3000 tcp:3000` y la app instalada con
- * `-PbaseUrl=http://localhost:3000/`. Los escenarios FN01-ESC01 a FN01-ESC05 guardan un pantallazo
- * por paso, una fila en el informe y un PDF en su propia carpeta,
- * `.../files/e2e-evidencia/FN01_ESCxx/` (solo en el dispositivo, no en el repo).
+ * On a phone it requires `adb reverse tcp:3000 tcp:3000` and the app installed with
+ * `-PbaseUrl=http://localhost:3000/`. Scenarios FN01-ESC01 through FN01-ESC05 save a screenshot
+ * per step, a row in the report, and a PDF in their own folder,
+ * `.../files/e2e-evidencia/FN01_ESCxx/` (device only, not in the repo).
  */
 class CatalogoE2ETest {
 
     @get:Rule
     val rule = createEmptyComposeRule()
 
-    /** El repositorio real de la app: cuenta las consultas y guarda el último catálogo recibido. */
+    /** The app's real repository: counts the queries and stores the last catalog received. */
     private class AlbumesRealesContados(
         private val real: AlbumRepository = AlbumRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL))
     ) : AlbumRepository by real {
@@ -96,7 +96,7 @@ class CatalogoE2ETest {
     private fun esperarA(tag: String, milis: Long = 15_000) =
         rule.waitUntil(milis) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
 
-    /** Da tiempo a que Coil pinte las portadas antes del pantallazo. */
+    /** Gives Coil time to render the covers before the screenshot. */
     private fun capturar(evidencia: String, paso: String) {
         SystemClock.sleep(2_000)
         EvidenciaE2E.capturar(rule, evidencia, paso)
@@ -107,7 +107,7 @@ class CatalogoE2ETest {
         return requireNotNull(albumes.catalogo)
     }
 
-    /** Desde el inicio (que queda en la evidencia como [pasoInicio]) abre el catálogo real. */
+    /** From the home screen (recorded in the evidence as [pasoInicio]) opens the real catalog. */
     private fun verAlbumes(evidencia: String, pasoInicio: String): List<AlbumSummary> {
         esperarA(TagInicio)
         EvidenciaE2E.capturar(rule, evidencia, pasoInicio)
@@ -124,10 +124,10 @@ class CatalogoE2ETest {
         if (cantidad == 1) "1 lanzamiento" else "$cantidad lanzamientos"
 
     /**
-     * Una muestra acotada del catálogo real: los primeros [tamano] y el último. El backend
-     * desplegado puede tener cientos de álbumes, y recorrerlos todos en una prueba E2E (que ya de
-     * por sí hace esperas e IO real) la haría impráctica; esta muestra alcanza para comprobar que
-     * los datos reales llegan bien a la pantalla sin recorrer el catálogo completo.
+     * A bounded sample of the real catalog: the first [tamano] and the last one. The deployed
+     * backend can have hundreds of albums, and scrolling through all of them in an E2E test (which
+     * already does real waits and IO) would make it impractical; this sample is enough to verify
+     * that the real data reaches the screen correctly without scrolling through the entire catalog.
      */
     private fun muestraDelCatalogo(catalogo: List<AlbumSummary>, tamano: Int = 5): List<AlbumSummary> {
         val primeros = catalogo.take(tamano)
@@ -135,7 +135,7 @@ class CatalogoE2ETest {
         return if (ultimo != null && ultimo !in primeros) primeros + ultimo else primeros
     }
 
-    /** Comprueba, sobre una muestra del catálogo real, que se vea con los mismos datos y en orden. */
+    /** Checks, over a sample of the real catalog, that it is displayed with the same data and in order. */
     private fun comprobarLosAlbumesDelCatalogoReal(catalogo: List<AlbumSummary>) {
         rule.onNodeWithTag(TagContadorCatalogo).assertTextEquals(textoContador(catalogo.size))
         val muestra = muestraDelCatalogo(catalogo)
@@ -152,7 +152,7 @@ class CatalogoE2ETest {
         assertEquals(esperados, rule.tagsDeAlbumesRecorriendo(esperados).filter { it in esperados })
     }
 
-    /** FN01-ESC01: Visitante y Coleccionista ven el mismo catálogo real, en orden, con portada, nombre y género. */
+    /** FN01-ESC01: Visitor and Collector see the same real catalog, in order, with cover, name and genre. */
     @Test
     fun visitanteYColeccionistaVenLosCuatroAlbumesEnOrden() {
         val evidencia = "FN01_ESC01"
@@ -163,7 +163,7 @@ class CatalogoE2ETest {
             capturar(evidencia, "02_catalogo_visitante")
             comprobarLosAlbumesDelCatalogoReal(catalogoVisitante)
 
-            // Volver al ingreso y entrar como coleccionista.
+            // Go back to the entry screen and log in as collector.
             rule.onNodeWithTag(TagAtras).performClick()
             esperarA(TagInicio)
             Espresso.pressBack()
@@ -178,7 +178,7 @@ class CatalogoE2ETest {
         }
     }
 
-    /** FN01-ESC02: recorrer el catálogo real hasta el final y actualizarlo deslizando hacia abajo. */
+    /** FN01-ESC02: scroll through the real catalog to the end and refresh it by swiping down. */
     @Test
     fun recorrerHastaElFinalYDeslizarParaActualizar() {
         val evidencia = "FN01_ESC02"
@@ -191,7 +191,7 @@ class CatalogoE2ETest {
             rule.onNodeWithTag(tagAlbum(ultimo.id)).assertIsDisplayed()
             capturar(evidencia, "02_final_del_catalogo")
 
-            // Al principio de la lista, para que el gesto actualice en vez de solo desplazar.
+            // At the top of the list, so the gesture refreshes instead of just scrolling.
             rule.onNodeWithTag(TagCuadriculaCatalogo).performScrollToIndex(0)
             rule.onNodeWithTag(TagCuadriculaCatalogo).performTouchInput {
                 swipeDown(startY = top + 10f, endY = bottom, durationMillis = 600)
@@ -207,7 +207,7 @@ class CatalogoE2ETest {
         }
     }
 
-    /** FN01-ESC03: con el backend caído se ve el error y "Reintentar" recupera el catálogo (MockWebServer). */
+    /** FN01-ESC03: with the backend down the error shows up and "Reintentar" recovers the catalog (MockWebServer). */
     @Test
     fun conElBackendCaidoSeVeElErrorYReintentarRecuperaElCatalogo() {
         val evidencia = "FN01_ESC03"
@@ -244,7 +244,7 @@ class CatalogoE2ETest {
         }
     }
 
-    /** FN01-ESC04: al girar, el catálogo real conserva su posición y no vuelve a consultar el backend. */
+    /** FN01-ESC04: when rotating, the real catalog keeps its position and does not query the backend again. */
     @Test
     fun alGirarConservaLaPosicionSinVolverAConsultar() {
         val evidencia = "FN01_ESC04"
@@ -266,7 +266,7 @@ class CatalogoE2ETest {
         }
     }
 
-    /** FN01-ESC05: tocar un álbum real abre su detalle y "Atrás" vuelve al catálogo sin recargarlo. */
+    /** FN01-ESC05: tapping a real album opens its detail and "Atrás" returns to the catalog without reloading it. */
     @Test
     fun tocarUnAlbumAbreSuDetalleYAtrasVuelveAlCatalogo() {
         val evidencia = "FN01_ESC05"

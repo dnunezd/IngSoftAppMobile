@@ -19,10 +19,10 @@ enum class TrackSubmission {
 }
 
 /**
- * Datos del álbum destino para la tarjeta de contexto del formulario (nombre, portada, artista).
- * Se cargan con mejor esfuerzo: si la consulta falla o aún no responde, [AgregarCancionUiState.albumInfo]
- * se queda en `null` y el formulario sigue totalmente usable, sin afectar [EnvioCancion.AlbumNoDisponible]
- * (que solo lo dispara un fallo al guardar).
+ * Target album data for the form's context card (name, cover, artist).
+ * Loaded on a best-effort basis: if the query fails or hasn't responded yet, [AgregarCancionUiState.albumInfo]
+ * stays `null` and the form remains fully usable, without affecting [EnvioCancion.AlbumNoDisponible]
+ * (which is only triggered by a failure while saving).
  */
 data class TargetAlbumInfo(
     val nombre: String,
@@ -58,11 +58,11 @@ class AddTrackViewModel(
     }
 
     /**
-     * Carga de mejor esfuerzo para la tarjeta "Álbum destino" desde la caché local (Room), sin red:
-     * la pantalla de detalle ya consultó `GET /albums/{id}` al abrirse, así que repetirla aquí
-     * duplicaría esa consulta (el mismo problema de "consultas que se lanzan dos veces" visto en
-     * HU02/HU10). Si no hay nada en caché, se deja sin tarjeta y el formulario sigue usable; esto
-     * no debe confundirse con [EnvioCancion.AlbumNoDisponible], que solo lo dispara un fallo al guardar.
+     * Best-effort load for the "Target album" card from the local cache (Room), without network:
+     * the detail screen already queried `GET /albums/{id}` when it opened, so repeating it here
+     * would duplicate that query (the same "queries fired twice" problem seen in
+     * HU02/HU10). If there's nothing in the cache, the card is simply omitted and the form stays usable; this
+     * must not be confused with [EnvioCancion.AlbumNoDisponible], which is only triggered by a failure while saving.
      */
     private fun cargarInfoAlbum() {
         viewModelScope.launch {
@@ -92,8 +92,8 @@ class AddTrackViewModel(
                 val actualizado = estado.cambio()
                 actualizado.copy(
                     errores = validarTrack(actualizado.nombre, actualizado.duracion),
-                    // Si el banner de "no se pudo agregar" seguía visible, editar ya lo invalida:
-                    // solo se vuelve a mostrar en el próximo intento fallido de guardar.
+                    // If the "could not add" banner was still visible, editing already invalidates it:
+                    // it's only shown again on the next failed save attempt.
                     envio = if (estado.envio == TrackSubmission.Fallida) TrackSubmission.Editando else estado.envio
                 )
             }
@@ -119,8 +119,8 @@ class AddTrackViewModel(
             val envio = repositorio.addTrack(albumId, cancion).fold(
                 onSuccess = { TrackSubmission.Agregada },
                 onFailure = {
-                    // Cualquier falla no reconocida se trata igual que un error de carga (reintentable
-                    // desde el banner) en vez de relanzarla y tumbar la app.
+                    // Any unrecognized failure is treated the same as a load error (retryable
+                    // from the banner) instead of rethrowing it and crashing the app.
                     when (it) {
                         is AlbumNotAvailable -> TrackSubmission.AlbumNotAvailable
                         else -> TrackSubmission.Fallida

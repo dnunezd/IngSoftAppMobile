@@ -46,9 +46,9 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * Pantallas en inglés (internacionalizar-ingles, D8): textos y descripciones traducidos, formatos del
- * idioma y las mismas comprobaciones de accesibilidad que en español. El runner deja la app en
- * español; aquí se cambia el idioma solo dentro de la composición.
+ * Screens in English (internacionalizar-ingles, D8): translated texts and descriptions, locale
+ * formats, and the same accessibility checks as in Spanish. The runner leaves the app in
+ * Spanish; here the locale is changed only within the composition.
  */
 class PantallasEnInglesTest {
 
@@ -127,8 +127,8 @@ class PantallasEnInglesTest {
     }
 
     /**
-     * El detalle guardado (por ejemplo, abierto antes en español) trae la fecha en ISO y sale en inglés,
-     * también sin conexión: no queda una fecha en español guardada en Room.
+     * The saved detail (e.g. opened earlier in Spanish) carries the date in ISO format and shows up in
+     * English, even offline: no Spanish-formatted date is left stored in Room.
      */
     @Test
     fun detalleDeArtistaGuardadoEnIngles() {

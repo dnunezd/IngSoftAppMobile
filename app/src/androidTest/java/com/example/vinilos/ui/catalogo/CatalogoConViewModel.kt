@@ -20,7 +20,7 @@ import com.example.vinilos.data.model.Session
 import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.AlbumsViewModel
 
-/** El catálogo conectado a su ViewModel real (creado como en el NavHost) y a un repositorio sin red. */
+/** The catalog wired to its real ViewModel (created as in the NavHost) and a network-free repository. */
 @Composable
 fun CatalogoConViewModel(repositorio: RepositorioAlbumesFalso) {
     val viewModel: AlbumsViewModel = viewModel(
@@ -40,21 +40,21 @@ fun CatalogoConViewModel(repositorio: RepositorioAlbumesFalso) {
     }
 }
 
-/** Álbumes "Álbum 01" a "Álbum NN" con ids 1 a NN, ya en orden alfabético. */
+/** Albums "Álbum 01" through "Álbum NN" with ids 1 to NN, already in alphabetical order. */
 fun albumesDePrueba(cantidad: Int) = (1..cantidad).map { n ->
     AlbumSummary(n, "Álbum %02d".format(n), null, "Rock", "Artista $n", "19${(n % 90) + 10}")
 }
 
-/** Tags de las tarjetas de álbum en el orden en que están en la cuadrícula. */
+/** Tags of the album cards in the order they appear in the grid. */
 fun ComposeTestRule.tagsDeAlbumesEnPantalla(): List<String> =
     onAllNodes(SemanticsMatcher("es un álbum") {
         it.config.getOrNull(SemanticsProperties.TestTag)?.startsWith("album_") == true
     }).fetchSemanticsNodes().map { it.config[SemanticsProperties.TestTag] }
 
 /**
- * Tags de las tarjetas de álbum en el orden de la cuadrícula, recorriéndola desde el principio
- * hasta cada uno de los [esperados]. En pantallas pequeñas la cuadrícula solo compone lo que se
- * ve, así que [tagsDeAlbumesEnPantalla] no alcanza a leer los últimos álbumes.
+ * Tags of the album cards in grid order, scrolling it from the beginning
+ * up to each of the [esperados]. On small screens the grid only composes what is
+ * visible, so [tagsDeAlbumesEnPantalla] cannot read the last albums.
  */
 fun ComposeTestRule.tagsDeAlbumesRecorriendo(esperados: List<String>): List<String> {
     val cuadricula = onNodeWithTag(TagCuadriculaCatalogo)

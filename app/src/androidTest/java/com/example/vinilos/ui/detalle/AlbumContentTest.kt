@@ -105,8 +105,8 @@ class AlbumContentTest {
             VinilosTheme { AlbumContent(presentacion, onAtras = {}) }
         }
 
-        // performScrollToNode en vez de performScrollTo: en pantallas más pequeñas (p.ej. API 23)
-        // el mensaje puede quedar fuera de los nodos ya compuestos de la LazyColumn.
+        // performScrollToNode instead of performScrollTo: on smaller screens (e.g. API 23)
+        // the message may fall outside the LazyColumn's already-composed nodes.
         rule.onNode(hasScrollToNodeAction())
             .performScrollToNode(hasText("Este álbum aún no tiene canciones registradas"))
         rule.onNodeWithText("Este álbum aún no tiene canciones registradas").assertIsDisplayed()
@@ -128,8 +128,8 @@ class AlbumContentTest {
 
     @Test
     fun conCalificacionesMuestraLaFechaDeEstrenoYLasEstrellasDelPromedio() {
-        // Promedio de (3+5)/2 = 4,0 -> 4 estrellas, distinto de las de cada comentario
-        // individual (3 y 5), para no confundir el texto del encabezado con el de un comentario.
+        // Average of (3+5)/2 = 4.0 -> 4 stars, different from each individual comment's
+        // rating (3 and 5), so the header text isn't confused with a comment's.
         val presentacion = presentarAlbum(album.copy(
             comentarios = listOf(Comment("Gran disco", 3), Comment("Buen sonido", 5))
         ))
@@ -139,15 +139,15 @@ class AlbumContentTest {
 
         rule.onNodeWithText("Estreno").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("1 de agosto de 1984").performScrollTo().assertIsDisplayed()
-        // El promedio expone su número como texto y las estrellas se describen sin repetirlo.
+        // The average exposes its number as text, and the stars are described without repeating it.
         rule.onNode(hasText("4,0") and hasContentDescription("de 5 estrellas", substring = true))
             .performScrollTo().assertIsDisplayed()
     }
 
     @Test
     fun calificacionFueraDeRangoNoCierraLaAppYMuestraLasEstrellasLimitadas() {
-        // El backend valida 0..5, pero una calificación corrupta o fuera de rango no debe
-        // lanzar una excepción al dibujar las estrellas: se limita a 5 llenas como máximo.
+        // The backend validates 0..5, but a corrupted or out-of-range rating must not
+        // throw an exception when drawing the stars: it is capped at 5 filled stars max.
         val presentacion = presentarAlbum(album.copy(
             comentarios = listOf(Comment("Comentario con dato corrupto", 6))
         ))
@@ -185,9 +185,9 @@ class AlbumContentTest {
             VinilosTheme { AlbumContent(presentacion, onAtras = {}) }
         }
 
-        // performScrollToNode se usa en vez de onNodeWithText(...).performScrollTo() porque este
-        // último exige que el nodo ya esté compuesto; en una lista larga en un dispositivo real,
-        // los elementos finales (como el segundo comentario) pueden no haberse compuesto aún.
+        // performScrollToNode is used instead of onNodeWithText(...).performScrollTo() because the
+        // latter requires the node to already be composed; in a long list on a real device,
+        // the final items (like the second comment) may not have been composed yet.
         val lista = rule.onNode(hasScrollToNodeAction())
         lista.performScrollToNode(hasText("Gran disco"))
         rule.onNodeWithText("Gran disco").assertIsDisplayed()

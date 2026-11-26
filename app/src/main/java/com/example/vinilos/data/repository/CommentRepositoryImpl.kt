@@ -10,8 +10,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /**
- * Publica comentarios con [ComentarioApi]. La respuesta se ignora: la pantalla de éxito muestra lo que
- * escribió el coleccionista y el detalle del álbum vuelve a consultarse (add-comentar-album, D1 y D7).
+ * Posts comments with [ComentarioApi]. The response is ignored: the success screen shows what the
+ * collector wrote and the album detail is queried again (add-comentar-album, D1 and D7).
  */
 class CommentRepositoryImpl(
     private val adaptador: ServiceAdapter,

@@ -9,25 +9,25 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
-// El selector de fecha entrega la medianoche UTC del día elegido. Todas estas funciones trabajan en
-// UTC para que ese día no cambie con la zona del teléfono. No usan java.time porque minSdk es 23.
+// The date picker returns UTC midnight of the chosen day. All these functions work in
+// UTC so that day doesn't change with the phone's time zone. They don't use java.time because minSdk is 23.
 private val Utc: TimeZone = TimeZone.getTimeZone("UTC")
 
-/** Idioma por defecto de la app (values/). Los formatos lo usan cuando no se indica otro. */
+/** App's default language (values/). The formats use it when no other is specified. */
 val Espanol: Locale = Locale.forLanguageTag("es")
 
 private fun formatear(patron: String, millis: Long): String =
     SimpleDateFormat(patron, Locale.ROOT).apply { timeZone = Utc }.format(Date(millis))
 
-/** Fecha que espera el backend: `1969-09-26T00:00:00.000Z`. */
+/** Date expected by the backend: `1969-09-26T00:00:00.000Z`. */
 fun fechaIsoUtc(millis: Long): String = formatear("yyyy-MM-dd'T'00:00:00.000'Z'", millis)
 
-/** Fecha que ve el usuario en el formulario: `26/09/1969`. */
+/** Date the user sees in the form: `26/09/1969`. */
 fun fechaVisible(millis: Long): String = formatear("dd/MM/yyyy", millis)
 
 /**
- * Medianoche UTC del día local del teléfono, para compararla con las fechas del selector. Sin esto,
- * a las 8 p. m. en Bogotá ya sería "mañana" y se podría elegir un día futuro.
+ * UTC midnight of the phone's local day, to compare against the date picker's dates. Without this,
+ * at 8 p.m. in Bogotá it would already be "tomorrow" and a future day could be selected.
  */
 fun hoyEnUtc(ahoraMillis: Long, zona: TimeZone): Long {
     val local = Calendar.getInstance(zona).apply { timeInMillis = ahoraMillis }
@@ -43,8 +43,8 @@ fun anioUtc(millis: Long): Int =
     Calendar.getInstance(Utc).apply { timeInMillis = millis }.get(Calendar.YEAR)
 
 /**
- * Fecha del backend (`1984-08-01` o `1984-08-01T00:00:00.000Z`) como la ve el usuario, en el [idioma] de la
- * app: `1 de agosto de 1984` o `August 1, 1984`. Lanza [ParseException] si no es una fecha ISO válida.
+ * Backend date (`1984-08-01` or `1984-08-01T00:00:00.000Z`) as the user sees it, in the app's [idioma]:
+ * `1 de agosto de 1984` or `August 1, 1984`. Throws [ParseException] if it's not a valid ISO date.
  */
 fun formatearReleaseDate(fechaIso: String, idioma: Locale = Espanol): String {
     val timestamp = fechaIso.contains('T')
@@ -53,7 +53,7 @@ fun formatearReleaseDate(fechaIso: String, idioma: Locale = Espanol): String {
         fechaIso.contains('.') -> "yyyy-MM-dd'T'HH:mm:ss.SSSZ"
         else -> "yyyy-MM-dd'T'HH:mm:ssZ"
     }
-    // RFC 822 evita el patrón XXX, no disponible en SimpleDateFormat de Android API 23.
+    // RFC 822 avoids the XXX pattern, not available in Android API 23's SimpleDateFormat.
     val texto = if (timestamp) {
         fechaIso.replace(Regex("Z$"), "+0000").replace(Regex("([+-]\\d{2}):(\\d{2})$"), "$1$2")
     } else fechaIso
@@ -72,8 +72,8 @@ fun formatearReleaseDate(fechaIso: String, idioma: Locale = Espanol): String {
 }
 
 /**
- * Como [formatearFechaLanzamiento], pero una fecha ausente o que no se pueda interpretar da `null`. El
- * repositorio la usa para descartar fechas inválidas y la pantalla para mostrarlas en el idioma de la app.
+ * Like [formatearFechaLanzamiento], but a missing or unparseable date gives `null`. The
+ * repository uses it to discard invalid dates and the screen uses it to display them in the app's language.
  */
 fun formatearFechaONula(fechaIso: String?, idioma: Locale = Espanol): String? =
     fechaIso?.let {

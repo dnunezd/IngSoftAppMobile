@@ -74,7 +74,7 @@ const val TagActualizandoColeccionistas = "coleccionistas_actualizando"
 
 fun tagColeccionista(id: Int) = "coleccionista_$id"
 
-/** Selector de coleccionista: lista, busca y muestra los estados de carga, error y vacío. */
+/** Collector selector: lists, searches, and shows the loading, error, and empty states. */
 @Composable
 fun CollectorsScreen(
     estado: CollectorsUiState,
@@ -147,8 +147,8 @@ fun CollectorsScreen(
 
 @Composable
 private fun Buscador(consultaInicial: String, onBuscar: (String) -> Unit) {
-    // Texto local para que escribir no dependa del viaje por el ViewModel; el ViewModel conserva
-    // el valor y rememberSaveable lo restaura al girar la pantalla.
+    // Local text so typing doesn't depend on the round trip through the ViewModel; the ViewModel keeps
+    // the value and rememberSaveable restores it on screen rotation.
     var texto by rememberSaveable { mutableStateOf(consultaInicial) }
     BasicTextField(
         value = texto,

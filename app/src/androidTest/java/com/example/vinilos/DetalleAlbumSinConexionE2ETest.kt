@@ -30,9 +30,9 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * Detalle de álbum guardado (add-cache-consultas, HU02), con la pila de red real contra `MockWebServer`
- * y la base de Room en memoria. El detalle se guarda con la consulta del catálogo: el usuario nunca abrió
- * el álbum con conexión.
+ * Saved album detail (add-cache-consultas, HU02), using the real network stack against `MockWebServer`
+ * and the in-memory Room database. The detail is saved via the catalog query: the user never opened
+ * the album while connected.
  */
 class DetalleAlbumSinConexionE2ETest {
 
@@ -47,7 +47,7 @@ class DetalleAlbumSinConexionE2ETest {
         servidor = MockWebServer().apply { start() }
         val contexto: Context = ApplicationProvider.getApplicationContext()
         db = Room.inMemoryDatabaseBuilder(contexto, VinilosDb::class.java).build()
-        // "localhost" es uno de los hosts con HTTP permitido en network_security_config.xml.
+        // "localhost" is one of the hosts allowed over HTTP in network_security_config.xml.
         ApplicationProvider.getApplicationContext<VinilosApplication>().container =
             AppContainer(baseUrl = "http://localhost:${servidor.port}/", albumDao = db.albumDao())
     }
@@ -71,7 +71,7 @@ class DetalleAlbumSinConexionE2ETest {
 
     private fun responder(cuerpo: String) = servidor.enqueue(MockResponse().setBody(cuerpo))
 
-    /** El servidor corta la conexión: es lo que ve la app sin red o con el backend caído. */
+    /** The server cuts the connection: this is what the app sees with no network or a down backend. */
     private fun servidorCaido() =
         servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
 
@@ -86,7 +86,7 @@ class DetalleAlbumSinConexionE2ETest {
 
     private fun noSeVe(texto: String) = rule.onAllNodesWithText(texto).fetchSemanticsNodes().isEmpty()
 
-    /** Entra como Visitante y abre el catálogo con el servidor sano, sin abrir ningún detalle. */
+    /** Enters as a Visitor and opens the catalog with the server healthy, without opening any detail. */
     private fun verCatalogoConConexion() {
         responder(catalogo)
         rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
@@ -122,7 +122,7 @@ class DetalleAlbumSinConexionE2ETest {
         ActivityScenario.launch(MainActivity::class.java).use {
             verCatalogoConConexion()
 
-            // El 101 está en el catálogo, pero le faltan descripción, disquera y fecha: no se guardó su detalle.
+            // Album 101 is in the catalog, but it's missing description, label, and date: its detail was not saved.
             servidorCaido()
             abrirAlbum(101)
             esperarPeticiones(2)

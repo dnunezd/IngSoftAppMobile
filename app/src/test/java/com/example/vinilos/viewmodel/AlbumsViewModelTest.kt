@@ -18,7 +18,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
-/** Cada consulta queda pendiente hasta que la prueba la completa. */
+/** Each query remains pending until the test completes it. */
 private class CatalogoFalso(
     private val ignoraCancelacion: Boolean = false
 ) : AlbumRepository {

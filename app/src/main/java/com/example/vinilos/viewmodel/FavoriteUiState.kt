@@ -1,29 +1,29 @@
 package com.example.vinilos.viewmodel
 
-/** Estados del botón de favorito en el detalle de artista (HU10). */
+/** Favorite button states in the artist detail screen (HU10). */
 sealed interface FavoriteUiState {
-    /** Comprobando si el artista ya es favorito del coleccionista: botón inactivo, sin texto de error. */
+    /** Checking whether the artist is already the collector's favorite: inactive button, no error text. */
     data object Comprobando : FavoriteUiState
 
-    /** Falló la comprobación inicial: botón inactivo, con opción de reintentar. */
+    /** The initial check failed: inactive button, with a retry option. */
     data object ErrorComprobacion : FavoriteUiState
 
-    /** El artista no es favorito: botón "Agregar Favorito" activo. */
+    /** The artist is not a favorite: active "Add Favorite" button. */
     data object NoFavorito : FavoriteUiState
 
-    /** Guardando el favorito: botón "Guardando..." inactivo. */
+    /** Saving the favorite: inactive "Saving..." button. */
     data object Guardando : FavoriteUiState
 
     /**
-     * El artista ya es favorito: botón "Favorito" inactivo. [mostrarConfirmacion] sigue el mismo
-     * patrón que `AlbumsUiState`/`avisoMostrado()`: la pantalla muestra el mensaje transitorio y
-     * llama a [FavoritoViewModel.confirmacionMostrada] para apagarlo.
+     * The artist is already a favorite: inactive "Favorite" button. [mostrarConfirmacion] follows the same
+     * pattern as `AlbumsUiState`/`avisoMostrado()`: the screen shows the transient message and
+     * calls [FavoritoViewModel.confirmacionMostrada] to turn it off.
      */
     data class Favorito(val mostrarConfirmacion: Boolean) : FavoriteUiState
 
-    /** Falló el guardado por red o servidor: mensaje de error, botón disponible para reintentar. */
+    /** Saving failed due to network or server issues: error message, button available to retry. */
     data object ErrorGuardado : FavoriteUiState
 
-    /** El artista ya no existe en el backend: mensaje y botón para volver al listado. */
+    /** The artist no longer exists on the backend: message and button to return to the list. */
     data object NotAvailable : FavoriteUiState
 }

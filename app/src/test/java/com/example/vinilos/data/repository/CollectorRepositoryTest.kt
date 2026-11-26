@@ -20,7 +20,7 @@ import org.junit.Test
 import retrofit2.Response
 import java.util.concurrent.TimeUnit
 
-/** Mapeo de DTO a modelo; la traducción de errores de red se prueba en `ServiceAdapterTest`. */
+/** DTO-to-model mapping; network error translation is tested in `ServiceAdapterTest`. */
 class CollectorRepositoryTest {
 
     private lateinit var servidor: MockWebServer

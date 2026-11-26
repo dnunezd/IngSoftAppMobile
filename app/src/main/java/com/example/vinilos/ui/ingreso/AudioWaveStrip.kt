@@ -34,8 +34,8 @@ import com.example.vinilos.ui.idiomaDeLaApp
 const val TagAudioWaveStrip = "franja_audio_wave"
 
 /**
- * Franja decorativa del ingreso (marcador "Interactive beat wave marker doodle" del Figma): no tiene
- * datos reales ni responde a toques. La onda es el SVG del diseño, recortado a 200x24.
+ * Decorative strip for the entry form (Figma marker "Interactive beat wave marker doodle"): it has no
+ * real data and doesn't respond to touches. The wave is the design's SVG, cropped to 200x24.
  */
 @Composable
 fun AudioWaveStrip(modifier: Modifier = Modifier) {

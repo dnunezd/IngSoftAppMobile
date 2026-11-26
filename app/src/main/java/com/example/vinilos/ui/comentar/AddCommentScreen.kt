@@ -93,12 +93,12 @@ const val TagAceptarPublicado = "comentar_aceptar"
 
 fun tagEstrella(calificacion: Int) = "comentar_estrella_$calificacion"
 
-/** Lo que el usuario puede hacer en la pantalla; lo resuelve `ComentarAlbumViewModel`. */
+/** What the user can do on the screen; resolved by `ComentarAlbumViewModel`. */
 data class AddCommentActions(
     val onCalificar: (Int) -> Unit,
     val onOpinion: (String) -> Unit,
     val onPublicar: () -> Unit,
-    /** Flecha, botón atrás del sistema y "Aceptar" (add-comentar-album, D5 y D6). */
+    /** Back arrow, system back button, and "Accept" (add-comentar-album, D5 and D6). */
     val onSalir: () -> Unit,
     val onContinuarEscribiendo: () -> Unit,
     val onDescartar: () -> Unit,
@@ -106,8 +106,8 @@ data class AddCommentActions(
 )
 
 /**
- * Comentar un álbum (HU09): solo la ve el Coleccionista. Con el comentario publicado, la misma pantalla
- * muestra el resumen de éxito (add-comentar-album, D6).
+ * Comment on an album (HU09): only visible to the Collector. Once the comment is published, the same
+ * screen shows the success summary (add-comentar-album, D6).
  */
 @Composable
 fun AddCommentScreen(
@@ -116,7 +116,7 @@ fun AddCommentScreen(
     acciones: AddCommentActions,
     modifier: Modifier = Modifier
 ) {
-    // El ViewModel decide: con borrador pregunta y durante el envío no hace nada.
+    // The ViewModel decides: with a draft it asks, and during submission it does nothing.
     BackHandler(onBack = acciones.onSalir)
 
     Column(
@@ -202,7 +202,7 @@ private fun ErrorAlbum(onReintentar: () -> Unit) {
     }
 }
 
-// ---------- Formulario ----------
+// ---------- Form ----------
 
 @Composable
 private fun Formulario(album: Album, coleccionista: String, estado: AddCommentUiState, acciones: AddCommentActions) {
@@ -284,7 +284,7 @@ private fun TarjetaAlbum(album: Album, coleccionista: String) {
     }
 }
 
-/** "Rubén Blades · 1984": artistas y año, sin la parte que falte. */
+/** "Rubén Blades · 1984": artists and year, without the missing part. */
 private fun datosDelAlbum(album: Album): String =
     listOf(album.artistas.joinToString(", ") { it.nombre }, album.fechaLanzamiento.take(4))
         .filter { it.isNotBlank() }
@@ -327,7 +327,7 @@ private fun Estrellas(
     }
 }
 
-/** Estrellas del resumen publicado: no son accionables y se anuncian como un solo elemento ("4 de 5 estrellas"). */
+/** Stars in the published summary: not actionable, and announced as a single element ("4 of 5 stars"). */
 @Composable
 private fun EstrellasSoloLectura(calificacion: Int?) {
     val valor = calificacion ?: 0
@@ -392,7 +392,7 @@ private fun Opinion(estado: AddCommentUiState, onOpinion: (String) -> Unit) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.weight(1f)
         )
-        // Sin salto de línea: con la fuente al 200 % el contador quedaba apilado en vertical.
+        // No line break: with the font at 200% the counter ended up stacked vertically.
         Text(
             stringResource(R.string.comentar_contador, estado.opinion.length, LimiteOpinion),
             style = MaterialTheme.typography.labelMedium,
@@ -478,7 +478,7 @@ private fun DialogoDescartar(acciones: AddCommentActions) {
     )
 }
 
-// ---------- Éxito (D6) ----------
+// ---------- Success (D6) ----------
 
 @Composable
 private fun ContenidoPublicado(album: Album, coleccionista: String, estado: AddCommentUiState, onAceptar: () -> Unit) {
@@ -579,7 +579,7 @@ private fun ContenidoPublicado(album: Album, coleccionista: String, estado: AddC
     }
 }
 
-/** Vinilo con la marca de publicado, como en el mockup de éxito. */
+/** Vinyl with the published mark, as in the success mockup. */
 @Composable
 private fun IlustracionPublicado(modifier: Modifier = Modifier) {
     Box(modifier.size(152.dp)) {
@@ -604,7 +604,7 @@ private fun IlustracionPublicado(modifier: Modifier = Modifier) {
     }
 }
 
-// ---------- Vistas previas ----------
+// ---------- Previews ----------
 
 private val SesionDeEjemplo = Session.Collector(Collector(101, "Jaime Monsalve", "jmonsalve@rtvc.com.co"))
 

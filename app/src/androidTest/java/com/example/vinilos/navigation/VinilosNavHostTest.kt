@@ -109,7 +109,7 @@ class VinilosNavHostTest {
         100, "Bailando con lobos", null, "Descripción de prueba",
         "Rock", "Disquera", "2020-01-01", emptyList(), emptyList(), emptyList()
     )
-    /** En el catálogo hay un álbum con detalle (100) y otro que ya no existe en el backend (999). */
+    /** The catalog has one album with detail (100) and another that no longer exists on the backend (999). */
     private val catalogoDePrueba = listOf(
         AlbumSummary(100, "Bailando con lobos", null, "Rock", "", "2020"),
         AlbumSummary(999, "Zafiro perdido", null, "Folk", "", null)
@@ -159,7 +159,7 @@ class VinilosNavHostTest {
         rule.waitForIdle()
     }
 
-    /** El botón "Atrás" del sistema: la pantalla de inicio no tiene flecha en el encabezado. */
+    /** The system "Back" button: the home screen has no arrow in the header. */
     private fun atrasDelSistema() {
         rule.runOnIdle { nav.popBackStack() }
         rule.waitForIdle()
@@ -171,7 +171,7 @@ class VinilosNavHostTest {
 
         assertEquals(Routes.INGRESO, ruta())
         assertEquals(Session.None, session.session.value)
-        // Sin pantalla anterior, "Atrás" del sistema cierra la app.
+        // With no previous screen, the system "Back" closes the app.
         assertNull(nav.previousBackStackEntry)
     }
 
@@ -298,7 +298,7 @@ class VinilosNavHostTest {
 
         assertEquals(Routes.INICIO, ruta())
         assertEquals(Session.Visitor, session.session.value)
-        // El saludo cambia con el perfil.
+        // The greeting changes with the profile.
         rule.onNodeWithText("¡Hola, melómano!").assertIsDisplayed()
         rule.onNodeWithText("¡Hola, Manolo Bellon!").assertDoesNotExist()
     }
@@ -448,9 +448,9 @@ class VinilosNavHostTest {
 
     @Test
     fun alVolverDesdeArtistNotAvailableElListadoSeActualizaSinElArtistaEliminado() {
-        // Corrige un bug de revisión de PR: antes, "Volver al listado" solo hacía popBackStack()
-        // y el listado conservaba al artista ya eliminado porque ArtistsViewModel solo consulta
-        // en su init. Ahora debe forzar una nueva consulta (ArtistsViewModel.reintentar()).
+        // Fixes a PR review bug: previously, "Back to list" only called popBackStack()
+        // and the list kept the already-removed artist because ArtistsViewModel only queries
+        // in its init. It must now force a new query (ArtistsViewModel.reintentar()).
         favoritos.esFavorito = Result.success(false)
         favoritos.agregarResultado = Result.failure(ArtistNotAvailable())
         mostrar(RepositorioFalso(Result.success(listOf(manolo))))
@@ -467,8 +467,8 @@ class VinilosNavHostTest {
         rule.onNodeWithTag(TagBotonFavorito).performScrollTo().performClick()
         rule.waitForIdle()
 
-        // El artista ya no existe en el backend real: la siguiente consulta del listado no debe
-        // incluirlo.
+        // The artist no longer exists on the real backend: the next listing query must not
+        // include it.
         artistas.resultado = Result.success(listOf(queen))
         rule.onNodeWithText("Volver al listado de artistas").performClick()
         rule.waitForIdle()
@@ -479,7 +479,7 @@ class VinilosNavHostTest {
         rule.onAllNodesWithTag(tagArtista(ruben)).assertCountEquals(0)
     }
 
-    // ---------- Agregar un álbum a un artista (HU15) ----------
+    // ---------- Add an album to an artist (HU15) ----------
 
     private fun abrirDetalleDeRubenComoColeccionista() {
         mostrar(RepositorioFalso(Result.success(listOf(manolo))))
@@ -504,7 +504,7 @@ class VinilosNavHostTest {
         abrirVentanaAsociar()
         rule.onNodeWithText("Asociar álbum a Rubén Blades Bellido de Luna").assertIsDisplayed()
 
-        // Lo que respondería el backend al volver a consultar el detalle.
+        // What the backend would respond when the detail is queried again.
         artistas.detalles = artistas.detalles + ((ArtistType.MUSICO to 100) to Result.success(
             detalleRuben.copy(albumes = listOf(AlbumArtista(100, "Bailando con lobos", null, "2020")))
         ))

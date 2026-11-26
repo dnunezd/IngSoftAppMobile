@@ -45,27 +45,27 @@ import java.text.Normalizer
 import java.util.Locale
 
 /**
- * E2E de la HU00 (ingreso) contra el backend real BackVynils.
+ * E2E for HU00 (sign-in) against the real BackVynils backend.
  *
- * No asume un dataset fijo (como los coleccionistas 100 y 101 de `sql/data.sql`): envuelve los
- * repositorios reales de coleccionistas y álbumes para capturar lo que el backend conectado
- * realmente devuelve, y calcula las aserciones (nombre, correo, iniciales, término de búsqueda
- * discriminante) a partir de esos datos. Así la prueba es coherente tanto con el backend local
- * (Docker) como con el desplegado por los tutores, sin importar qué coleccionistas tenga cada uno.
+ * It does not assume a fixed dataset (like collectors 100 and 101 from `sql/data.sql`): it wraps
+ * the real collector and album repositories to capture what the connected backend actually
+ * returns, and computes the assertions (name, email, initials, discriminating search term) from
+ * that data. This way the test is consistent both with the local backend (Docker) and the one
+ * deployed by the instructors, regardless of which collectors each one has.
  *
- * En un teléfono requiere `adb reverse tcp:3000 tcp:3000` y la app instalada con
- * `-PbaseUrl=http://localhost:3000/`. La recuperación ante fallos del backend se prueba, de forma
- * automática y sin backend, en [RecuperacionTest].
+ * On a phone it requires `adb reverse tcp:3000 tcp:3000` and the app installed with
+ * `-PbaseUrl=http://localhost:3000/`. Recovery from backend failures is tested, automatically and
+ * without a backend, in [RecuperacionTest].
  *
- * Los escenarios FN00-ESC01 a FN00-ESC03 guardan un pantallazo por paso y una fila en el informe de
- * `.../files/e2e-evidencia/FN00_ESCxx/informe.md` (solo en el dispositivo, no en el repo).
+ * Scenarios FN00-ESC01 through FN00-ESC03 save a screenshot per step and a row in the report at
+ * `.../files/e2e-evidencia/FN00_ESCxx/informe.md` (device-only, not in the repo).
  */
 class IngresoE2ETest {
 
     @get:Rule
     val rule = createEmptyComposeRule()
 
-    /** El repositorio real de coleccionistas: guarda el último listado recibido del backend. */
+    /** The real collector repository: stores the last listing received from the backend. */
     private class ColeccionistasRealesContados(
         private val real: CollectorRepository = CollectorRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL))
     ) : CollectorRepository by real {
@@ -75,7 +75,7 @@ class IngresoE2ETest {
             real.getCollectors().also { resultado -> resultado.onSuccess { coleccionistas = it } }
     }
 
-    /** El repositorio real de álbumes: solo para saber cuál es el primer álbum real del catálogo. */
+    /** The real album repository: only used to know which is the first real album in the catalog. */
     private class AlbumesRealesContados(
         private val real: AlbumRepository = AlbumRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL))
     ) : AlbumRepository by real {
@@ -106,13 +106,13 @@ class IngresoE2ETest {
         return requireNotNull(coleccionistasRepo.coleccionistas)
     }
 
-    /** Desde la pantalla de inicio, "Ver álbumes" lleva al catálogo. */
+    /** From the home screen, "Ver álbumes" leads to the catalog. */
     private fun verAlbumes() {
         esperarA(TagInicio)
         rule.onNodeWithTag(TagVerAlbumes).performScrollTo().performClick()
         esperarA(TagCatalogo)
-        // El catálogo real carga desde BackVynils: se espera al primer álbum real (sea cual sea
-        // el backend conectado) para que la evidencia muestre la lista y no el estado "Cargando".
+        // The real catalog loads from BackVynils: it waits for the first real album (whichever
+        // backend is connected) so the evidence shows the list instead of the "Cargando" state.
         rule.waitUntil(15_000) { albumesRepo.catalogo != null }
         val primerAlbum = requireNotNull(albumesRepo.catalogo).first()
         esperarA(tagAlbum(primerAlbum.id))
@@ -121,7 +121,7 @@ class IngresoE2ETest {
     private fun filaColeccionista(coleccionista: Collector): SemanticsMatcher =
         hasTestTag(tagColeccionista(coleccionista.id))
 
-    /** Comprueba nombre, correo e iniciales de [coleccionista], anclado a su propia fila. */
+    /** Checks name, email, and initials of [coleccionista], anchored to its own row. */
     private fun comprobarFilaColeccionista(coleccionista: Collector) {
         val fila = filaColeccionista(coleccionista)
         rule.onNode(fila).assertIsDisplayed()
@@ -130,19 +130,19 @@ class IngresoE2ETest {
         rule.onNode(fila and hasText(iniciales(coleccionista.name))).assertExists()
     }
 
-    /** Igual que la normalización de búsqueda de producción: sin tildes y en minúsculas. */
+    /** Same as the production search normalization: no accents and lowercase. */
     private val marcasDiacriticas = Regex("\\p{InCombiningDiacriticalMarks}+")
     private fun normalizado(texto: String) =
         Normalizer.normalize(texto, Normalizer.Form.NFD).replace(marcasDiacriticas, "").lowercase(Locale.ROOT)
 
     /**
-     * La subcadena más corta del nombre o correo de [objetivo] que no aparece ni en el nombre ni
-     * en el correo de ningún otro coleccionista de [lista]. La búsqueda de producción filtra por
-     * nombre o correo normalizados, así que el término debe discriminar en ambos campos.
+     * The shortest substring of the name or email of [objetivo] that does not appear in either the
+     * name or the email of any other collector in [lista]. Production search filters by normalized
+     * name or email, so the term must discriminate on both fields.
      *
-     * Devuelve `null` si ninguna subcadena discrimina (p.ej. el nombre completo de [objetivo] es,
-     * a su vez, subcadena del nombre o correo de otro coleccionista real): en ese caso no hay
-     * ningún término de búsqueda seguro para [objetivo] y no se debe inventar uno.
+     * Returns `null` if no substring discriminates (e.g. the full name of [objetivo] is itself a
+     * substring of the name or email of another real collector): in that case there is no safe
+     * search term for [objetivo] and one must not be made up.
      */
     private fun substringDiscriminante(objetivo: Collector, lista: List<Collector>): String? {
         val bases = listOf(normalizado(objetivo.name), normalizado(objetivo.email))
@@ -160,10 +160,10 @@ class IngresoE2ETest {
     }
 
     /**
-     * Coleccionistas cuyo nombre+correo no se repite en ningún otro de [lista]. El backend real
-     * puede listar la misma persona dos veces con distinto id (mismo nombre y correo): ninguna
-     * subcadena discrimina entre dos registros idénticos, así que la búsqueda solo usa
-     * coleccionistas con datos únicos.
+     * Collectors whose name+email is not repeated in any other entry of [lista]. The real backend
+     * can list the same person twice with a different id (same name and email): no substring
+     * discriminates between two identical records, so the search only uses collectors with
+     * unique data.
      */
     private fun conDatosUnicos(lista: List<Collector>): List<Collector> {
         fun clave(c: Collector) = normalizado(c.name) + "|" + normalizado(c.email)
@@ -171,7 +171,7 @@ class IngresoE2ETest {
         return lista.filter { conteo.getValue(clave(it)) == 1 }
     }
 
-    /** FN00-ESC01: ingresar a la plataforma como visitante. */
+    /** FN00-ESC01: sign in to the platform as a visitor. */
     @Test
     fun ingresarComoVisitanteLlevaAlInicioYDeAhiAlCatalogo() {
         val evidencia = "FN00_ESC01"
@@ -189,7 +189,7 @@ class IngresoE2ETest {
         }
     }
 
-    /** FN00-ESC02: ingresar a la plataforma como coleccionista. */
+    /** FN00-ESC02: sign in to the platform as a collector. */
     @Test
     fun ingresarComoColeccionistaMuestraLaListaRealYSeEligeUno() {
         val evidencia = "FN00_ESC02"
@@ -216,7 +216,7 @@ class IngresoE2ETest {
         }
     }
 
-    /** FN00-ESC03: ingresar como coleccionista usando la búsqueda. */
+    /** FN00-ESC03: sign in as a collector using the search box. */
     @Test
     fun elBuscadorFiltraLosColeccionistasReales() {
         val evidencia = "FN00_ESC03"
@@ -245,7 +245,7 @@ class IngresoE2ETest {
             }
             EvidenciaE2E.capturar(rule, evidencia, "03_busqueda_filtrada")
 
-            // Sin cerrar el teclado, la captura del inicio sale cortada mientras la ventana recupera su alto.
+            // Without closing the keyboard, the home screenshot comes out cropped while the window regains its height.
             Espresso.closeSoftKeyboard()
             rule.onNodeWithTag(tagColeccionista(objetivo.id)).performClick()
 
@@ -270,13 +270,13 @@ class IngresoE2ETest {
             rule.onNodeWithTag(TagAtras).performClick()
             esperarA(TagEntrarVisitante)
 
-            // Entrar como coleccionista lleva al inicio, y "Atrás" del sistema al ingreso, no al selector.
+            // Signing in as a collector leads to home, and the system "Back" goes to sign-in, not to the selector.
             entrarComoColeccionista()
             esperarA(tagColeccionista(segundo.id))
             rule.onNodeWithTag(tagColeccionista(segundo.id)).performClick()
             esperarA(TagInicio)
 
-            // Del inicio al listado de artistas y de vuelta con la flecha, conservando la sesión.
+            // From home to the artist list and back with the arrow, keeping the session.
             rule.onNodeWithTag(TagVerArtistas).performScrollTo().performClick()
             esperarA(TagArtistas)
             rule.onNodeWithTag(TagAtras).performClick()
@@ -284,14 +284,14 @@ class IngresoE2ETest {
             verAlbumes()
             rule.onNodeWithTag(TagRolActivo).assertTextEquals("COLECCIONISTA")
 
-            // Catálogo -> inicio -> ingreso.
+            // Catalog -> home -> sign-in.
             rule.onNodeWithTag(TagAtras).performClick()
             esperarA(TagInicio)
             Espresso.pressBack()
             esperarA(TagEntrarVisitante)
             rule.onAllNodesWithTag(TagBuscador).assertCountEquals(0)
 
-            // Cambiar de perfil: ahora como visitante.
+            // Switching profile: now as visitor.
             rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
             verAlbumes()
             rule.onNodeWithTag(TagRolActivo).assertTextEquals("VISITANTE")

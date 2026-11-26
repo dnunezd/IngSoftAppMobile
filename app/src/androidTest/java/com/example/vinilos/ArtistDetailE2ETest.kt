@@ -63,19 +63,20 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * E2E de la HU04 (detalle del artista) como Visitante, desde el listado de artistas (HU03).
+ * E2E for HU04 (artist detail) as a Visitor, starting from the artist list (HU03).
  *
- * FN04-ESC01 a ESC04 y ESC07 van contra el backend real y no asumen un dataset fijo: antes de abrir
- * la app consultan el listado y los detalles reales y eligen el artista que cumple la condición del
- * escenario; si no hay ninguno, el escenario se omite. Así pasan contra el backend local (Docker) y
- * contra el desplegado por los tutores. En el emulador la app llega al backend local por
- * `10.0.2.2`; en un teléfono, con `adb reverse tcp:3000 tcp:3000` y `-PbaseUrl=http://localhost:3000/`.
+ * FN04-ESC01 through ESC04 and ESC07 run against the real backend and do not assume a fixed
+ * dataset: before opening the app they query the real list and details and pick the artist that
+ * meets the scenario's condition; if there is none, the scenario is skipped. This way they pass
+ * against both the local backend (Docker) and the one deployed by the tutors. On the emulator the
+ * app reaches the local backend via `10.0.2.2`; on a phone, with `adb reverse tcp:3000 tcp:3000`
+ * and `-PbaseUrl=http://localhost:3000/`.
  *
- * FN04-ESC05 (error de carga) y ESC06 (banda con integrantes, que no existe en ninguno de los dos
- * backends) usan `MockWebServer`, como [RecuperacionTest].
+ * FN04-ESC05 (loading error) and ESC06 (band with members, which doesn't exist on either backend)
+ * use `MockWebServer`, like [RecuperacionTest].
  *
- * Cada escenario guarda un pantallazo por paso, `informe.md` y un PDF en
- * `.../files/e2e-evidencia/FN04_ESCxx/` (en el dispositivo; los PDF se versionan a mano en
+ * Each scenario saves a screenshot per step, `informe.md`, and a PDF in
+ * `.../files/e2e-evidencia/FN04_ESCxx/` (on the device; the PDFs are versioned by hand in
  * `docs/pruebas/sprint-2/HU04/e2e/`).
  */
 class ArtistDetailE2ETest {
@@ -83,7 +84,7 @@ class ArtistDetailE2ETest {
     @get:Rule
     val rule = createEmptyComposeRule()
 
-    /** El repositorio real de la app, que además cuenta cuántas veces se consulta cada detalle. */
+    /** The app's real repository, which also counts how many times each detail is queried. */
     private class ArtistasReales(
         baseUrl: String = BuildConfig.BASE_URL,
         private val real: ArtistRepository = ArtistRepositoryImpl(ServiceAdapter(baseUrl))
@@ -114,12 +115,12 @@ class ArtistDetailE2ETest {
         servidor?.shutdown()
     }
 
-    // ---------- Datos reales ----------
+    // ---------- Real data ----------
 
-    /** Un artista del listado real junto con su detalle real. */
+    /** An artist from the real list along with its real detail. */
     private data class Candidato(val artista: Artist, val detalle: ArtistDetail)
 
-    /** Consulta, con un repositorio aparte (no cuenta), el listado y el detalle de cada artista real. */
+    /** Queries, with a separate repository (not counted), the list and the detail of each real artist. */
     private fun candidatosReales(): List<Candidato> = runBlocking {
         val consulta = ArtistRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL))
         consulta.getArtists().getOrThrow().mapNotNull { artista ->
@@ -127,14 +128,14 @@ class ArtistDetailE2ETest {
         }
     }
 
-    /** El primero que cumple [condicion], o el escenario se omite explicando qué faltó. */
+    /** The first one that meets [condicion], or the scenario is skipped explaining what was missing. */
     private fun elegir(motivo: String, condicion: (Candidato) -> Boolean): Candidato {
         val elegido = candidatosReales().firstOrNull(condicion)
         Assume.assumeTrue("El backend conectado no tiene $motivo", elegido != null)
         return requireNotNull(elegido)
     }
 
-    /** El que tenga premios y, entre ellos, más álbumes: muestra el mayor número de secciones con datos. */
+    /** The one with prizes and, among those, the most albums: shows the largest number of sections with data. */
     private fun masCompleto(tipo: ArtistType, motivo: String): Candidato {
         val elegido = candidatosReales()
             .filter { it.artista.type == tipo }
@@ -143,7 +144,7 @@ class ArtistDetailE2ETest {
         return requireNotNull(elegido)
     }
 
-    // ---------- Navegación ----------
+    // ---------- Navigation ----------
 
     private fun esperarA(tag: String, milis: Long = 15_000) =
         rule.waitUntil(milis) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
@@ -154,14 +155,14 @@ class ArtistDetailE2ETest {
     private fun esperarQueDesaparezca(tag: String, milis: Long = 5_000) =
         rule.waitUntil(milis) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isEmpty() }
 
-    /** Visitante -> inicio -> "Ver artistas" -> fila del [artista] -> detalle cargado. */
+    /** Visitor -> home -> "Ver artistas" -> [artista]'s row -> detail loaded. */
     private fun abrirDetalle(artista: Artist, evidencia: String) {
         esperarA(TagEntrarVisitante)
         rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
         esperarA(TagInicio)
         EvidenciaE2E.capturar(rule, evidencia, "01_inicio_visitante")
         rule.onNodeWithTag(TagVerArtistas).performScrollTo().performClick()
-        // El contador aparece cuando el listado cargó; la fila puede estar más abajo, aún sin componer.
+        // The counter appears once the list has loaded; the row may be further down, not yet composed.
         esperarA(TagContadorArtistas)
         rule.onNodeWithTag(TagListaArtistas).performScrollToNode(hasTestTag(tagArtista(artista)))
         EvidenciaE2E.capturar(rule, evidencia, "02_listado_artistas")
@@ -175,7 +176,7 @@ class ArtistDetailE2ETest {
         rule.onNodeWithTag(TagNombreArtistDetail).assertTextEquals(nombre)
     }
 
-    /** Desplaza el detalle hasta el nodo (en pantallas pequeñas puede no estar compuesto aún). */
+    /** Scrolls the detail to the node (on small screens it may not be composed yet). */
     private fun desplazarA(matcher: SemanticsMatcher) {
         rule.onNodeWithTag(TagListaArtistDetail).performScrollToNode(matcher)
     }
@@ -190,9 +191,9 @@ class ArtistDetailE2ETest {
 
     private fun etiquetaDe(tipo: ArtistType) = if (tipo == ArtistType.BANDA) "Banda" else "Músico"
 
-    // ---------- Verificaciones del detalle ----------
+    // ---------- Detail verifications ----------
 
-    /** Imagen (real o por defecto), nombre, etiqueta, fecha con su rótulo y descripción. */
+    /** Image (real or default), name, label, date with its label, and description. */
     private fun verificarTarjeta(detalle: ArtistDetail) {
         esperarDetalle(detalle.nombre)
         rule.onNodeWithTag(TagTipoArtistDetail).assertTextEquals(etiquetaDe(detalle.tipo))
@@ -223,7 +224,7 @@ class ArtistDetailE2ETest {
         }
     }
 
-    /** Álbumes con portada (o respaldo), nombre y año, en el orden de la app. */
+    /** Albums with a cover (or fallback), name, and year, in the order used by the app. */
     private fun verificarAlbumes(detalle: ArtistDetail) {
         if (detalle.albumes.isEmpty()) {
             verTexto("Sin álbumes")
@@ -234,7 +235,7 @@ class ArtistDetailE2ETest {
             .assertTextEquals(contador(detalle.albumes.size, "álbum", "álbumes"))
         detalle.albumes.forEach { album ->
             desplazarA(hasTestTag(tagAlbumArtista(album.id)))
-            // La fila es clicable: fusiona el nombre, el año y la descripción de la portada (o del respaldo).
+            // The row is clickable: it merges the name, year, and description of the cover (or the fallback).
             rule.onNode(hasTestTag(tagAlbumArtista(album.id)) and hasText(album.nombre)).assertIsDisplayed()
             album.anio?.let { rule.onNode(hasTestTag(tagAlbumArtista(album.id)) and hasText(it)).assertExists() }
         }
@@ -255,9 +256,9 @@ class ArtistDetailE2ETest {
         }
     }
 
-    // ---------- Escenarios contra el backend real ----------
+    // ---------- Scenarios against the real backend ----------
 
-    /** FN04-ESC01: el detalle de un músico muestra sus datos, su fecha de nacimiento, álbumes y premios. */
+    /** FN04-ESC01: a musician's detail shows their data, birth date, albums, and prizes. */
     @Test
     fun elDetalleDeUnMusicoMuestraSusDatosAlbumesYPrizes() {
         val evidencia = "FN04_ESC01"
@@ -277,7 +278,7 @@ class ArtistDetailE2ETest {
         }
     }
 
-    /** FN04-ESC02: el detalle de una banda muestra su fecha de creación, integrantes, álbumes y premios. */
+    /** FN04-ESC02: a band's detail shows its creation date, members, albums, and prizes. */
     @Test
     fun elDetalleDeUnaBandaMuestraSuFechaDeCreacionIntegrantesAlbumesYPrizes() {
         val evidencia = "FN04_ESC02"
@@ -299,7 +300,7 @@ class ArtistDetailE2ETest {
         }
     }
 
-    /** FN04-ESC03: tocar un álbum abre su detalle (HU02) y "Atrás" vuelve al artista sin repetir la consulta. */
+    /** FN04-ESC03: tapping an album opens its detail (HU02) and "Atrás" returns to the artist without repeating the query. */
     @Test
     fun tocarUnAlbumAbreSuDetalleYAtrasVuelveAlArtistaSinRepetirLaConsulta() {
         val evidencia = "FN04_ESC03"
@@ -325,7 +326,7 @@ class ArtistDetailE2ETest {
         }
     }
 
-    /** FN04-ESC04: un artista sin álbumes ni premios muestra "Sin álbumes" y "Sin premios". */
+    /** FN04-ESC04: an artist with no albums or prizes shows "Sin álbumes" and "Sin premios". */
     @Test
     fun unArtistaSinAlbumesNiPrizesMuestraLosMensajesDeEmpty() {
         val evidencia = "FN04_ESC04"
@@ -344,7 +345,7 @@ class ArtistDetailE2ETest {
         }
     }
 
-    /** FN04-ESC07: al girar la pantalla el detalle se conserva sin volver a consultar el backend. */
+    /** FN04-ESC07: when rotating the screen, the detail is preserved without querying the backend again. */
     @Test
     fun alGirarLaPantallaElDetalleSeConservaSinVolverAConsultar() {
         val evidencia = "FN04_ESC07"
@@ -355,7 +356,7 @@ class ArtistDetailE2ETest {
             verificarTarjeta(detalle)
             EvidenciaE2E.capturar(rule, evidencia, "03_antes_de_girar")
 
-            // Girar de verdad (no solo recrear la Activity) para que la evidencia se vea en horizontal.
+            // Actually rotate (not just recreate the Activity) so the evidence is shown in landscape.
             escenario.onActivity { it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE }
             rule.waitUntil(5_000) {
                 var horizontal = false
@@ -373,11 +374,11 @@ class ArtistDetailE2ETest {
         }
     }
 
-    // ---------- Escenarios con MockWebServer ----------
+    // ---------- Scenarios with MockWebServer ----------
 
     /**
-     * Servidor local con un listado de un solo artista y su detalle. [caido] hace que el detalle corte
-     * la conexión, como un backend apagado; el listado responde siempre para poder llegar al detalle.
+     * Local server with a list containing a single artist and their detail. [caido] makes the detail
+     * drop the connection, like a server that is down; the list always responds so the detail can be reached.
      */
     private fun iniciarServidor(
         artista: Artist,
@@ -400,12 +401,12 @@ class ArtistDetailE2ETest {
             start()
         }
         servidor = nuevo
-        // "localhost" es uno de los hosts con HTTP permitido en network_security_config.xml.
+        // "localhost" is one of the hosts allowed over HTTP in network_security_config.xml.
         ApplicationProvider.getApplicationContext<VinilosApplication>().container =
             AppContainer(baseUrl = "http://localhost:${nuevo.port}/")
     }
 
-    /** FN04-ESC05: si falla la carga se ve "No se pudo cargar el artista" y "Reintentar" lo recupera. */
+    /** FN04-ESC05: if loading fails, "No se pudo cargar el artista" shows up and "Reintentar" recovers it. */
     @Test
     fun siFallaLaCargaSeVeElErrorYReintentarRecuperaElDetalle() {
         val evidencia = "FN04_ESC05"
@@ -429,7 +430,7 @@ class ArtistDetailE2ETest {
             rule.onNodeWithTag(TagReintentarArtistas).assertIsDisplayed()
             EvidenciaE2E.capturar(rule, evidencia, "03_error_de_carga")
 
-            // El backend "vuelve" y la persona pulsa Reintentar.
+            // The backend "comes back" and the person taps Reintentar.
             caido = false
             rule.onNodeWithTag(TagReintentarArtistas).performClick()
 
@@ -440,7 +441,7 @@ class ArtistDetailE2ETest {
         }
     }
 
-    /** FN04-ESC06: una banda con integrantes los muestra con imagen (o la de por defecto) y nombre. */
+    /** FN04-ESC06: a band with members shows them with an image (or the default one) and name. */
     @Test
     fun unaBandaConIntegrantesLosMuestraConImagenYNombre() {
         val evidencia = "FN04_ESC06"
@@ -472,7 +473,7 @@ class ArtistDetailE2ETest {
                 desplazarA(hasTestTag(tagIntegrante(id)))
                 rule.onNode(hasTestTag(tagIntegrante(id)) and hasAnyDescendant(hasText(nombre)), useUnmergedTree = true)
                     .assertExists()
-                // Sin imagen, o con una URL que no carga, se ve la imagen por defecto con su descripción.
+                // Without an image, or with a URL that fails to load, the default image is shown with its description.
                 rule.onNode(hasContentDescription("Imagen de $nombre"), useUnmergedTree = true).assertExists()
             }
             EvidenciaE2E.capturar(rule, evidencia, "03_integrantes")

@@ -7,9 +7,9 @@ import com.example.vinilos.R
 import java.util.Locale
 
 /**
- * Idioma en que la app muestra sus textos (internacionalizar-ingles, D1): el de los recursos que
- * Android eligió, no el del dispositivo. Con el teléfono en francés la app cae al español, y las
- * fechas y números también deben salir en español.
+ * Language in which the app shows its texts (internacionalizar-ingles, D1): the one chosen by
+ * Android for the resources, not the device's own locale. With the phone set to French the app
+ * falls back to Spanish, and dates and numbers must also come out in Spanish.
  */
 fun idiomaDeLaApp(contexto: Context): Locale = Locale.forLanguageTag(contexto.getString(R.string.idioma))
 

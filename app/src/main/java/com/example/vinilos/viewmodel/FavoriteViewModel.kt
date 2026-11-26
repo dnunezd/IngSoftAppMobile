@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-/** Botón de favorito del detalle de artista (HU10): comprobar y guardar el favorito del coleccionista. */
+/** Favorite button on the artist detail screen (HU10): check and save the collector's favorite. */
 class FavoriteViewModel(
     private val collectorId: Int,
     private val artistId: Int,
@@ -76,8 +76,8 @@ class FavoriteViewModel(
                 },
                 onFailure = {
                     when (it) {
-                        // Sin conexión, un favorito ya confirmado se muestra como tal: el botón queda
-                        // desactivado igual y no hay riesgo de agregarlo dos veces (add-cache-consultas, D5).
+                        // Without connectivity, an already-confirmed favorite is still shown as such: the
+                        // button stays disabled regardless, so there's no risk of adding it twice (add-cache-consultas, D5).
                         is LoadError ->
                             if (repositorio.esFavoritoGuardado(collectorId, artistId)) {
                                 FavoriteUiState.Favorito(mostrarConfirmacion = false)

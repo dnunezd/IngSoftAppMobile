@@ -24,7 +24,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
-/** Ventana para agregar un álbum a un artista (HU15): un criterio de aceptación por prueba. */
+/** Dialog to add an album to an artist (HU15): one acceptance criterion per test. */
 class AssociateAlbumDialogTest {
     @get:Rule
     val rule = createComposeRule()
@@ -64,7 +64,7 @@ class AssociateAlbumDialogTest {
         rule.waitForIdle()
     }
 
-    /** En pantallas pequeñas la lista no muestra todas las filas: se desplaza hasta la que se revisa. */
+    /** On small screens the list doesn't show every row: scroll to the one being checked. */
     private fun fila(id: Int) =
         rule.onNodeWithTag(TagListaAsociar).performScrollToNode(hasTestTag(tagAlbumAsociable(id))).let {
             rule.onNodeWithTag(tagAlbumAsociable(id))
@@ -77,7 +77,7 @@ class AssociateAlbumDialogTest {
         rule.onNodeWithTag(TagVentanaAsociar).assertDoesNotExist()
     }
 
-    // Criterio 1
+    // Criterion 1
     @Test
     fun muestraElNombreDelArtistaAlQueSeLeAgregaElAlbum() {
         mostrar(abierta)
@@ -86,7 +86,7 @@ class AssociateAlbumDialogTest {
         rule.onNodeWithText("Asociar álbum a Rubén Blades").assertIsDisplayed()
     }
 
-    // Criterio 3
+    // Criterion 3
     @Test
     fun muestraLaBarraDeBusquedaYAvisaLoQueSeEscribe() {
         mostrar(abierta)
@@ -108,14 +108,14 @@ class AssociateAlbumDialogTest {
 
     @Test
     fun laFilaNoRepiteElNombreConLaDescripcionDeLaPortada() {
-        // Revisión del PR #114: TalkBack leía "Imagen de A Night at the Opera" y luego "A Night at the Opera".
+        // PR #114 review fix: TalkBack was reading "Imagen de A Night at the Opera" and then "A Night at the Opera".
         mostrar(abierta)
 
         fila(102).assert(!hasContentDescription("Imagen de A Night at the Opera"))
         fila(102).assert(hasText("A Night at the Opera"))
     }
 
-    // Criterio 4
+    // Criterion 4
     @Test
     fun unAlbumYaAsociadoSeVeDeshabilitadoConLaEtiqueta() {
         mostrar(abierta)
@@ -127,7 +127,7 @@ class AssociateAlbumDialogTest {
         assertTrue(seleccionados.isEmpty())
     }
 
-    // Criterio 5
+    // Criterion 5
     @Test
     fun tocarUnAlbumDisponibleLoSelecciona() {
         mostrar(abierta)
@@ -145,7 +145,7 @@ class AssociateAlbumDialogTest {
         fila(103).assertIsNotSelected()
     }
 
-    // Criterio 6
+    // Criterion 6
     @Test
     fun associateEstaDeshabilitadoSinSeleccion() {
         mostrar(abierta)
@@ -154,7 +154,7 @@ class AssociateAlbumDialogTest {
         rule.onNodeWithTag(TagBotonAsociar).assert(hasText("Asociar"))
     }
 
-    // Criterio 7
+    // Criterion 7
     @Test
     fun conSeleccionAsociarSeHabilitaYAvisa() {
         mostrar(abierta.copy(seleccionado = 102))
@@ -172,7 +172,7 @@ class AssociateAlbumDialogTest {
         rule.onNodeWithTag(TagAsociandoAsociar, useUnmergedTree = true).assertIsDisplayed()
     }
 
-    // Criterio 8
+    // Criterion 8
     @Test
     fun cancelarCierraSinAsociar() {
         mostrar(abierta.copy(seleccionado = 102))
@@ -192,7 +192,7 @@ class AssociateAlbumDialogTest {
         assertEquals(1, cancelaciones)
     }
 
-    // Criterio 9
+    // Criterion 9
     @Test
     fun sinAlbumesDisponiblesMuestraElMensaje() {
         mostrar(abierta.copy(asociados = setOf(100, 102, 103)))
@@ -218,7 +218,7 @@ class AssociateAlbumDialogTest {
         rule.onNodeWithTag(TagEmptyAsociar).assertDoesNotExist()
     }
 
-    // Criterio 10
+    // Criterion 10
     @Test
     fun siFallaAlAsociarMuestraElErrorYConservaLaSeleccion() {
         mostrar(abierta.copy(seleccionado = 102, errorAlAsociar = true))
@@ -236,7 +236,7 @@ class AssociateAlbumDialogTest {
         rule.onNodeWithTag(TagErrorAsociar).assertDoesNotExist()
     }
 
-    // Carga y error del listado (DoD 5)
+    // Listing load and error (DoD 5)
     @Test
     fun mientrasCargaElListadoMuestraElIndicador() {
         mostrar(abierta.copy(listado = ListadoAsociable.Loading))

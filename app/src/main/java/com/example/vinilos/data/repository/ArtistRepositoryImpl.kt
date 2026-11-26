@@ -31,11 +31,11 @@ import retrofit2.HttpException
 import retrofit2.Response
 
 /**
- * Artistas del backend. Con [artistaDao], el listado y cada detalle abierto además se guardan en el
- * dispositivo (add-cache-consultas); sin él, se comporta como antes.
- * Retrofit y Room hacen su I/O en sus propios hilos; lo que corre en [dispatcher] (`Dispatchers.Default`
- * por defecto) es el trabajo de CPU: convertir, ordenar y validar fechas. Así se puede llamar desde el
- * hilo principal sin bloquearlo.
+ * Backend artists. With [artistaDao], the listing and each opened detail are also stored on the
+ * device (add-cache-consultas); without it, it behaves as before.
+ * Retrofit and Room do their I/O on their own threads; what runs on [dispatcher] (`Dispatchers.Default`
+ * by default) is CPU work: converting, sorting and validating dates. This way it can be called from the
+ * main thread without blocking it.
  */
 class ArtistRepositoryImpl(
     private val adaptador: ServiceAdapter,
@@ -44,7 +44,7 @@ class ArtistRepositoryImpl(
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ArtistRepository {
 
-    /** Protege la comparación, la escritura y la actualización de lo que sigue (optimizar-cache-e-imagenes, D4). */
+    /** Protects the comparison, the write and the update of whatever follows (optimizar-cache-e-imagenes, D4). */
     private val escritura = Mutex()
     private val copiaListado = CopiaTabla<Pair<ArtistType, Int>, ArtistEntity> { it.tipo to it.id }
     private val copiaDetalles = CopiaTabla<Pair<ArtistType, Int>, ArtistDetailEntity> { it.tipo to it.id }
@@ -52,10 +52,10 @@ class ArtistRepositoryImpl(
     private val versionesDetalle = Versiones<Pair<ArtistType, Int>>()
 
     /**
-     * Músicos y bandas en un solo listado ordenado por nombre. Las dos consultas van en paralelo
-     * dentro de una sola llamada al adaptador: si cualquiera falla, el resultado es el error de carga,
-     * porque un listado parcial no cumpliría con mostrar ambos. Si sale bien, lo guardado queda igual a la
-     * respuesta (D4); su versión combina la de músicos y la de bandas.
+     * Musicians and bands in a single listing sorted by name. The two queries run in parallel
+     * inside a single call to the adapter: if either fails, the result is the load error,
+     * because a partial listing would fail to show both. If it succeeds, what's stored is left equal to the
+     * response (D4); its version combines the musicians' and the bands' versions.
      */
     override suspend fun getArtists(): Result<List<Artist>> = withContext(dispatcher) {
         adaptador.call {
@@ -83,7 +83,7 @@ class ArtistRepositoryImpl(
         leer(siNoHay = null) { detalle(tipo, id)?.aModelo() }
     }
 
-    /** Lectura de lo guardado: sin DAO o si falla el almacenamiento, es como si no hubiera nada. */
+    /** Reading what's stored: without a DAO or if storage fails, it's as if there were nothing. */
     private suspend fun <T> leer(siNoHay: T, bloque: suspend ArtistDao.() -> T): T {
         val dao = artistaDao ?: return siNoHay
         return try {
@@ -93,7 +93,7 @@ class ArtistRepositoryImpl(
         }
     }
 
-    // ---------- Punto único de escritura (optimizar-cache-e-imagenes, D4 y D5) ----------
+    // ---------- Single write point (optimizar-cache-e-imagenes, D4 and D5) ----------
 
     private suspend fun saveList(artistas: List<Artist>, version: String?) = escribir {
         if (version != null && version == versionListado) return@escribir
@@ -122,9 +122,9 @@ class ArtistRepositoryImpl(
     }
 
     /**
-     * Ejecuta [bloque] con [escritura] tomado. Si el bloque no termina normalmente, no se sabe qué quedó en
-     * Room, así que se descarta lo que se recordaba (regla 2 de D4). Un fallo del almacenamiento no cambia el
-     * resultado de la consulta; la cancelación y los errores de programación se relanzan.
+     * Runs [bloque] with [escritura] held. If the block does not finish normally, it's unknown what ended up in
+     * Room, so whatever was remembered is discarded (rule 2 of D4). A storage failure does not change the
+     * query's result; the cancellation and programming errors are rethrown.
      */
     private suspend fun escribir(bloque: suspend ArtistDao.() -> Unit) {
         val dao = artistaDao ?: return
@@ -148,12 +148,12 @@ class ArtistRepositoryImpl(
         ArtistDetail(id, nombre, imagen, descripcion, tipo, fecha, integrantes, albumes, premios)
 
     /**
-     * Detalle del artista según su tipo. Las premiaciones solo se consultan si el artista tiene alguna,
-     * porque el recurso del artista no trae el premio. Todo va en una sola llamada al adaptador: cualquier
-     * fallo es el error de carga, incluido el de las premiaciones, porque "Sin premios" sería falso.
-     * Si sale bien, guarda el detalle si cambió; si el backend confirma con un 404 que ya no existe, lo borra
-     * de lo guardado y sigue devolviendo el mismo error (D4). La versión combina la del artista y la de las
-     * premiaciones, o marca que no se pidieron.
+     * Artist detail according to its type. Prizes are only queried if the artist has any,
+     * because the artist resource does not carry the prize. Everything goes in a single call to the adapter: any
+     * failure is the load error, including the prizes' failure, because "No prizes" would be false.
+     * If it succeeds, it stores the detail if it changed; if the backend confirms with a 404 that it no longer exists, it is removed
+     * from storage and keeps returning the same error (D4). The version combines the artist's and the
+     * prizes', or marks that they were not requested.
      */
     override suspend fun getDetail(tipo: ArtistType, id: Int): Result<ArtistDetail> =
         withContext(dispatcher) {
@@ -176,10 +176,10 @@ class ArtistRepositoryImpl(
         }
 
     /**
-     * Músico: `POST`, que agrega sin quitar a nadie. Banda: el `POST` del backend deja a la banda como única
-     * intérprete del álbum, así que se lee su lista actual y se reemplaza por esa lista más el nuevo con
-     * `PUT`. Si la lista no se puede leer completa, no se envía nada: un `PUT` incompleto le quitaría
-     * álbumes a la banda (add-agregar-album-artista, D1).
+     * Musician: `POST`, which adds without removing anyone. Band: the backend's `POST` leaves the band as the
+     * album's only performer, so its current list is read and replaced by that list plus the new one with
+     * `PUT`. If the full list can't be read, nothing is sent: an incomplete `PUT` would remove
+     * albums from the band (add-agregar-album-artista, D1).
      */
     override suspend fun associateAlbum(tipo: ArtistType, idArtista: Int, idAlbum: Int): Result<Unit> =
         withContext(dispatcher) {
@@ -197,14 +197,14 @@ class ArtistRepositoryImpl(
             }
         }
 
-    /** Dentro de [ServiceAdapter.llamar]: una respuesta no exitosa se lanza para que se traduzca a `ErrorDeCarga`. */
+    /** Inside [ServiceAdapter.llamar]: an unsuccessful response is thrown so it gets translated to `LoadError`. */
     private fun Response<Unit>.exitosa() {
         if (!isSuccessful) throw HttpException(this)
     }
 
     /**
-     * Conversión tolerante: solo el id y el nombre del artista son obligatorios, porque el backend compartido
-     * tiene datos de prueba de otros equipos y un elemento malo no debe tumbar toda la pantalla.
+     * Tolerant conversion: only the artist's id and name are required, because the shared backend
+     * has test data from other teams and a bad element should not bring down the whole screen.
      */
     private fun ArtistDetailDto.aDetalle(tipo: ArtistType, premiaciones: List<PremiacionDto>) = ArtistDetail(
         id = id ?: throw JsonParseException("El artista no tiene id"),
@@ -252,12 +252,12 @@ class ArtistRepositoryImpl(
     private fun String?.conTexto(): String? = this?.takeIf(String::isNotBlank)
 
     /**
-     * La fecha se guarda en ISO y la pantalla la formatea en el idioma de la app: así lo guardado sirve en
-     * cualquier idioma, también sin conexión. Una ausente o que no se pueda interpretar se trata como ausente.
+     * The date is stored in ISO and the screen formats it in the app's language: this way what's stored works in
+     * any language, even offline. One that's missing or can't be parsed is treated as missing.
      */
     private fun fechaValida(fechaIso: String?): String? = fechaIso?.takeIf { formatearFechaONula(it) != null }
 
-    /** Ordena por la fecha ISO que acompaña a cada elemento, con los que no tienen fecha al final. */
+    /** Sorts by the ISO date that accompanies each element, with those without a date at the end. */
     private fun <T> List<Pair<T, String?>>.masRecientesPrimero(): List<T> =
         sortedWith(
             compareBy<Pair<T, String?>> { it.second == null }.thenByDescending { it.second?.take(LARGO_DIA_ISO) }
@@ -272,7 +272,7 @@ class ArtistRepositoryImpl(
     private companion object {
         const val LARGO_DIA_ISO = 10 // "yyyy-MM-dd"
 
-        /** Parte de la versión del detalle cuando el artista no tiene premios y no se pidió `/performerprizes`. */
+        /** Part of the detail's version when the artist has no prizes and `/performerprizes` wasn't requested. */
         const val PREMIACIONES_NO_PEDIDAS = "sin-premiaciones"
     }
 }

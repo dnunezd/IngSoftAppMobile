@@ -2,13 +2,13 @@ package com.example.vinilos.data.repository
 
 import com.example.vinilos.data.model.NewComment
 
-/** Comentarios de los álbumes (HU09). La implementación es [ComentarioRepositoryImpl]. */
+/** Comments on albums (HU09). The implementation is [ComentarioRepositoryImpl]. */
 interface CommentRepository {
 
     /**
-     * Publica el comentario en el álbum. Cualquier fallo (sin conexión, error del servidor, álbum o
-     * coleccionista inexistente, datos inválidos) es un `ErrorDeCarga`: el backend responde 404 tanto
-     * para el álbum como para el coleccionista, y la pantalla muestra el mismo mensaje para todos.
+     * Posts the comment on the album. Any failure (no connection, server error, nonexistent album or
+     * collector, invalid data) is a `LoadError`: the backend responds 404 both
+     * for the album and for the collector, and the screen shows the same message for all of them.
      */
     suspend fun postComment(albumId: Int, comentario: NewComment): Result<Unit>
 }

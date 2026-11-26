@@ -105,7 +105,7 @@ const val TagConfirmacionFavorito = "detalle_artista_confirmacion_favorito"
 const val TagNotAvailableFavorito = "detalle_artista_no_disponible_favorito"
 const val TagActualizandoArtistDetail = "detalle_artista_actualizando"
 
-/** Milisegundos que permanece visible la confirmación de favorito antes de ocultarse sola. */
+/** Milliseconds the favorite confirmation stays visible before it hides itself. */
 private val DuracionConfirmacionFavorito = 2500.milliseconds
 
 fun tagAlbumArtista(id: Int) = "detalle_artista_album_$id"
@@ -116,9 +116,9 @@ private val EsquinaFila = RoundedCornerShape(20.dp)
 private val EsquinaMiniatura = RoundedCornerShape(12.dp)
 
 /**
- * Detalle de un músico o una banda con sus integrantes, álbumes y premios (HU04). [estadoFavorito]
- * nulo oculta por completo la sección de favorito (HU10): así se mantiene oculta para el Visitante
- * sin que esta pantalla necesite conocer la sesión.
+ * Detail screen for a musician or band with its members, albums and awards (HU04). [estadoFavorito]
+ * null fully hides the favorite section (HU10): this way it stays hidden for the Visitor
+ * without this screen needing to know about the session.
  */
 @Composable
 fun ArtistDetailScreen(
@@ -131,20 +131,20 @@ fun ArtistDetailScreen(
     onAgregarFavorito: () -> Unit = {},
     onReintentarFavorito: () -> Unit = {},
     onConfirmacionFavoritoMostrada: () -> Unit = {},
-    // Volver al listado tras "artista ya no disponible": por defecto es igual a onAtras, pero
-    // VinilosNavHost pasa uno propio para marcar el listado y forzar una nueva consulta (sin
-    // eso, popBackStack por sí solo no recarga el listado; ver bug corregido en HU10).
+    // Go back to the list after "artist no longer available": by default it's the same as onAtras, but
+    // VinilosNavHost passes its own to flag the list and force a new query (without
+    // that, popBackStack alone wouldn't reload the list; see bug fixed in HU10).
     onVolverAlListado: () -> Unit = onAtras,
     onAvisoMostrado: () -> Unit = {},
-    // HU15: nulo oculta "Agregar álbum" (Visitante), igual que estadoFavorito.
+    // HU15: null hides "Add album" (Visitor), same as estadoFavorito.
     estadoAsociar: AssociateAlbumUiState? = null,
     accionesAsociar: AssociateAlbumActions = AssociateAlbumActions(),
     onAgregarAlbum: (Set<Int>) -> Unit = {},
     onAlbumAsociadoMostrado: () -> Unit = {}
 ) {
-    // Se maneja aquí arriba (fuera del LazyColumn) y no dentro de la tarjeta: esa tarjeta se
-    // compone en un "item" sin key explícita, y un LaunchedEffect allí puede reiniciarse si el
-    // item se recompone/recicla, lo que impedía que la espera de 2.5s llegara a completarse.
+    // Handled here at the top (outside the LazyColumn) and not inside the card: that card is
+    // composed in an "item" without an explicit key, and a LaunchedEffect there could restart if the
+    // item recomposes/recycles, which prevented the 2.5s wait from completing.
     if (estadoFavorito is FavoriteUiState.Favorito && estadoFavorito.mostrarConfirmacion) {
         LaunchedEffect(estadoFavorito) {
             delay(DuracionConfirmacionFavorito)
@@ -183,7 +183,7 @@ fun ArtistDetailScreen(
                     null
                 }
             )
-            // Una sola columna perezosa: un artista puede tener muchos álbumes y premios.
+            // A single lazy column: an artist can have many albums and awards.
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
@@ -226,7 +226,7 @@ private fun LazyListScope.contenido(
     onAgregarFavorito: () -> Unit,
     onReintentarFavorito: () -> Unit,
     onVolverAlListado: () -> Unit,
-    /** Nulo para el Visitante: no ve "Agregar álbum" (HU15). */
+    /** Null for the Visitor: they don't see "Add album" (HU15). */
     onAgregarAlbum: ((Set<Int>) -> Unit)?
 ) {
     item(key = "tarjeta_principal") {
@@ -304,7 +304,7 @@ private fun TarjetaPrincipal(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Si la URL no responde, no es una imagen o no existe, se muestra la imagen por defecto.
+        // If the URL doesn't respond, isn't an image, or doesn't exist, the default image is shown.
         AsyncImage(
             model = detalle.imagen?.takeIf { it.isNotBlank() },
             contentDescription = stringResource(R.string.artistas_imagen_descripcion, detalle.nombre),
@@ -350,7 +350,7 @@ private fun TarjetaPrincipal(
     }
 }
 
-/** Botón de favorito y sus mensajes asociados (HU10); oculto por completo para el Visitante. */
+/** Favorite button and its associated messages (HU10); fully hidden for the Visitor. */
 @Composable
 private fun SeccionFavorito(
     nombre: String,
@@ -366,8 +366,8 @@ private fun SeccionFavorito(
     ) {
         when (estado) {
             FavoriteUiState.NotAvailable -> TarjetaFavoritoNotAvailable(onVolverAlListado)
-            // El guardado reintenta con la misma acción de agregar (onAgregar); la tarjeta de
-            // error reemplaza al botón principal en vez de mostrarse junto a él.
+            // Saving retries with the same add action (onAgregar); the error
+            // card replaces the main button instead of showing alongside it.
             FavoriteUiState.ErrorGuardado -> TarjetaErrorGuardado(
                 onReintentar = onAgregar,
                 modifier = Modifier.testTag(TagErrorFavorito)
@@ -431,7 +431,7 @@ private fun SeccionFavorito(
     }
 }
 
-/** Nota bajo el botón ya marcado como favorito: confirma que ya es favorito (HU10). */
+/** Note below the button already marked as favorite: confirms it's already a favorite (HU10). */
 @Composable
 private fun NotaBloqueoTemporalFavorito() {
     Row(
@@ -458,8 +458,8 @@ private fun NotaBloqueoTemporalFavorito() {
 }
 
 /**
- * Tarjeta de error al guardar el favorito (HU10), con el mismo lenguaje visual que `TarjetaError`
- * en la creación de álbum (HU07): fondo errorContainer, ícono de advertencia y botón de reintento.
+ * Error card for saving the favorite (HU10), with the same visual language as `TarjetaError`
+ * in album creation (HU07): errorContainer background, warning icon and retry button.
  */
 @Composable
 private fun TarjetaErrorGuardado(onReintentar: () -> Unit, modifier: Modifier = Modifier) {
@@ -495,7 +495,7 @@ private fun TarjetaErrorGuardado(onReintentar: () -> Unit, modifier: Modifier = 
     }
 }
 
-/** Tarjeta cuando el artista ya no existe en el backend (HU10): mensaje y regreso al listado. */
+/** Card shown when the artist no longer exists in the backend (HU10): message and return to the list. */
 @Composable
 private fun TarjetaFavoritoNotAvailable(onVolverAlListado: () -> Unit) {
     Column(
@@ -571,7 +571,7 @@ private fun BloqueFecha(tipo: ArtistType, fecha: String) {
     }
 }
 
-/** Título de la sección, con el contador a la derecha solo cuando hay elementos. */
+/** Section title, with the counter on the right only when there are items. */
 @Composable
 private fun TituloSeccion(
     @StringRes titulo: Int,
@@ -605,13 +605,13 @@ private fun TituloSeccion(
     }
 }
 
-/** "Agregar álbum" junto al título de la sección de álbumes, solo para el Coleccionista (HU15). */
+/** "Add album" next to the albums section title, only for the Collector (HU15). */
 @Composable
 private fun BotonAgregarAlbum(onClick: () -> Unit) {
     Button(
         onClick = onClick,
         shape = RoundedCornerShape(50),
-        // Alto visual de 40 dp; Material 3 mantiene el área táctil de 48 dp.
+        // Visual height of 40 dp; Material 3 keeps the 48 dp touch target.
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
         modifier = Modifier.testTag(TagBotonAgregarAlbum)
     ) {
@@ -621,7 +621,7 @@ private fun BotonAgregarAlbum(onClick: () -> Unit) {
     }
 }
 
-/** Sección sin elementos: bloque gris con un ícono y el mensaje, como en el marco de Figma. */
+/** Section with no items: gray block with an icon and the message, as in the Figma frame. */
 @Composable
 private fun BloqueEmpty(@StringRes mensaje: Int, icono: Painter) {
     Row(
@@ -647,7 +647,7 @@ private fun BloqueEmpty(@StringRes mensaje: Int, icono: Painter) {
     }
 }
 
-/** Los integrantes no son seleccionables: ningún criterio lo pide y el mockup no muestra indicador. */
+/** Members are not selectable: no criterion requires it and the mockup shows no indicator. */
 @Composable
 private fun FilaIntegrantes(integrantes: List<IntegranteArtista>) {
     LazyRow(
@@ -706,7 +706,7 @@ private fun FilaAlbum(album: AlbumArtista, onSeleccionar: (Int) -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // Misma portada del catálogo: el ícono de disco se ve mientras carga y si la portada falta o no carga.
+        // Same cover as the catalog: the disc icon shows while loading and if the cover is missing or fails to load.
         AlbumCover(
             url = album.portada,
             contentDescription = stringResource(R.string.artistas_imagen_descripcion, album.nombre),
@@ -808,7 +808,7 @@ private fun Loading() {
     }
 }
 
-/** Tarjeta de relleno mientras carga, con la misma forma que la tarjeta principal. */
+/** Placeholder card while loading, with the same shape as the main card. */
 @Composable
 private fun TarjetaEsqueleto() {
     Column(
@@ -827,7 +827,7 @@ private fun TarjetaEsqueleto() {
     }
 }
 
-/** Fila de relleno mientras carga, con la misma forma que una fila de álbum. */
+/** Placeholder row while loading, with the same shape as an album row. */
 @Composable
 private fun FilaEsqueleto() {
     Row(

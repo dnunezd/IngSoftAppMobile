@@ -21,7 +21,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
-/** Botón de favorito en el detalle real del artista (HU10 sobre HU04), un estado a la vez. */
+/** Favorite button on the real artist detail screen (HU10 over HU04), one state at a time. */
 class ArtistDetailScreenFavoritoTest {
     @get:Rule
     val rule = createComposeRule()
@@ -146,9 +146,9 @@ class ArtistDetailScreenFavoritoTest {
 
     @Test
     fun noDisponibleUsaUnCallbackDeVolverAlListadoDistintoDeAtras() {
-        // Corrige un bug de revisión de PR: VinilosNavHost necesita distinguir "volver al
-        // listado tras artista no disponible" (que debe forzar una nueva consulta) de "atrás"
-        // normal; si ambos compartieran el mismo callback, no habría forma de diferenciarlos.
+        // Fixes a PR review bug: VinilosNavHost needs to distinguish "go back to the list
+        // after artist not available" (which must force a new query) from a regular "back";
+        // if both shared the same callback, there would be no way to tell them apart.
         var atras = 0
         var volverAlListado = 0
         mostrar(
@@ -175,8 +175,8 @@ class ArtistDetailScreenFavoritoTest {
     fun laConfirmacionDesapareceSolaDespuesDeUnosSegundos() {
         rule.setContent {
             VinilosTheme {
-                // Sin remember, esta línea se re-ejecutaría en cada recomposición y reiniciaría
-                // "estado" a mostrarConfirmacion = true, impidiendo que la confirmación desaparezca.
+                // Without remember, this line would re-run on every recomposition and reset
+                // "estado" to mostrarConfirmacion = true, preventing the confirmation from disappearing.
                 var estado by remember {
                     mutableStateOf<FavoriteUiState>(FavoriteUiState.Favorito(mostrarConfirmacion = true))
                 }
@@ -195,9 +195,9 @@ class ArtistDetailScreenFavoritoTest {
 
         rule.onNodeWithTag(TagConfirmacionFavorito).assertIsDisplayed()
 
-        // La pantalla real (HU04) compone más contenido que la antigua pantalla provisional
-        // (álbumes, premios, imagen), por lo que en emuladores lentos el margen sobre los 2.5s
-        // de espera de producción debe ser mayor; el valor de producción no cambia.
+        // The real screen (HU04) composes more content than the old placeholder screen
+        // (albums, awards, image), so on slow emulators the margin over the 2.5s production
+        // wait needs to be larger; the production value itself does not change.
         rule.waitUntil(timeoutMillis = 10_000) {
             rule.onAllNodesWithTag(TagConfirmacionFavorito).fetchSemanticsNodes().isEmpty()
         }

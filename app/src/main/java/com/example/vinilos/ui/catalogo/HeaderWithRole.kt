@@ -27,7 +27,7 @@ import com.example.vinilos.ui.ingreso.ChipEtiqueta
 import com.example.vinilos.ui.ingreso.TagAtras
 import com.example.vinilos.ui.ingreso.encabezado
 
-/** Encabezado del catálogo y del formulario: flecha de atrás, etiqueta del rol y título. */
+/** Header for the catalog and the form: back arrow, role label and title. */
 @Composable
 fun HeaderWithRole(
     session: Session,

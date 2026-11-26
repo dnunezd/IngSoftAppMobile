@@ -9,8 +9,8 @@ import androidx.room.Upsert
 import com.example.vinilos.data.model.ArtistType
 
 /**
- * Listado (HU03) y detalle (HU04) de artistas. El listado se lee sin `ORDER BY` porque se ordena en
- * Kotlin con `ordenAlfabetico()`: SQLite no ignora tildes.
+ * Listing (HU03) and detail (HU04) of artists. The listing is read without `ORDER BY` because it is
+ * sorted in Kotlin with `ordenAlfabetico()`: SQLite does not ignore accents.
  */
 @Dao
 abstract class ArtistDao {
@@ -39,7 +39,7 @@ abstract class ArtistDao {
     @Query("DELETE FROM artista_detalle WHERE tipo = :tipo AND id = :id")
     abstract suspend fun borrarDetalle(tipo: ArtistType, id: Int)
 
-    // ---------- Escrituras incrementales (optimizar-cache-e-imagenes, D6) ----------
+    // ---------- Incremental writes (optimizar-cache-e-imagenes, D6) ----------
 
     @Upsert
     abstract suspend fun saveArtists(artistas: List<ArtistEntity>)
@@ -47,7 +47,7 @@ abstract class ArtistDao {
     @Query("DELETE FROM artistas WHERE tipo = :tipo AND id IN (:ids)")
     abstract suspend fun borrarArtistas(tipo: ArtistType, ids: List<Int>)
 
-    /** Aplica lo que cambió del listado. La clave de cada fila es (tipo, id). */
+    /** Applies what changed in the listing. The key of each row is (tipo, id). */
     @Transaction
     open suspend fun aplicarListado(cambios: TableChanges<Pair<ArtistType, Int>, ArtistEntity>) {
         if (cambios.reemplazarTodo) {

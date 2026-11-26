@@ -7,7 +7,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Copia en memoria y versiones de lo escrito (optimizar-cache-e-imagenes, D4 y D5). */
+/** In-memory copy and versions of what was written (optimizar-cache-e-imagenes, D4 and D5). */
 class CopiaTablaTest {
 
     private data class Fila(val id: Int, val nombre: String)

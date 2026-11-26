@@ -1,18 +1,18 @@
 package com.example.vinilos.data.local
 
 /**
- * Qué escribir en una tabla de la caché (optimizar-cache-e-imagenes, D5 y D6).
+ * What to write to a cache table (optimizar-cache-e-imagenes, D5 and D6).
  *
- * - Con [reemplazarTodo], se borra la tabla (o la parte que corresponda) y se insertan [guardar]: es lo que se
- *   hace cuando no se sabe qué hay guardado.
- * - Sin él, solo se guardan las filas nuevas o modificadas de [guardar] y se borran las claves de [borrar].
+ * - With [reemplazarTodo], the table (or the corresponding part) is deleted and [guardar] is inserted: this is
+ *   what happens when it's not known what is stored.
+ * - Without it, only the new or modified rows from [guardar] are saved and the keys in [borrar] are deleted.
  */
 data class TableChanges<K, E>(
     val reemplazarTodo: Boolean,
     val save: List<E>,
     val borrar: List<K> = emptyList()
 ) {
-    /** No hay nada que escribir. */
+    /** There is nothing to write. */
     val vacios: Boolean get() = !reemplazarTodo && save.isEmpty() && borrar.isEmpty()
 
     companion object {
@@ -26,8 +26,8 @@ data class TableChanges<K, E>(
 }
 
 /**
- * SQLite admite como máximo 999 parámetros por consulta en las versiones de Android más antiguas (API 23), así
- * que los borrados por ids se hacen en grupos.
+ * SQLite supports at most 999 parameters per query on older Android versions (API 23), so
+ * deletions by id are done in batches.
  */
 internal const val TAMANO_GRUPO_BORRADO = 500
 

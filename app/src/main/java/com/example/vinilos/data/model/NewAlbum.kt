@@ -1,6 +1,6 @@
 package com.example.vinilos.data.model
 
-/** Datos que el Coleccionista llena en el formulario (HU07). La fecha es la medianoche UTC elegida. */
+/** Data the Collector fills in the form (HU07). The date is the chosen UTC midnight. */
 data class NewAlbum(
     val nombre: String,
     val portada: String,

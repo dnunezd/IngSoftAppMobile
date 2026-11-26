@@ -61,7 +61,7 @@ data class AddTrackActions(
     val onGuardar: () -> Unit = {},
     val onCancelar: () -> Unit = {},
     val onAtras: () -> Unit = {},
-    /** El álbum ya no existe en el backend: a diferencia de [onAtras], le avisa al detalle. */
+    /** The album no longer exists in the backend: unlike [onAtras], it notifies the detail screen. */
     val onAlbumNotAvailable: () -> Unit = {}
 )
 
@@ -205,7 +205,7 @@ fun AddTrackScreen(
 
 }
 
-/** Tarjeta de contexto "álbum destino" (cobertura best-effort, ver [InfoAlbumDestino]). */
+/** Context card for "target album" (best-effort cover art, see [InfoAlbumDestino]). */
 @Composable
 private fun TarjetaAlbumDestino(info: TargetAlbumInfo) {
     Row(
@@ -247,7 +247,7 @@ private fun TarjetaAlbumDestino(info: TargetAlbumInfo) {
     }
 }
 
-/** Mismo estilo de banner de error que el formulario de crear álbum, para que ambos combinen. */
+/** Same error banner style as the create-album form, so both look consistent. */
 @Composable
 private fun TarjetaErrorEnvio(mensaje: String) {
     Row(

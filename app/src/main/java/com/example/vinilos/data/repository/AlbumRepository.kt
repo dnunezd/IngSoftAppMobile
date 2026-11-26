@@ -5,27 +5,27 @@ import com.example.vinilos.data.model.Track
 import com.example.vinilos.data.model.NewAlbum
 import com.example.vinilos.data.model.AlbumSummary
 
-/** Se lanza cuando el backend confirma con un 404 que el álbum ya no existe (HU02). */
+/** Thrown when the backend confirms with a 404 that the album no longer exists (HU02). */
 class AlbumNotAvailable(causa: Throwable? = null) : Exception("El álbum ya no está disponible", causa)
 
-/** Álbumes de la app. La implementación es [AlbumRepositoryImpl]. */
+/** App's albums. The implementation is [AlbumRepositoryImpl]. */
 interface AlbumRepository {
 
-    /** Detalle del álbum (HU02); falla con [AlbumNoDisponible] si el backend ya no lo tiene. */
+    /** Album detail (HU02); fails with [AlbumNotAvailable] if the backend no longer has it. */
     suspend fun getAlbum(id: Int): Result<Album>
 
-    /** Catálogo (HU01) ordenado por nombre. */
+    /** Catalog (HU01) sorted by name. */
     suspend fun getAlbums(): Result<List<AlbumSummary>>
 
-    /** Último catálogo guardado en el dispositivo; vacío si no hay caché o no se pudo leer. */
+    /** Last catalog stored on the device; empty if there's no cache or it couldn't be read. */
     suspend fun getCachedAlbums(): List<AlbumSummary>
 
-    /** Detalle guardado en el dispositivo (add-cache-consultas); `null` si no hay o no se pudo leer. */
+    /** Detail stored on the device (add-cache-consultas); `null` if there's none or it couldn't be read. */
     suspend fun getCachedAlbum(id: Int): Album?
 
-    /** Crea el álbum (HU07) y devuelve su id. */
+    /** Creates the album (HU07) and returns its id. */
     suspend fun createAlbum(album: NewAlbum): Result<Int>
 
-    /** Asocia una canción existente al álbum indicado (HU08). */
+    /** Associates an existing track with the given album (HU08). */
     suspend fun addTrack(albumId: Int, cancion: Track): Result<Unit>
 }

@@ -22,17 +22,17 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-/** Listado y detalle de artistas guardados (add-cache-consultas, D4), con un DAO falso en memoria. */
+/** Listing and detail of cached artists (add-cache-consultas, D4), with a fake in-memory DAO. */
 class ArtistRepositoryCacheTest {
 
-    /** Guarda en memoria; [fallaAlLeer] y [fallaAlEscribir] simulan un almacenamiento que no responde. */
+    /** Stores in memory; [fallaAlLeer] and [fallaAlEscribir] simulate a storage that doesn't respond. */
     private class ArtistDaoFalso : ArtistDao() {
         var filas: List<ArtistEntity> = emptyList()
         var detalles: Map<Pair<ArtistType, Int>, ArtistDetailEntity> = emptyMap()
         var fallaAlLeer: Throwable? = null
         var fallaAlEscribir: Throwable? = null
 
-        /** Cada escritura que recibió, en orden, con las claves que tocó (optimizar-cache-e-imagenes). */
+        /** Every write it received, in order, with the keys it touched (optimizar-cache-e-imagenes). */
         val operaciones = mutableListOf<String>()
 
         private fun anotar(operacion: String, claves: List<Any> = emptyList()) {
@@ -85,7 +85,7 @@ class ArtistRepositoryCacheTest {
     private lateinit var dao: ArtistDaoFalso
     private lateinit var repositorio: ArtistRepository
 
-    // Las dos consultas del listado van en paralelo, así que se responde por ruta y no en orden.
+    // The two listing requests run in parallel, so responses are dispatched by path rather than order.
     private var musicos: MockResponse = MockResponse().setBody("[]")
     private var bandas: MockResponse = MockResponse().setBody("[]")
     private val otrasRoutes = mutableMapOf<String, MockResponse>()
@@ -112,7 +112,7 @@ class ArtistRepositoryCacheTest {
 
     private fun fila(tipo: ArtistType, id: Int, nombre: String) = ArtistEntity(tipo, id, nombre, null)
 
-    // ---------- Listado (HU03) ----------
+    // ---------- Listing (HU03) ----------
 
     @Test
     fun unListadoSuccesssoReemplazaLoGuardado() = runTest {
@@ -163,7 +163,7 @@ class ArtistRepositoryCacheTest {
         assertEquals(guardado, dao.filas)
     }
 
-    // ---------- Detalle (HU04) ----------
+    // ---------- Detail (HU04) ----------
 
     private val queenJson = """
         {"id": 101, "name": "Queen", "image": "https://img/queen.jpg", "description": "Banda británica",
@@ -217,7 +217,7 @@ class ArtistRepositoryCacheTest {
         assertEquals(guardado(queen), dao.detalles[ArtistType.BANDA to 101])
     }
 
-    // ---------- Sin DAO y fallos del almacenamiento ----------
+    // ---------- Without DAO and storage failures ----------
 
     @Test
     fun sinDaoNoHayNadaGuardadoYSeConsultaComoAntes() = runTest {
@@ -249,7 +249,7 @@ class ArtistRepositoryCacheTest {
         assertEquals(queen, repositorio.getDetail(ArtistType.BANDA, 101).getOrThrow())
     }
 
-    // ---------- Escribir solo lo que cambió (optimizar-cache-e-imagenes, D4 y D5) ----------
+    // ---------- Write only what changed (optimizar-cache-e-imagenes, D4 and D5) ----------
 
     private fun conVersion(cuerpo: String, version: String? = null) =
         MockResponse().setBody(cuerpo).apply { if (version != null) setHeader("ETag", version) }

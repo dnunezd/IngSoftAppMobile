@@ -6,7 +6,7 @@ import com.example.vinilos.data.model.Artista
 import com.example.vinilos.data.model.Track
 import com.example.vinilos.data.model.Comment
 
-/** Detalle de un álbum (HU02), con los mismos campos que `Album`. La fecha queda en ISO, sin formatear. */
+/** Detail of an album (HU02), with the same fields as `Album`. The date is kept in ISO, unformatted. */
 @Entity(tableName = "album_detalle")
 data class AlbumDetailEntity(
     @PrimaryKey val id: Int,

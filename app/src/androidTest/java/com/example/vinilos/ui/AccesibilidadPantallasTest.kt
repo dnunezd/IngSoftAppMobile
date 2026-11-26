@@ -71,10 +71,10 @@ import com.example.vinilos.viewmodel.AddCommentUiState
 import com.example.vinilos.viewmodel.EnvioComment
 
 /**
- * Regresión de accesibilidad (corregir-accesibilidad-scanner): activa las comprobaciones de
- * accesibilidad de Compose (etiquetas, destinos táctiles, elementos duplicados) y recorre las ocho
- * pantallas con la fuente normal (1x) y ampliada (2x). El contraste de color se cubre en
- * `ContrasteDePaletaTest`, porque estas comprobaciones no lo evalúan.
+ * Accessibility regression (corregir-accesibilidad-scanner): enables Compose accessibility
+ * checks (labels, touch targets, duplicate elements) and walks through the eight screens with
+ * normal (1x) and enlarged (2x) font scale. Color contrast is covered in
+ * `ContrasteDePaletaTest`, since these checks don't evaluate it.
  */
 @RunWith(Parameterized::class)
 class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
@@ -103,21 +103,21 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
         listOf(Comment("Excelente", 5))
     )
 
-    /** Comprobaciones de accesibilidad de la pantalla y, además, que cada título esperado sea un encabezado. */
+    /** Accessibility checks for the screen, plus verifying that each expected title is a heading. */
     private fun verificar(vararg encabezados: String, contenido: @Composable () -> Unit) {
         rule.enableAccessibilityChecks()
         rule.setContent { ConEscala { VinilosTheme { contenido() } } }
-        // Un diálogo o una hoja inferior viven en su propia ventana: se revisa cada raíz.
+        // A dialog or a bottom sheet lives in its own window: each root is checked.
         val raices = rule.onAllNodes(isRoot())
         raices.fetchSemanticsNodes().indices.forEach { raices[it].tryPerformAccessibilityChecks() }
         encabezados.forEach {
             val encabezado = hasText(it, substring = true) and isHeading()
-            // En una lista larga (o con la fuente al 200 %) el título puede no estar compuesto aún.
+            // In a long list (or with the font at 200%) the title may not be composed yet.
             val yaCompuesto = rule.onAllNodes(encabezado).fetchSemanticsNodes().isNotEmpty()
             if (!yaCompuesto && rule.onAllNodes(hasScrollToNodeAction()).fetchSemanticsNodes().isNotEmpty()) {
                 rule.onAllNodes(hasScrollToNodeAction())[0].performScrollToNode(encabezado)
             }
-            // Puede haber varios con el mismo texto (título de la barra y del listado): basta con uno.
+            // There may be several with the same text (bar title and list title): one is enough.
             assertTrue(
                 "Falta el encabezado \"$it\"",
                 rule.onAllNodes(encabezado).fetchSemanticsNodes().isNotEmpty()
@@ -136,7 +136,7 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
         rule.setContent { ConEscala { VinilosTheme { EntryScreen(onVisitante = {}, onColeccionista = {}) } } }
         rule.onNodeWithContentDescription("Entrar como Visitante").assertExists()
         rule.onNodeWithContentDescription("Entrar como Coleccionista").assertExists()
-        // El texto "Entrar" no debe quedar como un segundo elemento junto a la descripción.
+        // The "Entrar" text should not remain as a second element next to the description.
         rule.onAllNodesWithText("Entrar").assertCountEquals(0)
     }
 
@@ -156,8 +156,8 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
         listOf("Nombre del álbum, obligatorio", "Portada (URL), obligatorio", "Descripción, obligatorio").forEach {
             rule.onNodeWithContentDescription(it).assertExists()
         }
-        // Fecha y listas: el nodo combinado lleva etiqueta y valor, es accionable y el texto de adentro
-        // no queda como un segundo elemento (TalkBack se detenía en ese texto y decía solo el valor).
+        // Date and lists: the combined node carries label and value, is actionable, and the text inside
+        // it does not remain as a second element (TalkBack used to stop on that text and read only the value).
         listOf(
             "Fecha de lanzamiento, obligatorio, DD/MM/AAAA" to "DD/MM/AAAA",
             "Género, obligatorio, Selecciona un género" to "Selecciona un género",
@@ -317,7 +317,7 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
         )
     }
 
-    // ---------- HU08: agregar canción (revisión de PR) ----------
+    // ---------- HU08: add track (PR review) ----------
 
     @Test
     fun addTrackFormularioEmptyConTarjetaDeAlbumDestino() = verificar("Agregar canción", "Datos de la canción") {

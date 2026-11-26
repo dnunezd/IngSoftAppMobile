@@ -8,19 +8,19 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
 
-/** Álbum que una prueba crea en el backend: el nombre lleva la hora para no confundirse con otro. */
+/** Album a test creates in the backend: the name carries a timestamp so it isn't confused with another one. */
 data class AlbumDePrueba(val id: Int, val nombre: String)
 
 /**
- * Álbumes propios de las E2E que escriben en BackVynils (HU08, HU09 y HU15): cada escenario crea el suyo
- * con `POST /albums`, le agrega canciones, comentarios o artistas desde la app, y [borrarTodos] lo deja
- * como estaba, aunque la prueba falle a mitad de camino.
+ * Albums owned by the E2E tests that write to BackVynils (HU08, HU09 and HU15): each scenario creates its
+ * own with `POST /albums`, adds tracks, comments or artists from the app, and [borrarTodos] leaves it
+ * as it was, even if the test fails midway.
  *
- * BackVynils no borra un álbum que tiene comentarios o canciones (la base de datos lo impide), así que
- * primero se borran sus comentarios (`DELETE /albums/{id}/comments/{id}`) y sus canciones
- * (`DELETE /albums/{id}/tracks/{id}`, que solo las desvincula del álbum). Al borrar el álbum, la base de
- * datos quita también su relación con los artistas. No se usa `DELETE /musicians/{id}/albums/{id}`: en
- * BackVynils su filtro no devuelve nada y le quitaría al músico todos sus álbumes.
+ * BackVynils won't delete an album that has comments or tracks (the database prevents it), so its
+ * comments are deleted first (`DELETE /albums/{id}/comments/{id}`) and its tracks
+ * (`DELETE /albums/{id}/tracks/{id}`, which only unlinks them from the album). When the album is deleted, the
+ * database also removes its relation with the artists. `DELETE /musicians/{id}/albums/{id}` is not used: in
+ * BackVynils its filter returns nothing and would remove all of the musician's albums.
  */
 class AlbumesDePrueba(private val baseUrl: String = BuildConfig.BASE_URL) {
 
@@ -38,9 +38,9 @@ class AlbumesDePrueba(private val baseUrl: String = BuildConfig.BASE_URL) {
             .put("recordLabel", "EMI")
             .toString()
             .toRequestBody("application/json".toMediaType())
-        // La secuencia de ids de `album` arranca en 1, pero los datos de ejemplo usan los ids 100 a 103: cuando
-        // llega a ellos, BackVynils responde 500 por clave duplicada. Cada intento fallido avanza la secuencia,
-        // así que basta con reintentar hasta pasar los ids ocupados.
+        // The `album` id sequence starts at 1, but the sample data uses ids 100 to 103: when it
+        // reaches them, BackVynils responds 500 for a duplicate key. Each failed attempt advances the
+        // sequence, so it's enough to retry until the occupied ids are passed.
         repeat(INTENTOS) {
             val id = http.newCall(Request.Builder().url("${baseUrl}albums").post(cuerpo).build()).execute().use { respuesta ->
                 if (respuesta.isSuccessful) JSONObject(requireNotNull(respuesta.body).string()).getInt("id") else null
@@ -57,14 +57,14 @@ class AlbumesDePrueba(private val baseUrl: String = BuildConfig.BASE_URL) {
         http.newCall(Request.Builder().url("${baseUrl}albums/$id").build()).execute()
             .use { JSONObject(requireNotNull(it.body).string()) }
 
-    /** Ids de los álbumes de un músico (`musicians`) o de una banda (`bands`) según el backend. */
+    /** Ids of a musician's albums (`musicians`) or a band's (`bands`) depending on the backend. */
     fun albumesDe(ruta: String, artistaId: Int): Set<Int> {
         val albumes = http.newCall(Request.Builder().url("$baseUrl$ruta/$artistaId").build()).execute()
             .use { JSONObject(requireNotNull(it.body).string()).getJSONArray("albums") }
         return ids(albumes)
     }
 
-    /** Borra un álbum sin canciones ni comentarios a mitad de la prueba, como si otra persona lo eliminara. */
+    /** Deletes an album with no tracks or comments mid-test, as if someone else had deleted it. */
     fun borrar(album: AlbumDePrueba) {
         borrar("albums/${album.id}")
         synchronized(creados) { creados -= album.id }
@@ -85,7 +85,7 @@ class AlbumesDePrueba(private val baseUrl: String = BuildConfig.BASE_URL) {
         http.newCall(Request.Builder().url("$baseUrl$ruta").delete().build()).execute().close()
 
     private companion object {
-        /** Más que los álbumes de ejemplo (ids 100 a 103) que la secuencia puede encontrarse seguidos. */
+        /** More than the sample albums (ids 100 to 103) that the sequence may run into in a row. */
         const val INTENTOS = 10
     }
 

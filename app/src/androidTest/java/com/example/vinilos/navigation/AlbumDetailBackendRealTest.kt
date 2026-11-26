@@ -23,28 +23,28 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * E2E de la HU02 (detalle del álbum) contra el backend real BackVynils, para dos casos que se
- * prueban mejor navegando directo a la ruta por id (un id inexistente no aparece en el catálogo):
- *  - un álbum sin canciones ni comentarios, y
- *  - un álbum inexistente (404 real del backend).
+ * E2E for HU02 (album detail) against the real BackVynils backend, for two cases that are best
+ * tested by navigating directly to the route by id (a nonexistent id doesn't appear in the catalog):
+ *  - an album with no tracks or comments, and
+ *  - a nonexistent album (a real 404 from the backend).
  *
- * El primer caso no asume un id ni un nombre fijo (como el álbum 101/"Poeta del pueblo" de
- * `sql/data.sql`): consulta el catálogo real y busca, entre los primeros álbumes, uno cuyo
- * detalle real no tenga canciones ni comentarios. Si el backend actual no tiene ningún álbum así
- * (por ejemplo, el desplegado por los tutores), la prueba se omite en vez de fallar, porque el
- * escenario que busca cubrir (mensajes de vacío) no se puede ejercitar con esos datos.
+ * The first case doesn't assume a fixed id or name (like album 101/"Poeta del pueblo" from
+ * `sql/data.sql`): it queries the real catalog and looks, among the first albums, for one whose
+ * real detail has no tracks or comments. If the currently connected backend has no such album
+ * (e.g. the one deployed by the tutors), the test is skipped instead of failing, because the
+ * scenario it aims to cover (empty-state messages) can't be exercised with that data.
  *
- * Por eso se arma el mismo `VinilosNavHost` de la app (con el [AlbumRepository][com.example.vinilos.data.repository.AlbumRepository]
- * real de [AppContainer]) y se navega directo a la ruta del detalle por id, igual que hace el
- * catálogo al pulsar un álbum. El resto del árbol de navegación no participa en esta HU, así que
- * los repositorios de coleccionistas/artistas quedan con datos controlados.
+ * That's why the same `VinilosNavHost` from the app is assembled (with the real [AlbumRepository][com.example.vinilos.data.repository.AlbumRepository]
+ * from [AppContainer]) and navigation goes directly to the detail route by id, the same way the
+ * catalog does when an album is tapped. The rest of the navigation tree doesn't take part in this HU, so
+ * the collector/artist repositories are left with controlled data.
  *
- * Requiere el backend en el PC y el teléfono con `adb reverse tcp:3000 tcp:3000`, instalando la
- * app con `-PbaseUrl=http://localhost:3000/`.
+ * Requires the backend on the PC and the phone with `adb reverse tcp:3000 tcp:3000`, installing the
+ * app with `-PbaseUrl=http://localhost:3000/`.
  *
- * Cada paso guarda un pantallazo y una fila en el informe de
- * `.../files/e2e-evidencia/<carpeta>/informe.md` (solo en el dispositivo, no en el repo). Cada
- * escenario usa su propia carpeta (FN02_ESC02 y FN02_ESC03) para obtener un PDF por escenario.
+ * Each step saves a screenshot and a row in the report at
+ * `.../files/e2e-evidencia/<folder>/informe.md` (only on the device, not in the repo). Each
+ * scenario uses its own folder (FN02_ESC02 and FN02_ESC03) to get one PDF per scenario.
  */
 class AlbumDetailBackendRealTest {
 
@@ -56,7 +56,7 @@ class AlbumDetailBackendRealTest {
     private val contenedor = AppContainer()
 
     private fun mostrarDesde(ruta: String) {
-        // El ViewModel se crea fuera del composable para que no se recree en cada recomposición.
+        // The ViewModel is created outside the composable so it isn't recreated on every recomposition.
         val sesion = SessionViewModel().apply { enterAsVisitor() }
         rule.setContent {
             val contexto = LocalContext.current
@@ -81,8 +81,8 @@ class AlbumDetailBackendRealTest {
 
     @Test
     fun unAlbumSinTrackesNiCommentsMuestraLosMensajesDeEmptyConDatosReales() {
-        // Busca, entre los primeros 30 álbumes del catálogo real, uno sin canciones ni
-        // comentarios. No se asume cuál id cumple esa condición: depende del backend conectado.
+        // Looks, among the first 30 albums in the real catalog, for one with no tracks or
+        // comments. It doesn't assume which id meets that condition: it depends on the connected backend.
         val vacio = runBlocking {
             val catalogo = contenedor.albumRepository.getAlbums().getOrThrow()
             catalogo.asSequence().take(30).firstNotNullOfOrNull { resumen ->
@@ -103,8 +103,8 @@ class AlbumDetailBackendRealTest {
             rule.onAllNodesWithText(vacio.nombre).fetchSemanticsNodes().isNotEmpty()
         }
 
-        // performScrollToNode se usa porque en una lista larga en un dispositivo real los
-        // elementos mas abajo (artista, mensajes de vacio) pueden no estar compuestos aun.
+        // performScrollToNode is used because in a long list on a real device the
+        // elements further down (artist, empty messages) may not be composed yet.
         val lista = rule.onNode(hasScrollToNodeAction())
         rule.onNodeWithText(vacio.nombre).assertIsDisplayed()
         vacio.artistas.forEach { artista ->

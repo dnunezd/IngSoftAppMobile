@@ -166,7 +166,7 @@ class CollectorsScreenTest {
         assertEquals(1, atras)
     }
 
-    // ---------- Listado guardado (add-cache-consultas, D6) ----------
+    // ---------- Cached list (add-cache-consultas, D6) ----------
 
     @Test
     fun conElListadoGuardadoActualizandoseMuestraElIndicadorPequenoYLaLista() {

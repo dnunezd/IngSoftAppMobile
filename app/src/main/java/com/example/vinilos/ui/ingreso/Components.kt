@@ -42,8 +42,8 @@ import com.example.vinilos.ui.idiomaDeLaApp
 const val TagAtras = "atras"
 
 /**
- * Barra superior con la flecha de atrás (opcional), el logo y el nombre de la app. [accion] se muestra al
- * final de la barra, por ejemplo el indicador de actualización.
+ * Top bar with an optional back arrow, the logo, and the app name. [accion] is shown at the
+ * end of the bar, for example the refresh indicator.
  */
 @Composable
 fun EncabezadoVinilo(
@@ -91,8 +91,8 @@ fun EncabezadoVinilo(
 }
 
 /**
- * Indicador pequeño de que se están actualizando los datos guardados que ya se ven en pantalla
- * (add-cache-consultas, D6). Es el mismo que usa el catálogo junto a su encabezado.
+ * Small indicator that the saved data already shown on screen is being refreshed
+ * (add-cache-consultas, D6). It's the same one used by the catalog next to its header.
  */
 @Composable
 fun IndicadorActualizando(descripcion: String, tag: String, modifier: Modifier = Modifier) {
@@ -106,9 +106,9 @@ fun IndicadorActualizando(descripcion: String, tag: String, modifier: Modifier =
 }
 
 /**
- * Muestra [mensaje] en [avisos] una vez cuando [mostrar] pasa a `true`. Llama a [onMostrado] en un
- * `finally`: si la pantalla sale antes de que termine, el aviso queda como mostrado y no se repite al
- * volver, igual que en el catálogo.
+ * Shows [mensaje] in [avisos] once when [mostrar] turns `true`. Calls [onMostrado] in a
+ * `finally`: if the screen exits before it finishes, the notice is marked as shown and doesn't
+ * repeat when returning, the same as in the catalog.
  */
 @Composable
 fun AvisoUnaVez(mostrar: Boolean, mensaje: String, avisos: SnackbarHostState, onMostrado: () -> Unit) {
@@ -123,7 +123,7 @@ fun AvisoUnaVez(mostrar: Boolean, mensaje: String, avisos: SnackbarHostState, on
     }
 }
 
-/** Etiqueta pequeña en mayúsculas sobre fondo suave (por ejemplo "ACCESO LIBRE"). */
+/** Small uppercase label on a soft background (for example "FREE ACCESS"). */
 @Composable
 fun ChipEtiqueta(
     texto: String,
@@ -143,15 +143,15 @@ fun ChipEtiqueta(
 }
 
 /**
- * Marca un adorno puramente decorativo (etiquetas, franjas y titulares de ambientación): no expone
- * ningún texto a los lectores de pantalla. Se usa `clearAndSetSemantics` y no `invisibleToUser`
- * porque algunos lectores (Voice Assistant de Samsung) siguen leyendo los nodos marcados como
- * invisibles. Debe ir al final de la cadena de modificadores para no borrar un `testTag`.
+ * Marks a purely decorative adornment (labels, strips, and ambience headlines): it exposes no
+ * text to screen readers. `clearAndSetSemantics` is used instead of `invisibleToUser` because
+ * some readers (Samsung's Voice Assistant) still read nodes marked as invisible. It must go at
+ * the end of the modifier chain so it doesn't erase a `testTag`.
  */
 fun Modifier.decorativo(): Modifier = clearAndSetSemantics { }
 
 /**
- * Marca un título de pantalla o de sección como encabezado para TalkBack. Une los descendientes para
- * que un titular partido en varios textos ("Nuevo" + "álbum") se lea como un solo encabezado.
+ * Marks a screen or section title as a header for TalkBack. Merges descendants so that a
+ * headline split across several texts ("New" + "album") is read as a single header.
  */
 fun Modifier.encabezado(): Modifier = semantics(mergeDescendants = true) { heading() }

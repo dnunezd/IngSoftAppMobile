@@ -8,15 +8,15 @@ import java.io.File
 import javax.xml.parsers.DocumentBuilderFactory
 
 /**
- * El inglés (values-en) debe tener los mismos textos y plurales que el español (values), con los
- * mismos marcadores de formato (internacionalizar-ingles). Así, un texto nuevo sin traducir, o
- * traducido con otros parámetros, falla aquí y no en tiempo de ejecución.
+ * English (values-en) must have the same texts and plurals as Spanish (values), with the
+ * same format markers (internacionalizar-ingles). This way, a new untranslated text, or one
+ * translated with different parameters, fails here instead of at runtime.
  */
 class ParidadDeTraduccionesTest {
 
     private val marcador = Regex("""%(\d+\$)?[sdf]""")
 
-    /** Clave (string o plurals/cantidad) → marcadores en orden. */
+    /** Key (string or plurals/quantity) → markers in order. */
     private fun leer(carpeta: String): Map<String, List<String>> {
         val archivo = File("src/main/res/$carpeta/strings.xml")
         assertTrue("No existe ${archivo.absolutePath}", archivo.exists())

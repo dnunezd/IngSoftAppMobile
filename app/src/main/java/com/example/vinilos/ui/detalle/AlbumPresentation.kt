@@ -15,7 +15,7 @@ data class AlbumPresentation(
     val promedio: String? = null
 )
 
-/** [idioma]: el de la app, para que la fecha y el promedio coincidan con los textos (internacionalizar-ingles). */
+/** [idioma]: the app's locale, so the date and average match the texts (internationalize-english). */
 fun presentarAlbum(album: Album, idioma: Locale = Espanol): AlbumPresentation =
     AlbumPresentation(
         album = album,

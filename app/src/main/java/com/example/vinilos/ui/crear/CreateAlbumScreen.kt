@@ -130,7 +130,7 @@ fun tagFieldError(campo: AlbumField) = "crear_error_${campo.name}"
 
 private const val PrimerAnioDelSelector = 1900
 
-/** Acciones del formulario, agrupadas para no pasar nueve callbacks por separado. */
+/** Form actions, grouped so nine callbacks aren't passed separately. */
 data class CreateAlbumActions(
     val onNombre: (String) -> Unit = {},
     val onPortada: (String) -> Unit = {},
@@ -142,7 +142,7 @@ data class CreateAlbumActions(
     val onCancelar: () -> Unit = {}
 )
 
-/** Formulario para crear un álbum (HU07). No tiene estado propio salvo qué menú está abierto. */
+/** Form to create an album (HU07). Has no state of its own besides which menu is open. */
 @Composable
 fun CreateAlbumScreen(
     estado: CreateAlbumUiState,
@@ -150,11 +150,11 @@ fun CreateAlbumScreen(
     acciones: CreateAlbumActions,
     modifier: Modifier = Modifier
 ) {
-    // Salir durante el envío cancelaría una petición que el backend quizá ya guardó.
+    // Leaving during submission would cancel a request the backend may have already saved.
     BackHandler(enabled = estado.enviando) {}
 
     val desplazamiento = rememberScrollState()
-    // Guardado para que al girar no vuelva a subir por un intento anterior.
+    // Saved so that rotating the screen doesn't resubmit from a previous attempt.
     var ultimoIntento by rememberSaveable { mutableIntStateOf(estado.intentosFallidos) }
     LaunchedEffect(estado.intentosFallidos) {
         if (estado.intentosFallidos != ultimoIntento) {
@@ -316,7 +316,7 @@ private fun TarjetaCampos(estado: CreateAlbumUiState, acciones: CreateAlbumActio
                     icono = R.drawable.ic_crear_enlace,
                     conError = AlbumField.Portada in estado.errores,
                     habilitado = habilitado,
-                    // Sin autocorrección: el teclado cambiaba letras de la URL y dejaba otra dirección.
+                    // No autocorrect: the keyboard changed letters in the URL, leaving a different address.
                     teclado = KeyboardOptions(
                         autoCorrectEnabled = false,
                         keyboardType = KeyboardType.Uri,
@@ -397,7 +397,7 @@ private fun TarjetaCampos(estado: CreateAlbumUiState, acciones: CreateAlbumActio
     }
 }
 
-/** Etiqueta con asterisco, el control del campo y su mensaje de error. */
+/** Label with an asterisk, the field's control, and its error message. */
 @Composable
 private fun Campo(
     etiqueta: String,
@@ -415,7 +415,7 @@ private fun Campo(
                 },
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurface,
-                // El campo ya anuncia su etiqueta y que es obligatorio: no se lee aparte.
+                // The field already announces its label and that it's required: no need to read it separately.
                 modifier = Modifier.decorativo()
             )
             Spacer(Modifier.weight(1f))
@@ -453,7 +453,7 @@ private fun Campo(
 private fun bordeDe(conError: Boolean): Color =
     if (conError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline
 
-/** Píldora común de los campos, con el mismo aspecto que el buscador de artistas. */
+/** Common pill shape for fields, with the same look as the artist search. */
 @Composable
 private fun Pildora(
     conError: Boolean,
@@ -572,7 +572,7 @@ private fun CampoDescripcion(
     )
 }
 
-/** Campo de solo lectura: la fecha únicamente se elige en el selector. */
+/** Read-only field: the date can only be chosen from the picker. */
 @Composable
 private fun CampoFecha(
     etiqueta: String,
@@ -582,7 +582,7 @@ private fun CampoFecha(
     onFecha: (Long) -> Unit
 ) {
     var abierto by rememberSaveable { mutableStateOf(false) }
-    // La descripción incluye el valor: sin ella TalkBack leería solo la etiqueta y no la fecha elegida.
+    // The description includes the value: without it TalkBack would only read the label, not the chosen date.
     val descripcion = "$etiqueta, ${fechaMillis?.let { fechaVisible(it) } ?: stringResource(R.string.crear_fecha_indicacion)}"
     Pildora(
         conError = conError,
@@ -590,7 +590,7 @@ private fun CampoFecha(
             .clip(CircleShape)
             .clickable(enabled = habilitado, role = Role.Button) { abierto = true }
             .testTag(TagFechaAlbum)
-            // Un solo elemento: sin esto TalkBack lee la descripción y luego el texto de adentro.
+            // A single element: without this TalkBack reads the description and then the inner text.
             .clearAndSetSemantics {
                 contentDescription = descripcion
                 role = Role.Button
@@ -630,8 +630,8 @@ private fun CampoFecha(
 }
 
 /**
- * El estado del calendario toma el idioma al crearse (Material 3 1.4), así que todo el selector,
- * estado incluido, queda dentro de [EnIdiomaDeLaApp]. El contenido del Dialog se envuelve otra vez.
+ * The calendar's state picks up the locale when created (Material 3 1.4), so the whole picker,
+ * including its state, stays inside [EnIdiomaDeLaApp]. The Dialog's content is wrapped again.
  */
 @Composable
 private fun SelectorFecha(fechaMillis: Long?, onAceptar: (Long) -> Unit, onCerrar: () -> Unit) {
@@ -652,10 +652,10 @@ private fun SelectorFechaEnIdioma(fechaMillis: Long?, onAceptar: (Long) -> Unit,
             }
         }
     )
-    // No se usa DatePickerDialog: no limita su altura y en horizontal deja afuera sus botones. Aquí el
-    // calendario se desplaza y los botones quedan siempre visibles.
-    // Dialog abre otra composición que vuelve a proveer el contexto y los recursos del dispositivo: el
-    // idioma de la app se aplica también adentro, o los textos de Material salen en el del dispositivo.
+    // DatePickerDialog isn't used: it doesn't limit its height, and in landscape its buttons end up off-screen.
+    // Here the calendar scrolls and the buttons remain always visible.
+    // Dialog opens another composition that provides the device's context and resources again: the
+    // app's language applies inside it too, or else Material's texts would come out in the device's language.
     Dialog(onDismissRequest = onCerrar, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         EnAppLanguage {
             Surface(
@@ -671,7 +671,7 @@ private fun SelectorFechaEnIdioma(fechaMillis: Long?, onAceptar: (Long) -> Unit,
                             .weight(1f, fill = false)
                             .verticalScroll(rememberScrollState())
                     ) {
-                        // El modo por defecto permite escribir la fecha; el criterio exige elegirla.
+                        // The default mode allows typing the date; the requirement is to pick it.
                         DatePicker(
                             state = selector,
                             showModeToggle = false,
@@ -707,10 +707,10 @@ private fun SelectorFechaEnIdioma(fechaMillis: Long?, onAceptar: (Long) -> Unit,
 }
 
 /**
- * El selector toma el idioma del dispositivo, que puede no ser el de la app (por ejemplo, un teléfono en
- * francés con la app en español): se le aplica el idioma de la app para no mezclar idiomas
- * (internacionalizar-ingles, D4). El aviso de lint se refiere a la descarga de idiomas de los App
- * Bundle; aquí se entrega un APK con todos los idiomas.
+ * The picker uses the device's language, which may not match the app's (for example, a phone in
+ * French with the app in Spanish): the app's language is applied to it so languages don't get mixed
+ * (internacionalizar-ingles, D4). The lint warning refers to App Bundle language downloads; here an
+ * APK with all languages included is shipped.
  */
 @SuppressLint("AppBundleLocaleChanges")
 @Composable
@@ -724,8 +724,8 @@ private fun EnAppLanguage(contenido: @Composable () -> Unit) {
         val ajustada = remember(configuracion, idioma) {
             Configuration(configuracion).apply { setLocale(idioma) }
         }
-        // Los textos de Material y stringResource leen LocalResources: sin él, el título del selector
-        // ("Selected date") quedaba en el idioma del dispositivo.
+        // Material's texts and stringResource read LocalResources: without it, the picker's title
+        // ("Selected date") would stay in the device's language.
         val contextoAjustado = remember(contexto, ajustada) { contexto.createConfigurationContext(ajustada) }
         CompositionLocalProvider(
             LocalConfiguration provides ajustada,
@@ -760,8 +760,8 @@ private fun CampoOpciones(
             modifier = Modifier
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, habilitado)
                 .testTag(tag)
-                // El ancla es un solo elemento con su rol: TalkBack se detenía en el texto de adentro
-                // y solo decía el valor, sin la etiqueta ni que es una lista.
+                // The anchor is a single element with its role: TalkBack used to stop at the inner text
+                // and only say the value, without the label or that it's a list.
                 .clearAndSetSemantics {
                     contentDescription = descripcion
                     role = Role.DropdownList

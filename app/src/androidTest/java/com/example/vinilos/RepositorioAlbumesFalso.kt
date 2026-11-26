@@ -8,9 +8,9 @@ import com.example.vinilos.data.remote.LoadError
 import com.example.vinilos.data.repository.AlbumRepository
 
 /**
- * Repositorio de álbumes sin red para las pruebas de navegación: el detalle se resuelve por id y el
- * catálogo entrega las respuestas de [catalogo] en orden; la última se repite en las consultas
- * siguientes (así una prueba puede simular que al deslizar llega un álbum nuevo).
+ * Network-free album repository for navigation tests: detail is resolved by id and the
+ * catalog returns the responses from [catalogo] in order; the last one repeats on subsequent
+ * queries (so a test can simulate a new album arriving when scrolling).
  */
 class RepositorioAlbumesFalso(
     private val resultados: Map<Int, Result<Album>> = emptyMap(),
@@ -36,7 +36,7 @@ class RepositorioAlbumesFalso(
         return if (respuestasCatalogo.size > 1) respuestasCatalogo.removeFirst() else respuestasCatalogo.first()
     }
 
-    /** Sin caché ni red, como cuando este falso heredaba del repositorio real sin DAO. */
+    /** No cache or network, same as when this fake inherited from the real repository without a DAO. */
     override suspend fun getCachedAlbums(): List<AlbumSummary> = emptyList()
     override suspend fun getCachedAlbum(id: Int): Album? = null
     override suspend fun createAlbum(album: NewAlbum): Result<Int> = Result.failure(LoadError())

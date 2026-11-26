@@ -15,7 +15,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
-/** Repositorio falso: cada llamada devuelve el resultado que se complete a mano. */
+/** Fake repository: each call returns whatever result is manually completed. */
 private class RepositorioArtistasFalso : ArtistRepository {
     val llamadas = mutableListOf<CompletableDeferred<Result<List<Artist>>>>()
 
@@ -25,7 +25,7 @@ private class RepositorioArtistasFalso : ArtistRepository {
         return respuesta.await()
     }
 
-    /** Listado guardado en el dispositivo (add-cache-consultas). */
+    /** List saved on the device (add-cache-consultas). */
     var guardados: List<Artist> = emptyList()
 
     override suspend fun getCachedArtists(): List<Artist> = guardados
@@ -52,7 +52,7 @@ class ArtistsViewModelTest {
         repo.llamadas.last().complete(Result.success(lista))
     }
 
-    // ---- 3.1: estados de la carga ----
+    // ---- 3.1: loading states ----
 
     @Test
     fun alCrearseEmpiezaLoadingYPideLosArtistasUnaVez() = runTest {
@@ -143,7 +143,7 @@ class ArtistsViewModelTest {
 
         vm.retry()
         advanceUntilIdle()
-        // La primera consulta responde tarde: su resultado no debe pisar a la segunda.
+        // The first query responds late: its result must not override the second one.
         repo.llamadas[1].complete(Result.success(listOf(queen)))
         repo.llamadas[0].complete(error)
         advanceUntilIdle()
@@ -151,7 +151,7 @@ class ArtistsViewModelTest {
         assertEquals(ArtistsUiState.Success(listOf(queen)), vm.uiState.value)
     }
 
-    // ---- 3.2: búsqueda por nombre ----
+    // ---- 3.2: search by name ----
 
     private fun exito(vm: ArtistsViewModel) = vm.uiState.value as ArtistsUiState.Success
 
@@ -228,7 +228,7 @@ class ArtistsViewModelTest {
         assertEquals(ArtistsUiState.Error, vm.uiState.value)
     }
 
-    // ---------- Listado guardado (add-cache-consultas, D5) ----------
+    // ---------- Saved list (add-cache-consultas, D5) ----------
 
     private fun repoConGuardados() = RepositorioArtistasFalso().apply { guardados = listOf(queen) }
 

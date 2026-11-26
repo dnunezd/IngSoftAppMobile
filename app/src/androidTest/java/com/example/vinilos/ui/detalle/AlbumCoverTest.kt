@@ -19,7 +19,7 @@ class AlbumCoverTest {
     val rule = createComposeRule()
 
     @Test
-    @SdkSuppress(minSdkVersion = 26) // captureToImage usa PixelCopy, disponible desde API 26.
+    @SdkSuppress(minSdkVersion = 26) // captureToImage uses PixelCopy, available since API 26.
     fun sinUrlMuestraLaPortadaConElIconoDeRespaldo() {
         rule.setContent {
             VinilosTheme { AlbumCover(url = null, modifier = Modifier.size(160.dp)) }
@@ -59,8 +59,8 @@ class AlbumCoverTest {
     }
 
     /**
-     * El ícono de respaldo lo dibuja Coil dentro de la misma imagen, así que no tiene nodo propio: se comprueba
-     * que haya píxeles distintos del fondo, que se toma de la esquina (el ícono va centrado).
+     * The fallback icon is drawn by Coil inside the same image, so it has no node of its own: this checks
+     * that there are pixels different from the background, which is sampled from the corner (the icon is centered).
      */
     private fun dibujaAlgoSobreElFondo(): Boolean {
         val pixeles = rule.onNodeWithContentDescription("Portada del álbum").captureToImage().toPixelMap()

@@ -7,7 +7,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** Reglas del formulario de comentar un álbum (HU09, add-comentar-album D2). */
+/** Rules for the form to comment on an album (HU09, add-comentar-album D2). */
 class AddCommentUiStateTest {
 
     private val album = Album(

@@ -10,7 +10,7 @@ import com.example.vinilos.RepositorioAlbumesFalso
 import org.junit.Rule
 import org.junit.Test
 
-/** Criterio 7: con muchos álbumes se recorre toda la lista sin que la app se detenga. */
+/** Criterion 7: with many albums the whole list can be scrolled through without the app stalling. */
 class CatalogoListaLargaTest {
 
     @get:Rule

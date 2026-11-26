@@ -48,7 +48,7 @@ import com.example.vinilos.ui.idiomaDeLaApp
 
 const val TagFranjaAudioFeed = "franja_audio_feed"
 
-/** Altura (dp) y opacidad de cada barra de las ondas del Figma. */
+/** Height (dp) and opacity of each bar in the Figma waveform. */
 private val BarrasIzquierda = listOf(
     8 to 1f, 16 to 1f, 12 to 0.8f, 4 to 0.45f, 14 to 1f, 8 to 0.7f, 16 to 1f,
     10 to 0.8f, 6 to 0.6f, 12 to 1f, 8 to 0.7f, 16 to 1f, 8 to 0.8f, 4 to 0.45f
@@ -57,12 +57,12 @@ private val BarrasDerecha = listOf(
     4 to 0.45f, 10 to 0.8f, 16 to 1f, 8 to 0.7f, 14 to 1f, 8 to 1f, 16 to 1f, 6 to 0.6f, 12 to 1f, 4 to 0.45f
 )
 
-/** Cabecera del selector: etiquetas, titular "¿Quién eres?", franja AUDIO FEED y subtítulo. */
+/** Selector header: labels, "Who are you?" headline, AUDIO FEED strip, and subtitle. */
 @Composable
 fun CollectorsTitle() {
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        // Con la fuente ampliada el titular crece: la altura de 106 dp es solo el mínimo y la franja
-        // va debajo del texto, no encima.
+        // With an enlarged font the headline grows: the 106 dp height is only the minimum and the
+        // strip goes below the text, not on top of it.
         Box(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier.fillMaxWidth().heightIn(min = 106.dp),
@@ -165,7 +165,7 @@ private fun FilaTitular() {
     }
 }
 
-/** Franja decorativa "AUDIO FEED" entre dos ondas de barras; no responde a toques. */
+/** Decorative "AUDIO FEED" strip between two bar waveforms; does not respond to touches. */
 @Composable
 fun FranjaAudioFeed(modifier: Modifier = Modifier) {
     Row(
@@ -211,7 +211,7 @@ private fun OndaDeBarras(barras: List<Pair<Int, Float>>, alFinal: Boolean, modif
 
 private val Serif = FontFamily.Serif
 
-/** Racimo de notas y estrella en la esquina superior derecha: SVG del Figma y glifos de texto. */
+/** Cluster of music notes and a star in the top-right corner: Figma SVG and text glyphs. */
 @Composable
 private fun DoodlesColeccionistas(modifier: Modifier = Modifier) {
     Box(modifier = modifier.clearAndSetSemantics {}.size(width = 112.dp, height = 64.dp)) {
@@ -286,7 +286,7 @@ private fun CollectorsTitlePreview() {
     }
 }
 
-/** Dos notas de texto que asoman sobre el extremo derecho del campo de búsqueda. */
+/** Two text notes peeking over the right edge of the search field. */
 @Composable
 fun NotasDelBuscador(modifier: Modifier = Modifier) {
     Row(

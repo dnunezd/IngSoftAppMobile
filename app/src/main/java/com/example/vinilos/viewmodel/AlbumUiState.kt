@@ -6,8 +6,8 @@ sealed interface AlbumUiState {
     data object Loading : AlbumUiState
 
     /**
-     * [actualizando]: se muestra el detalle guardado mientras se consulta el backend.
-     * [errorAlActualizar]: esa consulta falló y la pantalla debe avisarlo una vez (add-cache-consultas, D5).
+     * [actualizando]: the cached detail is shown while the backend is queried.
+     * [errorAlActualizar]: that query failed and the screen must report it once (add-cache-consultas, D5).
      */
     data class Success(
         val album: Album,

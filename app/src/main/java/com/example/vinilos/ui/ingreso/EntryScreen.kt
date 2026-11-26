@@ -74,9 +74,9 @@ const val TagEntrarColeccionista = "entrar_coleccionista"
 private val BordeChip = Color(0xFFFFB5A3)
 
 /**
- * Pantalla de ingreso (componente `Html → Body → Main` del Figma): el usuario elige entrar como
- * Visitante o como Coleccionista. [ilustracionVisitante] e [ilustracionColeccionista] son las
- * imágenes de las tarjetas.
+ * Entry screen (`Html → Body → Main` component from Figma): the user chooses to enter as a
+ * Visitor or as a Collector. [ilustracionVisitante] and [ilustracionColeccionista] are the
+ * card images.
  */
 @Composable
 fun EntryScreen(
@@ -133,12 +133,12 @@ fun EntryScreen(
                     fondoImagen = ChipColeccionistaFondo,
                     alturaImagen = 192.dp,
                     ilustracion = ilustracionColeccionista,
-                    // La figura está de pie: se recorta desde arriba para que se vea la cara y el disco.
+                    // The figure is standing: it's cropped from the top so the face and record show.
                     alineacionIlustracion = Alignment.TopCenter,
                     tagEntrar = TagEntrarColeccionista,
                     onEntrar = onColeccionista
                 )
-                // Estrella "sticker" que sobresale de la esquina inferior derecha de la tarjeta.
+                // "Sticker" star peeking out from the card's bottom-right corner.
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
@@ -203,7 +203,7 @@ private fun EncabezadoIngreso() {
     }
 }
 
-/** Titular "Make Endless Beats, Sound Amazing" con sus decoraciones (todas SVG del Figma). */
+/** Headline "Make Endless Beats, Sound Amazing" with its decorations (all Figma SVGs). */
 @Composable
 private fun SeccionTitular() {
     val titular = TextStyle(
@@ -213,8 +213,8 @@ private fun SeccionTitular() {
         lineHeight = 38.88.sp,
         letterSpacing = (-1.08).sp
     )
-    // El titular del Figma es un lienzo de medidas fijas; con la fuente ampliada se pasa a un
-    // flujo vertical sin decoraciones para que ningún texto se solape.
+    // The Figma headline is a fixed-size canvas; with the enlarged font it switches to a
+    // vertical flow without decorations so no text overlaps.
     if (LocalDensity.current.fontScale > FuenteAmpliada) {
         TitularAmpliado(titular)
         return
@@ -269,7 +269,7 @@ private fun SeccionTitular() {
         )
         AudioWaveStrip(modifier = Modifier.offset(y = 199.dp))
 
-        // Decoraciones (SVG del Figma): chispas sobre "Make", corcheas y la etiqueta "Beats & Sound".
+        // Decorations (Figma SVGs): sparkles over "Make", eighth notes, and the "Beats & Sound" label.
         Image(
             painter = painterResource(R.drawable.ic_ing_doodle_make),
             contentDescription = null,
@@ -312,7 +312,7 @@ private fun SeccionTitular() {
     }
 }
 
-/** Escala de fuente a partir de la cual el titular deja el lienzo de medidas fijas. */
+/** Font scale from which the headline leaves the fixed-size canvas. */
 private const val FuenteAmpliada = 1.15f
 
 @Composable
@@ -346,7 +346,7 @@ private fun ChipSuperior(modifier: Modifier = Modifier) {
     }
 }
 
-/** Titular en flujo vertical para fuentes ampliadas: mismos textos, sin posiciones absolutas. */
+/** Headline in a vertical flow for enlarged fonts: same texts, no absolute positions. */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun TitularAmpliado(titular: TextStyle) {
@@ -507,8 +507,8 @@ private fun TarjetaPerfil(
                     elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp),
                     modifier = Modifier.testTag(tagEntrar)
                 ) {
-                    // La descripción va en el contenido del botón, no en un nodo aparte: así el botón
-                    // es un solo elemento ("Entrar como Visitante") y no dos paradas para TalkBack.
+                    // The description goes in the button's content, not in a separate node: this way
+                    // the button is a single element ("Enter as Visitor") rather than two stops for TalkBack.
                     Text(
                         text = stringResource(R.string.ingreso_entrar),
                         style = MaterialTheme.typography.labelLarge.copy(

@@ -101,19 +101,19 @@ private val EsquinaFila = RoundedCornerShape(16.dp)
 private val EsquinaPortada = RoundedCornerShape(12.dp)
 private val Pildora = RoundedCornerShape(50)
 
-/** Acciones de la ventana para agregar un álbum a un artista (HU15). */
+/** Actions for the dialog to add an album to an artist (HU15). */
 data class AssociateAlbumActions(
     val onBuscar: (String) -> Unit = {},
     val onSeleccionar: (Int) -> Unit = {},
     val onAsociar: () -> Unit = {},
-    /** "Cancelar", el botón de cierre, deslizar la ventana hacia abajo y el botón atrás. */
+    /** "Cancel", the close button, swiping the dialog down, and the back button. */
     val onCancelar: () -> Unit = {},
     val onReintentarCarga: () -> Unit = {}
 )
 
 /**
- * Ventana inferior para agregar un álbum a [nombreArtista] (HU15, add-agregar-album-artista D7). Sin estado:
- * solo se muestra mientras [estado] diga que está abierta. Mientras se asocia no se puede cerrar.
+ * Bottom sheet for adding an album to [nombreArtista] (HU15, add-agregar-album-artista D7). Stateless:
+ * it's only shown while [estado] says it's open. It cannot be closed while associating.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -128,7 +128,7 @@ fun AssociateAlbumDialog(estado: AssociateAlbumUiState, nombreArtista: String, a
         onDismissRequest = acciones.onCancelar,
         sheetState = hoja,
         containerColor = MaterialTheme.colorScheme.surface,
-        // El asa visible sigue midiendo 32 dp; el margen lleva su área táctil a 48 × 48 dp.
+        // The visible handle still measures 32 dp; the margin brings its touch target to 48 × 48 dp.
         dragHandle = { BottomSheetDefaults.DragHandle(modifier = Modifier.padding(horizontal = 8.dp)) }
     ) {
         ContenidoAsociar(estado, nombreArtista, acciones)
@@ -156,8 +156,8 @@ private fun ContenidoAsociar(estado: AssociateAlbumUiState, nombreArtista: Strin
 
 @Composable
 private fun Encabezado(nombreArtista: String, cerrarActivo: Boolean, onCerrar: () -> Unit) {
-    // El foco inicial va al título: en Android 8 o anterior, la ventana enfocaba sola la búsqueda y abría el
-    // teclado, que dejaba la lista sin espacio. Además, TalkBack anuncia primero a qué artista se agrega.
+    // Initial focus goes to the title: on Android 8 or earlier, the dialog would auto-focus the search field and open the
+    // keyboard, leaving the list without space. Also, TalkBack announces first which artist it's being added to.
     val foco = remember { FocusRequester() }
     LaunchedEffect(Unit) { foco.requestFocus() }
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -283,7 +283,7 @@ private fun ColumnScope.Listado(estado: AssociateAlbumUiState, acciones: Associa
     }
 }
 
-/** Mensaje centrado con el ícono de disco, como los bloques vacíos del detalle. */
+/** Centered message with the disc icon, like the empty blocks in the detail screen. */
 @Composable
 private fun Mensaje(@StringRes texto: Int, tag: String) {
     Row(
@@ -312,8 +312,8 @@ private fun Mensaje(@StringRes texto: Int, tag: String) {
 }
 
 /**
- * Fila seleccionable con rol de botón de opción. La ya asociada queda deshabilitada, en gris y con la
- * etiqueta "Ya asociado"; su texto conserva el color pleno para no perder contraste (D7).
+ * Selectable row with a radio button role. The one already associated is disabled, in gray, with the
+ * "Already associated" label; its text keeps full color to avoid losing contrast (D7).
  */
 @Composable
 private fun FilaAsociable(
@@ -328,7 +328,7 @@ private fun FilaAsociable(
         elegido -> MaterialTheme.colorScheme.primaryContainer
         else -> MaterialTheme.colorScheme.surface
     }
-    // `primary` y no `Naranja`: sobre `primaryContainer` el radio y el borde necesitan 3:1 (revisión del PR #114).
+    // `primary` and not `Naranja`: over `primaryContainer` the radius and border need 3:1 (PR #114 review).
     val fuenteAmpliada = LocalDensity.current.fontScale > FuenteAmpliadaAsociar
     val borde = if (elegido) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
     Row(
@@ -349,7 +349,7 @@ private fun FilaAsociable(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        // La portada es decorativa dentro de la fila: el nombre ya se anuncia, así TalkBack no lo lee dos veces.
+        // The cover is decorative within the row: the name is already announced, so TalkBack doesn't read it twice.
         Box(modifier = Modifier.clearAndSetSemantics { testTag = tagPortadaAsociable(album.id) }) {
             AlbumCover(
                 url = album.portada,
@@ -374,7 +374,7 @@ private fun FilaAsociable(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
-            // Con la fuente ampliada la etiqueta va debajo del año: al lado dejaba el título truncado.
+            // With enlarged font the label goes below the year: next to it, it left the title truncated.
             if (yaAsociado && fuenteAmpliada) EtiquetaYaAsociado(album.id)
         }
         if (yaAsociado && !fuenteAmpliada) EtiquetaYaAsociado(album.id)
@@ -463,7 +463,7 @@ private fun Botones(estado: AssociateAlbumUiState, acciones: AssociateAlbumActio
     }
 }
 
-// ---------- Previsualizaciones ----------
+// ---------- Previews ----------
 
 private val previa = listOf(
     AlbumSummary(103, "A Day at the Races", null, "Rock", "Queen", "1976"),
@@ -510,7 +510,7 @@ private fun PreviewLoading() = Previa(AssociateAlbumUiState(abierta = true))
 @Composable
 private fun PreviewErrorListado() = Previa(AssociateAlbumUiState(abierta = true, listado = ListadoAsociable.Error))
 
-/** Escala de fuente a partir de la cual la etiqueta "Ya asociado" pasa debajo del año. */
+/** Font scale from which the "Already associated" label moves below the year. */
 private const val FuenteAmpliadaAsociar = 1.15f
 
 @Composable

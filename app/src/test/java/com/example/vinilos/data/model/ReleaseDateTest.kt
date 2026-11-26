@@ -21,7 +21,7 @@ class ReleaseDateTest {
             set(anio, mes - 1, dia)
         }.timeInMillis
 
-    /** Instante en UTC de un día de noviembre de 2026, el mes de los casos de zona horaria. */
+    /** UTC instant for a day in November 2026, the month used for the time zone test cases. */
     private fun instanteNoviembre2026Utc(dia: Int, hora: Int, minuto: Int): Long =
         medianocheUtc(2026, 11, dia) + (hora * 60L + minuto) * 60_000L
 

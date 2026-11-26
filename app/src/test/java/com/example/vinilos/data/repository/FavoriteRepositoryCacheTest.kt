@@ -16,16 +16,16 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-/** Favoritos confirmados guardados en el repositorio (add-cache-consultas, D4), con un DAO falso en memoria. */
+/** Confirmed favorites saved in the repository (add-cache-consultas, D4), with a fake in-memory DAO. */
 class FavoriteRepositoryCacheTest {
 
-    /** Guarda en memoria; [fallaAlLeer] y [fallaAlEscribir] simulan un almacenamiento que no responde. */
+    /** Stores in memory; [fallaAlLeer] and [fallaAlEscribir] simulate storage that does not respond. */
     private class FavoriteDaoFalso : FavoriteDao() {
         var filas: Set<FavoriteEntity> = emptySet()
         var fallaAlLeer: Throwable? = null
         var fallaAlEscribir: Throwable? = null
 
-        /** Cada escritura que recibió, en orden, con las claves que tocó (optimizar-cache-e-imagenes). */
+        /** Every write it received, in order, with the keys it touched (optimizar-cache-e-imagenes). */
         val operaciones = mutableListOf<String>()
 
         private fun anotar(operacion: String, claves: List<Any> = emptyList()) {
@@ -150,7 +150,7 @@ class FavoriteRepositoryCacheTest {
         assertTrue(repositorio.addFavorite(100, 8, ArtistType.BANDA).isSuccess)
     }
 
-    // ---------- Escribir solo lo que cambió (optimizar-cache-e-imagenes, D4 y D5) ----------
+    // ---------- Write only what changed (optimizar-cache-e-imagenes, D4 y D5) ----------
 
     private fun favoritos(vararg ids: Int, version: String? = null) = MockResponse()
         .setBody(ids.joinToString(prefix = "[", postfix = "]") { """{"id": $it}""" })
@@ -185,7 +185,7 @@ class FavoriteRepositoryCacheTest {
     fun siElFavoritoSeQuitaEnElBackendYVuelveLaVersionAnteriorLoGuardadoSeCorrige() = runTest {
         servidor.enqueue(favoritos(version = "W/\"f0\""))
         servidor.enqueue(MockResponse().setBody("""{"id": 7}"""))
-        // Alguien quitó el favorito en el backend: vuelve a responder la versión de antes de agregarlo.
+        // Someone removed the favorite in the backend: it responds again with the version from before adding it.
         servidor.enqueue(favoritos(version = "W/\"f0\""))
         repositorio.esFavorito(100, 7).getOrThrow()
         repositorio.addFavorite(100, 7, ArtistType.BANDA).getOrThrow()

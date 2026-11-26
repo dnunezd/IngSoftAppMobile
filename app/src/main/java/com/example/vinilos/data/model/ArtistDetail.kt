@@ -1,9 +1,9 @@
 package com.example.vinilos.data.model
 
 /**
- * Detalle de un músico o una banda (HU04). [tipo] decide qué significa [fecha] (nacimiento o creación,
- * en ISO; la pantalla la muestra en el idioma de la app) y si hay integrantes. Se llama así para no chocar con [Artista] (los intérpretes de
- * un álbum) ni con [Artist] (la fila del listado).
+ * Detail of a musician or a band (HU04). [tipo] determines what [fecha] means (birth or founding,
+ * in ISO; the screen displays it in the app's language) and whether there are members. It's named this way to avoid clashing with [Artista] (the performers of
+ * an album) or with [Artist] (the listing row).
  */
 data class ArtistDetail(
     val id: Int,
@@ -34,6 +34,6 @@ data class ArtistPrize(
     val id: Int,
     val nombre: String,
     val organizacion: String,
-    /** En ISO, como [ArtistaDetalle.fecha]. */
+    /** In ISO, like [ArtistaDetalle.fecha]. */
     val fecha: String?
 )

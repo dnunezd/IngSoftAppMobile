@@ -15,11 +15,11 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
- * Coleccionistas del backend. Con [coleccionistaDao], el listado además se guarda en el dispositivo
- * (add-cache-consultas); sin él, se comporta como antes.
- * Retrofit y Room hacen su I/O en sus propios hilos; lo que corre en [dispatcher] (`Dispatchers.Default`
- * por defecto) es el trabajo de CPU: convertir la respuesta. Así se puede llamar desde el hilo principal sin
- * bloquearlo.
+ * Backend collectors. With [coleccionistaDao], the listing is also stored on the device
+ * (add-cache-consultas); without it, it behaves as before.
+ * Retrofit and Room do their I/O on their own threads; what runs on [dispatcher] (`Dispatchers.Default`
+ * by default) is CPU work: converting the response. This way it can be called from the main thread without
+ * blocking it.
  */
 class CollectorRepositoryImpl(
     private val adaptador: ServiceAdapter,
@@ -28,14 +28,14 @@ class CollectorRepositoryImpl(
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : CollectorRepository {
 
-    /** Protege la comparación, la escritura y la actualización de lo que sigue (optimizar-cache-e-imagenes, D4). */
+    /** Protects the comparison, the write and the update of whatever follows (optimizar-cache-e-imagenes, D4). */
     private val escritura = Mutex()
     private val copia = CopiaTabla<Int, CollectorEntity> { it.id }
     private var versionGuardada: String? = null
 
     /**
-     * Si la consulta sale bien, lo guardado queda igual a la respuesta, en el orden del backend (D4). Solo se
-     * escriben los coleccionistas nuevos o cambiados (una fila cambia también si cambió su posición).
+     * If the query succeeds, what's stored is left equal to the response, in the backend's order (D4). Only
+     * the new or changed collectors are written (a row also changes if its position changed).
      */
     override suspend fun getCollectors(): Result<List<Collector>> = withContext(dispatcher) {
         adaptador.call { api.getCollectors().conVersion() }
@@ -44,7 +44,7 @@ class CollectorRepositoryImpl(
             .map { (coleccionistas, _) -> coleccionistas }
     }
 
-    /** Vacío si no hay caché o si no se pudo leer: la caché es una mejora, nunca una condición. */
+    /** Empty if there's no cache or it couldn't be read: the cache is an enhancement, never a precondition. */
     override suspend fun getCachedCollectors(): List<Collector> = withContext(dispatcher) {
         val dao = coleccionistaDao ?: return@withContext emptyList()
         try {
@@ -55,9 +55,9 @@ class CollectorRepositoryImpl(
     }
 
     /**
-     * Punto único de escritura (D4 y D5). Si no termina normalmente, se descarta lo que se recordaba y la
-     * siguiente consulta reemplaza todo. Un fallo del almacenamiento no cambia el resultado de la consulta; la
-     * cancelación y los errores de programación se relanzan.
+     * Single write point (D4 and D5). If it doesn't finish normally, whatever was remembered is discarded and the
+     * next query replaces everything. A storage failure does not change the query's result; the
+     * cancellation and programming errors are rethrown.
      */
     private suspend fun save(coleccionistas: List<Collector>, version: String?) {
         val dao = coleccionistaDao ?: return

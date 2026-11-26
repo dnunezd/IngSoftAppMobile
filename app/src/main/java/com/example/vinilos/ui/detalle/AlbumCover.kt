@@ -16,16 +16,16 @@ import androidx.compose.ui.res.stringResource
 import coil.compose.AsyncImage
 import com.example.vinilos.R
 
-/** Parte del contenedor que ocupa el ícono de respaldo: proporcionado en la miniatura y en el detalle. */
+/** Fraction of the container occupied by the fallback icon: used for both the thumbnail and the detail. */
 private const val FRACCION_ICONO_RESPALDO = 0.4f
 
 /**
- * Portada del álbum (optimizar-cache-e-imagenes, D1): un solo [AsyncImage] sobre fondo neutro. Sin URL,
- * mientras carga o si falla, Coil dibuja el ícono vectorial de disco centrado y teñido; cuando la imagen
- * carga, deja de dibujarlo. No se decodifica ningún mapa de bits de respaldo ni se compone un nodo aparte
- * para el ícono.
+ * Album cover (optimizar-cache-e-imagenes, D1): a single [AsyncImage] over a neutral background. With no
+ * URL, while loading, or on failure, Coil draws the centered, tinted vinyl icon; once the image
+ * loads, it stops drawing it. No fallback bitmap is decoded, and no separate node is composed
+ * for the icon.
  *
- * Se usa en el catálogo, el detalle del álbum, la vista previa de crear álbum y los álbumes del artista.
+ * Used in the catalog, the album detail, the create-album preview, and the artist's albums.
  */
 @Composable
 fun AlbumCover(
@@ -49,8 +49,8 @@ fun AlbumCover(
 }
 
 /**
- * Dibuja [icono] centrado, con lado igual a [fraccion] del lado menor del espacio, y teñido con [tinte]. No
- * tiene tamaño propio, así que Coil le da todo el espacio de la imagen sin importar el `ContentScale`.
+ * Draws [icono] centered, with a side equal to [fraccion] of the space's shorter side, and tinted with [tinte]. It
+ * has no intrinsic size, so Coil gives it the full image space regardless of `ContentScale`.
  */
 private class IconoCentrado(
     private val icono: Painter,

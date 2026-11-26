@@ -12,14 +12,14 @@ import com.google.gson.reflect.TypeToken
 import java.lang.reflect.Type
 
 /**
- * Listas anidadas de los detalles guardadas como JSON (add-cache-consultas, D2): el detalle siempre se
- * lee y se reemplaza entero, así que no hacen falta tablas hijas.
+ * Nested lists of the details stored as JSON (add-cache-consultas, D2): the detail is always read and
+ * replaced whole, so no child tables are needed.
  *
- * Gson ignora la nulabilidad de Kotlin: si una fila vieja no tiene un campo que el modelo declara no
- * nulo, se leería con `null`. Por eso, **cualquier cambio en [Cancion], [Artista], [Comentario],
- * [IntegranteArtista], [AlbumArtista] o [PremioArtista] debe subir la versión de [VinilosDb]**, lo que
- * borra lo guardado (migración destructiva). Si se activa la minificación, esas clases necesitan un
- * `-keep` (ver `proguard-rules.pro`).
+ * Gson ignores Kotlin's nullability: if an old row lacks a field that the model declares non-null,
+ * it would be read as `null`. That's why **any change to [Cancion], [Artista], [Comentario],
+ * [IntegranteArtista], [AlbumArtista] or [PremioArtista] must bump [VinilosDb]'s version**, which
+ * wipes the stored data (destructive migration). If minification is enabled, those classes need a
+ * `-keep` rule (see `proguard-rules.pro`).
  */
 class Conversores {
 
@@ -46,8 +46,8 @@ class Conversores {
     @TypeConverter fun aPrizes(json: String): List<ArtistPrize> = leer(json, TIPO_PREMIOS)
 
     /**
-     * El tipo de cada lista se crea una sola vez, en lugar de un `TypeToken` nuevo en cada lectura
-     * (optimizar-cache-e-imagenes, D8). El JSON guardado no cambia.
+     * The type of each list is created only once, instead of a new `TypeToken` on every read
+     * (optimizar-cache-e-imagenes, D8). The stored JSON does not change.
      */
     private companion object {
         val TIPO_CANCIONES: Type = object : TypeToken<List<Track>>() {}.type

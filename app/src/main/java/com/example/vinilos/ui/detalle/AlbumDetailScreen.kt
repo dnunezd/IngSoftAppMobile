@@ -54,13 +54,13 @@ import com.example.vinilos.ui.idiomaDeLaApp
 const val TagActualizandoDetalle = "detalle_actualizando"
 const val TagAddComment = "detalle_comentar"
 
-/** Verde del ícono de confirmación en el aviso "Canción agregada" (no forma parte de la paleta de marca). */
+/** Green of the confirmation icon in the "Track added" snackbar (not part of the brand palette). */
 private val VerdeConfirmacion = Color(0xFF2ECC71)
 
 /**
- * Visuals propias del aviso "Canción agregada", para no depender de [SnackbarVisuals.actionLabel]
- * (pensado para una acción real, no para transportar un subtítulo) al decidir en el [SnackbarHost]
- * si se dibuja con el estilo de éxito.
+ * Custom visuals for the "Track added" snackbar, so we don't depend on [SnackbarVisuals.actionLabel]
+ * (meant for a real action, not for carrying a subtitle) when deciding in [SnackbarHost]
+ * whether to draw it with the success style.
  */
 private data class AvisoTrackAgregadaVisuals(
     val mensaje: String,
@@ -83,7 +83,7 @@ fun AlbumDetailScreen(
     onAddTrack: () -> Unit = {},
     mostrarAvisoTrackAgregada: Boolean = false,
     onAvisoTrackAgregadaMostrado: () -> Unit = {},
-    /** Solo el Coleccionista puede comentar (HU09); sin esta acción el botón no se dibuja. */
+    /** Only the Collector can comment (HU09); without this action the button isn't drawn. */
     onComentar: (() -> Unit)? = null
 ) {
     if (estado is AlbumUiState.Success) {
@@ -105,8 +105,8 @@ fun AlbumDetailScreen(
                         AvisoTrackAgregadaVisuals(mensaje = mensajeTrackAgregada, subtitulo = detalleTrackAgregada)
                     )
                 } finally {
-                    // Igual que AvisoUnaVez: si la pantalla sale antes de terminar, queda como mostrado
-                    // y no vuelve a aparecer al regresar (ni se reinicia al girar).
+                    // Same as AvisoUnaVez: if the screen exits before finishing, it stays marked as shown
+                    // and won't appear again on return (nor reset on rotation).
                     onAvisoTrackAgregadaMostrado()
                 }
             }
@@ -123,7 +123,7 @@ fun AlbumDetailScreen(
             if (onComentar != null) {
                 ExtendedFloatingActionButton(
                     onClick = onComentar,
-                    // Material oculta el texto a la accesibilidad, así que el nombre lo da el ícono (como en HU07).
+                    // Material hides the text from accessibility, so the icon provides the name (as in HU07).
                     icon = { Icon(Icons.Filled.Edit, contentDescription = stringResource(R.string.detalle_comentar)) },
                     text = { Text(stringResource(R.string.detalle_comentar)) },
                     containerColor = MaterialTheme.colorScheme.primary,
@@ -189,7 +189,7 @@ fun AlbumDetailScreen(
     }
 }
 
-/** Aviso de éxito al estilo del mockup: píldora oscura, ícono de confirmación, título y subtítulo. */
+/** Success snackbar styled after the mockup: dark pill, confirmation icon, title, and subtitle. */
 @Composable
 private fun AvisoSuccess(titulo: String, subtitulo: String, onCerrar: () -> Unit) {
     Row(

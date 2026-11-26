@@ -17,7 +17,7 @@ fun promedioCalificaciones(comentarios: List<Comment>, idioma: Locale = Espanol)
     }.format(promedio)
 }
 
-/** Redondea el promedio ya formateado (coma o punto, según el idioma) a un número entero de estrellas. */
+/** Rounds the already-formatted average (comma or dot, depending on the locale) to a whole number of stars. */
 fun estrellasLlenas(promedio: String?): Int {
     if (promedio == null) return 0
     val valor = promedio.replace(',', '.').toDouble()

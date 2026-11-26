@@ -1,9 +1,9 @@
 package com.example.vinilos.data.model
 
-/** Quién está usando la app: nadie aún, un visitante o un coleccionista concreto. */
+/** Who is using the app: no one yet, a visitor, or a specific collector. */
 sealed interface Session {
 
-    /** Única regla para mostrar las acciones exclusivas del coleccionista (crear álbum, comentar...). */
+    /** The single rule for showing the collector's exclusive actions (create album, comment...). */
     val collectorActionsEnabled: Boolean
         get() = this is Collector
 

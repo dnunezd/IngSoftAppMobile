@@ -58,29 +58,29 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * E2E de la HU03 (listado de artistas) como Visitante.
+ * E2E for HU03 (artist listing) as Visitor.
  *
- * FN03-ESC01 a ESC04 y ESC07 van contra el backend real BackVynils, pero no asumen un dataset fijo
- * (como los 2 artistas de ejemplo de `sql/data.sql`): envuelven el repositorio real para capturar
- * el listado que el backend realmente devuelve y calculan los términos de búsqueda y las
- * aseriones a partir de esos datos. Así las pruebas son coherentes tanto con el backend local
- * (Docker) como con el desplegado por los tutores, sin importar cuántos artistas tenga cada uno.
- * En el emulador la app llega al backend por `10.0.2.2`; en un teléfono, con
- * `adb reverse tcp:3000 tcp:3000` e instalando la app con `-PbaseUrl=http://localhost:3000/`.
+ * FN03-ESC01 through ESC04 and ESC07 run against the real BackVynils backend, but don't assume a fixed
+ * dataset (like the 2 sample artists from `sql/data.sql`): they wrap the real repository to capture the
+ * listing the backend actually returns and compute the search terms and assertions from that data. This
+ * way the tests are consistent both with the local backend (Docker) and with the one deployed by the
+ * tutors, regardless of how many artists each has. On the emulator, the app reaches the backend via
+ * `10.0.2.2`; on a phone, with `adb reverse tcp:3000 tcp:3000` and installing the app with
+ * `-PbaseUrl=http://localhost:3000/`.
  *
- * FN03-ESC05 (backend caído) y ESC06 (sin artistas) no se pueden provocar contra BackVynils sin
- * detenerlo o borrar datos, así que siguen usando `MockWebServer` con datos fabricados; no
- * dependen del dataset real y no necesitaban cambiar.
+ * FN03-ESC05 (backend down) and ESC06 (no artists) can't be triggered against BackVynils without
+ * stopping it or deleting data, so they still use `MockWebServer` with fabricated data; they don't
+ * depend on the real dataset and didn't need to change.
  *
- * Cada escenario guarda un pantallazo por paso, `informe.md` y un PDF en
- * `.../files/e2e-evidencia/FN03_ESCxx/` (solo en el dispositivo, no en el repo).
+ * Each scenario saves a screenshot per step, `informe.md` and a PDF in
+ * `.../files/e2e-evidencia/FN03_ESCxx/` (only on the device, not in the repo).
  */
 class ArtistasE2ETest {
 
     @get:Rule
     val rule = createEmptyComposeRule()
 
-    /** El repositorio real de la app: cuenta las consultas y guarda el último listado recibido. */
+    /** The app's real repository: counts the queries and stores the last listing received. */
     private class ArtistasReales(
         private val real: ArtistRepository = ArtistRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL))
     ) : ArtistRepository by real {
@@ -114,7 +114,7 @@ class ArtistasE2ETest {
     private fun esperarQueDesaparezca(tag: String, milis: Long = 5_000) =
         rule.waitUntil(milis) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isEmpty() }
 
-    /** Visitante -> inicio -> "Ver artistas" (sin esperar datos; también sirve con MockWebServer). */
+    /** Visitor -> home -> "Ver artistas" (without waiting for data; also works with MockWebServer). */
     private fun abrirArtistasComoVisitante(evidencia: String) {
         esperarA(TagEntrarVisitante)
         rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
@@ -129,7 +129,7 @@ class ArtistasE2ETest {
         return requireNotNull(artistas.lista)
     }
 
-    /** Para los escenarios contra el backend real: abre artistas y devuelve el listado real capturado. */
+    /** For scenarios against the real backend: opens artists and returns the captured real listing. */
     private fun verArtistasReales(evidencia: String): List<Artist> {
         abrirArtistasComoVisitante(evidencia)
         val lista = esperarElListadoReal()
@@ -137,7 +137,7 @@ class ArtistasE2ETest {
         return lista
     }
 
-    /** Desplaza la lista hasta la fila (en pantallas pequeñas puede no estar compuesta aún). */
+    /** Scrolls the list to the row (on small screens it may not be composed yet). */
     private fun fila(artista: Artist): SemanticsNodeInteraction {
         rule.onNodeWithTag(TagListaArtistas).performScrollToNode(hasTestTag(tagArtista(artista)))
         return rule.onNodeWithTag(tagArtista(artista))
@@ -164,12 +164,12 @@ class ArtistasE2ETest {
     private fun noAparece(artista: Artist) =
         rule.onAllNodesWithTag(tagArtista(artista)).assertCountEquals(0)
 
-    /** Igual que la normalización de búsqueda de producción: sin tildes y en minúsculas. */
+    /** Same as production's search normalization: without accents and in lowercase. */
     private val marcasDiacriticas = Regex("\\p{InCombiningDiacriticalMarks}+")
     private fun normalizado(texto: String) =
         Normalizer.normalize(texto, Normalizer.Form.NFD).replace(marcasDiacriticas, "").lowercase(Locale.ROOT)
 
-    /** La subcadena más corta del nombre de [objetivo] que no aparece en ningún otro artista de [lista]. */
+    /** The shortest substring of [objetivo]'s name that doesn't appear in any other artist in [lista]. */
     private fun substringDiscriminante(objetivo: Artist, lista: List<Artist>): String {
         val nombre = normalizado(objetivo.name)
         val otros = lista.filterNot { it.id == objetivo.id && it.type == objetivo.type }
@@ -183,7 +183,7 @@ class ArtistasE2ETest {
         return nombre
     }
 
-    /** Un término que no coincide (ni como subcadena) con ningún artista real de [lista]. */
+    /** A term that doesn't match (even as a substring) any real artist in [lista]. */
     private fun terminoSinCoincidencias(lista: List<Artist>): String {
         val normalizados = lista.map { normalizado(it.name) }
         var sufijo = 0
@@ -198,17 +198,16 @@ class ArtistasE2ETest {
     private fun etiquetaDe(artista: Artist) = if (artista.type == ArtistType.BANDA) "Banda" else "Músico"
 
     /**
-     * Artistas cuyo nombre no se repite en ningún otro de [lista]. El backend real puede listar el
-     * mismo nombre como músico y como banda (comparten identidad por nombre, no por id): la búsqueda
-     * por nombre no puede distinguir esos casos, así que los escenarios de búsqueda solo usan
-     * artistas con nombre único.
+     * Artists whose name is not repeated in any other in [lista]. The real backend can list the same
+     * name as both a musician and a band (they share identity by name, not by id): searching by name
+     * can't distinguish those cases, so the search scenarios only use artists with a unique name.
      */
     private fun conNombreUnico(lista: List<Artist>): List<Artist> {
         val conteoPorNombre = lista.groupingBy { normalizado(it.name) }.eachCount()
         return lista.filter { conteoPorNombre.getValue(normalizado(it.name)) == 1 }
     }
 
-    /** FN03-ESC01: ver el listado real de artistas desde el menú principal. */
+    /** FN03-ESC01: see the real artist listing from the main menu. */
     @Test
     fun elVisitanteVeMusicosYBandasEnOrdenConImagenNombreYEtiqueta() {
         val evidencia = "FN03_ESC01"
@@ -218,7 +217,7 @@ class ArtistasE2ETest {
             rule.onNodeWithTag(TagBuscadorArtistas).assertIsDisplayed()
             contadorDice(textoContador(lista.size))
 
-            // Los dos primeros del listado real (ya viene ordenado alfabéticamente) deben verse en ese orden.
+            // The first two in the real listing (already sorted alphabetically) must be seen in that order.
             if (lista.size >= 2) {
                 val primeros = lista.take(2)
                 rule.onNodeWithTag(TagListaArtistas).performScrollToNode(hasTestTag(tagArtista(primeros[0])))
@@ -229,8 +228,8 @@ class ArtistasE2ETest {
             }
 
             lista.forEach { artista ->
-                // Se ancla por el tag de esa fila (tipo+id), no por nombre/descripción: el backend real
-                // puede repetir el mismo nombre en un músico y una banda (comparten identidad por nombre).
+                // Anchored by that row's tag (type+id), not by name/description: the real backend can
+                // repeat the same name for a musician and a band (they share identity by name).
                 val filaDelArtista = hasTestTag(tagArtista(artista))
                 fila(artista).assert(hasText(artista.name)).assert(hasText(etiquetaDe(artista)))
                 rule.onNode(filaDelArtista and hasContentDescription("Imagen de ${artista.name}")).assertExists()
@@ -239,7 +238,7 @@ class ArtistasE2ETest {
         }
     }
 
-    /** FN03-ESC02: filtrar por nombre a medida que se escribe, sin distinguir mayúsculas ni tildes. */
+    /** FN03-ESC02: filter by name as it's typed, case- and accent-insensitive. */
     @Test
     fun elBuscadorFiltraPorNombreMientrasSeEscribe() {
         val evidencia = "FN03_ESC02"
@@ -247,8 +246,8 @@ class ArtistasE2ETest {
             val lista = verArtistasReales(evidencia)
             EvidenciaE2E.capturar(rule, evidencia, "02_listado_completo")
 
-            // Solo artistas con nombre único: el backend real puede repetir el mismo nombre en un
-            // músico y una banda, y ahí la búsqueda por nombre no puede distinguir a cuál se refiere.
+            // Only artists with a unique name: the real backend can repeat the same name for a
+            // musician and a band, and there the search by name can't tell which one is meant.
             val candidatos = conNombreUnico(lista)
             Assume.assumeTrue(
                 "El backend conectado no tiene artistas con nombre único para probar la búsqueda",
@@ -264,7 +263,7 @@ class ArtistasE2ETest {
             EvidenciaE2E.capturar(rule, evidencia, "03_busqueda_discriminante")
             borrarBusqueda()
 
-            // En mayúsculas también debe encontrar a otro artista real único, sin distinguir tildes.
+            // In uppercase it must also find another real, unique artist, accent-insensitively.
             if (candidatos.size > 1) {
                 val segundoObjetivo = candidatos[1]
                 val terminoDos = substringDiscriminante(segundoObjetivo, lista)
@@ -282,7 +281,7 @@ class ArtistasE2ETest {
         }
     }
 
-    /** FN03-ESC03: una búsqueda sin coincidencias muestra el mensaje y se puede corregir. */
+    /** FN03-ESC03: a search with no matches shows the message and can be corrected. */
     @Test
     fun unaBusquedaSinCoincidenciasMuestraElMensaje() {
         val evidencia = "FN03_ESC03"
@@ -306,7 +305,7 @@ class ArtistasE2ETest {
         }
     }
 
-    /** FN03-ESC04: seleccionar un artista real lleva a su detalle y "Atrás" vuelve con la búsqueda. */
+    /** FN03-ESC04: selecting a real artist leads to their detail, and "Atrás" returns with the search. */
     @Test
     fun selectUnArtistaLlevaASuDetalleYAtrasVuelveAlListado() {
         val evidencia = "FN03_ESC04"
@@ -328,7 +327,7 @@ class ArtistasE2ETest {
 
             esperarA(TagArtistDetail)
             esperarQueDesaparezca(TagArtistas)
-            // El nombre ya no viaja en la ruta: aparece cuando termina la consulta del detalle al backend.
+            // The name no longer travels in the route: it appears when the detail query to the backend finishes.
             esperarA(TagNombreArtistDetail)
             rule.onNodeWithTag(TagNombreArtistDetail).assertTextEquals(objetivo.name)
             rule.onNodeWithTag(TagTipoArtistDetail).assertTextEquals(etiquetaDe(objetivo))
@@ -344,7 +343,7 @@ class ArtistasE2ETest {
         }
     }
 
-    /** Servidor local con músicos y bandas; [caido] hace que corte la conexión, como un backend apagado. */
+    /** Local server with musicians and bands; [caido] makes it cut the connection, like a backend that's down. */
     private fun iniciarServidor(musicos: String, bandas: String, caido: () -> Boolean): MockWebServer {
         val nuevo = MockWebServer().apply {
             dispatcher = object : Dispatcher() {
@@ -358,13 +357,13 @@ class ArtistasE2ETest {
             start()
         }
         servidor = nuevo
-        // "localhost" es uno de los hosts con HTTP permitido en network_security_config.xml.
+        // "localhost" is one of the hosts allowed over HTTP in network_security_config.xml.
         ApplicationProvider.getApplicationContext<VinilosApplication>().container =
             AppContainer(baseUrl = "http://localhost:${nuevo.port}/")
         return nuevo
     }
 
-    /** FN03-ESC05: con el backend caído se ve el error y "Reintentar" recupera el listado. */
+    /** FN03-ESC05: with the backend down, the error is shown and "Reintentar" recovers the listing. */
     @Test
     fun conElBackendCaidoSeVeElErrorYReintentarRecuperaElListado() {
         val evidencia = "FN03_ESC05"
@@ -383,7 +382,7 @@ class ArtistasE2ETest {
             rule.onNodeWithTag(TagReintentarArtistas).assertIsDisplayed()
             EvidenciaE2E.capturar(rule, evidencia, "02_backend_caido")
 
-            // El backend "vuelve" y la persona pulsa Reintentar.
+            // The backend "comes back" and the person taps Reintentar.
             caido = false
             rule.onNodeWithTag(TagReintentarArtistas).performClick()
 
@@ -393,7 +392,7 @@ class ArtistasE2ETest {
         }
     }
 
-    /** FN03-ESC06: si no hay músicos ni bandas registrados se muestra el mensaje. */
+    /** FN03-ESC06: if there are no musicians or bands registered, the message is shown. */
     @Test
     fun sinArtistasRegistradosSeMuestraElMensaje() {
         val evidencia = "FN03_ESC06"
@@ -409,7 +408,7 @@ class ArtistasE2ETest {
         }
     }
 
-    /** FN03-ESC07: al girar la pantalla se conservan la búsqueda y el listado real, sin volver a consultar. */
+    /** FN03-ESC07: rotating the screen preserves the search and the real listing, without re-querying. */
     @Test
     fun alGirarLaPantallaSeConservanLaBusquedaYElListadoSinVolverAConsultar() {
         val evidencia = "FN03_ESC07"
@@ -428,12 +427,12 @@ class ArtistasE2ETest {
             fila(objetivo).assertIsDisplayed()
             (lista - objetivo).forEach { noAparece(it) }
             EvidenciaE2E.capturar(rule, evidencia, "02_antes_de_girar")
-            // En API 23, si el buscador sigue enfocado al girar, el teclado se reconecta y vuelve a
-            // enviar el texto escrito por la prueba ("ru" -> "ruru"). Se quita el foco antes de girar.
+            // On API 23, if the search field stays focused while rotating, the keyboard reconnects and
+            // resends the text the test typed ("ru" -> "ruru"). Focus is cleared before rotating.
             escenario.onActivity { it.currentFocus?.clearFocus() }
             rule.waitForIdle()
 
-            // Girar de verdad (no solo recrear la Activity) para que la evidencia se vea en horizontal.
+            // Actually rotate (not just recreate the Activity) so the evidence shows the landscape view.
             escenario.onActivity { it.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE }
             rule.waitUntil(5_000) {
                 var horizontal = false

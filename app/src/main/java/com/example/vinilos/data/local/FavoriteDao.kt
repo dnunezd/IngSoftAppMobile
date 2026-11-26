@@ -6,7 +6,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 
-/** Favoritos que el backend confirmó para cada coleccionista (HU10). */
+/** Favorites that the backend confirmed for each collector (HU10). */
 @Dao
 abstract class FavoriteDao {
 
@@ -22,7 +22,7 @@ abstract class FavoriteDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     abstract suspend fun insertar(favoritos: List<FavoriteEntity>)
 
-    /** La comprobación trae todos los favoritos del coleccionista: lo que ya no viene, se borra. */
+    /** The check brings all of the collector's favorites: whatever no longer comes is deleted. */
     @Transaction
     open suspend fun reemplazarDe(coleccionistaId: Int, artistaIds: List<Int>) {
         borrarDe(coleccionistaId)
@@ -32,12 +32,12 @@ abstract class FavoriteDao {
     suspend fun agregar(coleccionistaId: Int, artistaId: Int) =
         insertar(listOf(FavoriteEntity(coleccionistaId, artistaId)))
 
-    // ---------- Escrituras incrementales (optimizar-cache-e-imagenes, D6) ----------
+    // ---------- Incremental writes (optimizar-cache-e-imagenes, D6) ----------
 
     @Query("DELETE FROM favoritos WHERE coleccionistaId = :coleccionistaId AND artistaId IN (:artistaIds)")
     abstract suspend fun borrarDeColeccionista(coleccionistaId: Int, artistaIds: List<Int>)
 
-    /** Aplica lo que cambió en los favoritos de un coleccionista; las filas son los ids de artista. */
+    /** Applies what changed in a collector's favorites; the rows are the artist ids. */
     @Transaction
     open suspend fun aplicarDe(coleccionistaId: Int, cambios: TableChanges<Int, Int>) {
         if (cambios.reemplazarTodo) {

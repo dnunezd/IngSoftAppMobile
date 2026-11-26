@@ -16,7 +16,7 @@ import org.junit.Before
 import org.junit.Test
 import java.util.concurrent.TimeUnit
 
-/** Publicar un comentario (HU09, add-comentar-album D1) contra un backend simulado. */
+/** Posting a comment (HU09, add-comentar-album D1) against a mocked backend. */
 class CommentRepositoryTest {
 
     private lateinit var servidor: MockWebServer

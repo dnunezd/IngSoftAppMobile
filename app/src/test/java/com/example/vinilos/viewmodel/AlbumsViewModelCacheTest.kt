@@ -15,7 +15,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
-/** La lectura de lo guardado y cada consulta quedan pendientes hasta que la prueba las completa. */
+/** Reading the cached data and each query remain pending until the test completes them. */
 private class CatalogoConCacheFalso : AlbumRepository {
     val lecturas = mutableListOf<CompletableDeferred<List<AlbumSummary>>>()
     val consultas = mutableListOf<CompletableDeferred<Result<List<AlbumSummary>>>>()
@@ -39,7 +39,7 @@ private class CatalogoConCacheFalso : AlbumRepository {
     ): Result<Unit> = error("No se usa en esta prueba")
 }
 
-/** Carga inicial con catálogo guardado (add-cache-catalogo, D5). */
+/** Initial load with a cached catalog (add-cache-catalogo, D5). */
 @OptIn(ExperimentalCoroutinesApi::class)
 class AlbumsViewModelCacheTest {
 
@@ -131,7 +131,7 @@ class AlbumsViewModelCacheTest {
         val viewModel = AlbumsViewModel(repositorio)
         advanceUntilIdle()
 
-        // Mientras se lee lo guardado el estado es Cargando, así que albumCreado vuelve a cargar.
+        // While the cached data is being read the state is Loading, so albumCreado reloads it.
         viewModel.albumCreado(103)
         advanceUntilIdle()
         repositorio.lecturas.first().complete(listOf(opera))
@@ -172,11 +172,11 @@ class AlbumsViewModelCacheTest {
         assertEquals(AlbumsUiState.Loading, viewModel.uiState.value)
     }
 
-    // ---------- Álbum creado sin esperar la consulta (optimizar-cache-e-imagenes, D7) ----------
+    // ---------- Album created without waiting for the query (optimizar-cache-e-imagenes, D7) ----------
 
     private val abbey = AlbumSummary(205, "Abbey Road", null, "Rock", "", "1969")
 
-    /** Catálogo cargado con [opera] y sin consultas pendientes. */
+    /** Catalog loaded with [opera] and no pending queries. */
     private fun TestScope.catalogoCargado(): Pair<AlbumsViewModel, CatalogoConCacheFalso> {
         val (viewModel, repositorio) = abrir(listOf(opera))
         repositorio.responder(Result.success(listOf(opera)))
@@ -197,7 +197,7 @@ class AlbumsViewModelCacheTest {
         assertEquals(AlbumsUiState.Success(listOf(abbey, opera), actualizando = true), viewModel.uiState.value)
         assertEquals(2, repositorio.consultas.size)
 
-        // Mientras tanto, otro dispositivo agregó otro álbum: aparece cuando responde la consulta.
+        // Meanwhile, another device added another album: it appears once the query responds.
         repositorio.responder(Result.success(listOf(abbey, opera, poeta)))
         advanceUntilIdle()
 

@@ -15,7 +15,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
-/** Cada envío queda pendiente hasta que la prueba lo completa. */
+/** Each submission remains pending until the test completes it. */
 private class CreacionFalsa : AlbumRepository {
     val envios = mutableListOf<NewAlbum>()
     private val respuestas = mutableListOf<CompletableDeferred<Result<Int>>>()

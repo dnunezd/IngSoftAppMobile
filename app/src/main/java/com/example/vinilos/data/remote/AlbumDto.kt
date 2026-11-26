@@ -13,7 +13,7 @@ data class AlbumDto(
     val comments: List<CommentDto>?
 )
 
-/** Cuerpo de `POST /albums`: el backend rechaza con 400 cualquier otro campo, incluso `id`. */
+/** Body of `POST /albums`: the backend rejects any other field with 400, even `id`. */
 data class CreateAlbumDto(
     val name: String,
     val cover: String,

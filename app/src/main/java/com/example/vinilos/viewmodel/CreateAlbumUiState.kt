@@ -14,9 +14,9 @@ sealed interface EnvioAlbum {
 }
 
 /**
- * Estado del formulario. A diferencia de los demás estados de la app no es sellado: los datos deben
- * conservarse en todas las etapas del envío, así que lo sellado es solo [EnvioAlbum].
- * [intentosFallidos] avisa a la pantalla que debe subir hasta el aviso de errores.
+ * Form state. Unlike the other states in the app it isn't sealed: the data must be
+ * preserved across all submission stages, so only [EnvioAlbum] is sealed.
+ * [intentosFallidos] tells the screen it must scroll up to the error notice.
  */
 data class CreateAlbumUiState(
     val nombre: String = "",
@@ -32,7 +32,7 @@ data class CreateAlbumUiState(
     val enviando: Boolean get() = envio == EnvioAlbum.Enviando
 }
 
-/** `http://` o `https://` seguido de un dominio; el puerto, la ruta y la consulta son opcionales. */
+/** `http://` or `https://` followed by a domain; the port, path, and query string are optional. */
 private val UrlPortada = Regex("""https?://[\p{L}\p{N}][^/?#:@\s]*([:/?#].*)?""", RegexOption.IGNORE_CASE)
 
 fun portadaValida(portada: String): Boolean = UrlPortada.matches(portada.trim())

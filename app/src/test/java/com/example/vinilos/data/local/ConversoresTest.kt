@@ -9,7 +9,7 @@ import com.example.vinilos.data.model.ArtistPrize
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** Ida y vuelta de cada lista que se guarda como JSON (add-cache-consultas, D2). */
+/** Round-trip of every list that gets stored as JSON (add-cache-consultas, D2). */
 class ConversoresTest {
 
     private val conversores = Conversores()

@@ -2,14 +2,14 @@ package com.example.vinilos.data.repository
 
 import com.example.vinilos.data.model.Collector
 
-/** Coleccionistas de la app. La implementación es [CollectorRepositoryImpl]. */
+/** App's collectors. The implementation is [CollectorRepositoryImpl]. */
 interface CollectorRepository {
 
     suspend fun getCollectors(): Result<List<Collector>>
 
     /**
-     * Último listado guardado en el dispositivo (add-cache-consultas), en el orden en que llegó del
-     * backend; vacío si no hay caché o no se pudo leer.
+     * Last listing stored on the device (add-cache-consultas), in the order it arrived from the
+     * backend; empty if there's no cache or it couldn't be read.
      */
     suspend fun getCachedCollectors(): List<Collector>
 }

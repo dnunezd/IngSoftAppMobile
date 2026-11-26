@@ -2,10 +2,10 @@ package com.example.vinilos.viewmodel
 
 import com.example.vinilos.data.model.Album
 
-/** Máximo de caracteres de la opinión, como el contador "57 / 400" del mockup. */
+/** Maximum character count for the opinion, like the "57 / 400" counter in the mockup. */
 const val LimiteOpinion = 400
 
-/** El álbum que se comenta (add-comentar-album, D3). */
+/** The album being commented on (add-comentar-album, D3). */
 sealed interface CargaAlbum {
     data object Loading : CargaAlbum
     data class Listo(val album: Album) : CargaAlbum
@@ -19,17 +19,17 @@ sealed interface EnvioComment {
     data object Publicado : EnvioComment
 }
 
-/** Texto de cada calificación: "Muy malo (1/5)" a "Excelente (5/5)". */
+/** Text for each rating: "Very bad (1/5)" to "Excellent (5/5)". */
 enum class RatingLevel { MuyMalo, Malo, Regular, Bueno, Excelente }
 
-/** Nivel de una calificación de 1 a 5; `null` si no hay calificación o está fuera de rango. */
+/** Level of a rating from 1 to 5; `null` if there is no rating or it's out of range. */
 fun nivelCalificacion(calificacion: Int?): RatingLevel? =
     calificacion?.let { RatingLevel.entries.getOrNull(it - 1) }
 
 /**
- * Estado de la pantalla de comentar un álbum (add-comentar-album, D2). Como el de crear álbum, no es
- * sellado: lo escrito se conserva en todas las etapas del envío. [confirmarDescarte] abre el diálogo
- * "¿Descartar comentario?" y [salir] le indica a la navegación que cierre la pantalla (D5).
+ * State of the comment-on-album screen (add-comentar-album, D2). Like the create-album screen's, it
+ * isn't sealed: what's written is preserved across all submission stages. [confirmarDescarte] opens the
+ * "Discard comment?" dialog and [salir] tells the navigation to close the screen (D5).
  */
 data class AddCommentUiState(
     val album: CargaAlbum = CargaAlbum.Loading,

@@ -28,7 +28,7 @@ private class ArtistRepositoryFalso : ArtistRepository {
         return respuesta.await()
     }
 
-    /** Detalles guardados en el dispositivo (add-cache-consultas). */
+    /** Details saved on the device (add-cache-consultas). */
     val guardados = mutableMapOf<Pair<ArtistType, Int>, ArtistDetail>()
 
     override suspend fun getCachedDetail(tipo: ArtistType, id: Int): ArtistDetail? = guardados[tipo to id]
@@ -118,7 +118,7 @@ class ArtistDetailViewModelTest {
         assertEquals(ArtistDetailUiState.Success(detalle), viewModel.uiState.value)
     }
 
-    /** Con una sola consulta en curso, ningún resultado tardío puede reemplazar a la vigente. */
+    /** With a single query in flight, no late result can replace the current one. */
     @Test
     fun retryDosVecesSeguidasNoLanzaUnaConsultaParalela() = runTest {
         val repositorio = ArtistRepositoryFalso()
@@ -134,7 +134,7 @@ class ArtistDetailViewModelTest {
         assertEquals(2, repositorio.consultas.size)
     }
 
-    // ---------- Detalle guardado (add-cache-consultas, D5) ----------
+    // ---------- Saved detail (add-cache-consultas, D5) ----------
 
     private fun repoConGuardado() = ArtistRepositoryFalso().apply { guardados[ArtistType.BANDA to 101] = detalle }
     private val actualizado = detalle.copy(descripcion = "Banda británica de rock")
@@ -192,7 +192,7 @@ class ArtistDetailViewModelTest {
         assertEquals(ArtistDetailUiState.Error, viewModel.uiState.value)
     }
 
-    // ---------- Álbum asociado (HU15, add-agregar-album-artista D5) ----------
+    // ---------- Associated album (HU15, add-agregar-album-artista D5) ----------
 
     private val ruben = ArtistDetail(
         100, "Rubén Blades Bellido de Luna", null, null, ArtistType.MUSICO, null, emptyList(),
@@ -212,7 +212,7 @@ class ArtistDetailViewModelTest {
 
     @Test
     fun albumAsociadoLoAgregaAlFinalDeLaDiscografiaYActivaElAviso() = runTest {
-        // Revisión del PR #114: se agrega al final y el orden lo fija la nueva consulta (un solo criterio de orden).
+        // PR #114 review: it's added at the end and the ordering is set by the new query (a single sort criterion).
         val repositorio = ArtistRepositoryFalso()
         val viewModel = rubenCargado(repositorio)
 

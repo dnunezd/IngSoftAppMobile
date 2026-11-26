@@ -81,7 +81,7 @@ class CatalogScreenTest {
         mostrar(AlbumsUiState.Success(ejemplo))
 
         ejemplo.forEach { album ->
-            // La tarjeta es clickable: su nodo fusiona la portada, el nombre y el género.
+            // The card is clickable: its node merges the cover, the name, and the genre.
             val tarjeta = hasTestTag(tagAlbum(album.id)) and
                 hasContentDescription("Portada de ${album.nombre}") and
                 hasText(album.nombre) and
@@ -151,7 +151,7 @@ class CatalogScreenTest {
         mostrar(AlbumsUiState.Error)
 
         rule.onNodeWithTag(TagErrorCatalogo).assertTextEquals("No pudimos cargar el catálogo")
-        // En pantallas bajas el botón queda debajo del borde y hay que desplazarse para verlo.
+        // On short screens the button sits below the fold and must be scrolled to before it's visible.
         rule.onNodeWithText("Reintentar").performScrollTo().assertIsDisplayed()
         rule.onNodeWithTag(TagReintentarCatalogo).performClick()
 
@@ -177,8 +177,8 @@ class CatalogScreenTest {
 
     @Test
     fun siLaPantallaSaleMientrasSeVeElAvisoQuedaComoMostrado() {
-        // Al tocar un álbum o girar, el catálogo sale de la composición antes de que el aviso
-        // termine; si no quedara marcado, volvería a aparecer al regresar.
+        // When tapping an album or rotating, the catalog leaves the composition before the notice
+        // finishes; if it weren't marked as shown, it would reappear upon returning.
         mostrar(AlbumsUiState.Success(ejemplo, errorAlActualizar = true))
         rule.onNodeWithText("No pudimos actualizar el catálogo").assertIsDisplayed()
         assertEquals(0, avisosMostrados)

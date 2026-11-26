@@ -24,7 +24,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
-/** Catálogo controlable: cada consulta espera a que la prueba la complete. */
+/** Controllable catalog: each query waits for the test to complete it. */
 private class CatalogoAsociableFalso : AlbumRepository {
     var guardados: List<AlbumSummary> = emptyList()
     val consultas = mutableListOf<CompletableDeferred<Result<List<AlbumSummary>>>>()
@@ -42,7 +42,7 @@ private class CatalogoAsociableFalso : AlbumRepository {
     override suspend fun addTrack(albumId: Int, cancion: Track): Result<Unit> = error("No se usa en esta prueba")
 }
 
-/** Asociaciones controlables: cada una espera a que la prueba la complete. */
+/** Controllable associations: each one waits for the test to complete it. */
 private class AsociacionesArtistaFalsas : ArtistRepository {
     val pedidas = mutableListOf<Pair<Triple<ArtistType, Int, Int>, CompletableDeferred<Result<Unit>>>>()
 
@@ -74,7 +74,7 @@ class AssociateAlbumViewModelTest {
 
     private fun viewModel() = AssociateAlbumViewModel(ArtistType.MUSICO, 100, albumes, artistas)
 
-    /** Abre la ventana del músico 100, que ya tiene "Buscando América", con el catálogo cargado. */
+    /** Opens musician 100's window, who already has "Buscando América", with the catalog loaded. */
     private fun TestScope.abiertaConCatalogo(): AssociateAlbumViewModel {
         val vm = viewModel()
         vm.abrir(setOf(100))
@@ -84,7 +84,7 @@ class AssociateAlbumViewModelTest {
         return vm
     }
 
-    // ---------- Abrir y cargar ----------
+    // ---------- Open and load ----------
 
     @Test
     fun empiezaCerradaYSinConsultar() = runTest {
@@ -184,7 +184,7 @@ class AssociateAlbumViewModelTest {
         assertEquals(1, albumes.consultas.size)
     }
 
-    // ---------- Búsqueda y mensajes de vacío ----------
+    // ---------- Search and empty-state messages ----------
 
     @Test
     fun searchFiltraPorNombreSinTildesNiMayusculas() = runTest {
@@ -216,7 +216,7 @@ class AssociateAlbumViewModelTest {
 
         assertTrue(vm.uiState.value.sinDisponibles)
         assertFalse(vm.uiState.value.sinResultados)
-        // Los ya asociados se siguen viendo, deshabilitados.
+        // Already associated albums are still shown, disabled.
         assertEquals(catalogo, vm.uiState.value.visibles)
     }
 
@@ -242,7 +242,7 @@ class AssociateAlbumViewModelTest {
         assertFalse(vm.uiState.value.sinResultados)
     }
 
-    // ---------- Selección ----------
+    // ---------- Selection ----------
 
     @Test
     fun sinSeleccionNoSePuedeAsociar() = runTest {
@@ -284,7 +284,7 @@ class AssociateAlbumViewModelTest {
 
     @Test
     fun unaBusquedaQueDejaFueraAlElegidoQuitaLaSeleccion() = runTest {
-        // Revisión del PR #114: no se debe poder asociar un álbum que ya no se ve.
+        // Review from PR #114: it should not be possible to associate an album that is no longer visible.
         val vm = abiertaConCatalogo()
         vm.select(102)
 
@@ -332,7 +332,7 @@ class AssociateAlbumViewModelTest {
         assertFalse(estado.puedeAsociar)
     }
 
-    // ---------- Asociar ----------
+    // ---------- Associate ----------
 
     @Test
     fun associateEnviaElAlbumElegidoAlArtistaYDeshabilitaElBoton() = runTest {
@@ -478,7 +478,7 @@ class AssociateAlbumViewModelTest {
         assertTrue(artistas.pedidas.isEmpty())
     }
 
-    // ---------- Cancelar ----------
+    // ---------- Cancel ----------
 
     @Test
     fun cancelarCierraSinAsociar() = runTest {

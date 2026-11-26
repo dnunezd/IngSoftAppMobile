@@ -34,7 +34,7 @@ class EntryScreenTest {
 
         rule.onNodeWithText("Visitante").performScrollTo().assertIsDisplayed()
         rule.onNodeWithText("Coleccionista").performScrollTo().assertIsDisplayed()
-        // Cada botón es un solo elemento y se anuncia con su perfil (el texto "Entrar" queda dentro de él).
+        // Each button is a single element and is announced with its content description (the "Entrar" text is inside it).
         rule.onNodeWithTag(TagEntrarVisitante).assertContentDescriptionEquals("Entrar como Visitante")
         rule.onNodeWithTag(TagEntrarColeccionista).assertContentDescriptionEquals("Entrar como Coleccionista")
     }

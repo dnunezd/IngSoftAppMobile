@@ -30,10 +30,10 @@ private class AlbumRepositoryFalso(
         else respuesta.await()
     }
 
-    /** Detalles guardados en el dispositivo (add-cache-consultas). */
+    /** Details saved on the device (add-cache-consultas). */
     val guardados = mutableMapOf<Int, Album>()
 
-    /** Si no es null, la lectura de lo guardado espera a que la prueba lo complete. */
+    /** If not null, reading the cached data waits until the test completes it. */
     var lecturaEnEspera: CompletableDeferred<Unit>? = null
 
     override suspend fun getCachedAlbum(id: Int): Album? {
@@ -161,7 +161,7 @@ class AlbumViewModelTest {
         assertEquals(1, repositorio.consultas.size)
     }
 
-    // ---------- Detalle guardado (add-cache-consultas, D5) ----------
+    // ---------- Saved detail (add-cache-consultas, D5) ----------
 
     private val actualizado = album.copy(nombre = "Buscando América (remasterizado)")
 
@@ -237,7 +237,7 @@ class AlbumViewModelTest {
         advanceUntilIdle()
     }
 
-    // ---------- Actualizar después de comentar (add-comentar-album, D7) ----------
+    // ---------- Refresh after commenting (add-comentar-album, D7) ----------
 
     private suspend fun kotlinx.coroutines.test.TestScope.conAlbumVisible(repositorio: AlbumRepositoryFalso): AlbumViewModel {
         val viewModel = AlbumViewModel(101, repositorio)
@@ -290,7 +290,7 @@ class AlbumViewModelTest {
         assertEquals(AlbumUiState.Loading, viewModel.uiState.value)
     }
 
-    // ---------- Aviso "Canción agregada" (revisión de PR: no debe repetir el GET al rotar) ----------
+    // ---------- "Track added" notice (PR review: must not repeat the GET on rotation) ----------
 
     @Test
     fun cancionAgregadaPrendeElAvisoYDisparaUnaSolaActualizacion() = runTest {
@@ -322,8 +322,8 @@ class AlbumViewModelTest {
 
     @Test
     fun elAvisoDeTrackAgregadaSobreviveUnaRecreacionDelViewModelAunNoMostrado() = runTest {
-        // Simula "rotar mientras se ve el aviso": el ViewModel no se destruye (sobrevive a cambios de
-        // configuración), así que su estado no se reinicia como sí pasaría con una clave de nav.
+        // Simulates "rotating while the notice is shown": the ViewModel is not destroyed (it survives
+        // configuration changes), so its state isn't reset as it would be with a nav key.
         val repositorio = AlbumRepositoryFalso()
         val viewModel = conAlbumVisible(repositorio)
 
@@ -332,7 +332,7 @@ class AlbumViewModelTest {
         repositorio.consultas.last().second.complete(Result.success(album))
         advanceUntilIdle()
 
-        // El aviso sigue activo (no se ha marcado como mostrado) y la consulta no se repite más.
+        // The notice stays active (it hasn't been marked as shown) and the query isn't repeated again.
         assertEquals(true, viewModel.avisoTrackAgregada.value)
         assertEquals(2, repositorio.consultas.size)
     }

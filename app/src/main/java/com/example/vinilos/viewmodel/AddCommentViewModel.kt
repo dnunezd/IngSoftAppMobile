@@ -13,7 +13,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-/** Comentar un álbum (HU09) como el coleccionista [coleccionistaId], que es quien ingresó. */
+/** Comment on an album (HU09) as the collector [coleccionistaId], who is the one logged in. */
 class AddCommentViewModel(
     private val albumId: Int,
     private val coleccionistaId: Int,
@@ -33,15 +33,15 @@ class AddCommentViewModel(
     }
 
     /**
-     * Casi siempre se llega desde el detalle, así que el álbum ya está guardado; si no, se consulta
-     * (add-comentar-album, D3).
+     * The detail screen is almost always the entry point, so the album is already cached; if not, it's
+     * fetched (add-comentar-album, D3).
      */
     private fun cargarAlbum() {
         _uiState.update { it.copy(album = CargaAlbum.Loading) }
         viewModelScope.launch {
             val album = albumRepository.getCachedAlbum(albumId)
                 ?: albumRepository.getAlbum(albumId).getOrElse {
-                    // Un 404 llega como AlbumNoDisponible, que no es ErrorDeCarga: también es "no se pudo obtener".
+                    // A 404 arrives as AlbumNoDisponible, which isn't ErrorDeCarga: it's also "could not be fetched".
                     if (it !is LoadError && it !is AlbumNotAvailable) throw it
                     null
                 }
@@ -55,7 +55,7 @@ class AddCommentViewModel(
 
     fun cambiarOpinion(opinion: String) = editar { copy(opinion = opinion.take(LimiteOpinion)) }
 
-    /** Durante el envío o ya publicado nada cambia; editar después de un error oculta el error (D4). */
+    /** While submitting or already published nothing changes; editing after an error hides the error (D4). */
     private fun editar(cambio: AddCommentUiState.() -> AddCommentUiState) {
         _uiState.update { estado ->
             if (estado.enviando || estado.publicado) estado
@@ -64,8 +64,8 @@ class AddCommentViewModel(
     }
 
     /**
-     * El backend acepta comentarios repetidos, así que esta guarda (y no solo el botón deshabilitado) es
-     * la que evita publicar dos veces con dos toques seguidos (D4).
+     * The backend accepts duplicate comments, so this guard (and not just the disabled button) is
+     * what prevents publishing twice with two quick taps (D4).
      */
     fun post() {
         val estado = _uiState.value
@@ -88,7 +88,7 @@ class AddCommentViewModel(
         }
     }
 
-    /** Flecha, botón atrás o "Aceptar" (D5 y D6). */
+    /** Back arrow, back button, or "OK" (D5 and D6). */
     fun pedirSalir() {
         _uiState.update { estado ->
             when {

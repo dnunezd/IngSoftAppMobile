@@ -22,10 +22,10 @@ import java.io.IOException
 import java.net.SocketTimeoutException
 import java.util.concurrent.TimeUnit
 
-// Respuesta pequeña que Retrofit/Gson convertirá desde el JSON.
+// Small response that Retrofit/Gson will convert from the JSON.
 data class DatosPrueba(val nombre: String)
 
-// API falsa para probar que el ServiceAdapter puede ejecutar una llamada Retrofit.
+// Fake API to test that the ServiceAdapter can execute a Retrofit call.
 interface ApiDePrueba {
     @GET("prueba")
     suspend fun obtenerPrueba(): DatosPrueba
@@ -50,31 +50,31 @@ class ServiceAdapterTest {
 
     @After
     fun terminar() {
-        // Cierra el servidor cuando acaba la prueba.
+        // Shuts down the server when the test finishes.
         servidor.shutdown()
     }
 
     @Test
     fun llamadaSuccesssaDevuelveLosDatos() = runTest {
-        // Arrange: el servidor responderá 200 con este JSON.
+        // Arrange: the server will respond 200 with this JSON.
         servidor.enqueue(
             MockResponse()
                 .setResponseCode(200)
                 .setBody("""{"nombre":"Vinilo"}""")
         )
 
-        // El adaptador debe apuntar al servidor falso de esta prueba.
+        // The adapter must point to this test's fake server.
         val adaptador = ServiceAdapter(servidor.url("/").toString())
         val api = adaptador.api<ApiDePrueba>()
 
-        // Act: la solicitud se ejecuta a través del adaptador.
+        // Act: the request is executed through the adapter.
         val resultado = adaptador.call { api.obtenerPrueba() }
 
-        // Assert: debe ser exitosa y devolver el valor que envió el servidor.
+        // Assert: it must succeed and return the value the server sent.
         assertTrue(resultado.isSuccess)
         assertEquals("Vinilo", resultado.getOrThrow().nombre)
 
-        // Además, comprobamos que Retrofit hizo la petición esperada.
+        // Additionally, we check that Retrofit made the expected request.
         val peticion = servidor.takeRequest()
         assertEquals("GET", peticion.method)
         assertEquals("/prueba", peticion.path)
@@ -103,7 +103,7 @@ class ServiceAdapterTest {
 
         val error = adaptador.call { api.obtenerPrueba() }.exceptionOrNull()
 
-        // Los repositorios lo distinguen sin conocer HTTP; para los demás sigue siendo un error de carga.
+        // Repositories distinguish this without knowing about HTTP; for everyone else it's still a load error.
         assertTrue(error is ResourceNotFound)
         assertTrue(error is LoadError)
     }
@@ -182,7 +182,7 @@ class ServiceAdapterTest {
 
     @Test
     fun cuerpoNullDevuelveElErrorDeLectura() = runTest {
-        // 200 con cuerpo "null" en una función que declara un tipo no nulo: no debe cerrar la app.
+        // 200 with a "null" body on a function that declares a non-null type: it must not crash the app.
         servidor.enqueue(MockResponse().setBody("null"))
         val api = adaptador.api<ApiDePrueba>()
 
@@ -203,7 +203,7 @@ class ServiceAdapterTest {
 
     @Test
     fun unNullPointerExceptionDelCodigoNoSeOculta() = runTest {
-        // Solo el cuerpo vacío de Retrofit es un fallo de carga; un NPE propio es un error de programación.
+        // Only Retrofit's empty body is a load failure; a self-inflicted NPE is a programming error.
         try {
             adaptador.call<DatosPrueba> { throw NullPointerException("Error de programación") }
             fail("El NullPointerException debe propagarse")
@@ -286,7 +286,7 @@ class ServiceAdapterTest {
 
     @Test
     fun jsonConEstructuraInesperadaSeTraduceALoadError() = runTest {
-        // Gson lanza IllegalStateException si llega un objeto donde se espera una lista.
+        // Gson throws IllegalStateException if an object arrives where a list is expected.
         servidor.enqueue(MockResponse().setBody("""{"mensaje": "no es una lista"}"""))
 
         assertTrue(adaptador.call { api.getCollectors().conVersion().valor }.exceptionOrNull() is LoadError)
@@ -328,12 +328,12 @@ class ServiceAdapterTest {
         assertEquals(1, segundo.getOrThrow().size)
     }
 
-    // ---------- Caché HTTP (optimizar-cache-e-imagenes, D2) ----------
+    // ---------- HTTP Cache (optimizar-cache-e-imagenes, D2) ----------
 
     @get:Rule
     val carpeta = TemporaryFolder()
 
-    /** Ejecuta [bloque] con un adaptador que usa la caché HTTP en una carpeta temporal y la cierra al final. */
+    /** Runs [bloque] with an adapter that uses the HTTP cache in a temporary folder and closes it afterward. */
     private suspend fun conCache(bloque: suspend (ServiceAdapter, ApiDePrueba) -> Unit) {
         val cliente = ServiceAdapter.clientePorDefecto(carpeta.newFolder("http"))
         try {
@@ -393,7 +393,7 @@ class ServiceAdapterTest {
     @Test
     fun conCacheSinConexionSeReportaElLoadErrorAunqueHayaRespuestaGuardada() = runTest {
         servidor.enqueue(respuestaConVersion("W/\"abc\""))
-        // OkHttp reintenta una conexión fallida: se encolan varias desconexiones.
+        // OkHttp retries a failed connection: several disconnects are queued up.
         repeat(3) { servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START)) }
 
         conCache { adaptador, api ->
@@ -417,7 +417,7 @@ class ServiceAdapterTest {
         assertEquals(null, servidor.takeRequest().getHeader("If-None-Match"))
     }
 
-    // ---------- Versión de la respuesta (optimizar-cache-e-imagenes, D3) ----------
+    // ---------- Response version (optimizar-cache-e-imagenes, D3) ----------
 
     @Test
     fun unaRespuestaSuccesssaEntregaSuVersion() = runTest {
@@ -486,7 +486,7 @@ class ServiceAdapterTest {
     }
 }
 
-// API falsa que devuelve la respuesta completa de Retrofit, como los GET que se guardan en Room.
+// Fake API that returns the full Retrofit response, like the GETs that get stored in Room.
 interface ApiConVersion {
     @GET("prueba")
     suspend fun obtenerPrueba(): retrofit2.Response<DatosPrueba>

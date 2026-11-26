@@ -219,7 +219,7 @@ class AlbumRepositoryTest {
             repositorio.getAlbum(101)
             fail("El error inesperado debe propagarse")
         } catch (error: IllegalStateException) {
-            // Al volver de otro dispatcher, kotlinx puede entregar una copia con el original como causa.
+            // When returning from another dispatcher, kotlinx may deliver a copy with the original as the cause.
             assertTrue(generateSequence<Throwable>(error) { it.cause }.any { it === esperado })
         }
     }
@@ -258,13 +258,13 @@ class AlbumRepositoryTest {
 
         val error = repositorio.getAlbum(101).exceptionOrNull()
 
-        // Retrofit lanza KotlinNullPointerException ante el cuerpo nulo y el adaptador la traduce.
+        // Retrofit throws KotlinNullPointerException for the null body and the adapter translates it.
         assertTrue("Una respuesta sin álbum debe ser un error de carga", error is LoadError)
         assertTrue("Un cuerpo nulo no es un 404", error !is ResourceNotFound)
         assertTrue(error !is AlbumNotAvailable)
     }
 
-    // ---- Catálogo (HU01): GET /albums ----
+    // ---- Catalog (HU01): GET /albums ----
 
     @Test
     fun catalogoConsultaGetAlbumsYConvierteCadaAlbum() = runTest {

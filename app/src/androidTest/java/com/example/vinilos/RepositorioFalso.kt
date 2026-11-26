@@ -3,10 +3,10 @@ package com.example.vinilos
 import com.example.vinilos.data.model.Collector
 import com.example.vinilos.data.repository.CollectorRepository
 
-/** Repositorio de coleccionistas sin red para las pruebas de UI y de navegación. */
+/** Network-free collector repository for UI and navigation tests. */
 class RepositorioFalso(
     var resultado: Result<List<Collector>>,
-    /** Listado guardado en el dispositivo (add-cache-consultas); vacío, sin caché, como antes. */
+    /** List saved on the device (add-cache-consultas); empty, no cache, as before. */
     var guardados: List<Collector> = emptyList()
 ) : CollectorRepository {
     var consultas = 0

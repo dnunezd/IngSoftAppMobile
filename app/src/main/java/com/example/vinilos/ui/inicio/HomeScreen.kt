@@ -57,8 +57,8 @@ const val TagVerAlbumes = "ver_albumes"
 const val TagVerArtistas = "ver_artistas"
 
 /**
- * Pantalla de inicio (secciones): a ella llegan ambos roles tras ingresar y desde aquí se elige
- * entre el catálogo de álbumes y el listado de artistas. No tiene estado ni consulta datos.
+ * Home screen (sections): both roles land here after signing in, and from here the user chooses
+ * between the album catalog and the artist list. It has no state and does not query data.
  */
 @Composable
 fun HomeScreen(
@@ -188,7 +188,7 @@ private fun TarjetaSeccion(
         modifier = Modifier.fillMaxWidth()
     ) {
         Box(modifier = Modifier.clip(forma)) {
-            // Resplandor suave en la esquina superior derecha, como en el mockup.
+            // Soft glow in the top-right corner, as in the mockup.
             Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
@@ -213,7 +213,7 @@ private fun TarjetaSeccion(
                     Image(
                         painter = painterResource(icono),
                         contentDescription = null,
-                        // El PNG exportado trae esquinas blancas: se recorta en círculo.
+                        // The exported PNG has white corners: it's cropped into a circle.
                         modifier = Modifier
                             .size(32.dp)
                             .clip(CircleShape)

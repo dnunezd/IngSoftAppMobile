@@ -41,9 +41,9 @@ import org.junit.Test
 import java.util.Collections
 
 /**
- * Favoritos confirmados guardados (add-cache-consultas, HU10), con la pila de red real contra un
- * `MockWebServer` que recuerda los favoritos agregados, y la base de Room en memoria. El detalle del
- * artista también se guarda, porque el botón de favorito solo aparece con el detalle en pantalla.
+ * Saved confirmed favorites (add-cache-consultas, HU10), using the real network stack against a
+ * `MockWebServer` that remembers the favorites added, and the in-memory Room database. The artist's
+ * detail is also saved, because the favorite button only appears with the detail on screen.
  */
 class FavoritosSinConexionE2ETest {
 
@@ -90,7 +90,7 @@ class FavoritosSinConexionE2ETest {
         servidor.start()
         val contexto: Context = ApplicationProvider.getApplicationContext()
         db = Room.inMemoryDatabaseBuilder(contexto, VinilosDb::class.java).build()
-        // "localhost" es uno de los hosts con HTTP permitido en network_security_config.xml.
+        // "localhost" is one of the hosts allowed over HTTP in network_security_config.xml.
         ApplicationProvider.getApplicationContext<VinilosApplication>().container = AppContainer(
             baseUrl = "http://localhost:${servidor.port}/",
             artistaDao = db.artistaDao(),
@@ -107,7 +107,7 @@ class FavoritosSinConexionE2ETest {
     private fun esperarA(tag: String, milis: Long = 15_000) =
         rule.waitUntil(milis) { rule.onAllNodesWithTag(tag).fetchSemanticsNodes().isNotEmpty() }
 
-    /** Espera a que el botón de favorito muestre [texto]. */
+    /** Waits for the favorite button to show [texto]. */
     private fun esperarBoton(texto: String, milis: Long = 15_000) = rule.waitUntil(milis) {
         rule.onAllNodes(hasTestTag(TagBotonFavorito) and hasText(texto)).fetchSemanticsNodes().isNotEmpty()
     }
@@ -137,7 +137,7 @@ class FavoritosSinConexionE2ETest {
     @Test
     fun sinConexionUnFavoritoConfirmadoSeVeComoFavoritoYOtroArtistaOfreceReintentar() {
         ActivityScenario.launch(MainActivity::class.java).use {
-            // Con conexión: agregar Queen y abrir Rubén, que no es favorito.
+            // While connected: add Queen and open Rubén, who is not a favorite.
             entrarComoColeccionista()
             abrir(queen)
             esperarBoton("Agregar Favorito")
@@ -148,7 +148,7 @@ class FavoritosSinConexionE2ETest {
             esperarBoton("Agregar Favorito")
             alListado(queen)
 
-            // Sin conexión: el listado y los detalles salen de lo guardado.
+            // Without connection: the list and details come from what was saved.
             caido = true
             abrir(queen)
             esperarBoton("Favorito")

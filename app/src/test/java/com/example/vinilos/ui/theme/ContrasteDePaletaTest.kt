@@ -6,8 +6,8 @@ import org.junit.Test
 import kotlin.math.pow
 
 /**
- * Contraste WCAG de los pares texto/fondo de la paleta (corregir-accesibilidad-scanner).
- * 4,5:1 para texto normal; 3:1 solo se acepta en texto grande y no se usa aquí.
+ * WCAG contrast of the palette's text/background pairs (corregir-accesibilidad-scanner).
+ * 4.5:1 for normal text; 3:1 is only accepted for large text and is not used here.
  */
 class ContrasteDePaletaTest {
 
@@ -57,7 +57,7 @@ class ContrasteDePaletaTest {
 
     @Test
     fun lasAccionesDeDialogosSobreLosContenedoresDeSuperficieCumplen() {
-        // surfaceContainerHigh (diálogos) es Superficie; surfaceContainer (menús) es Fondo.
+        // surfaceContainerHigh (dialogs) is Superficie; surfaceContainer (menus) is Fondo.
         exigir("NaranjaContraste sobre Superficie", NaranjaContraste, Superficie)
         exigir("NaranjaContraste sobre Fondo", NaranjaContraste, Fondo)
         exigir("NaranjaOscuro sobre NaranjaSuave (chip y avatar del comentario publicado)", NaranjaOscuro, NaranjaSuave)

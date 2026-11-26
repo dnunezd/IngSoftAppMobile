@@ -17,7 +17,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Artistas guardados (add-cache-consultas, D1): listado completo y detalle por (tipo, id). */
+/** Saved artists (add-cache-consultas, D1): full listing and detail by (type, id). */
 @RunWith(AndroidJUnit4::class)
 class ArtistDaoTest {
 
@@ -51,7 +51,7 @@ class ArtistDaoTest {
         premios = listOf(ArtistPrize(7, "Grammy", "Academia", null))
     )
 
-    // ---------- Listado ----------
+    // ---------- Listing ----------
 
     @Test
     fun unaBaseNuevaNoTieneArtistas() = runTest {
@@ -77,7 +77,7 @@ class ArtistDaoTest {
         assertEquals(listOf(artista(ArtistType.BANDA, 2, "Nombre nuevo")), dao.todos())
     }
 
-    // ---------- Detalle ----------
+    // ---------- Detail ----------
 
     @Test
     fun sinDetalleGuardadoDevuelveNull() = runTest {
@@ -125,7 +125,7 @@ class ArtistDaoTest {
         assertEquals(vacio, dao.detalle(ArtistType.MUSICO, 5))
     }
 
-    // ---------- Escrituras incrementales (optimizar-cache-e-imagenes, D6) ----------
+    // ---------- Incremental writes (optimizar-cache-e-imagenes, D6) ----------
 
     @Test
     fun aplicarListadoBorraSoloElTipoYElIdIndicados() = runTest {

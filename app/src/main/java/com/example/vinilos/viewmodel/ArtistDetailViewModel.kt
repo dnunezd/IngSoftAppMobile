@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-/** Solo se consulta al crearse y al reintentar desde el error, así que nunca hay dos consultas a la vez. */
+/** Only queried on creation and when retrying from error, so there are never two queries at once. */
 class ArtistDetailViewModel(
     private val tipo: ArtistType,
     private val id: Int,
@@ -30,7 +30,7 @@ class ArtistDetailViewModel(
         if (_uiState.value == ArtistDetailUiState.Error) cargar()
     }
 
-    /** La pantalla ya mostró el aviso de que no se pudo actualizar el detalle guardado. */
+    /** The screen already showed the notice that the saved detail couldn't be refreshed. */
     fun avisoMostrado() {
         val estado = _uiState.value
         if (estado is ArtistDetailUiState.Success && estado.errorAlActualizar) {
@@ -39,15 +39,15 @@ class ArtistDetailViewModel(
     }
 
     /**
-     * Un álbum se acaba de asociar al artista (HU15, D5): se agrega de inmediato a la discografía y se vuelve
-     * a consultar el detalle, que también actualiza lo guardado. Si esa consulta falla, se conserva el álbum
-     * agregado sin avisar de error: la asociación sí ocurrió.
+     * An album was just associated with the artist (HU15, D5): it's added to the discography immediately and the
+     * detail is re-queried, which also refreshes what's saved. If that query fails, the added album is
+     * kept without reporting an error: the association did happen.
      */
     fun albumAsociado(album: AlbumSummary) {
         val estado = _uiState.value as? ArtistDetailUiState.Success ?: return
         val detalle = estado.detalle
-        // Se agrega al final: el orden de la discografía lo fija la consulta que sigue, con el mismo criterio del
-        // repositorio (revisión del PR #114).
+        // Added at the end: the discography order is set by the query that follows, using the same criteria as the
+        // repository (reviewed in PR #114).
         val albumes = if (detalle.albumes.any { it.id == album.id }) {
             detalle.albumes
         } else {
@@ -71,7 +71,7 @@ class ArtistDetailViewModel(
         }
     }
 
-    /** La pantalla ya mostró "Álbum asociado". */
+    /** The screen already showed "Album associated". */
     fun albumAsociadoMostrado() {
         val estado = _uiState.value
         if (estado is ArtistDetailUiState.Success && estado.mostrarAlbumAsociado) {
@@ -80,9 +80,9 @@ class ArtistDetailViewModel(
     }
 
     /**
-     * Con un detalle guardado, lo muestra de inmediato mientras consulta, y un fallo de la consulta solo
-     * activa el aviso. Sin nada guardado, se comporta como antes. Un 404 ([RecursoNoEncontrado]) lleva a
-     * `Error` aunque haya algo guardado: el artista ya no existe (add-cache-consultas, D5).
+     * With a saved detail, it's shown immediately while querying, and a query failure only
+     * triggers the notice. With nothing saved, it behaves as before. A 404 ([RecursoNoEncontrado]) leads to
+     * `Error` even if something is saved: the artist no longer exists (add-cache-consultas, D5).
      */
     private fun cargar() {
         _uiState.value = ArtistDetailUiState.Loading

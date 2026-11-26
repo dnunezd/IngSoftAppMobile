@@ -13,11 +13,11 @@ import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 
-/** Repositorio falso: cada llamada devuelve el resultado que se complete a mano. */
+/** Fake repository: each call returns the result that is manually completed. */
 private class RepositorioFalso : CollectorRepository {
     val llamadas = mutableListOf<CompletableDeferred<Result<List<Collector>>>>()
 
-    /** Listado guardado en el dispositivo (add-cache-consultas). */
+    /** List saved on the device (add-cache-consultas). */
     var guardados: List<Collector> = emptyList()
 
     override suspend fun getCachedCollectors(): List<Collector> = guardados
@@ -42,7 +42,7 @@ class CollectorsViewModelTest {
 
     private val error = Result.failure<List<Collector>>(LoadError())
 
-    // ---- 4.1: estados de la carga ----
+    // ---- 4.1: loading states ----
 
     @Test
     fun alCrearseEmpiezaLoadingYPideLosColeccionistasUnaVez() = runTest {
@@ -135,14 +135,14 @@ class CollectorsViewModelTest {
         advanceUntilIdle()
         repo.llamadas[1].complete(error)
         advanceUntilIdle()
-        // La primera consulta responde tarde con datos: no debe cambiar el estado.
+        // The first query responds late with data: it should not change the state.
         repo.llamadas[0].complete(Result.success(todos))
         advanceUntilIdle()
 
         assertEquals(CollectorsUiState.Error, vm.uiState.value)
     }
 
-    // ---- 4.2: búsqueda ----
+    // ---- 4.2: search ----
 
     private fun kotlinx.coroutines.test.TestScope.vmConDatos(): CollectorsViewModel {
         val repo = RepositorioFalso()
@@ -239,7 +239,7 @@ class CollectorsViewModelTest {
 
         vm.search("bel")
 
-        // Lo que ve una pantalla recreada (rotación): el mismo ViewModel con el mismo estado.
+        // What a recreated screen (rotation) sees: the same ViewModel with the same state.
         val estado = vm.uiState.value as CollectorsUiState.Success
         assertEquals("bel", estado.consulta)
         assertEquals(listOf(manolo), estado.visibles)
@@ -271,7 +271,7 @@ class CollectorsViewModelTest {
         assertEquals(1, repo.llamadas.size)
     }
 
-    // ---------- Listado guardado (add-cache-consultas, D5) ----------
+    // ---------- Saved list (add-cache-consultas, D5) ----------
 
     private fun repoConGuardados() = RepositorioFalso().apply { guardados = listOf(manolo, jaime) }
 

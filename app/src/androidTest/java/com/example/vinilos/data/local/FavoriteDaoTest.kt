@@ -13,7 +13,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Favoritos confirmados (add-cache-consultas, D1): por coleccionista, reemplazados en cada comprobación. */
+/** Confirmed favorites (add-cache-consultas, D1): per collector, replaced on every check. */
 @RunWith(AndroidJUnit4::class)
 class FavoriteDaoTest {
 
@@ -71,7 +71,7 @@ class FavoriteDaoTest {
         assertEquals(setOf(1, 2), dao.deColeccionista(100).toSet())
     }
 
-    // ---------- Escrituras incrementales (optimizar-cache-e-imagenes, D6) ----------
+    // ---------- Incremental writes (optimizar-cache-e-imagenes, D6) ----------
 
     @Test
     fun aplicarDeAgregaYQuitaSoloLosDeEseColeccionista() = runTest {

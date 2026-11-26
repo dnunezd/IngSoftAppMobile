@@ -76,7 +76,7 @@ import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.ArtistsUiState
 import com.example.vinilos.ui.ingreso.encabezado
 
-/** Se conserva el tag del destino provisional: las pruebas de navegación llegan aquí por él. */
+/** The provisional destination tag is kept: navigation tests reach here through it. */
 const val TagArtistas = "artistas"
 const val TagProgresoArtistas = "artistas_progreso"
 const val TagBuscadorArtistas = "artistas_buscador"
@@ -89,7 +89,7 @@ const val TagActualizandoArtistas = "artistas_actualizando"
 
 fun tagArtista(artista: Artist) = "artista_${artista.type.name.lowercase()}_${artista.id}"
 
-/** Listado de músicos y bandas con búsqueda y sus estados de carga, vacío y error (HU03). */
+/** List of musicians and bands with search and its loading, empty and error states (HU03). */
 @Composable
 fun ArtistsScreen(
     estado: ArtistsUiState,
@@ -165,7 +165,7 @@ fun ArtistsScreen(
     }
 }
 
-/** Encabezado del listado y del detalle del artista: flecha de atrás, título y una acción opcional al final. */
+/** Header for the artist list and detail screens: back arrow, title and an optional action at the end. */
 @Composable
 internal fun EncabezadoArtistas(titulo: String, onAtras: () -> Unit, accion: (@Composable () -> Unit)? = null) {
     Row(
@@ -240,8 +240,8 @@ private fun Titular() {
 
 @Composable
 private fun Buscador(consultaInicial: String, habilitado: Boolean, onBuscar: (String) -> Unit) {
-    // Texto local para que escribir no dependa del viaje por el ViewModel; el ViewModel conserva
-    // el valor y rememberSaveable lo restaura al girar la pantalla.
+    // Local text so typing doesn't depend on the round trip through the ViewModel; the ViewModel keeps
+    // the value and rememberSaveable restores it on screen rotation.
     var texto by rememberSaveable { mutableStateOf(consultaInicial) }
     BasicTextField(
         value = texto,
@@ -336,7 +336,7 @@ private fun FilaArtista(artista: Artist, onSeleccionar: (Artist) -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // Si la URL no responde, no es una imagen o no existe, se muestra la imagen por defecto.
+        // If the URL doesn't respond, isn't an image, or doesn't exist, the default image is shown.
         AsyncImage(
             model = artista.image?.takeIf { it.isNotBlank() },
             contentDescription = stringResource(R.string.artistas_imagen_descripcion, artista.name),
@@ -406,7 +406,7 @@ private fun Loading() {
     }
 }
 
-/** Fila de relleno mientras carga, con la misma forma que una fila de artista. */
+/** Placeholder row while loading, with the same shape as an artist row. */
 @Composable
 private fun FilaEsqueleto() {
     Row(
@@ -483,7 +483,7 @@ private fun Empty(conBusqueda: Boolean) {
     }
 }
 
-/** Error de carga del listado y del detalle del artista: [mensaje] y botón "Reintentar". */
+/** Loading error for the artist list and detail: [mensaje] and a "Retry" button. */
 @Composable
 internal fun ErrorArtistas(mensaje: String, onReintentar: () -> Unit) {
     Column(
