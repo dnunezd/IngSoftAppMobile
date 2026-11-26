@@ -1,0 +1,7 @@
+# Resultados de las corridas: se publican en la wiki, no en el repositorio.
+capturas/
+comparacion/
+e2e/
+cmp/
+*.apk
+__pycache__/
