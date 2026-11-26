@@ -1,6 +1,6 @@
 # Regresión entre versiones
 
-Compara cada versión de la app con la anterior, con dos métodos. El resultado de la última corrida y su evaluación están en [`docs/pruebas/sprint-3/regresion`](../../docs/pruebas/sprint-3/regresion).
+Compara cada versión de la app con la anterior, con dos métodos. Aquí solo están las herramientas y los comandos: el resultado de cada corrida, sus imágenes y la evaluación del método se publican en la wiki ([Sprint 3 · Regresión entre versiones](https://github.com/dnunezd/IngSoftAppMobile/wiki/Sprint-3#regresión-entre-versiones)), no en el repositorio. Las capturas y comparaciones se generan en carpetas locales que no se versionan.
 
 | Archivo | Qué hace |
 |---|---|
