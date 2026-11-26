@@ -66,6 +66,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -109,6 +110,8 @@ import com.example.vinilos.ui.ingreso.decorativo
 import com.example.vinilos.ui.ingreso.encabezado
 import java.util.Locale
 import java.util.TimeZone
+import com.example.vinilos.ui.idiomaDeLaApp
+import com.example.vinilos.ui.theme.coloresBotonPrincipal
 
 const val TagFormularioCrear = "crear_formulario"
 const val TagNombreAlbum = "crear_nombre"
@@ -628,16 +631,16 @@ private fun CampoFecha(
 
 /**
  * El estado del calendario toma el idioma al crearse (Material 3 1.4), así que todo el selector,
- * estado incluido, queda dentro de [EnEspanol].
+ * estado incluido, queda dentro de [EnIdiomaDeLaApp]. El contenido del Dialog se envuelve otra vez.
  */
 @Composable
 private fun SelectorFecha(fechaMillis: Long?, onAceptar: (Long) -> Unit, onCerrar: () -> Unit) {
-    EnEspanol { SelectorFechaEnEspanol(fechaMillis, onAceptar, onCerrar) }
+    EnIdiomaDeLaApp { SelectorFechaEnIdioma(fechaMillis, onAceptar, onCerrar) }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SelectorFechaEnEspanol(fechaMillis: Long?, onAceptar: (Long) -> Unit, onCerrar: () -> Unit) {
+private fun SelectorFechaEnIdioma(fechaMillis: Long?, onAceptar: (Long) -> Unit, onCerrar: () -> Unit) {
     val hoy = remember { hoyEnUtc(System.currentTimeMillis(), TimeZone.getDefault()) }
     val selector = rememberDatePickerState(
         initialSelectedDateMillis = fechaMillis,
@@ -651,47 +654,51 @@ private fun SelectorFechaEnEspanol(fechaMillis: Long?, onAceptar: (Long) -> Unit
     )
     // No se usa DatePickerDialog: no limita su altura y en horizontal deja afuera sus botones. Aquí el
     // calendario se desplaza y los botones quedan siempre visibles.
+    // Dialog abre otra composición que vuelve a proveer el contexto y los recursos del dispositivo: el
+    // idioma de la app se aplica también adentro, o los textos de Material salen en el del dispositivo.
     Dialog(onDismissRequest = onCerrar, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        Surface(
-            shape = RoundedCornerShape(28.dp),
-            color = MaterialTheme.colorScheme.surface,
-            modifier = Modifier
-                .padding(8.dp)
-                .widthIn(max = 360.dp)
-        ) {
-            Column {
-                Box(
-                    modifier = Modifier
-                        .weight(1f, fill = false)
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    // El modo por defecto permite escribir la fecha; el criterio exige elegirla.
-                    DatePicker(
-                        state = selector,
-                        showModeToggle = false,
-                        title = {
-                            Text(
-                                text = stringResource(R.string.crear_fecha_titulo),
-                                style = MaterialTheme.typography.labelLarge,
-                                modifier = Modifier.padding(start = 24.dp, end = 12.dp, top = 16.dp)
-                            )
-                        }
-                    )
-                }
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    horizontalArrangement = Arrangement.End
-                ) {
-                    TextButton(onClick = onCerrar) {
-                        Text(stringResource(R.string.crear_cancelar), style = MaterialTheme.typography.labelLarge)
-                    }
-                    TextButton(
-                        onClick = { selector.selectedDateMillis?.let(onAceptar) },
-                        enabled = selector.selectedDateMillis != null
+        EnIdiomaDeLaApp {
+            Surface(
+                shape = RoundedCornerShape(28.dp),
+                color = MaterialTheme.colorScheme.surface,
+                modifier = Modifier
+                    .padding(8.dp)
+                    .widthIn(max = 360.dp)
+            ) {
+                Column {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f, fill = false)
+                            .verticalScroll(rememberScrollState())
                     ) {
-                        Text(stringResource(R.string.crear_fecha_aceptar), style = MaterialTheme.typography.labelLarge)
+                        // El modo por defecto permite escribir la fecha; el criterio exige elegirla.
+                        DatePicker(
+                            state = selector,
+                            showModeToggle = false,
+                            title = {
+                                Text(
+                                    text = stringResource(R.string.crear_fecha_titulo),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    modifier = Modifier.padding(start = 24.dp, end = 12.dp, top = 16.dp)
+                                )
+                            }
+                        )
+                    }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        TextButton(onClick = onCerrar) {
+                            Text(stringResource(R.string.crear_cancelar), style = MaterialTheme.typography.labelLarge)
+                        }
+                        TextButton(
+                            onClick = { selector.selectedDateMillis?.let(onAceptar) },
+                            enabled = selector.selectedDateMillis != null
+                        ) {
+                            Text(stringResource(R.string.crear_fecha_aceptar), style = MaterialTheme.typography.labelLarge)
+                        }
                     }
                 }
             }
@@ -700,24 +707,30 @@ private fun SelectorFechaEnEspanol(fechaMillis: Long?, onAceptar: (Long) -> Unit
 }
 
 /**
- * La app solo existe en español, pero el selector toma el idioma del dispositivo: en un teléfono en
- * inglés mezclaría "Selected date" con los textos propios. El aviso de lint se refiere a la descarga
- * de idiomas de los App Bundle; aquí se entrega un APK con un solo idioma.
+ * El selector toma el idioma del dispositivo, que puede no ser el de la app (por ejemplo, un teléfono en
+ * francés con la app en español): se le aplica el idioma de la app para no mezclar idiomas
+ * (internacionalizar-ingles, D4). El aviso de lint se refiere a la descarga de idiomas de los App
+ * Bundle; aquí se entrega un APK con todos los idiomas.
  */
 @SuppressLint("AppBundleLocaleChanges")
 @Composable
-private fun EnEspanol(contenido: @Composable () -> Unit) {
+private fun EnIdiomaDeLaApp(contenido: @Composable () -> Unit) {
     val configuracion = LocalConfiguration.current
     val contexto = LocalContext.current
-    if (ConfigurationCompat.getLocales(configuracion)[0]?.language == "es") {
+    val idioma = idiomaDeLaApp()
+    if (ConfigurationCompat.getLocales(configuracion)[0]?.language == idioma.language) {
         contenido()
     } else {
-        val espanol = remember(configuracion) {
-            Configuration(configuracion).apply { setLocale(Locale.forLanguageTag("es")) }
+        val ajustada = remember(configuracion, idioma) {
+            Configuration(configuracion).apply { setLocale(idioma) }
         }
+        // Los textos de Material y stringResource leen LocalResources: sin él, el título del selector
+        // ("Selected date") quedaba en el idioma del dispositivo.
+        val contextoAjustado = remember(contexto, ajustada) { contexto.createConfigurationContext(ajustada) }
         CompositionLocalProvider(
-            LocalConfiguration provides espanol,
-            LocalContext provides contexto.createConfigurationContext(espanol),
+            LocalConfiguration provides ajustada,
+            LocalContext provides contextoAjustado,
+            LocalResources provides contextoAjustado.resources,
             content = contenido
         )
     }
@@ -797,10 +810,7 @@ private fun Botones(estado: CrearAlbumUiState, acciones: AccionesCrearAlbum) {
         Button(
             onClick = acciones.onCrear,
             enabled = !estado.enviando,
-            colors = ButtonDefaults.buttonColors(
-                disabledContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f),
-                disabledContentColor = MaterialTheme.colorScheme.onPrimary
-            ),
+            colors = coloresBotonPrincipal(enviando = true),
             modifier = Modifier
                 .fillMaxWidth()
                 .heightIn(min = 52.dp)

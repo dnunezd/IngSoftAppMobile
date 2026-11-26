@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,9 +29,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -38,9 +39,13 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.vinilos.R
+import com.example.vinilos.data.model.Session
 import com.example.vinilos.ui.ingreso.EncabezadoVinilo
 import com.example.vinilos.ui.ingreso.IndicadorActualizando
 import com.example.vinilos.ui.ingreso.encabezado
+
+const val TagAgregarCancionDetalle = "detalle_agregar_cancion"
+const val TagListaDetalleAlbum = "lista_detalle_album"
 
 @Composable
 fun ContenidoAlbum(
@@ -48,12 +53,15 @@ fun ContenidoAlbum(
     onAtras: () -> Unit,
     modifier: Modifier = Modifier,
     actualizando: Boolean = false,
+    session: Session = Session.Visitor,
+    onAgregarCancion: () -> Unit = {},
     /** Espacio extra al final para que un botón flotante no tape el último comentario (HU09). */
     margenInferior: Dp = 0.dp
 ) {
     val descripcionActualizando = stringResource(R.string.detalle_actualizando)
     LazyColumn(
         modifier = modifier.fillMaxSize()
+            .testTag(TagListaDetalleAlbum)
             .background(MaterialTheme.colorScheme.background)
             .windowInsetsPadding(WindowInsets.safeDrawing),
         contentPadding = PaddingValues(start = 20.dp, top = 20.dp, end = 20.dp, bottom = 20.dp + margenInferior),
@@ -95,6 +103,16 @@ fun ContenidoAlbum(
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.encabezado()
             )
+        }
+        if (session.collectorActionsEnabled) {
+            item {
+                Button(
+                    onClick = onAgregarCancion,
+                    modifier = Modifier.fillMaxWidth().testTag(TagAgregarCancionDetalle)
+                ) {
+                    Text(stringResource(R.string.detalle_agregar_cancion))
+                }
+            }
         }
         presentacion.mensajeCanciones?.let { mensaje ->
             item { Text(stringResource(mensaje), style = MaterialTheme.typography.bodyLarge) }
@@ -172,15 +190,16 @@ private fun PromedioConEstrellas(promedio: String?) {
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         } else {
-            // Un solo elemento ("5,0 de 5 estrellas"): sin esto TalkBack leía "5,0" y luego "5,0 de 5 estrellas".
-            val descripcionEstrellas = stringResource(R.string.detalle_promedio_estrellas, promedio)
-            Row(
-                modifier = Modifier.clearAndSetSemantics { contentDescription = descripcionEstrellas },
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
+            // La columna ya es un solo elemento ("Promedio de calificaciones, 5,0, de 5 estrellas"). El número
+            // queda expuesto como texto (si no, el Scanner lo marca como texto no expuesto) y las estrellas
+            // se describen sin repetirlo.
+            val descripcionEstrellas = stringResource(R.string.detalle_promedio_estrellas)
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Text(promedio, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                TextoEstrellas(llenas = estrellasLlenas(promedio))
+                TextoEstrellas(
+                    llenas = estrellasLlenas(promedio),
+                    modifier = Modifier.semantics { contentDescription = descripcionEstrellas }
+                )
             }
         }
     }
@@ -227,8 +246,13 @@ private fun FilaCancion(numero: Int, cancion: com.example.vinilos.data.model.Can
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
+        // Un solo elemento por pista ("03, Prueba, 3:07"): con número, nombre y duración sueltos, dos
+        // canciones con el mismo nombre o duración quedaban como descripciones duplicadas.
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .semantics(mergeDescendants = true) {}
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
@@ -236,7 +260,9 @@ private fun FilaCancion(numero: Int, cancion: com.example.vinilos.data.model.Can
                 "%02d".format(numero),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.width(28.dp)
+                maxLines = 1,
+                softWrap = false,
+                modifier = Modifier.widthIn(min = 28.dp)
             )
             Text(cancion.nombre, modifier = Modifier.weight(1f), fontWeight = FontWeight.Medium)
             Text(cancion.duracion, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -251,7 +277,14 @@ private fun TarjetaComentario(comentario: com.example.vinilos.data.model.Comenta
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        // Un solo elemento por comentario (texto y calificación): dos comentarios con la misma nota
+        // dejaban la calificación como descripción duplicada.
+        Column(
+            Modifier
+                .semantics(mergeDescendants = true) {}
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
             Text(comentario.descripcion)
             comentario.calificacion?.let { calificacion ->
                 val descripcionCalificacion = stringResource(R.string.detalle_calificacion, calificacion)

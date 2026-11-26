@@ -44,6 +44,7 @@ import com.example.vinilos.ui.theme.NaranjaContraste
 import com.example.vinilos.ui.theme.NaranjaOscuro
 import com.example.vinilos.ui.theme.TextoPrincipal
 import com.example.vinilos.ui.theme.VinilosTheme
+import com.example.vinilos.ui.idiomaDeLaApp
 
 const val TagFranjaAudioFeed = "franja_audio_feed"
 
@@ -107,7 +108,7 @@ private fun FilaEtiquetas() {
                 modifier = Modifier.size(width = 7.dp, height = 10.5.dp)
             )
             Text(
-                text = stringResource(R.string.coleccionistas_chip_curado).uppercase(),
+                text = stringResource(R.string.coleccionistas_chip_curado).uppercase(idiomaDeLaApp()),
                 style = MaterialTheme.typography.labelSmall.copy(letterSpacing = 0.275.sp),
                 color = NaranjaOscuro
             )
@@ -178,7 +179,7 @@ fun FranjaAudioFeed(modifier: Modifier = Modifier) {
     ) {
         OndaDeBarras(barras = BarrasIzquierda, alFinal = false, modifier = Modifier.weight(1f))
         Text(
-            text = stringResource(R.string.coleccionistas_audio_feed).uppercase(),
+            text = stringResource(R.string.coleccionistas_audio_feed).uppercase(idiomaDeLaApp()),
             style = MaterialTheme.typography.labelSmall.copy(lineHeight = 16.5.sp),
             color = NaranjaContraste
         )

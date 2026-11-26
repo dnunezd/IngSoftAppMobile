@@ -1,5 +1,6 @@
 package com.example.vinilos.data.model
 
+import java.text.DateFormat
 import java.text.ParseException
 import java.text.ParsePosition
 import java.text.SimpleDateFormat
@@ -11,6 +12,9 @@ import java.util.TimeZone
 // El selector de fecha entrega la medianoche UTC del día elegido. Todas estas funciones trabajan en
 // UTC para que ese día no cambie con la zona del teléfono. No usan java.time porque minSdk es 23.
 private val Utc: TimeZone = TimeZone.getTimeZone("UTC")
+
+/** Idioma por defecto de la app (values/). Los formatos lo usan cuando no se indica otro. */
+val Espanol: Locale = Locale.forLanguageTag("es")
 
 private fun formatear(patron: String, millis: Long): String =
     SimpleDateFormat(patron, Locale.ROOT).apply { timeZone = Utc }.format(Date(millis))
@@ -39,10 +43,10 @@ fun anioUtc(millis: Long): Int =
     Calendar.getInstance(Utc).apply { timeInMillis = millis }.get(Calendar.YEAR)
 
 /**
- * Fecha del backend (`1984-08-01` o `1984-08-01T00:00:00.000Z`) como la ve el usuario: `1 de agosto de 1984`.
- * Lanza [ParseException] si no es una fecha ISO válida.
+ * Fecha del backend (`1984-08-01` o `1984-08-01T00:00:00.000Z`) como la ve el usuario, en el [idioma] de la
+ * app: `1 de agosto de 1984` o `August 1, 1984`. Lanza [ParseException] si no es una fecha ISO válida.
  */
-fun formatearFechaLanzamiento(fechaIso: String): String {
+fun formatearFechaLanzamiento(fechaIso: String, idioma: Locale = Espanol): String {
     val timestamp = fechaIso.contains('T')
     val patron = when {
         !timestamp -> "yyyy-MM-dd"
@@ -62,7 +66,20 @@ fun formatearFechaLanzamiento(fechaIso: String): String {
     if (fecha == null || posicion.index != texto.length) {
         throw ParseException("Fecha ISO inválida: $fechaIso", posicion.errorIndex.coerceAtLeast(0))
     }
-    return SimpleDateFormat("d 'de' MMMM 'de' yyyy", Locale.forLanguageTag("es")).apply {
+    return DateFormat.getDateInstance(DateFormat.LONG, idioma).apply {
         timeZone = Utc
     }.format(fecha)
 }
+
+/**
+ * Como [formatearFechaLanzamiento], pero una fecha ausente o que no se pueda interpretar da `null`. El
+ * repositorio la usa para descartar fechas inválidas y la pantalla para mostrarlas en el idioma de la app.
+ */
+fun formatearFechaONula(fechaIso: String?, idioma: Locale = Espanol): String? =
+    fechaIso?.let {
+        try {
+            formatearFechaLanzamiento(it, idioma)
+        } catch (_: ParseException) {
+            null
+        }
+    }

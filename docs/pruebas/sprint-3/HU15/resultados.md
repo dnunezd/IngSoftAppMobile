@@ -108,6 +108,35 @@ Después de las correcciones: 502 unitarias sin fallos, lint sin errores y 59/59
 - **Error al asociar:** no se puede provocar en el backend real; cubrirlo con `MockWebServer` en la misma clase, como las demás E2E.
 - **Tags:** `TagBotonAgregarAlbum`, `TagVentanaAsociar`, `TagListaAsociar`, `tagAlbumAsociable(id)`, `tagYaAsociado(id)`, `TagBotonAsociar`, `TagCancelarAsociar`, `TagErrorAsociar`, `TagVacioAsociar` y `TagSinResultadosAsociar`, en `ui/artistas/VentanaAsociarAlbum.kt`.
 
+## Pruebas E2E (T15-5)
+
+Clase `AgregarAlbumArtistaE2ETest` (cambio de OpenSpec [`add-e2e-agregar-album-artista`](../../../../openspec/changes/add-e2e-agregar-album-artista)). Recorre la app desde el ingreso, como la persona, con los tres escenarios más importantes: la búsqueda sin resultados y cancelar, el flujo completo y el error con reintento. ESC01 y ESC02 van contra BackVynils; como asocian álbumes, se corren contra el backend **local**. Lo que se asocia es siempre un álbum propio (`POST /albums`); al borrarlo al terminar con `DELETE /albums/{id}` desaparece también su relación con el artista, que conserva sus álbumes reales, así que no hace falta restaurar la lista con `PUT` como proponía la guía anterior. ESC03 usa `MockWebServer` para provocar el error.
+
+| ID         | Descripción del escenario                                 | Resultado esperado                                                                                                                                                                                                                                                                             | Backend          | Evidencia                 |
+|------------|-----------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------|---------------------------|
+| FN15-ESC01 | El Coleccionista elige un álbum en la ventana de un músico, busca un texto sin coincidencias, lo vuelve a elegir y pulsa "Cancelar" | "No encontramos álbumes con esa búsqueda" y la selección se quita ("Asociar" deshabilitado); "Cancelar" cierra sin asociar; al abrir de nuevo, sin búsqueda ni selección; no se envía nada                                                                                         | BackVynils local | [PDF](e2e/FN15_ESC01.pdf) |
+| FN15-ESC02 | El Coleccionista agrega un álbum del catálogo a una banda | La ventana muestra "Asociar álbum a <banda>" con "Asociar" deshabilitado y sus álbumes como "Ya asociado"; al buscar y elegir el álbum se habilita; al asociar, la ventana se cierra, "Álbum asociado" y el detalle muestra el álbum; en el backend la banda conserva los álbumes que ya tenía | BackVynils local | [PDF](e2e/FN15_ESC02.pdf) |
+| FN15-ESC03 | Asocia un álbum y la asociación tarda y falla             | Mientras asocia, "Asociar" deshabilitado y un segundo toque no envía nada; luego "No se pudo asociar el álbum, intenta de nuevo" con la ventana abierta y el álbum seleccionado; al reintentar se asocia y el detalle lo muestra                                                                 | `MockWebServer`  | [PDF](e2e/FN15_ESC03.pdf) |
+
+Criterios de la HU15 cubiertos por las E2E:
+
+| #   | Criterio                                                            | Escenarios   |
+|-----|---------------------------------------------------------------------|--------------|
+| 1   | El Coleccionista ve "Agregar álbum"                                 | ESC01, ESC02 |
+| 2   | Ventana con el nombre del artista, la búsqueda y el catálogo        | ESC02        |
+| 3   | Búsqueda por nombre y mensaje sin resultados                        | ESC01, ESC02 |
+| 4   | Álbumes ya asociados deshabilitados con "Ya asociado"               | ESC02        |
+| 5   | "Asociar" deshabilitado sin selección y mientras se envía           | ESC01, ESC02, ESC03 |
+| 6   | Al asociar: ventana cerrada, "Álbum asociado" y álbum en el detalle | ESC02, ESC03 |
+| 7   | La banda conserva sus otros álbumes                                 | ESC02        |
+| 8   | Error al asociar: mensaje, ventana abierta y selección conservada   | ESC03        |
+| 9   | La búsqueda que deja fuera al álbum elegido quita la selección      | ESC01        |
+| 10  | "Cancelar" cierra sin asociar y la ventana vuelve vacía             | ESC01        |
+
+Que el Visitante no vea "Agregar álbum" se cubre en `PantallaDetalleArtistaAsociarTest` y `VinilosNavHostTest` (Compose UI).
+
+Samsung SM-S938B (Android 17), 2026-11-22, contra BackVynils local: `OK (9 tests)` junto con las E2E de HU08 y HU09, sin escenarios omitidos y con todas las capturas en "Ok"; el músico 100 quedó con los álbumes 100 y 101 y la banda 101 con los álbumes 102 y 103, como antes de la corrida. Para correrlas, ver la sección E2E de [HU08](../HU08/README.md#cómo-correrlas) con la clase `com.example.vinilos.AgregarAlbumArtistaE2ETest`.
+
 ## Sin verificar
 
 - Capturas de la ventana girada y con fuente al 200 % para la wiki: el giro está cubierto por `RotacionTest`, pero las capturas quedaron pendientes porque los emuladores pasaron a otra sesión de pruebas.

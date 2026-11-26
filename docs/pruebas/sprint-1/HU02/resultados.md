@@ -19,7 +19,7 @@ Los conteos (91) corresponden a la suite dedicada de HU02 vigente en el momento 
 `AlbumDetalleE2ETest` y `AlbumDetalleBackendRealTest` (3 escenarios: flujo completo exitoso, álbum sin canciones ni comentarios, 404 real) ejecutados contra el backend BackVynils real, en Samsung SM-A356E (Android 16) por USB, con `adb reverse tcp:3000 tcp:3000` y la app instalada con `-PbaseUrl=http://localhost:3000/`:
 
 ```
-adb shell am instrument -w -e class com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest com.example.vinilos.test/androidx.test.runner.AndroidJUnitRunner
+adb shell am instrument -w -e class com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest com.example.vinilos.test/com.example.vinilos.VinilosTestRunner
 ```
 
 Resultado: **OK (3 tests)**. Evidencia generada por `EvidenciaE2E`, una carpeta y un PDF por escenario (`FN02_ESC01`, `FN02_ESC02`, `FN02_ESC03`), extraída del dispositivo con `adb pull` y adjunta en la wiki (T02-6); no se versiona en el repositorio.

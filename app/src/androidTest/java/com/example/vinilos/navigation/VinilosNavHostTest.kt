@@ -52,6 +52,12 @@ import com.example.vinilos.ui.catalogo.TagCatalogo
 import com.example.vinilos.ui.catalogo.TagCuadriculaCatalogo
 import com.example.vinilos.ui.catalogo.TagRolActivo
 import com.example.vinilos.ui.catalogo.tagAlbum
+import com.example.vinilos.ui.crear.TagCancelarAgregarCancion
+import com.example.vinilos.ui.crear.TagDuracionCancion
+import com.example.vinilos.ui.crear.TagGuardarCancion
+import com.example.vinilos.ui.crear.TagNombreCancion
+import com.example.vinilos.ui.detalle.TagAgregarCancionDetalle
+import com.example.vinilos.ui.detalle.TagListaDetalleAlbum
 import com.example.vinilos.data.model.AlbumResumen
 import com.example.vinilos.ui.ingreso.TagAtras
 import com.example.vinilos.ui.ingreso.TagBuscador
@@ -84,11 +90,11 @@ class VinilosNavHostTest {
     private val queen = Artist(101, "Queen", null, ArtistType.BANDA)
     private val ruben = Artist(100, "Rubén Blades Bellido de Luna", null, ArtistType.MUSICO)
     private val detalleQueen = ArtistaDetalle(
-        101, "Queen", null, "Banda británica", ArtistType.BANDA, "1 de enero de 1970", emptyList(),
+        101, "Queen", null, "Banda británica", ArtistType.BANDA, "1970-01-01T00:00:00.000Z", emptyList(),
         listOf(AlbumArtista(100, "Bailando con lobos", null, "2020")), emptyList()
     )
     private val detalleRuben = ArtistaDetalle(
-        100, "Rubén Blades Bellido de Luna", null, "Cantante", ArtistType.MUSICO, "16 de julio de 1948",
+        100, "Rubén Blades Bellido de Luna", null, "Cantante", ArtistType.MUSICO, "1948-07-16T00:00:00.000Z",
         emptyList(), emptyList(), emptyList()
     )
     private val artistas = RepositorioArtistasFalso(
@@ -549,6 +555,13 @@ class VinilosNavHostTest {
         rule.waitForIdle()
     }
 
+    private fun irAlCatalogoComoColeccionista() {
+        entrarComoColeccionista()
+        elegir(manolo)
+        rule.onNodeWithTag(TagVerAlbumes).performScrollTo().performClick()
+        rule.waitForIdle()
+    }
+
     private fun tocarAlbum(id: Int) {
         rule.onNodeWithTag(TagCuadriculaCatalogo).performScrollToNode(hasTestTag(tagAlbum(id)))
         rule.onNodeWithTag(tagAlbum(id)).performClick()
@@ -578,12 +591,56 @@ class VinilosNavHostTest {
         assertEquals(Rutas.DETALLE_ALBUM, ruta())
         assertEquals(100, albumes.ultimoId)
         rule.onNodeWithText("Bailando con lobos").assertIsDisplayed()
+        rule.onAllNodesWithTag(TagAgregarCancionDetalle).assertCountEquals(0)
 
         rule.onNodeWithTag(TagAtras).performClick()
         rule.waitForIdle()
         assertEquals(Rutas.CATALOGO, ruta())
         rule.onNodeWithTag(tagAlbum(100)).assertIsDisplayed()
         assertEquals(1, albumes.consultasCatalogo)
+    }
+
+    @Test
+    fun elColeccionistaAbreElFormularioDesdeElDetalleYCancelaSinEnviar() {
+        mostrar(RepositorioFalso(Result.success(listOf(manolo))))
+        irAlCatalogoComoColeccionista()
+        tocarAlbum(100)
+
+        rule.onNodeWithTag(TagListaDetalleAlbum)
+            .performScrollToNode(hasTestTag(TagAgregarCancionDetalle))
+        rule.onNodeWithTag(TagAgregarCancionDetalle).performClick()
+        rule.waitForIdle()
+        assertEquals(Rutas.AGREGAR_CANCION, ruta())
+
+        rule.onNodeWithTag(TagDuracionCancion).performTextInput("5:05")
+        rule.onNodeWithTag(TagNombreCancion).performTextInput("Decisiones")
+        rule.onNodeWithTag(TagCancelarAgregarCancion).performScrollTo().performClick()
+        rule.waitForIdle()
+
+        assertEquals(Rutas.DETALLE_ALBUM, ruta())
+        assertEquals(emptyList<Pair<Int, com.example.vinilos.data.model.Cancion>>(), albumes.cancionesEnviadas)
+    }
+
+    @Test
+    fun guardarCancionRegresaAlDetalleActualizadoYConfirma() {
+        mostrar(RepositorioFalso(Result.success(listOf(manolo))))
+        albumes.resultadoAgregarCancion = Result.success(Unit)
+        irAlCatalogoComoColeccionista()
+        tocarAlbum(100)
+
+        rule.onNodeWithTag(TagListaDetalleAlbum)
+            .performScrollToNode(hasTestTag(TagAgregarCancionDetalle))
+        rule.onNodeWithTag(TagAgregarCancionDetalle).performClick()
+        rule.waitForIdle()
+        rule.onNodeWithTag(TagNombreCancion).performTextInput("Decisiones")
+        rule.onNodeWithTag(TagDuracionCancion).performTextInput("5:05")
+        rule.onNodeWithTag(TagGuardarCancion).performClick()
+        rule.waitForIdle()
+
+        assertEquals(Rutas.DETALLE_ALBUM, ruta())
+        rule.onNodeWithText("Decisiones").assertIsDisplayed()
+        rule.onNodeWithText("5:05").assertIsDisplayed()
+        rule.onNodeWithText("Canción agregada").assertIsDisplayed()
     }
 
     @Test

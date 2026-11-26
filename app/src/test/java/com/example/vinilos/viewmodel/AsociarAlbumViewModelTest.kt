@@ -7,6 +7,7 @@ import com.example.vinilos.data.model.AlbumResumen
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.ArtistaDetalle
+import com.example.vinilos.data.model.Cancion
 import com.example.vinilos.data.remote.ErrorDeCarga
 import com.example.vinilos.data.remote.RecursoNoEncontrado
 import com.example.vinilos.data.repository.AlbumRepository
@@ -38,6 +39,7 @@ private class CatalogoAsociableFalso : AlbumRepository {
     override suspend fun obtenerAlbum(id: Int): Result<Album> = error("No se usa en esta prueba")
     override suspend fun obtenerAlbumGuardado(id: Int): Album = error("No se usa en esta prueba")
     override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> = error("No se usa en esta prueba")
+    override suspend fun agregarCancion(albumId: Int, cancion: Cancion): Result<Unit> = error("No se usa en esta prueba")
 }
 
 /** Asociaciones controlables: cada una espera a que la prueba la complete. */

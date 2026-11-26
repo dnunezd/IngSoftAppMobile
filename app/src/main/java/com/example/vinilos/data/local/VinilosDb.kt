@@ -20,7 +20,7 @@ import androidx.room.TypeConverters
         ArtistaDetalleEntity::class,
         FavoritoEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 @TypeConverters(Conversores::class)
@@ -36,7 +36,8 @@ abstract class VinilosDb : RoomDatabase() {
 
         /**
          * La base es una caché que la siguiente consulta vuelve a llenar, así que un cambio de esquema
-         * la borra en lugar de migrar datos (add-cache-catalogo D6, add-cache-consultas D1).
+         * la borra en lugar de migrar datos (add-cache-catalogo D6, add-cache-consultas D1). La versión 3 guarda
+ * las fechas del artista en ISO en lugar de en español (internacionalizar-ingles).
          */
         fun crear(context: Context): VinilosDb =
             Room.databaseBuilder(context, VinilosDb::class.java, NOMBRE)

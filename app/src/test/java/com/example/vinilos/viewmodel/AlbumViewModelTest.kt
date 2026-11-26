@@ -44,6 +44,10 @@ private class AlbumRepositoryFalso(
     override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> = error("No se usa en esta prueba")
     override suspend fun obtenerAlbumesGuardados(): List<AlbumResumen> = error("No se usa en esta prueba")
     override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> = error("No se usa en esta prueba")
+    override suspend fun agregarCancion(
+        albumId: Int,
+        cancion: com.example.vinilos.data.model.Cancion
+    ): Result<Unit> = error("No se usa en esta prueba")
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -284,5 +288,52 @@ class AlbumViewModelTest {
         viewModel.actualizar()
 
         assertEquals(AlbumUiState.Cargando, viewModel.uiState.value)
+    }
+
+    // ---------- Aviso "Canción agregada" (revisión de PR: no debe repetir el GET al rotar) ----------
+
+    @Test
+    fun cancionAgregadaPrendeElAvisoYDisparaUnaSolaActualizacion() = runTest {
+        val repositorio = AlbumRepositoryFalso()
+        val viewModel = conAlbumVisible(repositorio)
+        assertEquals(false, viewModel.avisoCancionAgregada.value)
+
+        viewModel.cancionAgregada()
+        advanceUntilIdle()
+
+        assertEquals(true, viewModel.avisoCancionAgregada.value)
+        assertEquals(listOf(101, 101), repositorio.consultas.map { it.first })
+    }
+
+    @Test
+    fun avisoCancionAgregadaMostradoApagaElAvisoSinRepetirLaConsulta() = runTest {
+        val repositorio = AlbumRepositoryFalso()
+        val viewModel = conAlbumVisible(repositorio)
+        viewModel.cancionAgregada()
+        advanceUntilIdle()
+        repositorio.consultas.last().second.complete(Result.success(album))
+        advanceUntilIdle()
+
+        viewModel.avisoCancionAgregadaMostrado()
+
+        assertEquals(false, viewModel.avisoCancionAgregada.value)
+        assertEquals(2, repositorio.consultas.size)
+    }
+
+    @Test
+    fun elAvisoDeCancionAgregadaSobreviveUnaRecreacionDelViewModelAunNoMostrado() = runTest {
+        // Simula "rotar mientras se ve el aviso": el ViewModel no se destruye (sobrevive a cambios de
+        // configuración), así que su estado no se reinicia como sí pasaría con una clave de nav.
+        val repositorio = AlbumRepositoryFalso()
+        val viewModel = conAlbumVisible(repositorio)
+
+        viewModel.cancionAgregada()
+        advanceUntilIdle()
+        repositorio.consultas.last().second.complete(Result.success(album))
+        advanceUntilIdle()
+
+        // El aviso sigue activo (no se ha marcado como mostrado) y la consulta no se repite más.
+        assertEquals(true, viewModel.avisoCancionAgregada.value)
+        assertEquals(2, repositorio.consultas.size)
     }
 }

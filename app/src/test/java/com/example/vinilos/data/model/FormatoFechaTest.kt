@@ -41,4 +41,18 @@ class FormatoFechaTest {
     fun timestampConDesplazamientoSeInterpretaEnUtc() {
         assertEquals("1 de agosto de 1984", formatearFechaLanzamiento("1984-07-31T19:00:00-05:00"))
     }
+
+    @Test
+    fun laFechaLargaSigueElIdiomaDeLaApp() {
+        assertEquals("August 1, 1984", formatearFechaLanzamiento("1984-08-01", java.util.Locale.ENGLISH))
+        assertEquals("1 de agosto de 1984", formatearFechaLanzamiento("1984-08-01", Espanol))
+    }
+
+    @Test
+    fun laFechaONulaFormateaEnElIdiomaYDescartaLasInvalidas() {
+        assertEquals("1 de enero de 1970", formatearFechaONula("1970-01-01T00:00:00.000Z"))
+        assertEquals("January 1, 1970", formatearFechaONula("1970-01-01T00:00:00.000Z", java.util.Locale.ENGLISH))
+        assertEquals(null, formatearFechaONula("2020-99-99T00:00:00.000Z"))
+        assertEquals(null, formatearFechaONula(null))
+    }
 }
