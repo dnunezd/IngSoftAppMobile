@@ -60,6 +60,12 @@ def desplazar(imagen, dy):
     return lienzo
 
 
+def rellenar(imagen, tamano):
+    lienzo = Image.new("RGB", tamano, "white")
+    lienzo.paste(imagen, (0, 0))
+    return lienzo
+
+
 def comparar(base, nueva):
     """Devuelve (porcentaje de píxeles distintos, máscara de diferencias, desplazamiento aplicado)."""
     if base.size != nueva.size:
@@ -100,23 +106,41 @@ def composicion(base, nueva, mascara, titulo_base, titulo_nueva):
     return lienzo
 
 
-def main(carpeta_base, carpeta_nueva, salida):
+def comparar_carpetas(carpeta_base, carpeta_nueva, salida, titulos, recortar=True, guardar_iguales=True):
+    """Compara las capturas de dos carpetas y devuelve una fila por captura de la base.
+
+    [recortar]: quita las barras del sistema (capturas de pantalla completa). Las de `EvidenciaE2E` en API 26 o
+    superior ya son solo la app y no se recortan.
+    """
     os.makedirs(salida, exist_ok=True)
-    version_base = os.path.basename(os.path.normpath(carpeta_base))
-    version_nueva = os.path.basename(os.path.normpath(carpeta_nueva))
     filas = []
     for nombre in sorted(f for f in os.listdir(carpeta_base) if f.endswith(".png")):
         ruta_nueva = os.path.join(carpeta_nueva, nombre)
         if not os.path.exists(ruta_nueva):
             filas.append([nombre[:-4], "", "", "Sin captura en la versión nueva"])
             continue
-        base = recortar_sistema(Image.open(os.path.join(carpeta_base, nombre)).convert("RGB"))
-        nueva = recortar_sistema(Image.open(ruta_nueva).convert("RGB"))
+        base = Image.open(os.path.join(carpeta_base, nombre)).convert("RGB")
+        nueva = Image.open(ruta_nueva).convert("RGB")
+        if recortar:
+            base, nueva = recortar_sistema(base), recortar_sistema(nueva)
+        if base.size != nueva.size:
+            # P. ej., una prueba que en una versión dibuja bajo las barras del sistema y en otra no. Se ponen las
+            # dos sobre un lienzo común, sin deformarlas, y la alineación vertical corrige el corrimiento.
+            tamano = (max(base.size[0], nueva.size[0]), max(base.size[1], nueva.size[1]))
+            base, nueva = rellenar(base, tamano), rellenar(nueva, tamano)
         porcentaje, mascara, dy = comparar(base, nueva)
-        composicion(base, desplazar(nueva, dy) if dy else nueva, mascara, version_base, version_nueva).save(
-            os.path.join(salida, nombre[:-4] + ".jpg"), quality=82
-        )
-        filas.append([nombre[:-4], f"{porcentaje:.2f}", dy, "Igual" if porcentaje < UMBRAL_IGUAL else "Cambió"])
+        estado = "Igual" if porcentaje < UMBRAL_IGUAL else "Cambió"
+        if estado == "Cambió" or guardar_iguales:
+            composicion(base, desplazar(nueva, dy) if dy else nueva, mascara, *titulos).save(
+                os.path.join(salida, nombre[:-4] + ".jpg"), quality=82
+            )
+        filas.append([nombre[:-4], f"{porcentaje:.2f}", dy, estado])
+    return filas
+
+
+def main(carpeta_base, carpeta_nueva, salida):
+    titulos = (os.path.basename(os.path.normpath(carpeta_base)), os.path.basename(os.path.normpath(carpeta_nueva)))
+    filas = comparar_carpetas(carpeta_base, carpeta_nueva, salida, titulos)
     with open(os.path.join(salida, "resultado.csv"), "w", newline="", encoding="utf-8") as archivo:
         escritor = csv.writer(archivo)
         escritor.writerow(["pantalla", "porcentaje_distinto", "desplazamiento_px", "estado"])
