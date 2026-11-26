@@ -1,8 +1,8 @@
 package com.example.vinilos.data.repository
 
 import android.database.sqlite.SQLiteException
-import com.example.vinilos.data.local.ColeccionistaDao
-import com.example.vinilos.data.local.ColeccionistaEntity
+import com.example.vinilos.data.local.CollectorDao
+import com.example.vinilos.data.local.CollectorEntity
 import com.example.vinilos.data.model.Collector
 import com.example.vinilos.data.remote.CollectorApi
 import com.example.vinilos.data.remote.CollectorDto
@@ -24,28 +24,28 @@ import kotlinx.coroutines.withContext
 class CollectorRepositoryImpl(
     private val adaptador: ServiceAdapter,
     private val api: CollectorApi = adaptador.api(),
-    private val coleccionistaDao: ColeccionistaDao? = null,
+    private val coleccionistaDao: CollectorDao? = null,
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : CollectorRepository {
 
     /** Protege la comparación, la escritura y la actualización de lo que sigue (optimizar-cache-e-imagenes, D4). */
     private val escritura = Mutex()
-    private val copia = CopiaTabla<Int, ColeccionistaEntity> { it.id }
+    private val copia = CopiaTabla<Int, CollectorEntity> { it.id }
     private var versionGuardada: String? = null
 
     /**
      * Si la consulta sale bien, lo guardado queda igual a la respuesta, en el orden del backend (D4). Solo se
      * escriben los coleccionistas nuevos o cambiados (una fila cambia también si cambió su posición).
      */
-    override suspend fun obtenerColeccionistas(): Result<List<Collector>> = withContext(dispatcher) {
-        adaptador.llamar { api.getCollectors().conVersion() }
+    override suspend fun getCollectors(): Result<List<Collector>> = withContext(dispatcher) {
+        adaptador.call { api.getCollectors().conVersion() }
             .map { respuesta -> respuesta.valor.mapNotNull { it.aModelo() } to respuesta.version }
-            .onSuccess { (coleccionistas, version) -> guardar(coleccionistas, version) }
+            .onSuccess { (coleccionistas, version) -> save(coleccionistas, version) }
             .map { (coleccionistas, _) -> coleccionistas }
     }
 
     /** Vacío si no hay caché o si no se pudo leer: la caché es una mejora, nunca una condición. */
-    override suspend fun obtenerColeccionistasGuardados(): List<Collector> = withContext(dispatcher) {
+    override suspend fun getCachedCollectors(): List<Collector> = withContext(dispatcher) {
         val dao = coleccionistaDao ?: return@withContext emptyList()
         try {
             dao.todos().map { Collector(it.id, it.nombre, it.correo) }
@@ -59,13 +59,13 @@ class CollectorRepositoryImpl(
      * siguiente consulta reemplaza todo. Un fallo del almacenamiento no cambia el resultado de la consulta; la
      * cancelación y los errores de programación se relanzan.
      */
-    private suspend fun guardar(coleccionistas: List<Collector>, version: String?) {
+    private suspend fun save(coleccionistas: List<Collector>, version: String?) {
         val dao = coleccionistaDao ?: return
         escritura.withLock {
             try {
                 if (version != null && version == versionGuardada) return@withLock
                 val cambios = copia.cambiosPara(
-                    coleccionistas.mapIndexed { posicion, it -> ColeccionistaEntity(it.id, it.name, it.email, posicion) }
+                    coleccionistas.mapIndexed { posicion, it -> CollectorEntity(it.id, it.name, it.email, posicion) }
                 )
                 if (!cambios.vacios) {
                     dao.aplicar(cambios)

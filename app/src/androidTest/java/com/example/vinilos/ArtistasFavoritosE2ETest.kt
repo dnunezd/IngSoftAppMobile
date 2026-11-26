@@ -28,11 +28,11 @@ import com.example.vinilos.e2e.EvidenciaE2E
 import com.example.vinilos.ui.artistas.TagBotonFavorito
 import com.example.vinilos.ui.artistas.TagConfirmacionFavorito
 import com.example.vinilos.ui.artistas.TagContadorArtistas
-import com.example.vinilos.ui.artistas.TagDetalleArtista
+import com.example.vinilos.ui.artistas.TagArtistDetail
 import com.example.vinilos.ui.artistas.TagErrorFavorito
 import com.example.vinilos.ui.artistas.TagListaArtistas
-import com.example.vinilos.ui.artistas.TagNombreDetalleArtista
-import com.example.vinilos.ui.artistas.TagNoDisponibleFavorito
+import com.example.vinilos.ui.artistas.TagNombreArtistDetail
+import com.example.vinilos.ui.artistas.TagNotAvailableFavorito
 import com.example.vinilos.ui.artistas.TagReintentarFavorito
 import com.example.vinilos.ui.artistas.tagArtista
 import com.example.vinilos.ui.ingreso.TagAtras
@@ -98,9 +98,9 @@ class ArtistasFavoritosE2ETest {
             return real.esFavorito(collectorId, artistId)
         }
 
-        override suspend fun agregarFavorito(collectorId: Int, artistId: Int, tipo: ArtistType): Result<Unit> {
+        override suspend fun addFavorite(collectorId: Int, artistId: Int, tipo: ArtistType): Result<Unit> {
             envios++
-            return real.agregarFavorito(collectorId, artistId, tipo)
+            return real.addFavorite(collectorId, artistId, tipo)
         }
     }
 
@@ -130,7 +130,7 @@ class ArtistasFavoritosE2ETest {
     // ---------- Datos reales (design.md, D3) ----------
 
     private fun artistasReales(): List<Artist> = runBlocking {
-        ArtistRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL)).obtenerArtistas().getOrThrow()
+        ArtistRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL)).getArtists().getOrThrow()
     }
 
     /** La primera banda o el primer músico del backend; si no hay, el escenario se omite. */
@@ -141,7 +141,7 @@ class ArtistasFavoritosE2ETest {
     }
 
     /** Crea un coleccionista sin favoritos con `POST /collectors` y lo registra para borrarlo (D2). */
-    private fun crearColeccionista(): Int {
+    private fun createColeccionista(): Int {
         val marca = System.currentTimeMillis()
         val cuerpo = JSONObject()
             .put("name", "E2E FN10 $marca")
@@ -220,9 +220,9 @@ class ArtistasFavoritosE2ETest {
     private fun abrirDetalle(artista: Artist, evidencia: String, pasoListado: String) {
         verListado(artista, evidencia, pasoListado)
         rule.onNodeWithTag(tagArtista(artista)).performClick()
-        esperarA(TagDetalleArtista)
-        esperarA(TagNombreDetalleArtista)
-        rule.onNodeWithTag(TagNombreDetalleArtista).assertTextEquals(artista.name)
+        esperarA(TagArtistDetail)
+        esperarA(TagNombreArtistDetail)
+        rule.onNodeWithTag(TagNombreArtistDetail).assertTextEquals(artista.name)
     }
 
     /** Detalle -> listado -> inicio, con el botón atrás de cada pantalla. */
@@ -280,7 +280,7 @@ class ArtistasFavoritosE2ETest {
     fun elColeccionistaAgregaUnaBandaComoFavorita() {
         val evidencia = "FN10_ESC02"
         val banda = primerArtista(ArtistType.BANDA)
-        val coleccionista = crearColeccionista()
+        val coleccionista = createColeccionista()
 
         ActivityScenario.launch(MainActivity::class.java).use {
             entrarComoColeccionista(coleccionista)
@@ -297,7 +297,7 @@ class ArtistasFavoritosE2ETest {
     fun elColeccionistaAgregaUnMusicoComoFavorito() {
         val evidencia = "FN10_ESC03"
         val musico = primerArtista(ArtistType.MUSICO)
-        val coleccionista = crearColeccionista()
+        val coleccionista = createColeccionista()
 
         ActivityScenario.launch(MainActivity::class.java).use {
             entrarComoColeccionista(coleccionista)
@@ -314,7 +314,7 @@ class ArtistasFavoritosE2ETest {
     fun alVolverAAbrirLaAppElBotonSigueComoFavorito() {
         val evidencia = "FN10_ESC04"
         val artista = primerArtista(ArtistType.BANDA)
-        val coleccionista = crearColeccionista()
+        val coleccionista = createColeccionista()
 
         ActivityScenario.launch(MainActivity::class.java).use {
             entrarComoColeccionista(coleccionista)
@@ -342,7 +342,7 @@ class ArtistasFavoritosE2ETest {
     fun unArtistaQueYaEsFavoritoApareceDesactivado() {
         val evidencia = "FN10_ESC05"
         val artista = primerArtista(ArtistType.MUSICO)
-        val coleccionista = crearColeccionista()
+        val coleccionista = createColeccionista()
         agregarEnElBackend(coleccionista, artista)
 
         ActivityScenario.launch(MainActivity::class.java).use {
@@ -495,7 +495,7 @@ class ArtistasFavoritosE2ETest {
             esperarBoton("Agregar Favorito")
             boton().performClick()
 
-            esperarA(TagNoDisponibleFavorito)
+            esperarA(TagNotAvailableFavorito)
             rule.onNodeWithText("El artista ya no está disponible").assertIsDisplayed()
             rule.onAllNodesWithTag(TagConfirmacionFavorito).assertCountEquals(0)
             rule.onNodeWithText("Volver al listado de artistas").performScrollTo().assertIsDisplayed()

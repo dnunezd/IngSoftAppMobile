@@ -18,7 +18,7 @@ class RepositorioFavoritosFalso(
         return esFavorito
     }
 
-    override suspend fun agregarFavorito(collectorId: Int, artistId: Int, tipo: ArtistType): Result<Unit> {
+    override suspend fun addFavorite(collectorId: Int, artistId: Int, tipo: ArtistType): Result<Unit> {
         guardados++
         return agregarResultado
     }

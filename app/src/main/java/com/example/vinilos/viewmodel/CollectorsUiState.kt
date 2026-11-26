@@ -4,7 +4,7 @@ import com.example.vinilos.data.model.Collector
 
 sealed interface CollectorsUiState {
 
-    data object Cargando : CollectorsUiState
+    data object Loading : CollectorsUiState
 
     /**
      * [coleccionistas] es la lista completa del backend; [visibles] es la que resulta de
@@ -12,7 +12,7 @@ sealed interface CollectorsUiState {
      * [actualizando]: se muestra el listado guardado mientras se consulta el backend.
      * [errorAlActualizar]: esa consulta falló y la pantalla debe avisarlo una vez (add-cache-consultas, D5).
      */
-    data class Exito(
+    data class Success(
         val coleccionistas: List<Collector>,
         val consulta: String = "",
         val actualizando: Boolean = false,
@@ -21,7 +21,7 @@ sealed interface CollectorsUiState {
         val visibles: List<Collector> = filtrar(coleccionistas, consulta)
     }
 
-    data object Vacio : CollectorsUiState
+    data object Empty : CollectorsUiState
 
     data object Error : CollectorsUiState
 }

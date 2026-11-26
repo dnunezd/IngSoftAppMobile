@@ -1,29 +1,29 @@
 package com.example.vinilos.data.repository
 
 import com.example.vinilos.data.local.AlbumDao
-import com.example.vinilos.data.local.AlbumDetalleEntity
+import com.example.vinilos.data.local.AlbumDetailEntity
 import com.example.vinilos.data.local.AlbumEntity
-import com.example.vinilos.data.local.ArtistaDao
-import com.example.vinilos.data.local.ArtistaDetalleEntity
-import com.example.vinilos.data.local.ArtistaEntity
-import com.example.vinilos.data.local.ColeccionistaDao
-import com.example.vinilos.data.local.ColeccionistaEntity
-import com.example.vinilos.data.local.FavoritoDao
-import com.example.vinilos.data.local.FavoritoEntity
-import com.example.vinilos.data.model.AlbumNuevo
+import com.example.vinilos.data.local.ArtistDao
+import com.example.vinilos.data.local.ArtistDetailEntity
+import com.example.vinilos.data.local.ArtistEntity
+import com.example.vinilos.data.local.CollectorDao
+import com.example.vinilos.data.local.CollectorEntity
+import com.example.vinilos.data.local.FavoriteDao
+import com.example.vinilos.data.local.FavoriteEntity
+import com.example.vinilos.data.model.NewAlbum
 import com.example.vinilos.data.model.ArtistType
-import com.example.vinilos.data.model.ComentarioNuevo
+import com.example.vinilos.data.model.NewComment
 import com.example.vinilos.data.remote.AlbumApi
 import com.example.vinilos.data.remote.AlbumDto
 import com.example.vinilos.data.remote.ArtistApi
-import com.example.vinilos.data.remote.ArtistaDetalleDto
+import com.example.vinilos.data.remote.ArtistDetailDto
 import com.example.vinilos.data.remote.BandDto
 import com.example.vinilos.data.remote.CollectorApi
 import com.example.vinilos.data.remote.CollectorDto
-import com.example.vinilos.data.remote.ComentarioApi
-import com.example.vinilos.data.remote.ComentarioDto
-import com.example.vinilos.data.remote.ComentarioNuevoDto
-import com.example.vinilos.data.remote.CrearAlbumDto
+import com.example.vinilos.data.remote.CommentApi
+import com.example.vinilos.data.remote.CommentDto
+import com.example.vinilos.data.remote.NewCommentDto
+import com.example.vinilos.data.remote.CreateAlbumDto
 import com.example.vinilos.data.remote.IdAlbumDto
 import com.example.vinilos.data.remote.MusicianDto
 import com.example.vinilos.data.remote.PerformerDto
@@ -91,28 +91,28 @@ class RepositoriosDispatcherTest {
     )
 
     private val albumApi = object : AlbumApi {
-        override suspend fun obtenerAlbumes(): Response<List<AlbumDto>> = Response.success(listOf(albumDto)).also { anotarHilo() }
-        override suspend fun obtenerAlbum(id: Int): Response<AlbumDto> = Response.success(albumDto).also { anotarHilo() }
-        override suspend fun crearAlbum(album: CrearAlbumDto): AlbumDto = albumDto.also { anotarHilo() }
+        override suspend fun getAlbums(): Response<List<AlbumDto>> = Response.success(listOf(albumDto)).also { anotarHilo() }
+        override suspend fun getAlbum(id: Int): Response<AlbumDto> = Response.success(albumDto).also { anotarHilo() }
+        override suspend fun createAlbum(album: CreateAlbumDto): AlbumDto = albumDto.also { anotarHilo() }
     }
 
     private val albumDao = object : AlbumDao() {
         override suspend fun todos(): List<AlbumEntity> = emptyList<AlbumEntity>().also { anotarHilo() }
         override suspend fun borrarTodos() = anotarHilo()
         override suspend fun insertar(albumes: List<AlbumEntity>) = anotarHilo()
-        override suspend fun detalle(id: Int): AlbumDetalleEntity? = null.also { anotarHilo() }
-        override suspend fun guardarDetalle(detalle: AlbumDetalleEntity) = anotarHilo()
+        override suspend fun detalle(id: Int): AlbumDetailEntity? = null.also { anotarHilo() }
+        override suspend fun saveDetail(detalle: AlbumDetailEntity) = anotarHilo()
         override suspend fun borrarDetalles() = anotarHilo()
-        override suspend fun insertarDetalles(detalles: List<AlbumDetalleEntity>) = anotarHilo()
+        override suspend fun insertarDetalles(detalles: List<AlbumDetailEntity>) = anotarHilo()
         override suspend fun borrarDelCatalogo(id: Int) = anotarHilo()
         override suspend fun borrarDetalle(id: Int) = anotarHilo()
-        override suspend fun guardarAlbumes(albumes: List<AlbumEntity>) = anotarHilo()
-        override suspend fun guardarDetalles(detalles: List<AlbumDetalleEntity>) = anotarHilo()
+        override suspend fun saveAlbums(albumes: List<AlbumEntity>) = anotarHilo()
+        override suspend fun saveDetails(detalles: List<AlbumDetailEntity>) = anotarHilo()
         override suspend fun borrarAlbumesPorId(ids: List<Int>) = anotarHilo()
         override suspend fun borrarDetallesPorId(ids: List<Int>) = anotarHilo()
     }
 
-    private val detalleDto = ArtistaDetalleDto(
+    private val detalleDto = ArtistDetailDto(
         id = 1, name = "Queen", image = null, description = null, birthDate = null,
         creationDate = "1970-01-01T00:00:00.000Z", albums = emptyList(), musicians = emptyList(),
         performerPrizes = emptyList()
@@ -122,10 +122,10 @@ class RepositoriosDispatcherTest {
         override suspend fun getMusicians(): Response<List<MusicianDto>> =
             Response.success(listOf(MusicianDto(2, "Rubén Blades", null))).also { anotarHilo() }
         override suspend fun getBands(): Response<List<BandDto>> = Response.success(listOf(BandDto(1, "Queen", null))).also { anotarHilo() }
-        override suspend fun getMusician(id: Int): Response<ArtistaDetalleDto> = Response.success(detalleDto).also { anotarHilo() }
-        override suspend fun getBand(id: Int): Response<ArtistaDetalleDto> = Response.success(detalleDto).also { anotarHilo() }
+        override suspend fun getMusician(id: Int): Response<ArtistDetailDto> = Response.success(detalleDto).also { anotarHilo() }
+        override suspend fun getBand(id: Int): Response<ArtistDetailDto> = Response.success(detalleDto).also { anotarHilo() }
         override suspend fun getPerformerPrizes(): Response<List<PremiacionDto>> = Response.success(emptyList<PremiacionDto>()).also { anotarHilo() }
-        override suspend fun asociarAlbumAMusico(id: Int, albumId: Int): Response<Unit> = Response.success(Unit).also { anotarHilo() }
+        override suspend fun associateAlbumWithPerformer(id: Int, albumId: Int): Response<Unit> = Response.success(Unit).also { anotarHilo() }
         override suspend fun reemplazarAlbumesDeBanda(id: Int, albumes: List<IdAlbumDto>): Response<Unit> =
             Response.success(Unit).also { anotarHilo() }
     }
@@ -141,30 +141,30 @@ class RepositoriosDispatcherTest {
             PerformerDto(musicianId).also { anotarHilo() }
     }
 
-    private val coleccionistaDao = object : ColeccionistaDao() {
-        override suspend fun todos(): List<ColeccionistaEntity> = emptyList<ColeccionistaEntity>().also { anotarHilo() }
+    private val coleccionistaDao = object : CollectorDao() {
+        override suspend fun todos(): List<CollectorEntity> = emptyList<CollectorEntity>().also { anotarHilo() }
         override suspend fun borrarTodos() = anotarHilo()
-        override suspend fun insertar(coleccionistas: List<ColeccionistaEntity>) = anotarHilo()
-        override suspend fun guardar(coleccionistas: List<ColeccionistaEntity>) = anotarHilo()
+        override suspend fun insertar(coleccionistas: List<CollectorEntity>) = anotarHilo()
+        override suspend fun save(coleccionistas: List<CollectorEntity>) = anotarHilo()
         override suspend fun borrarPorId(ids: List<Int>) = anotarHilo()
     }
 
-    private val artistaDao = object : ArtistaDao() {
-        override suspend fun todos(): List<ArtistaEntity> = emptyList<ArtistaEntity>().also { anotarHilo() }
+    private val artistaDao = object : ArtistDao() {
+        override suspend fun todos(): List<ArtistEntity> = emptyList<ArtistEntity>().also { anotarHilo() }
         override suspend fun borrarTodos() = anotarHilo()
-        override suspend fun insertar(artistas: List<ArtistaEntity>) = anotarHilo()
-        override suspend fun detalle(tipo: ArtistType, id: Int): ArtistaDetalleEntity? = null.also { anotarHilo() }
-        override suspend fun guardarDetalle(detalle: ArtistaDetalleEntity) = anotarHilo()
+        override suspend fun insertar(artistas: List<ArtistEntity>) = anotarHilo()
+        override suspend fun detalle(tipo: ArtistType, id: Int): ArtistDetailEntity? = null.also { anotarHilo() }
+        override suspend fun saveDetail(detalle: ArtistDetailEntity) = anotarHilo()
         override suspend fun borrarDetalle(tipo: ArtistType, id: Int) = anotarHilo()
-        override suspend fun guardarArtistas(artistas: List<ArtistaEntity>) = anotarHilo()
+        override suspend fun saveArtists(artistas: List<ArtistEntity>) = anotarHilo()
         override suspend fun borrarArtistas(tipo: ArtistType, ids: List<Int>) = anotarHilo()
     }
 
-    private val favoritoDao = object : FavoritoDao() {
+    private val favoritoDao = object : FavoriteDao() {
         override suspend fun existe(coleccionistaId: Int, artistaId: Int): Boolean = false.also { anotarHilo() }
         override suspend fun deColeccionista(coleccionistaId: Int): List<Int> = emptyList<Int>().also { anotarHilo() }
         override suspend fun borrarDe(coleccionistaId: Int) = anotarHilo()
-        override suspend fun insertar(favoritos: List<FavoritoEntity>) = anotarHilo()
+        override suspend fun insertar(favoritos: List<FavoriteEntity>) = anotarHilo()
         override suspend fun borrarDeColeccionista(coleccionistaId: Int, artistaIds: List<Int>) = anotarHilo()
     }
 
@@ -173,68 +173,68 @@ class RepositoriosDispatcherTest {
     private fun coleccionistas() = CollectorRepositoryImpl(adaptador, collectorApi, coleccionistaDao, dispatcher)
     private fun favoritos() = FavoriteRepositoryImpl(adaptador, collectorApi, favoritoDao, dispatcher)
 
-    private val comentarioApi = object : ComentarioApi {
-        override suspend fun publicarComentario(albumId: Int, comentario: ComentarioNuevoDto): ComentarioDto =
-            ComentarioDto(comentario.description, comentario.rating).also { anotarHilo() }
+    private val comentarioApi = object : CommentApi {
+        override suspend fun postComment(albumId: Int, comentario: NewCommentDto): CommentDto =
+            CommentDto(comentario.description, comentario.rating).also { anotarHilo() }
     }
 
-    private fun comentarios() = ComentarioRepositoryImpl(adaptador, comentarioApi, dispatcher)
+    private fun comentarios() = CommentRepositoryImpl(adaptador, comentarioApi, dispatcher)
 
     // ---------- Álbumes ----------
 
     @Test
-    fun obtenerAlbumCorreEnElDispatcher() = runTest {
-        assertTrue(albumes().obtenerAlbum(100).isSuccess)
+    fun getAlbumCorreEnElDispatcher() = runTest {
+        assertTrue(albumes().getAlbum(100).isSuccess)
         assertTodoEnElDispatcher()
     }
 
     @Test
-    fun obtenerAlbumesYGuardarlosCorreEnElDispatcher() = runTest {
-        assertTrue(albumes().obtenerAlbumes().isSuccess)
+    fun getAlbumsYGuardarlosCorreEnElDispatcher() = runTest {
+        assertTrue(albumes().getAlbums().isSuccess)
         assertEquals("Consulta y reemplazo del catálogo y de los detalles guardados", 5, hilos.size)
         assertTodoEnElDispatcher()
     }
 
     @Test
-    fun obtenerAlbumesGuardadosCorreEnElDispatcher() = runTest {
-        albumes().obtenerAlbumesGuardados()
+    fun getCachedAlbumsCorreEnElDispatcher() = runTest {
+        albumes().getCachedAlbums()
         assertTodoEnElDispatcher()
     }
 
     @Test
-    fun crearAlbumCorreEnElDispatcher() = runTest {
-        val nuevo = AlbumNuevo("Buscando América", "https://example.com/p.jpg", 0L, "Salsa urbana", "Salsa", "Elektra")
-        assertTrue(albumes().crearAlbum(nuevo).isSuccess)
+    fun createAlbumCorreEnElDispatcher() = runTest {
+        val nuevo = NewAlbum("Buscando América", "https://example.com/p.jpg", 0L, "Salsa urbana", "Salsa", "Elektra")
+        assertTrue(albumes().createAlbum(nuevo).isSuccess)
         assertTodoEnElDispatcher()
     }
 
     // ---------- Artistas ----------
 
     @Test
-    fun obtenerArtistasCorreEnElDispatcher() = runTest {
-        assertEquals(listOf("Queen", "Rubén Blades"), artistas().obtenerArtistas().getOrThrow().map { it.name })
+    fun getArtistsCorreEnElDispatcher() = runTest {
+        assertEquals(listOf("Queen", "Rubén Blades"), artistas().getArtists().getOrThrow().map { it.name })
         assertTodoEnElDispatcher()
     }
 
     @Test
-    fun asociarAlbumCorreEnElDispatcher() = runTest {
-        assertTrue(artistas().asociarAlbum(ArtistType.MUSICO, 2, 100).isSuccess)
-        assertTrue(artistas().asociarAlbum(ArtistType.BANDA, 1, 100).isSuccess)
+    fun associateAlbumCorreEnElDispatcher() = runTest {
+        assertTrue(artistas().associateAlbum(ArtistType.MUSICO, 2, 100).isSuccess)
+        assertTrue(artistas().associateAlbum(ArtistType.BANDA, 1, 100).isSuccess)
         assertTodoEnElDispatcher()
     }
 
     @Test
-    fun obtenerDetalleCorreEnElDispatcher() = runTest {
-        assertTrue(artistas().obtenerDetalle(ArtistType.BANDA, 1).isSuccess)
-        assertTrue(artistas().obtenerDetalle(ArtistType.MUSICO, 1).isSuccess)
+    fun getDetailCorreEnElDispatcher() = runTest {
+        assertTrue(artistas().getDetail(ArtistType.BANDA, 1).isSuccess)
+        assertTrue(artistas().getDetail(ArtistType.MUSICO, 1).isSuccess)
         assertTodoEnElDispatcher()
     }
 
     // ---------- Coleccionistas y favoritos ----------
 
     @Test
-    fun obtenerColeccionistasCorreEnElDispatcher() = runTest {
-        assertTrue(coleccionistas().obtenerColeccionistas().isSuccess)
+    fun getCollectorsCorreEnElDispatcher() = runTest {
+        assertTrue(coleccionistas().getCollectors().isSuccess)
         assertTodoEnElDispatcher()
     }
 
@@ -245,41 +245,41 @@ class RepositoriosDispatcherTest {
     }
 
     @Test
-    fun agregarFavoritoCorreEnElDispatcher() = runTest {
-        assertTrue(favoritos().agregarFavorito(100, 1, ArtistType.BANDA).isSuccess)
-        assertTrue(favoritos().agregarFavorito(100, 2, ArtistType.MUSICO).isSuccess)
+    fun addFavoriteCorreEnElDispatcher() = runTest {
+        assertTrue(favoritos().addFavorite(100, 1, ArtistType.BANDA).isSuccess)
+        assertTrue(favoritos().addFavorite(100, 2, ArtistType.MUSICO).isSuccess)
         assertTodoEnElDispatcher()
     }
 
     @Test
-    fun publicarComentarioCorreEnElDispatcher() = runTest {
-        assertTrue(comentarios().publicarComentario(100, ComentarioNuevo(101, 5, "Gran prensado")).isSuccess)
+    fun postCommentCorreEnElDispatcher() = runTest {
+        assertTrue(comentarios().postComment(100, NewComment(101, 5, "Gran prensado")).isSuccess)
         assertTodoEnElDispatcher()
     }
 
     // ---------- Lecturas de lo guardado (add-cache-consultas) ----------
 
     @Test
-    fun obtenerAlbumGuardadoCorreEnElDispatcher() = runTest {
-        albumes().obtenerAlbumGuardado(100)
+    fun getCachedAlbumCorreEnElDispatcher() = runTest {
+        albumes().getCachedAlbum(100)
         assertTodoEnElDispatcher()
     }
 
     @Test
-    fun obtenerColeccionistasGuardadosCorreEnElDispatcher() = runTest {
-        coleccionistas().obtenerColeccionistasGuardados()
+    fun getCachedCollectorsCorreEnElDispatcher() = runTest {
+        coleccionistas().getCachedCollectors()
         assertTodoEnElDispatcher()
     }
 
     @Test
-    fun obtenerArtistasGuardadosCorreEnElDispatcher() = runTest {
-        artistas().obtenerArtistasGuardados()
+    fun getCachedArtistsCorreEnElDispatcher() = runTest {
+        artistas().getCachedArtists()
         assertTodoEnElDispatcher()
     }
 
     @Test
-    fun obtenerDetalleGuardadoCorreEnElDispatcher() = runTest {
-        artistas().obtenerDetalleGuardado(ArtistType.BANDA, 1)
+    fun getCachedDetailCorreEnElDispatcher() = runTest {
+        artistas().getCachedDetail(ArtistType.BANDA, 1)
         assertTodoEnElDispatcher()
     }
 

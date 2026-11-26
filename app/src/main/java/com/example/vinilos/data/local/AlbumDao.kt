@@ -34,16 +34,16 @@ abstract class AlbumDao {
     // ---------- Detalle (add-cache-consultas, D4) ----------
 
     @Query("SELECT * FROM album_detalle WHERE id = :id")
-    abstract suspend fun detalle(id: Int): AlbumDetalleEntity?
+    abstract suspend fun detalle(id: Int): AlbumDetailEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    abstract suspend fun guardarDetalle(detalle: AlbumDetalleEntity)
+    abstract suspend fun saveDetail(detalle: AlbumDetailEntity)
 
     @Query("DELETE FROM album_detalle")
     abstract suspend fun borrarDetalles()
 
     @Insert
-    abstract suspend fun insertarDetalles(detalles: List<AlbumDetalleEntity>)
+    abstract suspend fun insertarDetalles(detalles: List<AlbumDetailEntity>)
 
     @Query("DELETE FROM albumes WHERE id = :id")
     abstract suspend fun borrarDelCatalogo(id: Int)
@@ -63,7 +63,7 @@ abstract class AlbumDao {
      * en [albumes] sin estar en [detalles] si no pasó la validación estricta del detalle.
      */
     @Transaction
-    open suspend fun reemplazarCatalogo(albumes: List<AlbumEntity>, detalles: List<AlbumDetalleEntity>) {
+    open suspend fun reemplazarCatalogo(albumes: List<AlbumEntity>, detalles: List<AlbumDetailEntity>) {
         reemplazar(albumes)
         borrarDetalles()
         insertarDetalles(detalles)
@@ -72,10 +72,10 @@ abstract class AlbumDao {
     // ---------- Escrituras incrementales (optimizar-cache-e-imagenes, D6) ----------
 
     @Upsert
-    abstract suspend fun guardarAlbumes(albumes: List<AlbumEntity>)
+    abstract suspend fun saveAlbums(albumes: List<AlbumEntity>)
 
     @Upsert
-    abstract suspend fun guardarDetalles(detalles: List<AlbumDetalleEntity>)
+    abstract suspend fun saveDetails(detalles: List<AlbumDetailEntity>)
 
     @Query("DELETE FROM albumes WHERE id IN (:ids)")
     abstract suspend fun borrarAlbumesPorId(ids: List<Int>)
@@ -89,20 +89,20 @@ abstract class AlbumDao {
      */
     @Transaction
     open suspend fun aplicarCatalogo(
-        albumes: CambiosDeTabla<Int, AlbumEntity>,
-        detalles: CambiosDeTabla<Int, AlbumDetalleEntity>
+        albumes: TableChanges<Int, AlbumEntity>,
+        detalles: TableChanges<Int, AlbumDetailEntity>
     ) {
         if (albumes.reemplazarTodo) {
-            reemplazar(albumes.guardar)
+            reemplazar(albumes.save)
         } else {
-            if (albumes.guardar.isNotEmpty()) guardarAlbumes(albumes.guardar)
+            if (albumes.save.isNotEmpty()) saveAlbums(albumes.save)
             enGrupos(albumes.borrar) { borrarAlbumesPorId(it) }
         }
         if (detalles.reemplazarTodo) {
             borrarDetalles()
-            insertarDetalles(detalles.guardar)
+            insertarDetalles(detalles.save)
         } else {
-            if (detalles.guardar.isNotEmpty()) guardarDetalles(detalles.guardar)
+            if (detalles.save.isNotEmpty()) saveDetails(detalles.save)
             enGrupos(detalles.borrar) { borrarDetallesPorId(it) }
         }
     }

@@ -2,7 +2,7 @@ package com.example.vinilos.viewmodel
 
 import com.example.vinilos.MainDispatcherRule
 import com.example.vinilos.data.model.Collector
-import com.example.vinilos.data.remote.ErrorDeCarga
+import com.example.vinilos.data.remote.LoadError
 import com.example.vinilos.data.repository.CollectorRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -20,9 +20,9 @@ private class RepositorioFalso : CollectorRepository {
     /** Listado guardado en el dispositivo (add-cache-consultas). */
     var guardados: List<Collector> = emptyList()
 
-    override suspend fun obtenerColeccionistasGuardados(): List<Collector> = guardados
+    override suspend fun getCachedCollectors(): List<Collector> = guardados
 
-    override suspend fun obtenerColeccionistas(): Result<List<Collector>> {
+    override suspend fun getCollectors(): Result<List<Collector>> {
         val respuesta = CompletableDeferred<Result<List<Collector>>>()
         llamadas += respuesta
         return respuesta.await()
@@ -40,23 +40,23 @@ class CollectorsViewModelTest {
     private val jose = Collector(102, "José Pérez", "jose@correo.com")
     private val todos = listOf(manolo, jaime, jose)
 
-    private val error = Result.failure<List<Collector>>(ErrorDeCarga())
+    private val error = Result.failure<List<Collector>>(LoadError())
 
     // ---- 4.1: estados de la carga ----
 
     @Test
-    fun alCrearseEmpiezaCargandoYPideLosColeccionistasUnaVez() = runTest {
+    fun alCrearseEmpiezaLoadingYPideLosColeccionistasUnaVez() = runTest {
         val repo = RepositorioFalso()
 
         val vm = CollectorsViewModel(repo)
         advanceUntilIdle()
 
-        assertEquals(CollectorsUiState.Cargando, vm.uiState.value)
+        assertEquals(CollectorsUiState.Loading, vm.uiState.value)
         assertEquals(1, repo.llamadas.size)
     }
 
     @Test
-    fun cargandoPasaAExitoConLosColeccionistas() = runTest {
+    fun cargandoPasaASuccessConLosColeccionistas() = runTest {
         val repo = RepositorioFalso()
         val vm = CollectorsViewModel(repo)
         advanceUntilIdle()
@@ -64,11 +64,11 @@ class CollectorsViewModelTest {
         repo.llamadas[0].complete(Result.success(todos))
         advanceUntilIdle()
 
-        assertEquals(CollectorsUiState.Exito(todos), vm.uiState.value)
+        assertEquals(CollectorsUiState.Success(todos), vm.uiState.value)
     }
 
     @Test
-    fun cargandoPasaAVacioSiNoHayColeccionistas() = runTest {
+    fun cargandoPasaAEmptySiNoHayColeccionistas() = runTest {
         val repo = RepositorioFalso()
         val vm = CollectorsViewModel(repo)
         advanceUntilIdle()
@@ -76,7 +76,7 @@ class CollectorsViewModelTest {
         repo.llamadas[0].complete(Result.success(emptyList()))
         advanceUntilIdle()
 
-        assertEquals(CollectorsUiState.Vacio, vm.uiState.value)
+        assertEquals(CollectorsUiState.Empty, vm.uiState.value)
     }
 
     @Test
@@ -92,20 +92,20 @@ class CollectorsViewModelTest {
     }
 
     @Test
-    fun reintentarTrasUnErrorVuelveACargandoYLuegoAExito() = runTest {
+    fun retryTrasUnErrorVuelveALoadingYLuegoASuccess() = runTest {
         val repo = RepositorioFalso()
         val vm = CollectorsViewModel(repo)
         advanceUntilIdle()
         repo.llamadas[0].complete(error)
         advanceUntilIdle()
 
-        vm.reintentar()
+        vm.retry()
         advanceUntilIdle()
-        assertEquals(CollectorsUiState.Cargando, vm.uiState.value)
+        assertEquals(CollectorsUiState.Loading, vm.uiState.value)
 
         repo.llamadas[1].complete(Result.success(todos))
         advanceUntilIdle()
-        assertEquals(CollectorsUiState.Exito(todos), vm.uiState.value)
+        assertEquals(CollectorsUiState.Success(todos), vm.uiState.value)
     }
 
     @Test
@@ -116,9 +116,9 @@ class CollectorsViewModelTest {
         repo.llamadas[0].complete(error)
         advanceUntilIdle()
 
-        vm.reintentar()
+        vm.retry()
         advanceUntilIdle()
-        assertEquals(CollectorsUiState.Cargando, vm.uiState.value)
+        assertEquals(CollectorsUiState.Loading, vm.uiState.value)
 
         repo.llamadas[1].complete(error)
         advanceUntilIdle()
@@ -126,12 +126,12 @@ class CollectorsViewModelTest {
     }
 
     @Test
-    fun reintentarCancelaLaCargaAnteriorYUnaRespuestaTardiaNoPisaLaNueva() = runTest {
+    fun retryCancelaLaCargaAnteriorYUnaRespuestaTardiaNoPisaLaNueva() = runTest {
         val repo = RepositorioFalso()
         val vm = CollectorsViewModel(repo)
         advanceUntilIdle()
 
-        vm.reintentar()
+        vm.retry()
         advanceUntilIdle()
         repo.llamadas[1].complete(error)
         advanceUntilIdle()
@@ -154,21 +154,21 @@ class CollectorsViewModelTest {
     }
 
     private fun CollectorsViewModel.visibles(): List<Collector> =
-        (uiState.value as CollectorsUiState.Exito).visibles
+        (uiState.value as CollectorsUiState.Success).visibles
 
     @Test
     fun sinBusquedaSeVenTodosLosColeccionistas() = runTest {
         val vm = vmConDatos()
 
         assertEquals(todos, vm.visibles())
-        assertEquals("", (vm.uiState.value as CollectorsUiState.Exito).consulta)
+        assertEquals("", (vm.uiState.value as CollectorsUiState.Success).consulta)
     }
 
     @Test
     fun filtraPorNombre() = runTest {
         val vm = vmConDatos()
 
-        vm.buscar("bel")
+        vm.search("bel")
 
         assertEquals(listOf(manolo), vm.visibles())
     }
@@ -177,7 +177,7 @@ class CollectorsViewModelTest {
     fun filtraPorCorreo() = runTest {
         val vm = vmConDatos()
 
-        vm.buscar("rtvc")
+        vm.search("rtvc")
 
         assertEquals(listOf(jaime), vm.visibles())
     }
@@ -186,7 +186,7 @@ class CollectorsViewModelTest {
     fun noDistingueMayusculasDeMinusculas() = runTest {
         val vm = vmConDatos()
 
-        vm.buscar("JAIME")
+        vm.search("JAIME")
 
         assertEquals(listOf(jaime), vm.visibles())
     }
@@ -195,22 +195,22 @@ class CollectorsViewModelTest {
     fun noDistingueTildesEnLaBusquedaNiEnLosDatos() = runTest {
         val vm = vmConDatos()
 
-        vm.buscar("monsálve")
+        vm.search("monsálve")
         assertEquals(listOf(jaime), vm.visibles())
 
-        vm.buscar("jose perez")
+        vm.search("jose perez")
         assertEquals(listOf(jose), vm.visibles())
     }
 
     @Test
-    fun textoVacioODeEspaciosMuestraTodos() = runTest {
+    fun textoEmptyODeEspaciosMuestraTodos() = runTest {
         val vm = vmConDatos()
-        vm.buscar("bel")
+        vm.search("bel")
 
-        vm.buscar("")
+        vm.search("")
         assertEquals(todos, vm.visibles())
 
-        vm.buscar("   ")
+        vm.search("   ")
         assertEquals(todos, vm.visibles())
     }
 
@@ -218,18 +218,18 @@ class CollectorsViewModelTest {
     fun ignoraLosEspaciosAlrededorDelTexto() = runTest {
         val vm = vmConDatos()
 
-        vm.buscar("  bel ")
+        vm.search("  bel ")
 
         assertEquals(listOf(manolo), vm.visibles())
     }
 
     @Test
-    fun sinCoincidenciasLaListaVisibleQuedaVaciaPeroSigueEnExito() = runTest {
+    fun sinCoincidenciasLaListaVisibleQuedaVaciaPeroSigueEnSuccess() = runTest {
         val vm = vmConDatos()
 
-        vm.buscar("zzz")
+        vm.search("zzz")
 
-        assertTrue(vm.uiState.value is CollectorsUiState.Exito)
+        assertTrue(vm.uiState.value is CollectorsUiState.Success)
         assertEquals(emptyList<Collector>(), vm.visibles())
     }
 
@@ -237,35 +237,35 @@ class CollectorsViewModelTest {
     fun elTextoDeBusquedaSeConservaEnElEstado() = runTest {
         val vm = vmConDatos()
 
-        vm.buscar("bel")
+        vm.search("bel")
 
         // Lo que ve una pantalla recreada (rotación): el mismo ViewModel con el mismo estado.
-        val estado = vm.uiState.value as CollectorsUiState.Exito
+        val estado = vm.uiState.value as CollectorsUiState.Success
         assertEquals("bel", estado.consulta)
         assertEquals(listOf(manolo), estado.visibles)
     }
 
     @Test
-    fun buscarMientrasCargaNoHaceNada() = runTest {
+    fun searchMientrasCargaNoHaceNada() = runTest {
         val repo = RepositorioFalso()
         val vm = CollectorsViewModel(repo)
         advanceUntilIdle()
 
-        vm.buscar("bel")
+        vm.search("bel")
 
-        assertEquals(CollectorsUiState.Cargando, vm.uiState.value)
+        assertEquals(CollectorsUiState.Loading, vm.uiState.value)
     }
 
     @Test
-    fun buscarNoVuelveAConsultarAlBackend() = runTest {
+    fun searchNoVuelveAConsultarAlBackend() = runTest {
         val repo = RepositorioFalso()
         val vm = CollectorsViewModel(repo)
         advanceUntilIdle()
         repo.llamadas[0].complete(Result.success(todos))
         advanceUntilIdle()
 
-        vm.buscar("bel")
-        vm.buscar("jaime")
+        vm.search("bel")
+        vm.search("jaime")
         advanceUntilIdle()
 
         assertEquals(1, repo.llamadas.size)
@@ -281,12 +281,12 @@ class CollectorsViewModelTest {
         val vm = CollectorsViewModel(repo)
         advanceUntilIdle()
 
-        assertEquals(CollectorsUiState.Exito(listOf(manolo, jaime), actualizando = true), vm.uiState.value)
+        assertEquals(CollectorsUiState.Success(listOf(manolo, jaime), actualizando = true), vm.uiState.value)
 
         repo.llamadas.single().complete(Result.success(todos))
         advanceUntilIdle()
 
-        assertEquals(CollectorsUiState.Exito(todos), vm.uiState.value)
+        assertEquals(CollectorsUiState.Success(todos), vm.uiState.value)
     }
 
     @Test
@@ -298,11 +298,11 @@ class CollectorsViewModelTest {
         repo.llamadas.single().complete(error)
         advanceUntilIdle()
 
-        assertEquals(CollectorsUiState.Exito(listOf(manolo, jaime), errorAlActualizar = true), vm.uiState.value)
+        assertEquals(CollectorsUiState.Success(listOf(manolo, jaime), errorAlActualizar = true), vm.uiState.value)
     }
 
     @Test
-    fun conListadoGuardadoYRespuestaVaciaTerminaEnVacio() = runTest {
+    fun conListadoGuardadoYRespuestaVaciaTerminaEnEmpty() = runTest {
         val repo = repoConGuardados()
         val vm = CollectorsViewModel(repo)
         advanceUntilIdle()
@@ -310,7 +310,7 @@ class CollectorsViewModelTest {
         repo.llamadas.single().complete(Result.success(emptyList()))
         advanceUntilIdle()
 
-        assertEquals(CollectorsUiState.Vacio, vm.uiState.value)
+        assertEquals(CollectorsUiState.Empty, vm.uiState.value)
     }
 
     @Test
@@ -321,9 +321,9 @@ class CollectorsViewModelTest {
         repo.llamadas.single().complete(error)
         advanceUntilIdle()
 
-        vm.buscar("jaime")
+        vm.search("jaime")
 
-        val estado = vm.uiState.value as CollectorsUiState.Exito
+        val estado = vm.uiState.value as CollectorsUiState.Success
         assertEquals(listOf(jaime), estado.visibles)
         assertTrue(estado.errorAlActualizar)
     }
@@ -335,10 +335,10 @@ class CollectorsViewModelTest {
         advanceUntilIdle()
         repo.llamadas.single().complete(error)
         advanceUntilIdle()
-        vm.buscar("jaime")
+        vm.search("jaime")
 
         vm.avisoMostrado()
 
-        assertEquals(CollectorsUiState.Exito(listOf(manolo, jaime), consulta = "jaime"), vm.uiState.value)
+        assertEquals(CollectorsUiState.Success(listOf(manolo, jaime), consulta = "jaime"), vm.uiState.value)
     }
 }

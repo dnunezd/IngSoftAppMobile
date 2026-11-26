@@ -1,9 +1,9 @@
 package com.example.vinilos
 
 import com.example.vinilos.data.local.AlbumDao
-import com.example.vinilos.data.local.ArtistaDao
-import com.example.vinilos.data.local.ColeccionistaDao
-import com.example.vinilos.data.local.FavoritoDao
+import com.example.vinilos.data.local.ArtistDao
+import com.example.vinilos.data.local.CollectorDao
+import com.example.vinilos.data.local.FavoriteDao
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.AlbumRepository
 import com.example.vinilos.data.repository.AlbumRepositoryImpl
@@ -11,8 +11,8 @@ import com.example.vinilos.data.repository.ArtistRepository
 import com.example.vinilos.data.repository.ArtistRepositoryImpl
 import com.example.vinilos.data.repository.CollectorRepository
 import com.example.vinilos.data.repository.CollectorRepositoryImpl
-import com.example.vinilos.data.repository.ComentarioRepository
-import com.example.vinilos.data.repository.ComentarioRepositoryImpl
+import com.example.vinilos.data.repository.CommentRepository
+import com.example.vinilos.data.repository.CommentRepositoryImpl
 import com.example.vinilos.data.repository.FavoriteRepository
 import com.example.vinilos.data.repository.FavoriteRepositoryImpl
 import kotlinx.coroutines.CoroutineDispatcher
@@ -29,15 +29,15 @@ class AppContainer(
     artistasRepositorio: ArtistRepository? = null,
     albumesRepositorio: AlbumRepository? = null,
     favoritosRepositorio: FavoriteRepository? = null,
-    comentariosRepositorio: ComentarioRepository? = null,
+    comentariosRepositorio: CommentRepository? = null,
     /** Caché del catálogo y del detalle de álbum. Sin él, solo se usa la red, como antes. */
     albumDao: AlbumDao? = null,
     /** Caché del selector de coleccionistas (add-cache-consultas). */
-    coleccionistaDao: ColeccionistaDao? = null,
+    coleccionistaDao: CollectorDao? = null,
     /** Caché del listado y del detalle de artistas (add-cache-consultas). */
-    artistaDao: ArtistaDao? = null,
+    artistaDao: ArtistDao? = null,
     /** Caché de los favoritos confirmados de cada coleccionista (add-cache-consultas). */
-    favoritoDao: FavoritoDao? = null,
+    favoritoDao: FavoriteDao? = null,
     /** Dónde convierten y ordenan los repositorios, fuera del hilo principal. Retrofit y Room usan sus hilos. */
     dispatcher: CoroutineDispatcher = Dispatchers.Default,
     /**
@@ -71,6 +71,6 @@ class AppContainer(
         favoritosRepositorio ?: FavoriteRepositoryImpl(serviceAdapter, favoritoDao = favoritoDao, dispatcher = dispatcher)
 
     /** Comentarios de los álbumes (HU09). Se puede reemplazar con `comentariosRepositorio` en las pruebas. */
-    val comentarioRepository: ComentarioRepository =
-        comentariosRepositorio ?: ComentarioRepositoryImpl(serviceAdapter, dispatcher = dispatcher)
+    val comentarioRepository: CommentRepository =
+        comentariosRepositorio ?: CommentRepositoryImpl(serviceAdapter, dispatcher = dispatcher)
 }

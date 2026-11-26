@@ -27,7 +27,7 @@ class AlbumesDePrueba(private val baseUrl: String = BuildConfig.BASE_URL) {
     private val http = OkHttpClient()
     private val creados = mutableListOf<Int>()
 
-    fun crear(prefijo: String): AlbumDePrueba {
+    fun create(prefijo: String): AlbumDePrueba {
         val nombre = "$prefijo ${System.currentTimeMillis()}"
         val cuerpo = JSONObject()
             .put("name", nombre)

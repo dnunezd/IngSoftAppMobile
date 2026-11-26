@@ -16,17 +16,17 @@ interface ArtistApi {
     suspend fun getBands(): Response<List<BandDto>>
 
     @GET("musicians/{id}")
-    suspend fun getMusician(@Path("id") id: Int): Response<ArtistaDetalleDto>
+    suspend fun getMusician(@Path("id") id: Int): Response<ArtistDetailDto>
 
     @GET("bands/{id}")
-    suspend fun getBand(@Path("id") id: Int): Response<ArtistaDetalleDto>
+    suspend fun getBand(@Path("id") id: Int): Response<ArtistDetailDto>
 
     @GET("performerprizes")
     suspend fun getPerformerPrizes(): Response<List<PremiacionDto>>
 
     /** Agrega el músico a los intérpretes del álbum sin quitar a los demás (HU15). */
     @POST("musicians/{id}/albums/{albumId}")
-    suspend fun asociarAlbumAMusico(@Path("id") id: Int, @Path("albumId") albumId: Int): Response<Unit>
+    suspend fun associateAlbumWithPerformer(@Path("id") id: Int, @Path("albumId") albumId: Int): Response<Unit>
 
     /**
      * Reemplaza TODOS los álbumes de la banda por [albumes] (HU15). Con una lista vacía se los quita todos,

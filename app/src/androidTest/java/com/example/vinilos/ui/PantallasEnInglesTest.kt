@@ -20,27 +20,27 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.tryPerformAccessibilityChecks
 import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.ArtistType
-import com.example.vinilos.data.model.ArtistaDetalle
-import com.example.vinilos.data.model.Cancion
+import com.example.vinilos.data.model.ArtistDetail
+import com.example.vinilos.data.model.Track
 import com.example.vinilos.data.model.Collector
-import com.example.vinilos.data.model.Comentario
-import com.example.vinilos.data.model.PremioArtista
+import com.example.vinilos.data.model.Comment
+import com.example.vinilos.data.model.ArtistPrize
 import com.example.vinilos.data.model.Session
-import com.example.vinilos.ui.artistas.PantallaDetalleArtista
-import com.example.vinilos.ui.artistas.TagFechaDetalleArtista
-import com.example.vinilos.ui.comentar.AccionesComentarAlbum
-import com.example.vinilos.ui.comentar.PantallaComentarAlbum
-import com.example.vinilos.ui.crear.AccionesCrearAlbum
-import com.example.vinilos.ui.crear.PantallaCrearAlbum
-import com.example.vinilos.ui.detalle.ContenidoAlbum
+import com.example.vinilos.ui.artistas.ArtistDetailScreen
+import com.example.vinilos.ui.artistas.TagFechaArtistDetail
+import com.example.vinilos.ui.comentar.AddCommentActions
+import com.example.vinilos.ui.comentar.AddCommentScreen
+import com.example.vinilos.ui.create.CreateAlbumActions
+import com.example.vinilos.ui.create.CreateAlbumScreen
+import com.example.vinilos.ui.detalle.AlbumContent
 import com.example.vinilos.ui.detalle.presentarAlbum
-import com.example.vinilos.ui.ingreso.PantallaIngreso
-import com.example.vinilos.ui.inicio.PantallaInicio
+import com.example.vinilos.ui.ingreso.EntryScreen
+import com.example.vinilos.ui.inicio.HomeScreen
 import com.example.vinilos.ui.theme.VinilosTheme
-import com.example.vinilos.viewmodel.ArtistaDetalleUiState
+import com.example.vinilos.viewmodel.ArtistDetailUiState
 import com.example.vinilos.viewmodel.CargaAlbum
-import com.example.vinilos.viewmodel.ComentarAlbumUiState
-import com.example.vinilos.viewmodel.CrearAlbumUiState
+import com.example.vinilos.viewmodel.AddCommentUiState
+import com.example.vinilos.viewmodel.CreateAlbumUiState
 import java.util.Locale
 import org.junit.Rule
 import org.junit.Test
@@ -58,7 +58,7 @@ class PantallasEnInglesTest {
     private val coleccionista = Session.Collector(Collector(100, "Manolo Bellon", "manollo@caracol.com.co"))
     private val album = Album(
         100, "Buscando América", null, "Rubén Blades album", "Salsa", "Elektra", "1984-08-01",
-        listOf(Cancion("Decisiones", "5:05")), emptyList(), listOf(Comentario("Great", 4), Comentario("Superb", 5))
+        listOf(Track("Decisiones", "5:05")), emptyList(), listOf(Comment("Great", 4), Comment("Superb", 5))
     )
 
     @Composable
@@ -83,21 +83,21 @@ class PantallasEnInglesTest {
 
     @Test
     fun ingresoEnIngles() {
-        mostrar { PantallaIngreso(onVisitante = {}, onColeccionista = {}) }
+        mostrar { EntryScreen(onVisitante = {}, onColeccionista = {}) }
         rule.onNodeWithContentDescription("Enter as Visitor").assertExists()
         rule.onNodeWithContentDescription("Enter as Collector").assertExists()
     }
 
     @Test
     fun inicioEnIngles() {
-        mostrar { PantallaInicio(session = coleccionista, onVerAlbumes = {}, onVerArtistas = {}) }
+        mostrar { HomeScreen(session = coleccionista, onVerAlbumes = {}, onVerArtistas = {}) }
         rule.onNodeWithText("Hello, Manolo Bellon!").assertExists()
         rule.onNodeWithText("Discover music in its purest format").assertExists()
     }
 
     @Test
     fun detalleDeAlbumConFechaYPromedioEnIngles() {
-        mostrar { ContenidoAlbum(presentarAlbum(album, Locale.ENGLISH), onAtras = {}) }
+        mostrar { AlbumContent(presentarAlbum(album, Locale.ENGLISH), onAtras = {}) }
         rule.onNodeWithText("August 1, 1984").assertExists()
         rule.onNode(hasText("4.5")).assertExists()
         rule.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("Tracks"))
@@ -105,21 +105,21 @@ class PantallasEnInglesTest {
     }
 
     @Test
-    fun crearAlbumEnIngles() {
+    fun createAlbumEnIngles() {
         mostrar {
-            PantallaCrearAlbum(estado = CrearAlbumUiState(), session = coleccionista, acciones = AccionesCrearAlbum())
+            CreateAlbumScreen(estado = CreateAlbumUiState(), session = coleccionista, acciones = CreateAlbumActions())
         }
         rule.onNodeWithContentDescription("Album name, required").assertExists()
         rule.onNodeWithContentDescription("Genre, required, Select a genre").assertExists()
     }
 
     @Test
-    fun comentarAlbumEnIngles() {
+    fun addCommentEnIngles() {
         mostrar {
-            PantallaComentarAlbum(
-                estado = ComentarAlbumUiState(album = CargaAlbum.Listo(album)),
+            AddCommentScreen(
+                estado = AddCommentUiState(album = CargaAlbum.Listo(album)),
                 session = coleccionista,
-                acciones = AccionesComentarAlbum({}, {}, {}, {}, {}, {}, {})
+                acciones = AddCommentActions({}, {}, {}, {}, {}, {}, {})
             )
         }
         rule.onNodeWithText("What did you think of this vinyl?").assertExists()
@@ -132,20 +132,20 @@ class PantallasEnInglesTest {
      */
     @Test
     fun detalleDeArtistaGuardadoEnIngles() {
-        val queen = ArtistaDetalle(
+        val queen = ArtistDetail(
             101, "Queen", null, "British band", ArtistType.BANDA, "1970-01-01T00:00:00.000Z",
-            emptyList(), emptyList(), listOf(PremioArtista(1, "Grammy Award", "NARAS", "1978-12-10T00:00:00.000Z"))
+            emptyList(), emptyList(), listOf(ArtistPrize(1, "Grammy Award", "NARAS", "1978-12-10T00:00:00.000Z"))
         )
         mostrar {
-            PantallaDetalleArtista(
-                estado = ArtistaDetalleUiState.Exito(queen, errorAlActualizar = true),
+            ArtistDetailScreen(
+                estado = ArtistDetailUiState.Success(queen, errorAlActualizar = true),
                 onSeleccionarAlbum = {},
                 onReintentar = {},
                 onAtras = {},
                 onAvisoMostrado = {}
             )
         }
-        rule.onNodeWithTag(TagFechaDetalleArtista).assertTextEquals("January 1, 1970")
+        rule.onNodeWithTag(TagFechaArtistDetail).assertTextEquals("January 1, 1970")
         rule.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("December 10, 1978"))
         rule.onNodeWithText("December 10, 1978").assertExists()
     }

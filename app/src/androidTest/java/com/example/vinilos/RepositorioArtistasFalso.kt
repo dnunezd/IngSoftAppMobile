@@ -2,17 +2,17 @@ package com.example.vinilos
 
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
-import com.example.vinilos.data.model.ArtistaDetalle
-import com.example.vinilos.data.remote.ErrorDeCarga
+import com.example.vinilos.data.model.ArtistDetail
+import com.example.vinilos.data.remote.LoadError
 import com.example.vinilos.data.repository.ArtistRepository
 
 /** Repositorio de artistas sin red para las pruebas de UI y de navegación. */
 class RepositorioArtistasFalso(
     var resultado: Result<List<Artist>> = Result.success(emptyList()),
-    var detalles: Map<Pair<ArtistType, Int>, Result<ArtistaDetalle>> = emptyMap(),
+    var detalles: Map<Pair<ArtistType, Int>, Result<ArtistDetail>> = emptyMap(),
     /** Listado y detalles guardados (add-cache-consultas); vacíos, sin caché, como antes. */
     var guardados: List<Artist> = emptyList(),
-    var detallesGuardados: Map<Pair<ArtistType, Int>, ArtistaDetalle> = emptyMap(),
+    var detallesGuardados: Map<Pair<ArtistType, Int>, ArtistDetail> = emptyMap(),
     /** Respuestas de asociar un álbum (HU15), en orden; la última se repite. */
     asociaciones: List<Result<Unit>> = listOf(Result.success(Unit))
 ) : ArtistRepository {
@@ -23,22 +23,22 @@ class RepositorioArtistasFalso(
     val asociacionesPedidas = mutableListOf<Triple<ArtistType, Int, Int>>()
     private val respuestasAsociar = ArrayDeque(asociaciones)
 
-    override suspend fun obtenerArtistas(): Result<List<Artist>> {
+    override suspend fun getArtists(): Result<List<Artist>> {
         consultas++
         return resultado
     }
 
-    override suspend fun obtenerDetalle(tipo: ArtistType, id: Int): Result<ArtistaDetalle> {
+    override suspend fun getDetail(tipo: ArtistType, id: Int): Result<ArtistDetail> {
         consultasDetalle += tipo to id
-        return detalles[tipo to id] ?: Result.failure(ErrorDeCarga())
+        return detalles[tipo to id] ?: Result.failure(LoadError())
     }
 
-    override suspend fun obtenerArtistasGuardados(): List<Artist> = guardados
+    override suspend fun getCachedArtists(): List<Artist> = guardados
 
-    override suspend fun obtenerDetalleGuardado(tipo: ArtistType, id: Int): ArtistaDetalle? =
+    override suspend fun getCachedDetail(tipo: ArtistType, id: Int): ArtistDetail? =
         detallesGuardados[tipo to id]
 
-    override suspend fun asociarAlbum(tipo: ArtistType, idArtista: Int, idAlbum: Int): Result<Unit> {
+    override suspend fun associateAlbum(tipo: ArtistType, idArtista: Int, idAlbum: Int): Result<Unit> {
         asociacionesPedidas += Triple(tipo, idArtista, idAlbum)
         return if (respuestasAsociar.size > 1) respuestasAsociar.removeFirst() else respuestasAsociar.first()
     }

@@ -37,12 +37,12 @@ import com.example.vinilos.ui.artistas.TagBotonAsociar
 import com.example.vinilos.ui.artistas.TagBusquedaAsociar
 import com.example.vinilos.ui.artistas.TagCancelarAsociar
 import com.example.vinilos.ui.artistas.TagContadorArtistas
-import com.example.vinilos.ui.artistas.TagDetalleArtista
+import com.example.vinilos.ui.artistas.TagArtistDetail
 import com.example.vinilos.ui.artistas.TagErrorAsociar
 import com.example.vinilos.ui.artistas.TagListaArtistas
 import com.example.vinilos.ui.artistas.TagListaAsociar
-import com.example.vinilos.ui.artistas.TagListaDetalleArtista
-import com.example.vinilos.ui.artistas.TagNombreDetalleArtista
+import com.example.vinilos.ui.artistas.TagListaArtistDetail
+import com.example.vinilos.ui.artistas.TagNombreArtistDetail
 import com.example.vinilos.ui.artistas.TagSinResultadosAsociar
 import com.example.vinilos.ui.artistas.TagTituloAsociar
 import com.example.vinilos.ui.artistas.TagVentanaAsociar
@@ -96,9 +96,9 @@ class AgregarAlbumArtistaE2ETest {
     ) : ArtistRepository by real {
         @Volatile var envios = 0
 
-        override suspend fun asociarAlbum(tipo: ArtistType, idArtista: Int, idAlbum: Int): Result<Unit> {
+        override suspend fun associateAlbum(tipo: ArtistType, idArtista: Int, idAlbum: Int): Result<Unit> {
             envios++
-            return real.asociarAlbum(tipo, idArtista, idAlbum)
+            return real.associateAlbum(tipo, idArtista, idAlbum)
         }
     }
 
@@ -123,14 +123,14 @@ class AgregarAlbumArtistaE2ETest {
     /** La primera banda o el primer músico del backend; si no hay, el escenario se omite. */
     private fun primerArtista(tipo: ArtistType): Artist {
         val artista = runBlocking {
-            ArtistRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL)).obtenerArtistas().getOrThrow()
+            ArtistRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL)).getArtists().getOrThrow()
         }.firstOrNull { it.type == tipo }
         Assume.assumeTrue("Sin datos en el backend: no hay ningún artista de tipo $tipo", artista != null)
         return artista!!
     }
 
     private fun primerColeccionistaReal(): Int = runBlocking {
-        CollectorRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL)).obtenerColeccionistas().getOrThrow().first().id
+        CollectorRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL)).getCollectors().getOrThrow().first().id
     }
 
     private fun ruta(artista: Artist) = if (artista.type == ArtistType.BANDA) "bands" else "musicians"
@@ -166,40 +166,40 @@ class AgregarAlbumArtistaE2ETest {
         esperarA(TagContadorArtistas)
         rule.onNodeWithTag(TagListaArtistas).performScrollToNode(hasTestTag(tagArtista(artista)))
         rule.onNodeWithTag(tagArtista(artista)).performClick()
-        esperarA(TagDetalleArtista)
-        esperarA(TagNombreDetalleArtista)
-        rule.onNodeWithTag(TagNombreDetalleArtista).assertTextEquals(artista.name)
-        rule.onNodeWithTag(TagListaDetalleArtista).performScrollToNode(hasText("Álbumes"))
+        esperarA(TagArtistDetail)
+        esperarA(TagNombreArtistDetail)
+        rule.onNodeWithTag(TagNombreArtistDetail).assertTextEquals(artista.name)
+        rule.onNodeWithTag(TagListaArtistDetail).performScrollToNode(hasText("Álbumes"))
         EvidenciaE2E.capturar(rule, evidencia, paso)
     }
 
     /** "Agregar álbum" -> ventana abierta con el catálogo cargado. */
     private fun abrirVentana() {
-        rule.onNodeWithTag(TagListaDetalleArtista).performScrollToNode(hasTestTag(TagBotonAgregarAlbum))
+        rule.onNodeWithTag(TagListaArtistDetail).performScrollToNode(hasTestTag(TagBotonAgregarAlbum))
         rule.onNodeWithTag(TagBotonAgregarAlbum).performClick()
         esperarA(TagVentanaAsociar)
         esperarA(TagListaAsociar)
     }
 
-    private fun buscar(texto: String) {
+    private fun search(texto: String) {
         rule.onNodeWithTag(TagBusquedaAsociar).performTextReplacement(texto)
         Espresso.closeSoftKeyboard()
     }
 
     private fun filaDe(id: Int) = rule.onNodeWithTag(tagAlbumAsociable(id))
 
-    private fun seleccionar(id: Int) {
+    private fun select(id: Int) {
         rule.onNodeWithTag(TagListaAsociar).performScrollToNode(hasTestTag(tagAlbumAsociable(id)))
         filaDe(id).performClick()
     }
 
-    private fun asociar() = rule.onNodeWithTag(TagBotonAsociar)
+    private fun associate() = rule.onNodeWithTag(TagBotonAsociar)
 
     /** El álbum [id] aparece en la lista de álbumes del detalle del artista. */
     private fun verAlbumEnElDetalle(id: Int) {
         rule.waitUntil(15_000) {
             runCatching {
-                rule.onNodeWithTag(TagListaDetalleArtista).performScrollToNode(hasTestTag(tagAlbumArtista(id)))
+                rule.onNodeWithTag(TagListaArtistDetail).performScrollToNode(hasTestTag(tagAlbumArtista(id)))
             }.isSuccess
         }
         rule.onNodeWithTag(tagAlbumArtista(id)).assertIsDisplayed()
@@ -209,7 +209,7 @@ class AgregarAlbumArtistaE2ETest {
      * Abre la ventana del [artista], comprueba el título, "Asociar" deshabilitado y un álbum real ya
      * asociado (si tiene), busca y elige el [album] de prueba, lo asocia y lo ve en el detalle.
      */
-    private fun asociarDesdeElDetalle(artista: Artist, album: AlbumDePrueba, evidencia: String) {
+    private fun associateDesdeElDetalle(artista: Artist, album: AlbumDePrueba, evidencia: String) {
         val yaAsociado = albumesEnElBackend(artista).firstOrNull()
 
         ActivityScenario.launch(MainActivity::class.java).use {
@@ -219,7 +219,7 @@ class AgregarAlbumArtistaE2ETest {
 
             abrirVentana()
             rule.onNodeWithTag(TagTituloAsociar).assertTextEquals("Asociar álbum a ${artista.name}")
-            asociar().assertIsNotEnabled()
+            associate().assertIsNotEnabled()
             if (yaAsociado != null) {
                 rule.onNodeWithTag(TagListaAsociar).performScrollToNode(hasTestTag(tagAlbumAsociable(yaAsociado)))
                 rule.onNodeWithTag(tagYaAsociado(yaAsociado), useUnmergedTree = true).assertIsDisplayed()
@@ -227,15 +227,15 @@ class AgregarAlbumArtistaE2ETest {
             }
             EvidenciaE2E.capturar(rule, evidencia, "02_ventana_asociar")
 
-            buscar(album.nombre)
+            search(album.nombre)
             esperarA(tagAlbumAsociable(album.id))
             if (yaAsociado != null) rule.onAllNodesWithTag(tagAlbumAsociable(yaAsociado)).assertCountEquals(0)
-            seleccionar(album.id)
+            select(album.id)
             filaDe(album.id).assertIsSelected()
-            asociar().assertIsEnabled()
+            associate().assertIsEnabled()
             EvidenciaE2E.capturar(rule, evidencia, "03_album_seleccionado")
 
-            asociar().performClick()
+            associate().performClick()
             esperarQueSeCierreLaVentana()
             esperarTexto("Álbum asociado", milis = 10_000)
             EvidenciaE2E.capturar(rule, evidencia, "04_album_asociado")
@@ -254,7 +254,7 @@ class AgregarAlbumArtistaE2ETest {
     fun cancelarCierraSinAsociarYLaBusquedaSinResultadosQuitaLaSeleccion() {
         val evidencia = "FN15_ESC01"
         val musico = primerArtista(ArtistType.MUSICO)
-        val album = albumesDePrueba.crear("E2E FN15")
+        val album = albumesDePrueba.create("E2E FN15")
         val antes = albumesEnElBackend(musico)
 
         ActivityScenario.launch(MainActivity::class.java).use {
@@ -262,22 +262,22 @@ class AgregarAlbumArtistaE2ETest {
             abrirDetalle(musico, evidencia, "01_detalle_con_agregar_album")
             abrirVentana()
 
-            buscar(album.nombre)
+            search(album.nombre)
             esperarA(tagAlbumAsociable(album.id))
-            seleccionar(album.id)
-            asociar().assertIsEnabled()
+            select(album.id)
+            associate().assertIsEnabled()
             EvidenciaE2E.capturar(rule, evidencia, "02_album_seleccionado")
 
-            buscar("zzzz sin coincidencias")
+            search("zzzz sin coincidencias")
             esperarA(TagSinResultadosAsociar)
             rule.onNodeWithText("No encontramos álbumes con esa búsqueda").assertIsDisplayed()
-            asociar().assertIsNotEnabled()
+            associate().assertIsNotEnabled()
             EvidenciaE2E.capturar(rule, evidencia, "03_busqueda_sin_resultados")
 
-            buscar(album.nombre)
+            search(album.nombre)
             esperarA(tagAlbumAsociable(album.id))
             filaDe(album.id).assertIsNotSelected()
-            seleccionar(album.id)
+            select(album.id)
             rule.onNodeWithTag(TagCancelarAsociar).performClick()
             esperarQueSeCierreLaVentana()
             rule.onAllNodesWithText("Álbum asociado").assertCountEquals(0)
@@ -286,7 +286,7 @@ class AgregarAlbumArtistaE2ETest {
 
             abrirVentana()
             rule.onNodeWithTag(TagBusquedaAsociar).assert(hasText(album.nombre).not())
-            asociar().assertIsNotEnabled()
+            associate().assertIsNotEnabled()
             EvidenciaE2E.capturar(rule, evidencia, "05_ventana_otra_vez_vacia")
         }
         assertEquals(0, artistas.envios)
@@ -297,10 +297,10 @@ class AgregarAlbumArtistaE2ETest {
     @Test
     fun elColeccionistaAgregaUnAlbumAUnaBanda() {
         val banda = primerArtista(ArtistType.BANDA)
-        val album = albumesDePrueba.crear("E2E FN15")
+        val album = albumesDePrueba.create("E2E FN15")
         val antes = albumesEnElBackend(banda)
 
-        asociarDesdeElDetalle(banda, album, "FN15_ESC02")
+        associateDesdeElDetalle(banda, album, "FN15_ESC02")
 
         assertEquals(1, artistas.envios)
         assertEquals(antes + album.id, albumesEnElBackend(banda))
@@ -374,24 +374,24 @@ class AgregarAlbumArtistaE2ETest {
             entrarComoColeccionista(100)
             abrirDetalle(ruben, evidencia, "01_detalle_sin_albumes")
             abrirVentana()
-            seleccionar(101)
+            select(101)
             EvidenciaE2E.capturar(rule, evidencia, "02_album_seleccionado")
 
-            asociar().performClick()
+            associate().performClick()
             esperarA(TagAsociandoAsociar, milis = 2_000)
-            asociar().assertIsNotEnabled()
+            associate().assertIsNotEnabled()
             EvidenciaE2E.capturar(rule, evidencia, "03_asociando")
-            asociar().performClick()
+            associate().performClick()
 
             esperarA(TagErrorAsociar)
             rule.onNodeWithText("No se pudo asociar el álbum, intenta de nuevo").assertIsDisplayed()
             assertEquals("El toque durante el envío no debe enviar otra asociación", 1, simulado.envios)
             rule.onAllNodesWithText("Álbum asociado").assertCountEquals(0)
             filaDe(101).assertIsSelected()
-            asociar().assertIsEnabled()
+            associate().assertIsEnabled()
             EvidenciaE2E.capturar(rule, evidencia, "04_error_al_asociar")
 
-            asociar().performClick()
+            associate().performClick()
             esperarQueSeCierreLaVentana()
             esperarTexto("Álbum asociado", milis = 10_000)
             verAlbumEnElDetalle(101)

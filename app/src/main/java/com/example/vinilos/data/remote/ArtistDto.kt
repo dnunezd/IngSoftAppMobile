@@ -17,7 +17,7 @@ data class BandDto(
 )
 
 /** Respuesta de `GET /musicians/{id}` y `GET /bands/{id}`: cada recurso llena su fecha y solo la banda trae integrantes. */
-data class ArtistaDetalleDto(
+data class ArtistDetailDto(
     val id: Int?,
     val name: String?,
     val image: String?,
@@ -54,10 +54,10 @@ data class PremiacionArtistaDto(
 /** Elemento de `GET /performerprizes`: su [id] es el de la premiación, no el del premio. */
 data class PremiacionDto(
     val id: Int?,
-    val prize: PremioDto?
+    val prize: PrizeDto?
 )
 
-data class PremioDto(
+data class PrizeDto(
     val name: String?,
     val organization: String?
 )

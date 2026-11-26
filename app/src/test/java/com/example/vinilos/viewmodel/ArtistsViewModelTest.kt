@@ -3,8 +3,8 @@ package com.example.vinilos.viewmodel
 import com.example.vinilos.MainDispatcherRule
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
-import com.example.vinilos.data.model.ArtistaDetalle
-import com.example.vinilos.data.remote.ErrorDeCarga
+import com.example.vinilos.data.model.ArtistDetail
+import com.example.vinilos.data.remote.LoadError
 import com.example.vinilos.data.repository.ArtistRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -19,7 +19,7 @@ import org.junit.Test
 private class RepositorioArtistasFalso : ArtistRepository {
     val llamadas = mutableListOf<CompletableDeferred<Result<List<Artist>>>>()
 
-    override suspend fun obtenerArtistas(): Result<List<Artist>> {
+    override suspend fun getArtists(): Result<List<Artist>> {
         val respuesta = CompletableDeferred<Result<List<Artist>>>()
         llamadas += respuesta
         return respuesta.await()
@@ -28,11 +28,11 @@ private class RepositorioArtistasFalso : ArtistRepository {
     /** Listado guardado en el dispositivo (add-cache-consultas). */
     var guardados: List<Artist> = emptyList()
 
-    override suspend fun obtenerArtistasGuardados(): List<Artist> = guardados
+    override suspend fun getCachedArtists(): List<Artist> = guardados
 
-    override suspend fun obtenerDetalle(tipo: ArtistType, id: Int): Result<ArtistaDetalle> = error("No se usa en esta prueba")
-    override suspend fun obtenerDetalleGuardado(tipo: ArtistType, id: Int): ArtistaDetalle = error("No se usa en esta prueba")
-    override suspend fun asociarAlbum(tipo: ArtistType, idArtista: Int, idAlbum: Int): Result<Unit> =
+    override suspend fun getDetail(tipo: ArtistType, id: Int): Result<ArtistDetail> = error("No se usa en esta prueba")
+    override suspend fun getCachedDetail(tipo: ArtistType, id: Int): ArtistDetail = error("No se usa en esta prueba")
+    override suspend fun associateAlbum(tipo: ArtistType, idArtista: Int, idAlbum: Int): Result<Unit> =
         error("No se usa en esta prueba")
 }
 
@@ -46,7 +46,7 @@ class ArtistsViewModelTest {
     private val ruben = Artist(100, "Rubén Blades Bellido de Luna", "https://img/ruben.jpg", ArtistType.MUSICO)
     private val todos = listOf(queen, ruben)
 
-    private val error = Result.failure<List<Artist>>(ErrorDeCarga())
+    private val error = Result.failure<List<Artist>>(LoadError())
 
     private fun cargado(repo: RepositorioArtistasFalso, lista: List<Artist> = todos) {
         repo.llamadas.last().complete(Result.success(lista))
@@ -55,18 +55,18 @@ class ArtistsViewModelTest {
     // ---- 3.1: estados de la carga ----
 
     @Test
-    fun alCrearseEmpiezaCargandoYPideLosArtistasUnaVez() = runTest {
+    fun alCrearseEmpiezaLoadingYPideLosArtistasUnaVez() = runTest {
         val repo = RepositorioArtistasFalso()
 
         val vm = ArtistsViewModel(repo)
         advanceUntilIdle()
 
-        assertEquals(ArtistsUiState.Cargando, vm.uiState.value)
+        assertEquals(ArtistsUiState.Loading, vm.uiState.value)
         assertEquals(1, repo.llamadas.size)
     }
 
     @Test
-    fun cargandoPasaAExitoConLosArtistas() = runTest {
+    fun cargandoPasaASuccessConLosArtistas() = runTest {
         val repo = RepositorioArtistasFalso()
         val vm = ArtistsViewModel(repo)
         advanceUntilIdle()
@@ -74,11 +74,11 @@ class ArtistsViewModelTest {
         cargado(repo)
         advanceUntilIdle()
 
-        assertEquals(ArtistsUiState.Exito(todos), vm.uiState.value)
+        assertEquals(ArtistsUiState.Success(todos), vm.uiState.value)
     }
 
     @Test
-    fun cargandoPasaAVacioSiNoHayArtistas() = runTest {
+    fun cargandoPasaAEmptySiNoHayArtistas() = runTest {
         val repo = RepositorioArtistasFalso()
         val vm = ArtistsViewModel(repo)
         advanceUntilIdle()
@@ -86,7 +86,7 @@ class ArtistsViewModelTest {
         cargado(repo, emptyList())
         advanceUntilIdle()
 
-        assertEquals(ArtistsUiState.Vacio, vm.uiState.value)
+        assertEquals(ArtistsUiState.Empty, vm.uiState.value)
     }
 
     @Test
@@ -102,32 +102,32 @@ class ArtistsViewModelTest {
     }
 
     @Test
-    fun reintentarTrasErrorVuelveACargandoYLuegoAExito() = runTest {
+    fun retryTrasErrorVuelveALoadingYLuegoASuccess() = runTest {
         val repo = RepositorioArtistasFalso()
         val vm = ArtistsViewModel(repo)
         advanceUntilIdle()
         repo.llamadas[0].complete(error)
         advanceUntilIdle()
 
-        vm.reintentar()
+        vm.retry()
         advanceUntilIdle()
-        assertEquals(ArtistsUiState.Cargando, vm.uiState.value)
+        assertEquals(ArtistsUiState.Loading, vm.uiState.value)
         assertEquals(2, repo.llamadas.size)
 
         repo.llamadas[1].complete(Result.success(todos))
         advanceUntilIdle()
-        assertEquals(ArtistsUiState.Exito(todos), vm.uiState.value)
+        assertEquals(ArtistsUiState.Success(todos), vm.uiState.value)
     }
 
     @Test
-    fun reintentarQueVuelveAFallarTerminaEnError() = runTest {
+    fun retryQueVuelveAFallarTerminaEnError() = runTest {
         val repo = RepositorioArtistasFalso()
         val vm = ArtistsViewModel(repo)
         advanceUntilIdle()
         repo.llamadas[0].complete(error)
         advanceUntilIdle()
 
-        vm.reintentar()
+        vm.retry()
         advanceUntilIdle()
         repo.llamadas[1].complete(error)
         advanceUntilIdle()
@@ -136,34 +136,34 @@ class ArtistsViewModelTest {
     }
 
     @Test
-    fun reintentarCancelaLaCargaAnterior() = runTest {
+    fun retryCancelaLaCargaAnterior() = runTest {
         val repo = RepositorioArtistasFalso()
         val vm = ArtistsViewModel(repo)
         advanceUntilIdle()
 
-        vm.reintentar()
+        vm.retry()
         advanceUntilIdle()
         // La primera consulta responde tarde: su resultado no debe pisar a la segunda.
         repo.llamadas[1].complete(Result.success(listOf(queen)))
         repo.llamadas[0].complete(error)
         advanceUntilIdle()
 
-        assertEquals(ArtistsUiState.Exito(listOf(queen)), vm.uiState.value)
+        assertEquals(ArtistsUiState.Success(listOf(queen)), vm.uiState.value)
     }
 
     // ---- 3.2: búsqueda por nombre ----
 
-    private fun exito(vm: ArtistsViewModel) = vm.uiState.value as ArtistsUiState.Exito
+    private fun exito(vm: ArtistsViewModel) = vm.uiState.value as ArtistsUiState.Success
 
     @Test
-    fun buscarFiltraPorNombreEnCualquierParte() = runTest {
+    fun searchFiltraPorNombreEnCualquierParte() = runTest {
         val repo = RepositorioArtistasFalso()
         val vm = ArtistsViewModel(repo)
         advanceUntilIdle()
         cargado(repo)
         advanceUntilIdle()
 
-        vm.buscar("que")
+        vm.search("que")
 
         assertEquals(listOf(queen), exito(vm).visibles)
         assertEquals("que", exito(vm).consulta)
@@ -171,30 +171,30 @@ class ArtistsViewModelTest {
     }
 
     @Test
-    fun buscarNoDistingueMayusculasNiTildes() = runTest {
+    fun searchNoDistingueMayusculasNiTildes() = runTest {
         val repo = RepositorioArtistasFalso()
         val vm = ArtistsViewModel(repo)
         advanceUntilIdle()
         cargado(repo)
         advanceUntilIdle()
 
-        vm.buscar("RUBEN")
+        vm.search("RUBEN")
         assertEquals(listOf(ruben), exito(vm).visibles)
 
-        vm.buscar("bellído")
+        vm.search("bellído")
         assertEquals(listOf(ruben), exito(vm).visibles)
     }
 
     @Test
-    fun textoVacioODeEspaciosMuestraTodos() = runTest {
+    fun textoEmptyODeEspaciosMuestraTodos() = runTest {
         val repo = RepositorioArtistasFalso()
         val vm = ArtistsViewModel(repo)
         advanceUntilIdle()
         cargado(repo)
         advanceUntilIdle()
 
-        vm.buscar("que")
-        vm.buscar("   ")
+        vm.search("que")
+        vm.search("   ")
 
         assertEquals(todos, exito(vm).visibles)
     }
@@ -207,24 +207,24 @@ class ArtistsViewModelTest {
         cargado(repo)
         advanceUntilIdle()
 
-        vm.buscar("zzz")
+        vm.search("zzz")
 
         assertTrue(exito(vm).visibles.isEmpty())
         assertEquals("zzz", exito(vm).consulta)
     }
 
     @Test
-    fun buscarNoTieneEfectoMientrasCargaNiEnError() = runTest {
+    fun searchNoTieneEfectoMientrasCargaNiEnError() = runTest {
         val repo = RepositorioArtistasFalso()
         val vm = ArtistsViewModel(repo)
         advanceUntilIdle()
 
-        vm.buscar("que")
-        assertEquals(ArtistsUiState.Cargando, vm.uiState.value)
+        vm.search("que")
+        assertEquals(ArtistsUiState.Loading, vm.uiState.value)
 
         repo.llamadas[0].complete(error)
         advanceUntilIdle()
-        vm.buscar("que")
+        vm.search("que")
         assertEquals(ArtistsUiState.Error, vm.uiState.value)
     }
 
@@ -238,11 +238,11 @@ class ArtistsViewModelTest {
         val vm = ArtistsViewModel(repo)
         advanceUntilIdle()
 
-        assertEquals(ArtistsUiState.Exito(listOf(queen), actualizando = true), vm.uiState.value)
+        assertEquals(ArtistsUiState.Success(listOf(queen), actualizando = true), vm.uiState.value)
 
         cargado(repo)
         advanceUntilIdle()
-        assertEquals(ArtistsUiState.Exito(todos), vm.uiState.value)
+        assertEquals(ArtistsUiState.Success(todos), vm.uiState.value)
     }
 
     @Test
@@ -254,7 +254,7 @@ class ArtistsViewModelTest {
         repo.llamadas.single().complete(error)
         advanceUntilIdle()
 
-        assertEquals(ArtistsUiState.Exito(listOf(queen), errorAlActualizar = true), vm.uiState.value)
+        assertEquals(ArtistsUiState.Success(listOf(queen), errorAlActualizar = true), vm.uiState.value)
     }
 
     @Test
@@ -263,11 +263,11 @@ class ArtistsViewModelTest {
         val vm = ArtistsViewModel(repo)
         advanceUntilIdle()
 
-        vm.buscar("rub")
+        vm.search("rub")
         cargado(repo)
         advanceUntilIdle()
 
-        val estado = vm.uiState.value as ArtistsUiState.Exito
+        val estado = vm.uiState.value as ArtistsUiState.Success
         assertEquals("rub", estado.consulta)
         assertEquals(listOf(ruben), estado.visibles)
     }
@@ -282,6 +282,6 @@ class ArtistsViewModelTest {
 
         vm.avisoMostrado()
 
-        assertEquals(ArtistsUiState.Exito(listOf(queen)), vm.uiState.value)
+        assertEquals(ArtistsUiState.Success(listOf(queen)), vm.uiState.value)
     }
 }

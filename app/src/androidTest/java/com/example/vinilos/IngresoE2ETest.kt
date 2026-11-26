@@ -16,7 +16,7 @@ import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso
-import com.example.vinilos.data.model.AlbumResumen
+import com.example.vinilos.data.model.AlbumSummary
 import com.example.vinilos.data.model.Collector
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.AlbumRepository
@@ -71,18 +71,18 @@ class IngresoE2ETest {
     ) : CollectorRepository by real {
         @Volatile var coleccionistas: List<Collector>? = null
 
-        override suspend fun obtenerColeccionistas(): Result<List<Collector>> =
-            real.obtenerColeccionistas().also { resultado -> resultado.onSuccess { coleccionistas = it } }
+        override suspend fun getCollectors(): Result<List<Collector>> =
+            real.getCollectors().also { resultado -> resultado.onSuccess { coleccionistas = it } }
     }
 
     /** El repositorio real de álbumes: solo para saber cuál es el primer álbum real del catálogo. */
     private class AlbumesRealesContados(
         private val real: AlbumRepository = AlbumRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL))
     ) : AlbumRepository by real {
-        @Volatile var catalogo: List<AlbumResumen>? = null
+        @Volatile var catalogo: List<AlbumSummary>? = null
 
-        override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> =
-            real.obtenerAlbumes().also { resultado -> resultado.onSuccess { catalogo = it } }
+        override suspend fun getAlbums(): Result<List<AlbumSummary>> =
+            real.getAlbums().also { resultado -> resultado.onSuccess { catalogo = it } }
     }
 
     private val coleccionistasRepo = ColeccionistasRealesContados()

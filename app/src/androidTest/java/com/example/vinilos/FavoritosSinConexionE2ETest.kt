@@ -20,7 +20,7 @@ import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.ui.artistas.TagBotonFavorito
 import com.example.vinilos.ui.artistas.TagErrorFavorito
-import com.example.vinilos.ui.artistas.TagNombreDetalleArtista
+import com.example.vinilos.ui.artistas.TagNombreArtistDetail
 import com.example.vinilos.ui.artistas.TagReintentarFavorito
 import com.example.vinilos.ui.artistas.tagArtista
 import com.example.vinilos.ui.ingreso.TagAtras
@@ -126,7 +126,7 @@ class FavoritosSinConexionE2ETest {
     private fun abrir(artista: Artist) {
         esperarA(tagArtista(artista))
         rule.onNodeWithTag(tagArtista(artista)).performScrollTo().performClick()
-        esperarA(TagNombreDetalleArtista)
+        esperarA(TagNombreArtistDetail)
     }
 
     private fun alListado(artista: Artist) {

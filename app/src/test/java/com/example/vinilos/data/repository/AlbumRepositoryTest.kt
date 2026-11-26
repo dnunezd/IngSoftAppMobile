@@ -1,16 +1,16 @@
 package com.example.vinilos.data.repository
 
 import com.example.vinilos.data.model.Album
-import com.example.vinilos.data.model.AlbumNuevo
-import com.example.vinilos.data.model.AlbumResumen
+import com.example.vinilos.data.model.NewAlbum
+import com.example.vinilos.data.model.AlbumSummary
 import com.example.vinilos.data.model.Artista
-import com.example.vinilos.data.model.Cancion
-import com.example.vinilos.data.model.Comentario
+import com.example.vinilos.data.model.Track
+import com.example.vinilos.data.model.Comment
 import com.example.vinilos.data.remote.AlbumApi
 import com.example.vinilos.data.remote.AlbumDto
-import com.example.vinilos.data.remote.CrearAlbumDto
-import com.example.vinilos.data.remote.ErrorDeCarga
-import com.example.vinilos.data.remote.RecursoNoEncontrado
+import com.example.vinilos.data.remote.CreateAlbumDto
+import com.example.vinilos.data.remote.LoadError
+import com.example.vinilos.data.remote.ResourceNotFound
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.google.gson.Gson
 import com.google.gson.JsonParseException
@@ -81,12 +81,12 @@ class AlbumRepositoryTest {
             genero = "Salsa",
             disquera = "Elektra",
             fechaLanzamiento = "1984-08-01",
-            canciones = listOf(Cancion("Decisiones", "5:00")),
+            canciones = listOf(Track("Decisiones", "5:00")),
             artistas = listOf(Artista("Ruben Blades", "https://example.com/artista.jpg")),
-            comentarios = listOf(Comentario("Excelente", 5))
+            comentarios = listOf(Comment("Excelente", 5))
         )
 
-        val resultado = repositorio.obtenerAlbum(101)
+        val resultado = repositorio.getAlbum(101)
 
         assertEquals(esperado, resultado.getOrNull())
         val peticion = servidor.takeRequest(1, TimeUnit.SECONDS)
@@ -95,78 +95,78 @@ class AlbumRepositoryTest {
         assertEquals("/albums/101", peticion.path)
         assertEquals(
             setOf("descripcion", "calificacion"),
-            Comentario::class.java.declaredFields
+            Comment::class.java.declaredFields
                 .filterNot { it.isSynthetic || Modifier.isStatic(it.modifiers) }
                 .map { it.name }.toSet()
         )
     }
 
     @Test
-    fun respuesta404SeTraduceAAlbumNoDisponible() = runTest {
+    fun respuesta404SeTraduceAAlbumNotAvailable() = runTest {
         servidor.enqueue(MockResponse().setResponseCode(404))
 
-        val error = repositorio.obtenerAlbum(999).exceptionOrNull()
+        val error = repositorio.getAlbum(999).exceptionOrNull()
 
-        assertTrue("El 404 debe indicar álbum no disponible, no error de red", error is AlbumNoDisponible)
+        assertTrue("El 404 debe indicar álbum no disponible, no error de red", error is AlbumNotAvailable)
         assertTrue(error!!.cause is HttpException)
         assertEquals(404, (error.cause as HttpException).code())
         assertEquals("/albums/999", servidor.takeRequest(1, TimeUnit.SECONDS)?.path)
     }
 
     @Test
-    fun respuesta500SeTraduceAErrorDeCargaConSuCausa() = runTest {
+    fun respuesta500SeTraduceALoadErrorConSuCausa() = runTest {
         servidor.enqueue(MockResponse().setResponseCode(500))
 
-        val error = repositorio.obtenerAlbum(101).exceptionOrNull()
+        val error = repositorio.getAlbum(101).exceptionOrNull()
 
-        assertTrue("El fallo del servidor debe ser recuperable", error is ErrorDeCarga)
+        assertTrue("El fallo del servidor debe ser recuperable", error is LoadError)
         assertTrue(error!!.cause is HttpException)
         assertEquals(500, (error.cause as HttpException).code())
     }
 
     @Test
-    fun desconexionSeTraduceAErrorDeCargaConSuCausa() = runTest {
+    fun desconexionSeTraduceALoadErrorConSuCausa() = runTest {
         servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST))
 
-        val error = repositorio.obtenerAlbum(101).exceptionOrNull()
+        val error = repositorio.getAlbum(101).exceptionOrNull()
 
-        assertTrue("La desconexión debe ser un error de carga, no un 404", error is ErrorDeCarga)
+        assertTrue("La desconexión debe ser un error de carga, no un 404", error is LoadError)
         assertTrue(error!!.cause is IOException)
         assertTrue(error.cause !is HttpException)
     }
 
     @Test
-    fun timeoutSeTraduceAErrorDeCargaConSuCausa() = runTest {
+    fun timeoutSeTraduceALoadErrorConSuCausa() = runTest {
         servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE))
 
-        val error = repositorio.obtenerAlbum(101).exceptionOrNull()
+        val error = repositorio.getAlbum(101).exceptionOrNull()
 
-        assertTrue("El timeout debe permitir reintentar, no indicar un 404", error is ErrorDeCarga)
+        assertTrue("El timeout debe permitir reintentar, no indicar un 404", error is LoadError)
         assertTrue(error!!.cause is SocketTimeoutException)
     }
 
     @Test
-    fun jsonIlegibleSeTraduceAErrorDeCargaConSuCausa() = runTest {
+    fun jsonIlegibleSeTraduceALoadErrorConSuCausa() = runTest {
         servidor.enqueue(MockResponse().setBody("""{"id":[]}"""))
 
-        val error = repositorio.obtenerAlbum(101).exceptionOrNull()
+        val error = repositorio.getAlbum(101).exceptionOrNull()
 
-        assertTrue("El cuerpo ilegible debe permitir recuperar la carga", error is ErrorDeCarga)
+        assertTrue("El cuerpo ilegible debe permitir recuperar la carga", error is LoadError)
         assertTrue(error!!.cause is JsonParseException)
     }
 
     @Test
-    fun respuestaSinCamposObligatoriosSeTraduceAErrorDeCarga() = runTest {
+    fun respuestaSinCamposObligatoriosSeTraduceALoadError() = runTest {
         servidor.enqueue(MockResponse().setBody("""{"id":101}"""))
 
-        val error = repositorio.obtenerAlbum(101).exceptionOrNull()
+        val error = repositorio.getAlbum(101).exceptionOrNull()
 
-        assertTrue("Un álbum incompleto debe ser un fallo de carga, no cerrar la app", error is ErrorDeCarga)
+        assertTrue("Un álbum incompleto debe ser un fallo de carga, no cerrar la app", error is LoadError)
         assertTrue(error!!.cause is JsonParseException)
     }
 
     @Test
-    fun fechaDeLanzamientoConFormatoInvalidoSeTraduceAErrorDeCarga() = runTest {
+    fun fechaDeLanzamientoConFormatoInvalidoSeTraduceALoadError() = runTest {
         servidor.enqueue(
             MockResponse().setBody(
                 """
@@ -176,11 +176,11 @@ class AlbumRepositoryTest {
             )
         )
 
-        val error = repositorio.obtenerAlbum(103).exceptionOrNull()
+        val error = repositorio.getAlbum(103).exceptionOrNull()
 
         assertTrue(
             "Una fecha con formato inesperado debe ser un fallo de carga, no cerrar la app",
-            error is ErrorDeCarga
+            error is LoadError
         )
         assertTrue(error!!.cause is JsonParseException)
     }
@@ -196,27 +196,27 @@ class AlbumRepositoryTest {
             )
         )
 
-        val album = repositorio.obtenerAlbum(102).getOrThrow()
+        val album = repositorio.getAlbum(102).getOrThrow()
 
-        assertEquals(emptyList<Cancion>(), album.canciones)
+        assertEquals(emptyList<Track>(), album.canciones)
         assertEquals(emptyList<Artista>(), album.artistas)
-        assertEquals(emptyList<Comentario>(), album.comentarios)
+        assertEquals(emptyList<Comment>(), album.comentarios)
         assertEquals(null, album.portada)
         assertEquals("/albums/102", servidor.takeRequest(1, TimeUnit.SECONDS)?.path)
     }
 
     @Test
-    fun errorInesperadoSePropagaSinDisfrazarloDeErrorDeCarga() = runTest {
+    fun errorInesperadoSePropagaSinDisfrazarloDeLoadError() = runTest {
         val esperado = IllegalStateException("Error de programación")
         val api = object : AlbumApi {
-            override suspend fun obtenerAlbum(id: Int): Response<AlbumDto> = throw esperado
-            override suspend fun obtenerAlbumes(): Response<List<AlbumDto>> = throw esperado
-            override suspend fun crearAlbum(album: CrearAlbumDto): AlbumDto = throw esperado
+            override suspend fun getAlbum(id: Int): Response<AlbumDto> = throw esperado
+            override suspend fun getAlbums(): Response<List<AlbumDto>> = throw esperado
+            override suspend fun createAlbum(album: CreateAlbumDto): AlbumDto = throw esperado
         }
         val repositorio = AlbumRepositoryImpl(ServiceAdapter(servidor.url("/").toString()), api)
 
         try {
-            repositorio.obtenerAlbum(101)
+            repositorio.getAlbum(101)
             fail("El error inesperado debe propagarse")
         } catch (error: IllegalStateException) {
             // Al volver de otro dispatcher, kotlinx puede entregar una copia con el original como causa.
@@ -225,16 +225,16 @@ class AlbumRepositoryTest {
     }
 
     @Test
-    fun cancelarLaConsultaPropagaLaCancelacionSinErrorDeCarga() = runTest {
+    fun cancelarLaConsultaPropagaLaCancelacionSinLoadError() = runTest {
         val api = object : AlbumApi {
-            override suspend fun obtenerAlbum(id: Int): Response<AlbumDto> = awaitCancellation()
-            override suspend fun obtenerAlbumes(): Response<List<AlbumDto>> = awaitCancellation()
-            override suspend fun crearAlbum(album: CrearAlbumDto): AlbumDto = awaitCancellation()
+            override suspend fun getAlbum(id: Int): Response<AlbumDto> = awaitCancellation()
+            override suspend fun getAlbums(): Response<List<AlbumDto>> = awaitCancellation()
+            override suspend fun createAlbum(album: CreateAlbumDto): AlbumDto = awaitCancellation()
         }
         val repositorio = AlbumRepositoryImpl(ServiceAdapter(servidor.url("/").toString()), api)
         var devolvioResultado = false
         val consulta = async(start = CoroutineStart.UNDISPATCHED) {
-            val resultado = repositorio.obtenerAlbum(101)
+            val resultado = repositorio.getAlbum(101)
             devolvioResultado = true
             resultado
         }
@@ -253,15 +253,15 @@ class AlbumRepositoryTest {
     }
 
     @Test
-    fun cuerpoNuloSeTraduceAErrorDeCargaSinConfundirloCon404() = runTest {
+    fun cuerpoNuloSeTraduceALoadErrorSinConfundirloCon404() = runTest {
         servidor.enqueue(MockResponse().setBody("null"))
 
-        val error = repositorio.obtenerAlbum(101).exceptionOrNull()
+        val error = repositorio.getAlbum(101).exceptionOrNull()
 
         // Retrofit lanza KotlinNullPointerException ante el cuerpo nulo y el adaptador la traduce.
-        assertTrue("Una respuesta sin álbum debe ser un error de carga", error is ErrorDeCarga)
-        assertTrue("Un cuerpo nulo no es un 404", error !is RecursoNoEncontrado)
-        assertTrue(error !is AlbumNoDisponible)
+        assertTrue("Una respuesta sin álbum debe ser un error de carga", error is LoadError)
+        assertTrue("Un cuerpo nulo no es un 404", error !is ResourceNotFound)
+        assertTrue(error !is AlbumNotAvailable)
     }
 
     // ---- Catálogo (HU01): GET /albums ----
@@ -285,16 +285,16 @@ class AlbumRepositoryTest {
             )
         )
 
-        val albumes = repositorio.obtenerAlbumes().getOrThrow()
+        val albumes = repositorio.getAlbums().getOrThrow()
 
         assertEquals("/albums", servidor.takeRequest(1, TimeUnit.SECONDS)?.path)
         assertEquals(
             listOf(
-                AlbumResumen(
+                AlbumSummary(
                     id = 102, nombre = "A Night at the Opera", portada = "https://example.com/102.jpg",
                     genero = "Rock", artista = "Queen, Freddie Mercury", anio = "1975"
                 ),
-                AlbumResumen(
+                AlbumSummary(
                     id = 100, nombre = "Buscando América", portada = "https://example.com/100.jpg",
                     genero = "Salsa", artista = "Rubén Blades Bellido de Luna", anio = "1984"
                 )
@@ -318,7 +318,7 @@ class AlbumRepositoryTest {
             )
         )
 
-        val albumes = repositorio.obtenerAlbumes().getOrThrow()
+        val albumes = repositorio.getAlbums().getOrThrow()
 
         assertEquals(listOf(4), albumes.map { it.id })
     }
@@ -339,7 +339,7 @@ class AlbumRepositoryTest {
             )
         )
 
-        val albumes = repositorio.obtenerAlbumes().getOrThrow()
+        val albumes = repositorio.getAlbums().getOrThrow()
 
         assertEquals(listOf("", "", "", "Queen"), albumes.map { it.artista })
     }
@@ -358,16 +358,16 @@ class AlbumRepositoryTest {
             )
         )
 
-        val albumes = repositorio.obtenerAlbumes().getOrThrow()
+        val albumes = repositorio.getAlbums().getOrThrow()
 
         assertEquals(listOf(null, null, "1976"), albumes.map { it.anio })
     }
 
     @Test
-    fun catalogoSinAlbumesEsUnExitoConListaVacia() = runTest {
+    fun catalogoSinAlbumesEsUnSuccessConListaVacia() = runTest {
         servidor.enqueue(MockResponse().setBody("[]"))
 
-        assertEquals(emptyList<AlbumResumen>(), repositorio.obtenerAlbumes().getOrThrow())
+        assertEquals(emptyList<AlbumSummary>(), repositorio.getAlbums().getOrThrow())
     }
 
     @Test
@@ -385,7 +385,7 @@ class AlbumRepositoryTest {
             )
         )
 
-        val nombres = repositorio.obtenerAlbumes().getOrThrow().map { it.nombre }
+        val nombres = repositorio.getAlbums().getOrThrow().map { it.nombre }
 
         assertEquals(
             listOf("A Day at the Races", "A Night at the Opera", "Buscando América", "Poeta del pueblo"),
@@ -394,41 +394,41 @@ class AlbumRepositoryTest {
     }
 
     @Test
-    fun catalogoConError500EsErrorDeCarga() = runTest {
+    fun catalogoConError500EsLoadError() = runTest {
         servidor.enqueue(MockResponse().setResponseCode(500))
 
-        val error = repositorio.obtenerAlbumes().exceptionOrNull()
+        val error = repositorio.getAlbums().exceptionOrNull()
 
-        assertTrue(error is ErrorDeCarga)
+        assertTrue(error is LoadError)
         assertEquals(500, (error!!.cause as HttpException).code())
     }
 
     @Test
-    fun catalogoConDesconexionEsErrorDeCarga() = runTest {
+    fun catalogoConDesconexionEsLoadError() = runTest {
         servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST))
 
-        val error = repositorio.obtenerAlbumes().exceptionOrNull()
+        val error = repositorio.getAlbums().exceptionOrNull()
 
-        assertTrue(error is ErrorDeCarga)
+        assertTrue(error is LoadError)
         assertTrue(error!!.cause is IOException)
     }
 
     @Test
-    fun catalogoConJsonIlegibleEsErrorDeCarga() = runTest {
+    fun catalogoConJsonIlegibleEsLoadError() = runTest {
         servidor.enqueue(MockResponse().setBody("{no es una lista"))
 
-        assertTrue(repositorio.obtenerAlbumes().exceptionOrNull() is ErrorDeCarga)
+        assertTrue(repositorio.getAlbums().exceptionOrNull() is LoadError)
     }
 
     @Test
     fun cancelarElCatalogoPropagaLaCancelacion() = runTest {
         val api = object : AlbumApi {
-            override suspend fun obtenerAlbum(id: Int): Response<AlbumDto> = awaitCancellation()
-            override suspend fun obtenerAlbumes(): Response<List<AlbumDto>> = awaitCancellation()
-            override suspend fun crearAlbum(album: CrearAlbumDto): AlbumDto = awaitCancellation()
+            override suspend fun getAlbum(id: Int): Response<AlbumDto> = awaitCancellation()
+            override suspend fun getAlbums(): Response<List<AlbumDto>> = awaitCancellation()
+            override suspend fun createAlbum(album: CreateAlbumDto): AlbumDto = awaitCancellation()
         }
         val repositorio = AlbumRepositoryImpl(ServiceAdapter(servidor.url("/").toString()), api)
-        val consulta = async(start = CoroutineStart.UNDISPATCHED) { repositorio.obtenerAlbumes() }
+        val consulta = async(start = CoroutineStart.UNDISPATCHED) { repositorio.getAlbums() }
 
         consulta.cancel(CancellationException("El usuario salió del catálogo"))
 
@@ -440,7 +440,7 @@ class AlbumRepositoryTest {
         }
     }
 
-    private val albumNuevo = AlbumNuevo(
+    private val albumNuevo = NewAlbum(
         nombre = "Abbey Road",
         portada = "https://example.com/abbey.jpg",
         fechaLanzamientoMillis = -8_380_800_000L,
@@ -450,10 +450,10 @@ class AlbumRepositoryTest {
     )
 
     @Test
-    fun crearAlbumEnviaPostConLosSeisCamposYDevuelveElId() = runTest {
+    fun createAlbumEnviaPostConLosSeisCamposYDevuelveElId() = runTest {
         servidor.enqueue(MockResponse().setBody("""{"id": 205, "name": "Abbey Road"}"""))
 
-        val resultado = repositorio.crearAlbum(albumNuevo)
+        val resultado = repositorio.createAlbum(albumNuevo)
 
         assertEquals(205, resultado.getOrThrow())
         val peticion = servidor.takeRequest(1, TimeUnit.SECONDS)
@@ -474,42 +474,42 @@ class AlbumRepositoryTest {
     }
 
     @Test
-    fun crearAlbumRechazadoPorElBackendEsErrorDeCarga() = runTest {
+    fun createAlbumRechazadoPorElBackendEsLoadError() = runTest {
         servidor.enqueue(MockResponse().setResponseCode(400).setBody("""{"statusCode": 400}"""))
 
-        assertTrue(repositorio.crearAlbum(albumNuevo).exceptionOrNull() is ErrorDeCarga)
+        assertTrue(repositorio.createAlbum(albumNuevo).exceptionOrNull() is LoadError)
     }
 
     @Test
-    fun crearAlbumConErrorDelServidorEsErrorDeCarga() = runTest {
+    fun createAlbumConErrorDelServidorEsLoadError() = runTest {
         servidor.enqueue(MockResponse().setResponseCode(500))
 
-        assertTrue(repositorio.crearAlbum(albumNuevo).exceptionOrNull() is ErrorDeCarga)
+        assertTrue(repositorio.createAlbum(albumNuevo).exceptionOrNull() is LoadError)
     }
 
     @Test
-    fun crearAlbumSinConexionEsErrorDeCarga() = runTest {
+    fun createAlbumSinConexionEsLoadError() = runTest {
         servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
 
-        assertTrue(repositorio.crearAlbum(albumNuevo).exceptionOrNull() is ErrorDeCarga)
+        assertTrue(repositorio.createAlbum(albumNuevo).exceptionOrNull() is LoadError)
     }
 
     @Test
-    fun crearAlbumConRespuestaSinIdEsErrorDeCarga() = runTest {
+    fun createAlbumConRespuestaSinIdEsLoadError() = runTest {
         servidor.enqueue(MockResponse().setBody("""{"name": "Abbey Road"}"""))
 
-        assertTrue(repositorio.crearAlbum(albumNuevo).exceptionOrNull() is ErrorDeCarga)
+        assertTrue(repositorio.createAlbum(albumNuevo).exceptionOrNull() is LoadError)
     }
 
     @Test
     fun cancelarLaCreacionPropagaLaCancelacion() = runTest {
         val api = object : AlbumApi {
-            override suspend fun obtenerAlbum(id: Int): Response<AlbumDto> = awaitCancellation()
-            override suspend fun obtenerAlbumes(): Response<List<AlbumDto>> = awaitCancellation()
-            override suspend fun crearAlbum(album: CrearAlbumDto): AlbumDto = awaitCancellation()
+            override suspend fun getAlbum(id: Int): Response<AlbumDto> = awaitCancellation()
+            override suspend fun getAlbums(): Response<List<AlbumDto>> = awaitCancellation()
+            override suspend fun createAlbum(album: CreateAlbumDto): AlbumDto = awaitCancellation()
         }
         val repositorio = AlbumRepositoryImpl(ServiceAdapter(servidor.url("/").toString()), api)
-        val envio = async(start = CoroutineStart.UNDISPATCHED) { repositorio.crearAlbum(albumNuevo) }
+        val envio = async(start = CoroutineStart.UNDISPATCHED) { repositorio.createAlbum(albumNuevo) }
 
         envio.cancel(CancellationException("El usuario salió del formulario"))
 

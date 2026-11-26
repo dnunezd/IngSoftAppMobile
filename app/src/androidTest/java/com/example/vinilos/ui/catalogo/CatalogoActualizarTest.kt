@@ -10,8 +10,8 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
 import com.example.vinilos.RepositorioAlbumesFalso
-import com.example.vinilos.data.model.AlbumResumen
-import com.example.vinilos.data.remote.ErrorDeCarga
+import com.example.vinilos.data.model.AlbumSummary
+import com.example.vinilos.data.remote.LoadError
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -22,9 +22,9 @@ class CatalogoActualizarTest {
     @get:Rule
     val rule = createComposeRule()
 
-    private val races = AlbumResumen(103, "A Day at the Races", null, "Rock", "Queen", "1976")
-    private val buscando = AlbumResumen(100, "Buscando América", null, "Salsa", "Rubén Blades", "1984")
-    private val poeta = AlbumResumen(101, "Poeta del pueblo", null, "Salsa", "Rubén Blades", "1984")
+    private val races = AlbumSummary(103, "A Day at the Races", null, "Rock", "Queen", "1976")
+    private val buscando = AlbumSummary(100, "Buscando América", null, "Salsa", "Rubén Blades", "1984")
+    private val poeta = AlbumSummary(101, "Poeta del pueblo", null, "Salsa", "Rubén Blades", "1984")
 
     private fun deslizarHaciaAbajo() {
         rule.onNodeWithTag(TagCuadriculaCatalogo).performTouchInput {
@@ -34,7 +34,7 @@ class CatalogoActualizarTest {
     }
 
     @Test
-    fun alDeslizarApareceElAlbumNuevoEnSuPosicionAlfabetica() {
+    fun alDeslizarApareceElNewAlbumEnSuPosicionAlfabetica() {
         val repositorio = RepositorioAlbumesFalso(
             catalogo = listOf(Result.success(listOf(races, poeta)), Result.success(listOf(races, buscando, poeta)))
         )
@@ -50,12 +50,12 @@ class CatalogoActualizarTest {
     }
 
     @Test
-    fun alDeslizarElCatalogoVacioMuestraLosAlbumesQueLleguen() {
+    fun alDeslizarElCatalogoEmptyMuestraLosAlbumesQueLleguen() {
         val repositorio = RepositorioAlbumesFalso(
             catalogo = listOf(Result.success(emptyList()), Result.success(listOf(races)))
         )
         rule.setContent { CatalogoConViewModel(repositorio) }
-        rule.onNodeWithTag(TagVacioCatalogo).assertIsDisplayed()
+        rule.onNodeWithTag(TagEmptyCatalogo).assertIsDisplayed()
 
         deslizarHaciaAbajo()
 
@@ -66,7 +66,7 @@ class CatalogoActualizarTest {
     @Test
     fun siFallaLaActualizacionSeConservaLaListaYSeAvisa() {
         val repositorio = RepositorioAlbumesFalso(
-            catalogo = listOf(Result.success(listOf(races, poeta)), Result.failure(ErrorDeCarga()))
+            catalogo = listOf(Result.success(listOf(races, poeta)), Result.failure(LoadError()))
         )
         rule.setContent { CatalogoConViewModel(repositorio) }
 
@@ -81,7 +81,7 @@ class CatalogoActualizarTest {
     @Test
     fun enErrorDeslizarNoConsultaYReintentarSi() {
         val repositorio = RepositorioAlbumesFalso(
-            catalogo = listOf(Result.failure(ErrorDeCarga()), Result.success(listOf(races)))
+            catalogo = listOf(Result.failure(LoadError()), Result.success(listOf(races)))
         )
         rule.setContent { CatalogoConViewModel(repositorio) }
         rule.onNodeWithTag(TagErrorCatalogo).assertIsDisplayed()

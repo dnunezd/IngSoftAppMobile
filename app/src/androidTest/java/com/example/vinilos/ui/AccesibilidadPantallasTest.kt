@@ -21,54 +21,54 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.tryPerformAccessibilityChecks
 import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.AlbumArtista
-import com.example.vinilos.data.model.AlbumResumen
+import com.example.vinilos.data.model.AlbumSummary
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.Artista
-import com.example.vinilos.data.model.ArtistaDetalle
-import com.example.vinilos.data.model.Cancion
+import com.example.vinilos.data.model.ArtistDetail
+import com.example.vinilos.data.model.Track
 import com.example.vinilos.data.model.Collector
-import com.example.vinilos.data.model.Comentario
+import com.example.vinilos.data.model.Comment
 import com.example.vinilos.data.model.Session
-import com.example.vinilos.ui.artistas.PantallaArtistas
-import com.example.vinilos.ui.artistas.PantallaDetalleArtista
-import com.example.vinilos.ui.catalogo.PantallaCatalogo
-import com.example.vinilos.ui.crear.AccionesAgregarCancion
-import com.example.vinilos.ui.crear.AccionesCrearAlbum
-import com.example.vinilos.ui.crear.PantallaAgregarCancion
-import com.example.vinilos.ui.crear.PantallaCrearAlbum
-import com.example.vinilos.ui.detalle.ContenidoAlbum
-import com.example.vinilos.ui.detalle.TagAgregarCancionDetalle
+import com.example.vinilos.ui.artistas.ArtistsScreen
+import com.example.vinilos.ui.artistas.ArtistDetailScreen
+import com.example.vinilos.ui.catalogo.CatalogScreen
+import com.example.vinilos.ui.create.AddTrackActions
+import com.example.vinilos.ui.create.CreateAlbumActions
+import com.example.vinilos.ui.create.AddTrackScreen
+import com.example.vinilos.ui.create.CreateAlbumScreen
+import com.example.vinilos.ui.detalle.AlbumContent
+import com.example.vinilos.ui.detalle.TagAddTrackDetalle
 import com.example.vinilos.ui.detalle.TagListaDetalleAlbum
 import com.example.vinilos.ui.detalle.presentarAlbum
-import com.example.vinilos.ui.ingreso.PantallaColeccionistas
-import com.example.vinilos.ui.ingreso.PantallaIngreso
-import com.example.vinilos.ui.inicio.PantallaInicio
+import com.example.vinilos.ui.ingreso.CollectorsScreen
+import com.example.vinilos.ui.ingreso.EntryScreen
+import com.example.vinilos.ui.inicio.HomeScreen
 import com.example.vinilos.ui.theme.VinilosTheme
-import com.example.vinilos.viewmodel.AgregarCancionUiState
+import com.example.vinilos.viewmodel.AddTrackUiState
 import com.example.vinilos.viewmodel.AlbumsUiState
-import com.example.vinilos.viewmodel.ArtistaDetalleUiState
+import com.example.vinilos.viewmodel.ArtistDetailUiState
 import com.example.vinilos.viewmodel.ArtistsUiState
 import com.example.vinilos.viewmodel.CollectorsUiState
-import com.example.vinilos.viewmodel.CrearAlbumUiState
-import com.example.vinilos.viewmodel.EnvioCancion
-import com.example.vinilos.viewmodel.InfoAlbumDestino
-import com.example.vinilos.viewmodel.validarCancion
+import com.example.vinilos.viewmodel.CreateAlbumUiState
+import com.example.vinilos.viewmodel.TrackSubmission
+import com.example.vinilos.viewmodel.TargetAlbumInfo
+import com.example.vinilos.viewmodel.validarTrack
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import androidx.compose.ui.test.isRoot
-import com.example.vinilos.ui.comentar.AccionesComentarAlbum
-import com.example.vinilos.ui.comentar.PantallaComentarAlbum
-import com.example.vinilos.ui.artistas.AccionesAsociarAlbum
-import com.example.vinilos.ui.artistas.VentanaAsociarAlbum
-import com.example.vinilos.viewmodel.AsociarAlbumUiState
+import com.example.vinilos.ui.comentar.AddCommentActions
+import com.example.vinilos.ui.comentar.AddCommentScreen
+import com.example.vinilos.ui.artistas.AssociateAlbumActions
+import com.example.vinilos.ui.artistas.AssociateAlbumDialog
+import com.example.vinilos.viewmodel.AssociateAlbumUiState
 import com.example.vinilos.viewmodel.ListadoAsociable
 import com.example.vinilos.viewmodel.CargaAlbum
-import com.example.vinilos.viewmodel.ComentarAlbumUiState
-import com.example.vinilos.viewmodel.EnvioComentario
+import com.example.vinilos.viewmodel.AddCommentUiState
+import com.example.vinilos.viewmodel.EnvioComment
 
 /**
  * Regresión de accesibilidad (corregir-accesibilidad-scanner): activa las comprobaciones de
@@ -91,16 +91,16 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
     private val queen = Artist(101, "Queen", null, ArtistType.BANDA)
     private val ruben = Artist(100, "Rubén Blades Bellido de Luna", null, ArtistType.MUSICO)
     private val albumes = listOf(
-        AlbumResumen(103, "A Day at the Races", null, "Rock", "Queen", "1976"),
-        AlbumResumen(100, "Buscando América", null, "Salsa", "Rubén Blades Bellido de Luna", "1984")
+        AlbumSummary(103, "A Day at the Races", null, "Rock", "Queen", "1976"),
+        AlbumSummary(100, "Buscando América", null, "Salsa", "Rubén Blades Bellido de Luna", "1984")
     )
     private val coleccionista = Session.Collector(Collector(100, "Manolo Bellon", "manollo@caracol.com.co"))
-    private val accionesComentar = AccionesComentarAlbum({}, {}, {}, {}, {}, {}, {})
+    private val accionesComentar = AddCommentActions({}, {}, {}, {}, {}, {}, {})
 
     private val album = Album(
         100, "Buscando América", null, "Álbum de Rubén Blades y Seis del Solar", "Salsa", "Elektra",
-        "1984-08-01", listOf(Cancion("Decisiones", "5:05")), listOf(Artista("Rubén Blades", null)),
-        listOf(Comentario("Excelente", 5))
+        "1984-08-01", listOf(Track("Decisiones", "5:05")), listOf(Artista("Rubén Blades", null)),
+        listOf(Comment("Excelente", 5))
     )
 
     /** Comprobaciones de accesibilidad de la pantalla y, además, que cada título esperado sea un encabezado. */
@@ -133,7 +133,7 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
 
     @Test
     fun elBotonEntrarEsUnSoloElementoParaTalkBack() {
-        rule.setContent { ConEscala { VinilosTheme { PantallaIngreso(onVisitante = {}, onColeccionista = {}) } } }
+        rule.setContent { ConEscala { VinilosTheme { EntryScreen(onVisitante = {}, onColeccionista = {}) } } }
         rule.onNodeWithContentDescription("Entrar como Visitante").assertExists()
         rule.onNodeWithContentDescription("Entrar como Coleccionista").assertExists()
         // El texto "Entrar" no debe quedar como un segundo elemento junto a la descripción.
@@ -145,10 +145,10 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
         rule.setContent {
             ConEscala {
                 VinilosTheme {
-                    PantallaCrearAlbum(
-                        estado = CrearAlbumUiState(),
+                    CreateAlbumScreen(
+                        estado = CreateAlbumUiState(),
                         session = Session.Collector(Collector(100, "Manolo Bellon", "manollo@caracol.com.co")),
-                        acciones = AccionesCrearAlbum()
+                        acciones = CreateAlbumActions()
                     )
                 }
             }
@@ -170,22 +170,22 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
 
     @Test
     fun elPromedioExponeSuNumeroYLasEstrellasNoLoRepiten() {
-        rule.setContent { ConEscala { VinilosTheme { ContenidoAlbum(presentarAlbum(album), onAtras = {}) } } }
+        rule.setContent { ConEscala { VinilosTheme { AlbumContent(presentarAlbum(album), onAtras = {}) } } }
         rule.onNode(hasText("5,0") and hasContentDescription("de 5 estrellas", substring = true)).assertExists()
         rule.onAllNodes(hasContentDescription("5,0 de 5 estrellas", substring = true)).assertCountEquals(0)
     }
 
     @Test
     fun cadaPistaEsUnSoloElemento() {
-        rule.setContent { ConEscala { VinilosTheme { ContenidoAlbum(presentarAlbum(album), onAtras = {}) } } }
+        rule.setContent { ConEscala { VinilosTheme { AlbumContent(presentarAlbum(album), onAtras = {}) } } }
         rule.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("Decisiones"))
         rule.onNode(hasText("01") and hasText("Decisiones") and hasText("5:05")).assertExists()
     }
 
     @Test
-    fun cadaComentarioEsUnSoloElementoAunqueSeRepitaLaCalificacion() {
-        val conRepetidos = album.copy(comentarios = listOf(Comentario("Excelente", 4), Comentario("Muy bueno", 4)))
-        rule.setContent { ConEscala { VinilosTheme { ContenidoAlbum(presentarAlbum(conRepetidos), onAtras = {}) } } }
+    fun cadaCommentEsUnSoloElementoAunqueSeRepitaLaCalificacion() {
+        val conRepetidos = album.copy(comentarios = listOf(Comment("Excelente", 4), Comment("Muy bueno", 4)))
+        rule.setContent { ConEscala { VinilosTheme { AlbumContent(presentarAlbum(conRepetidos), onAtras = {}) } } }
         listOf("Excelente", "Muy bueno").forEach { texto ->
             rule.onNode(hasScrollToNodeAction()).performScrollToNode(hasText(texto))
             rule.onNode(hasText(texto) and hasContentDescription("4 / 5")).assertExists()
@@ -193,14 +193,14 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
     }
 
     @Test
-    fun lasEstrellasDelComentarioPublicadoSonSoloDeLectura() {
+    fun lasEstrellasDelCommentPublicadoSonSoloDeLectura() {
         rule.setContent {
             ConEscala {
                 VinilosTheme {
-                    PantallaComentarAlbum(
-                        estado = ComentarAlbumUiState(
+                    AddCommentScreen(
+                        estado = AddCommentUiState(
                             album = CargaAlbum.Listo(album), calificacion = 4, opinion = "Gran disco",
-                            envio = EnvioComentario.Publicado
+                            envio = EnvioComment.Publicado
                         ),
                         session = coleccionista, acciones = accionesComentar
                     )
@@ -212,13 +212,13 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
 
     @Test
     fun ingreso() = verificar {
-        PantallaIngreso(onVisitante = {}, onColeccionista = {})
+        EntryScreen(onVisitante = {}, onColeccionista = {})
     }
 
     @Test
     fun coleccionistas() = verificar("Quién") {
-        PantallaColeccionistas(
-            estado = CollectorsUiState.Exito(
+        CollectorsScreen(
+            estado = CollectorsUiState.Success(
                 listOf(
                     Collector(100, "Manolo Bellon", "manollo@caracol.com.co"),
                     Collector(101, "Jaime Monsalve", "jmonsalve@rtvc.com.co")
@@ -231,13 +231,13 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
 
     @Test
     fun inicio() = verificar("Descubre música", "Catálogo de Álbumes", "Listado de Artistas") {
-        PantallaInicio(session = Session.Visitor, onVerAlbumes = {}, onVerArtistas = {})
+        HomeScreen(session = Session.Visitor, onVerAlbumes = {}, onVerArtistas = {})
     }
 
     @Test
     fun catalogo() = verificar("Álbumes", "Explora", "Catálogo") {
-        PantallaCatalogo(
-            estado = AlbumsUiState.Exito(albumes),
+        CatalogScreen(
+            estado = AlbumsUiState.Success(albumes),
             session = Session.Visitor,
             onActualizar = {}, onReintentar = {}, onAvisoMostrado = {}, onSeleccionar = {}, onAtras = {}
         )
@@ -245,22 +245,22 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
 
     @Test
     fun detalleDeAlbum() = verificar("Artistas", "Canciones", "Comentarios") {
-        ContenidoAlbum(presentarAlbum(album), onAtras = {})
+        AlbumContent(presentarAlbum(album), onAtras = {})
     }
 
     @Test
     fun artistas() = verificar("Artistas", "Explora") {
-        PantallaArtistas(
-            estado = ArtistsUiState.Exito(listOf(queen, ruben)),
+        ArtistsScreen(
+            estado = ArtistsUiState.Success(listOf(queen, ruben)),
             onBuscar = {}, onReintentar = {}, onSeleccionar = {}, onAtras = {}, onAvisoMostrado = {}
         )
     }
 
     @Test
     fun detalleDeArtista() = verificar("Artista", "Álbumes") {
-        PantallaDetalleArtista(
-            estado = ArtistaDetalleUiState.Exito(
-                ArtistaDetalle(
+        ArtistDetailScreen(
+            estado = ArtistDetailUiState.Success(
+                ArtistDetail(
                     101, "Queen", null, "Banda británica", ArtistType.BANDA, "1970-01-01T00:00:00.000Z",
                     emptyList(), listOf(AlbumArtista(100, "Bailando con lobos", null, "2020")), emptyList()
                 )
@@ -270,28 +270,28 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
     }
 
     @Test
-    fun comentarAlbum() = verificar("Comentar álbum", "Qué te pareció") {
-        PantallaComentarAlbum(
-            estado = ComentarAlbumUiState(album = CargaAlbum.Listo(album)),
+    fun addComment() = verificar("Comentar álbum", "Qué te pareció") {
+        AddCommentScreen(
+            estado = AddCommentUiState(album = CargaAlbum.Listo(album)),
             session = coleccionista, acciones = accionesComentar
         )
     }
 
     @Test
     fun comentarioPublicado() = verificar("Comentario publicado exitosamente") {
-        PantallaComentarAlbum(
-            estado = ComentarAlbumUiState(
+        AddCommentScreen(
+            estado = AddCommentUiState(
                 album = CargaAlbum.Listo(album), calificacion = 4, opinion = "Gran disco",
-                envio = EnvioComentario.Publicado
+                envio = EnvioComment.Publicado
             ),
             session = coleccionista, acciones = accionesComentar
         )
     }
 
     @Test
-    fun descartarComentario() = verificar("Comentar álbum") {
-        PantallaComentarAlbum(
-            estado = ComentarAlbumUiState(
+    fun descartarComment() = verificar("Comentar álbum") {
+        AddCommentScreen(
+            estado = AddCommentUiState(
                 album = CargaAlbum.Listo(album), calificacion = 3, opinion = "Borrador", confirmarDescarte = true
             ),
             session = coleccionista, acciones = accionesComentar
@@ -299,86 +299,86 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
     }
 
     @Test
-    fun asociarAlbum() = verificar("Asociar álbum a Queen") {
-        VentanaAsociarAlbum(
-            estado = AsociarAlbumUiState(
+    fun associateAlbum() = verificar("Asociar álbum a Queen") {
+        AssociateAlbumDialog(
+            estado = AssociateAlbumUiState(
                 abierta = true, listado = ListadoAsociable.Listo(albumes), asociados = setOf(103)
             ),
-            nombreArtista = "Queen", acciones = AccionesAsociarAlbum()
+            nombreArtista = "Queen", acciones = AssociateAlbumActions()
         )
     }
 
     @Test
-    fun crearAlbum() = verificar("Crear", "Nuevo") {
-        PantallaCrearAlbum(
-            estado = CrearAlbumUiState(),
+    fun createAlbum() = verificar("Crear", "Nuevo") {
+        CreateAlbumScreen(
+            estado = CreateAlbumUiState(),
             session = Session.Collector(Collector(100, "Manolo Bellon", "manollo@caracol.com.co")),
-            acciones = AccionesCrearAlbum()
+            acciones = CreateAlbumActions()
         )
     }
 
     // ---------- HU08: agregar canción (revisión de PR) ----------
 
     @Test
-    fun agregarCancionFormularioVacioConTarjetaDeAlbumDestino() = verificar("Agregar canción", "Datos de la canción") {
-        PantallaAgregarCancion(
-            estado = AgregarCancionUiState(
-                albumInfo = InfoAlbumDestino("Buscando América", null, "Rubén Blades")
+    fun addTrackFormularioEmptyConTarjetaDeAlbumDestino() = verificar("Agregar canción", "Datos de la canción") {
+        AddTrackScreen(
+            estado = AddTrackUiState(
+                albumInfo = TargetAlbumInfo("Buscando América", null, "Rubén Blades")
             ),
             session = coleccionista,
-            acciones = AccionesAgregarCancion()
+            acciones = AddTrackActions()
         )
     }
 
     @Test
-    fun agregarCancionConErrorDeFormatoYEnvioFallido() = verificar("Agregar canción") {
-        PantallaAgregarCancion(
-            estado = AgregarCancionUiState(
+    fun addTrackConErrorDeFormatoYEnvioFallido() = verificar("Agregar canción") {
+        AddTrackScreen(
+            estado = AddTrackUiState(
                 nombre = "Decisiones",
                 duracion = "abc",
-                errores = validarCancion("Decisiones", "abc"),
-                envio = EnvioCancion.Fallida
+                errores = validarTrack("Decisiones", "abc"),
+                envio = TrackSubmission.Fallida
             ),
             session = coleccionista,
-            acciones = AccionesAgregarCancion()
+            acciones = AddTrackActions()
         )
     }
 
     @Test
-    fun agregarCancionGuardando() = verificar("Agregar canción") {
-        PantallaAgregarCancion(
-            estado = AgregarCancionUiState(
+    fun addTrackGuardando() = verificar("Agregar canción") {
+        AddTrackScreen(
+            estado = AddTrackUiState(
                 nombre = "Decisiones",
                 duracion = "5:05",
                 errores = emptyMap(),
-                envio = EnvioCancion.Guardando
+                envio = TrackSubmission.Guardando
             ),
             session = coleccionista,
-            acciones = AccionesAgregarCancion()
+            acciones = AddTrackActions()
         )
     }
 
     @Test
-    fun agregarCancionAlbumNoDisponible() = verificar("Agregar canción") {
-        PantallaAgregarCancion(
-            estado = AgregarCancionUiState(envio = EnvioCancion.AlbumNoDisponible),
+    fun addTrackAlbumNotAvailable() = verificar("Agregar canción") {
+        AddTrackScreen(
+            estado = AddTrackUiState(envio = TrackSubmission.AlbumNotAvailable),
             session = coleccionista,
-            acciones = AccionesAgregarCancion()
+            acciones = AddTrackActions()
         )
     }
 
     @Test
-    fun detalleDeAlbumConBotonAgregarCancionParaElColeccionista() {
+    fun detalleDeAlbumConBotonAddTrackParaElColeccionista() {
         rule.enableAccessibilityChecks()
         rule.setContent {
             ConEscala {
                 VinilosTheme {
-                    ContenidoAlbum(presentarAlbum(album), onAtras = {}, session = coleccionista)
+                    AlbumContent(presentarAlbum(album), onAtras = {}, session = coleccionista)
                 }
             }
         }
-        rule.onNodeWithTag(TagListaDetalleAlbum).performScrollToNode(hasTestTag(TagAgregarCancionDetalle))
-        rule.onNodeWithTag(TagAgregarCancionDetalle).assertExists()
+        rule.onNodeWithTag(TagListaDetalleAlbum).performScrollToNode(hasTestTag(TagAddTrackDetalle))
+        rule.onNodeWithTag(TagAddTrackDetalle).assertExists()
         rule.onRoot().tryPerformAccessibilityChecks()
     }
 }

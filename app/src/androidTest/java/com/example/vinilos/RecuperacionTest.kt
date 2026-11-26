@@ -80,7 +80,7 @@ class RecuperacionTest {
         rule.onNodeWithTag(TagEntrarColeccionista).performScrollTo().performClick()
     }
 
-    private fun reintentar() {
+    private fun retry() {
         esperarA(TagReintentar)
         rule.onNodeWithTag(TagReintentar).performClick()
     }
@@ -98,7 +98,7 @@ class RecuperacionTest {
 
             // El servidor "vuelve" y la persona pulsa Reintentar.
             servidorSano()
-            reintentar()
+            retry()
 
             esperarA(tagColeccionista(100))
             rule.onNodeWithText("Manolo Bellon").assertIsDisplayed()
@@ -117,7 +117,7 @@ class RecuperacionTest {
             rule.onNodeWithText("No pudimos cargar los coleccionistas").assertIsDisplayed()
 
             servidorSano()
-            reintentar()
+            retry()
 
             esperarA(tagColeccionista(101))
             rule.onNodeWithText("Jaime Monsalve").assertIsDisplayed()
@@ -125,7 +125,7 @@ class RecuperacionTest {
     }
 
     @Test
-    fun variosReintentosFallidosSeguidosDeUnoExitosoMuestranLaLista() {
+    fun variosReintentosFallidosSeguidosDeUnoSuccesssoMuestranLaLista() {
         servidorCaido()
         servidorConErrorInterno()
         servidorCaido()
@@ -138,14 +138,14 @@ class RecuperacionTest {
 
             // Cada reintento fallido vuelve a mostrar el mensaje de error con "Reintentar".
             repeat(2) { vez ->
-                reintentar()
+                retry()
                 esperarPeticiones(vez + 2)
                 esperarA(TagMensajeError)
                 rule.onNodeWithText("No pudimos cargar los coleccionistas").assertIsDisplayed()
                 rule.onNodeWithTag(TagReintentar).assertIsDisplayed()
             }
 
-            reintentar()
+            retry()
 
             esperarA(tagColeccionista(100))
             rule.onNodeWithText("Manolo Bellon").assertIsDisplayed()

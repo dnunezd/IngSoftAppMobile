@@ -1,6 +1,6 @@
 package com.example.vinilos.data.repository
 
-import com.example.vinilos.data.local.CambiosDeTabla
+import com.example.vinilos.data.local.TableChanges
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
@@ -13,7 +13,7 @@ class CopiaTablaTest {
     private data class Fila(val id: Int, val nombre: String)
 
     private fun copiaCompleta(vararg filas: Fila) = CopiaTabla<Int, Fila> { it.id }.apply {
-        aplicar(CambiosDeTabla.reemplazar(filas.toList()))
+        aplicar(TableChanges.reemplazar(filas.toList()))
     }
 
     @Test
@@ -21,7 +21,7 @@ class CopiaTablaTest {
         val copia = CopiaTabla<Int, Fila> { it.id }
 
         assertFalse(copia.completa)
-        assertEquals(CambiosDeTabla.reemplazar<Int, Fila>(listOf(Fila(1, "A"))), copia.cambiosPara(listOf(Fila(1, "A"))))
+        assertEquals(TableChanges.reemplazar<Int, Fila>(listOf(Fila(1, "A"))), copia.cambiosPara(listOf(Fila(1, "A"))))
     }
 
     @Test
@@ -38,7 +38,7 @@ class CopiaTablaTest {
 
         val cambios = copia.cambiosPara(listOf(Fila(1, "A"), Fila(2, "B nuevo"), Fila(4, "D")))
 
-        assertEquals(CambiosDeTabla.diferencias(listOf(Fila(2, "B nuevo"), Fila(4, "D")), listOf(3)), cambios)
+        assertEquals(TableChanges.diferencias(listOf(Fila(2, "B nuevo"), Fila(4, "D")), listOf(3)), cambios)
     }
 
     @Test
@@ -52,7 +52,7 @@ class CopiaTablaTest {
     fun aplicarDiferenciasActualizaLaCopia() {
         val copia = copiaCompleta(Fila(1, "A"), Fila(2, "B"))
 
-        copia.aplicar(CambiosDeTabla.diferencias(listOf(Fila(3, "C")), listOf(1)))
+        copia.aplicar(TableChanges.diferencias(listOf(Fila(3, "C")), listOf(1)))
 
         assertNull(copia.fila(1))
         assertEquals(Fila(3, "C"), copia.fila(3))

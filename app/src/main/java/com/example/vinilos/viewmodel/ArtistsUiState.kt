@@ -4,7 +4,7 @@ import com.example.vinilos.data.model.Artist
 
 sealed interface ArtistsUiState {
 
-    data object Cargando : ArtistsUiState
+    data object Loading : ArtistsUiState
 
     /**
      * [artistas] es el listado completo ya ordenado; [visibles] es el que resulta de aplicar la
@@ -12,7 +12,7 @@ sealed interface ArtistsUiState {
      * [actualizando]: se muestra el listado guardado mientras se consulta el backend.
      * [errorAlActualizar]: esa consulta falló y la pantalla debe avisarlo una vez (add-cache-consultas, D5).
      */
-    data class Exito(
+    data class Success(
         val artistas: List<Artist>,
         val consulta: String = "",
         val actualizando: Boolean = false,
@@ -21,7 +21,7 @@ sealed interface ArtistsUiState {
         val visibles: List<Artist> = filtrar(artistas, consulta)
     }
 
-    data object Vacio : ArtistsUiState
+    data object Empty : ArtistsUiState
 
     data object Error : ArtistsUiState
 }

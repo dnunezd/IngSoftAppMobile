@@ -1,10 +1,10 @@
 package com.example.vinilos.data.repository
 
-import com.example.vinilos.data.model.Cancion
-import com.example.vinilos.data.remote.ErrorDeCarga
+import com.example.vinilos.data.model.Track
+import com.example.vinilos.data.remote.LoadError
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.remote.TrackApi
-import com.example.vinilos.data.remote.CrearCancionDto
+import com.example.vinilos.data.remote.CrearTrackDto
 import com.google.gson.JsonParser
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
@@ -46,14 +46,14 @@ class AlbumRepositoryTracksTest {
     }
 
     @Test
-    fun agregaCancionAlAlbumConPostYSoloLosCamposPermitidos() = runTest {
+    fun agregaTrackAlAlbumConPostYSoloLosCamposPermitidos() = runTest {
         server.enqueue(
             MockResponse().setResponseCode(200).setBody(
                 """{"id": 10, "name": "Decisiones", "duration": "5:05"}"""
             )
         )
 
-        val result = repository.agregarCancion(101, Cancion("Decisiones", "5:05"))
+        val result = repository.addTrack(101, Track("Decisiones", "5:05"))
 
         assertTrue("La respuesta 200 debe ser exitosa: ${result.exceptionOrNull()}", result.isSuccess)
         val request = server.takeRequest(1, TimeUnit.SECONDS)
@@ -67,50 +67,50 @@ class AlbumRepositoryTracksTest {
     }
 
     @Test
-    fun respuesta404AlAgregarCancionSeTraduceAAlbumNoDisponible() = runTest {
+    fun respuesta404AlAddTrackSeTraduceAAlbumNotAvailable() = runTest {
         server.enqueue(MockResponse().setResponseCode(404))
 
-        val error = repository.agregarCancion(999, Cancion("Tema", "3:15")).exceptionOrNull()
+        val error = repository.addTrack(999, Track("Tema", "3:15")).exceptionOrNull()
 
-        assertTrue("El 404 debe identificar al álbum inexistente", error is AlbumNoDisponible)
+        assertTrue("El 404 debe identificar al álbum inexistente", error is AlbumNotAvailable)
         assertTrue(error!!.cause is HttpException)
         assertEquals(404, (error.cause as HttpException).code())
         assertEquals("/albums/999/tracks", server.takeRequest(1, TimeUnit.SECONDS)?.path)
     }
 
     @Test
-    fun respuesta500AlAgregarCancionPermiteReintentar() = runTest {
+    fun respuesta500AlAddTrackPermiteReintentar() = runTest {
         server.enqueue(MockResponse().setResponseCode(500))
 
-        val error = repository.agregarCancion(101, Cancion("Tema", "3:15")).exceptionOrNull()
+        val error = repository.addTrack(101, Track("Tema", "3:15")).exceptionOrNull()
 
-        assertTrue("El error del servidor debe ser recuperable", error is ErrorDeCarga)
+        assertTrue("El error del servidor debe ser recuperable", error is LoadError)
         assertTrue(error!!.cause is HttpException)
         assertEquals(500, (error.cause as HttpException).code())
     }
 
     @Test
-    fun desconexionAlAgregarCancionSeTraduceAErrorDeCarga() = runTest {
+    fun desconexionAlAddTrackSeTraduceALoadError() = runTest {
         server.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST))
 
-        val error = repository.agregarCancion(101, Cancion("Tema", "3:15")).exceptionOrNull()
+        val error = repository.addTrack(101, Track("Tema", "3:15")).exceptionOrNull()
 
-        assertTrue(error is ErrorDeCarga)
+        assertTrue(error is LoadError)
         assertTrue(error!!.cause is IOException)
     }
 
     @Test
     fun cancelarLaAsociacionPropagaLaCancelacion() = runTest {
         val trackApi = object : TrackApi {
-            override suspend fun agregarCancion(
+            override suspend fun addTrack(
                 albumId: Int,
-                cancion: CrearCancionDto
+                cancion: CrearTrackDto
             ): Response<Unit> = awaitCancellation()
         }
         val repository = AlbumRepositoryImpl(adapter, trackApi = trackApi)
         var devolvioResultado = false
         val request = async(start = CoroutineStart.UNDISPATCHED) {
-            val result = repository.agregarCancion(101, Cancion("Tema", "3:15"))
+            val result = repository.addTrack(101, Track("Tema", "3:15"))
             devolvioResultado = true
             result
         }

@@ -69,7 +69,7 @@ class ContrasteDePaletaTest {
     }
 
     @Test
-    fun lasInicialesBlancasSobreLosDosExtremosDeCadaAvatarCumplen() {
+    fun lasInitialsBlancasSobreLosDosExtremosDeCadaAvatarCumplen() {
         listOf(AvatarAzulClaro, AvatarAzul, AvatarGrisClaro, AvatarGris).forEach {
             exigir("blanco sobre avatar $it", Superficie, it)
         }

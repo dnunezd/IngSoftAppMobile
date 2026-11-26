@@ -1,22 +1,22 @@
 package com.example.vinilos.data.repository
 
 import android.database.sqlite.SQLiteException
-import com.example.vinilos.data.local.ArtistaDao
-import com.example.vinilos.data.local.ArtistaDetalleEntity
-import com.example.vinilos.data.local.ArtistaEntity
+import com.example.vinilos.data.local.ArtistDao
+import com.example.vinilos.data.local.ArtistDetailEntity
+import com.example.vinilos.data.local.ArtistEntity
 import com.example.vinilos.data.model.AlbumArtista
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
-import com.example.vinilos.data.model.ArtistaDetalle
+import com.example.vinilos.data.model.ArtistDetail
 import com.example.vinilos.data.model.IntegranteArtista
-import com.example.vinilos.data.model.PremioArtista
+import com.example.vinilos.data.model.ArtistPrize
 import com.example.vinilos.data.model.formatearFechaONula
 import com.example.vinilos.data.remote.ArtistApi
-import com.example.vinilos.data.remote.ArtistaDetalleDto
+import com.example.vinilos.data.remote.ArtistDetailDto
 import com.example.vinilos.data.remote.IdAlbumDto
 import com.example.vinilos.data.remote.PremiacionArtistaDto
 import com.example.vinilos.data.remote.PremiacionDto
-import com.example.vinilos.data.remote.RecursoNoEncontrado
+import com.example.vinilos.data.remote.ResourceNotFound
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.remote.conVersion
 import com.google.gson.JsonParseException
@@ -40,14 +40,14 @@ import retrofit2.Response
 class ArtistRepositoryImpl(
     private val adaptador: ServiceAdapter,
     private val api: ArtistApi = adaptador.api(),
-    private val artistaDao: ArtistaDao? = null,
+    private val artistaDao: ArtistDao? = null,
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : ArtistRepository {
 
     /** Protege la comparación, la escritura y la actualización de lo que sigue (optimizar-cache-e-imagenes, D4). */
     private val escritura = Mutex()
-    private val copiaListado = CopiaTabla<Pair<ArtistType, Int>, ArtistaEntity> { it.tipo to it.id }
-    private val copiaDetalles = CopiaTabla<Pair<ArtistType, Int>, ArtistaDetalleEntity> { it.tipo to it.id }
+    private val copiaListado = CopiaTabla<Pair<ArtistType, Int>, ArtistEntity> { it.tipo to it.id }
+    private val copiaDetalles = CopiaTabla<Pair<ArtistType, Int>, ArtistDetailEntity> { it.tipo to it.id }
     private var versionListado: String? = null
     private val versionesDetalle = Versiones<Pair<ArtistType, Int>>()
 
@@ -57,8 +57,8 @@ class ArtistRepositoryImpl(
      * porque un listado parcial no cumpliría con mostrar ambos. Si sale bien, lo guardado queda igual a la
      * respuesta (D4); su versión combina la de músicos y la de bandas.
      */
-    override suspend fun obtenerArtistas(): Result<List<Artist>> = withContext(dispatcher) {
-        adaptador.llamar {
+    override suspend fun getArtists(): Result<List<Artist>> = withContext(dispatcher) {
+        adaptador.call {
             coroutineScope {
                 val musicos = async { api.getMusicians().conVersion() }
                 val bandas = async { api.getBands().conVersion() }
@@ -69,22 +69,22 @@ class ArtistRepositoryImpl(
                 artistas to versionCompuesta(deMusicos.version, deBandas.version)
             }
         }.map { (artistas, version) -> artistas.sortedWith(compareBy(ordenAlfabetico()) { it.name }) to version }
-            .onSuccess { (artistas, version) -> guardarListado(artistas, version) }
+            .onSuccess { (artistas, version) -> saveList(artistas, version) }
             .map { (artistas, _) -> artistas }
     }
 
-    override suspend fun obtenerArtistasGuardados(): List<Artist> = withContext(dispatcher) {
+    override suspend fun getCachedArtists(): List<Artist> = withContext(dispatcher) {
         leer(siNoHay = emptyList()) {
             todos().map { Artist(it.id, it.nombre, it.imagen, it.tipo) }.sortedWith(compareBy(ordenAlfabetico()) { it.name })
         }
     }
 
-    override suspend fun obtenerDetalleGuardado(tipo: ArtistType, id: Int): ArtistaDetalle? = withContext(dispatcher) {
+    override suspend fun getCachedDetail(tipo: ArtistType, id: Int): ArtistDetail? = withContext(dispatcher) {
         leer(siNoHay = null) { detalle(tipo, id)?.aModelo() }
     }
 
     /** Lectura de lo guardado: sin DAO o si falla el almacenamiento, es como si no hubiera nada. */
-    private suspend fun <T> leer(siNoHay: T, bloque: suspend ArtistaDao.() -> T): T {
+    private suspend fun <T> leer(siNoHay: T, bloque: suspend ArtistDao.() -> T): T {
         val dao = artistaDao ?: return siNoHay
         return try {
             dao.bloque()
@@ -95,9 +95,9 @@ class ArtistRepositoryImpl(
 
     // ---------- Punto único de escritura (optimizar-cache-e-imagenes, D4 y D5) ----------
 
-    private suspend fun guardarListado(artistas: List<Artist>, version: String?) = escribir {
+    private suspend fun saveList(artistas: List<Artist>, version: String?) = escribir {
         if (version != null && version == versionListado) return@escribir
-        val cambios = copiaListado.cambiosPara(artistas.map { ArtistaEntity(it.type, it.id, it.name, it.image) })
+        val cambios = copiaListado.cambiosPara(artistas.map { ArtistEntity(it.type, it.id, it.name, it.image) })
         if (!cambios.vacios) {
             aplicarListado(cambios)
             copiaListado.aplicar(cambios)
@@ -105,11 +105,11 @@ class ArtistRepositoryImpl(
         versionListado = version
     }
 
-    private suspend fun guardarDetalleSiCambio(detalle: ArtistaDetalleEntity, version: String?) = escribir {
+    private suspend fun saveDetailIfChanged(detalle: ArtistDetailEntity, version: String?) = escribir {
         val clave = detalle.tipo to detalle.id
         if (versionesDetalle.igual(clave, version)) return@escribir
         if (copiaDetalles.fila(clave) != detalle) {
-            guardarDetalle(detalle)
+            saveDetail(detalle)
             copiaDetalles.guardada(detalle)
         }
         versionesDetalle.anotar(clave, version)
@@ -126,7 +126,7 @@ class ArtistRepositoryImpl(
      * Room, así que se descarta lo que se recordaba (regla 2 de D4). Un fallo del almacenamiento no cambia el
      * resultado de la consulta; la cancelación y los errores de programación se relanzan.
      */
-    private suspend fun escribir(bloque: suspend ArtistaDao.() -> Unit) {
+    private suspend fun escribir(bloque: suspend ArtistDao.() -> Unit) {
         val dao = artistaDao ?: return
         escritura.withLock {
             try {
@@ -141,11 +141,11 @@ class ArtistRepositoryImpl(
         }
     }
 
-    private fun ArtistaDetalle.aEntidad() =
-        ArtistaDetalleEntity(tipo, id, nombre, imagen, descripcion, fecha, integrantes, albumes, premios)
+    private fun ArtistDetail.aEntidad() =
+        ArtistDetailEntity(tipo, id, nombre, imagen, descripcion, fecha, integrantes, albumes, premios)
 
-    private fun ArtistaDetalleEntity.aModelo() =
-        ArtistaDetalle(id, nombre, imagen, descripcion, tipo, fecha, integrantes, albumes, premios)
+    private fun ArtistDetailEntity.aModelo() =
+        ArtistDetail(id, nombre, imagen, descripcion, tipo, fecha, integrantes, albumes, premios)
 
     /**
      * Detalle del artista según su tipo. Las premiaciones solo se consultan si el artista tiene alguna,
@@ -155,9 +155,9 @@ class ArtistRepositoryImpl(
      * de lo guardado y sigue devolviendo el mismo error (D4). La versión combina la del artista y la de las
      * premiaciones, o marca que no se pidieron.
      */
-    override suspend fun obtenerDetalle(tipo: ArtistType, id: Int): Result<ArtistaDetalle> =
+    override suspend fun getDetail(tipo: ArtistType, id: Int): Result<ArtistDetail> =
         withContext(dispatcher) {
-            adaptador.llamar {
+            adaptador.call {
                 val respuesta = when (tipo) {
                     ArtistType.MUSICO -> api.getMusician(id).conVersion()
                     ArtistType.BANDA -> api.getBand(id).conVersion()
@@ -170,8 +170,8 @@ class ArtistRepositoryImpl(
                 val versionPremiaciones = if (premiaciones == null) PREMIACIONES_NO_PEDIDAS else premiaciones.version
                 val version = versionCompuesta(respuesta.version, versionPremiaciones)
                 respuesta.valor.aDetalle(tipo, premiaciones?.valor.orEmpty()) to version
-            }.onSuccess { (detalle, version) -> guardarDetalleSiCambio(detalle.aEntidad(), version) }
-                .onFailure { if (it is RecursoNoEncontrado) borrarDetalleGuardado(tipo, id) }
+            }.onSuccess { (detalle, version) -> saveDetailIfChanged(detalle.aEntidad(), version) }
+                .onFailure { if (it is ResourceNotFound) borrarDetalleGuardado(tipo, id) }
                 .map { (detalle, _) -> detalle }
         }
 
@@ -181,11 +181,11 @@ class ArtistRepositoryImpl(
      * `PUT`. Si la lista no se puede leer completa, no se envía nada: un `PUT` incompleto le quitaría
      * álbumes a la banda (add-agregar-album-artista, D1).
      */
-    override suspend fun asociarAlbum(tipo: ArtistType, idArtista: Int, idAlbum: Int): Result<Unit> =
+    override suspend fun associateAlbum(tipo: ArtistType, idArtista: Int, idAlbum: Int): Result<Unit> =
         withContext(dispatcher) {
-            adaptador.llamar {
+            adaptador.call {
                 when (tipo) {
-                    ArtistType.MUSICO -> api.asociarAlbumAMusico(idArtista, idAlbum).exitosa()
+                    ArtistType.MUSICO -> api.associateAlbumWithPerformer(idArtista, idAlbum).exitosa()
                     ArtistType.BANDA -> {
                         val actuales = api.getBand(idArtista).conVersion().valor.albums
                             ?: throw JsonParseException("La banda llegó sin su lista de álbumes")
@@ -206,7 +206,7 @@ class ArtistRepositoryImpl(
      * Conversión tolerante: solo el id y el nombre del artista son obligatorios, porque el backend compartido
      * tiene datos de prueba de otros equipos y un elemento malo no debe tumbar toda la pantalla.
      */
-    private fun ArtistaDetalleDto.aDetalle(tipo: ArtistType, premiaciones: List<PremiacionDto>) = ArtistaDetalle(
+    private fun ArtistDetailDto.aDetalle(tipo: ArtistType, premiaciones: List<PremiacionDto>) = ArtistDetail(
         id = id ?: throw JsonParseException("El artista no tiene id"),
         nombre = name.conTexto() ?: throw JsonParseException("El artista no tiene nombre"),
         imagen = image,
@@ -235,12 +235,12 @@ class ArtistRepositoryImpl(
     private fun premios(
         delArtista: List<PremiacionArtistaDto>,
         premiaciones: List<PremiacionDto>
-    ): List<PremioArtista> {
+    ): List<ArtistPrize> {
         val premioPorPremiacion = premiaciones.associateBy { it.id }
         return delArtista.mapNotNull { dto ->
             val premio = premioPorPremiacion[dto.id]?.prize ?: return@mapNotNull null
             val fecha = fechaValida(dto.premiationDate)
-            PremioArtista(
+            ArtistPrize(
                 dto.id ?: return@mapNotNull null,
                 premio.name.conTexto() ?: return@mapNotNull null,
                 premio.organization.conTexto() ?: return@mapNotNull null,

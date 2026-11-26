@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 
 class CollectorsViewModel(private val repositorio: CollectorRepository) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<CollectorsUiState>(CollectorsUiState.Cargando)
+    private val _uiState = MutableStateFlow<CollectorsUiState>(CollectorsUiState.Loading)
     val uiState: StateFlow<CollectorsUiState> = _uiState.asStateFlow()
 
     private var carga: Job? = null
@@ -22,21 +22,21 @@ class CollectorsViewModel(private val repositorio: CollectorRepository) : ViewMo
         cargar()
     }
 
-    fun reintentar() {
+    fun retry() {
         cargar()
     }
 
     /** Filtra en el dispositivo; solo tiene efecto cuando el listado ya está cargado. */
-    fun buscar(texto: String) {
+    fun search(texto: String) {
         _uiState.update { estado ->
-            if (estado is CollectorsUiState.Exito) estado.copy(consulta = texto) else estado
+            if (estado is CollectorsUiState.Success) estado.copy(consulta = texto) else estado
         }
     }
 
     /** La pantalla ya mostró el aviso de que no se pudo actualizar el listado guardado. */
     fun avisoMostrado() {
         _uiState.update { estado ->
-            if (estado is CollectorsUiState.Exito) estado.copy(errorAlActualizar = false) else estado
+            if (estado is CollectorsUiState.Success) estado.copy(errorAlActualizar = false) else estado
         }
     }
 
@@ -48,24 +48,24 @@ class CollectorsViewModel(private val repositorio: CollectorRepository) : ViewMo
     private fun cargar() {
         val consulta = ++consultaVigente
         carga?.cancel()
-        _uiState.value = CollectorsUiState.Cargando
+        _uiState.value = CollectorsUiState.Loading
         carga = viewModelScope.launch {
-            val guardados = repositorio.obtenerColeccionistasGuardados()
+            val guardados = repositorio.getCachedCollectors()
             if (consulta != consultaVigente) return@launch
-            if (guardados.isNotEmpty()) _uiState.value = CollectorsUiState.Exito(guardados, actualizando = true)
+            if (guardados.isNotEmpty()) _uiState.value = CollectorsUiState.Success(guardados, actualizando = true)
 
-            val resultado = repositorio.obtenerColeccionistas()
+            val resultado = repositorio.getCollectors()
             if (consulta != consultaVigente) return@launch
-            val busqueda = (_uiState.value as? CollectorsUiState.Exito)?.consulta.orEmpty()
+            val busqueda = (_uiState.value as? CollectorsUiState.Success)?.consulta.orEmpty()
             _uiState.value = resultado.fold(
                 onSuccess = { lista ->
-                    if (lista.isEmpty()) CollectorsUiState.Vacio else CollectorsUiState.Exito(lista, busqueda)
+                    if (lista.isEmpty()) CollectorsUiState.Empty else CollectorsUiState.Success(lista, busqueda)
                 },
                 onFailure = {
                     if (guardados.isEmpty()) {
                         CollectorsUiState.Error
                     } else {
-                        CollectorsUiState.Exito(guardados, busqueda, errorAlActualizar = true)
+                        CollectorsUiState.Success(guardados, busqueda, errorAlActualizar = true)
                     }
                 }
             )

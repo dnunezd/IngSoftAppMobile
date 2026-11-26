@@ -31,13 +31,13 @@ import com.example.vinilos.e2e.EvidenciaE2E
 import com.example.vinilos.ui.artistas.TagArtistas
 import com.example.vinilos.ui.artistas.TagBuscadorArtistas
 import com.example.vinilos.ui.artistas.TagContadorArtistas
-import com.example.vinilos.ui.artistas.TagDetalleArtista
+import com.example.vinilos.ui.artistas.TagArtistDetail
 import com.example.vinilos.ui.artistas.TagErrorArtistas
 import com.example.vinilos.ui.artistas.TagListaArtistas
-import com.example.vinilos.ui.artistas.TagNombreDetalleArtista
+import com.example.vinilos.ui.artistas.TagNombreArtistDetail
 import com.example.vinilos.ui.artistas.TagReintentarArtistas
-import com.example.vinilos.ui.artistas.TagTipoDetalleArtista
-import com.example.vinilos.ui.artistas.TagVacioArtistas
+import com.example.vinilos.ui.artistas.TagTipoArtistDetail
+import com.example.vinilos.ui.artistas.TagEmptyArtistas
 import com.example.vinilos.ui.artistas.tagArtista
 import com.example.vinilos.ui.ingreso.TagAtras
 import com.example.vinilos.ui.ingreso.TagEntrarVisitante
@@ -87,9 +87,9 @@ class ArtistasE2ETest {
         @Volatile var consultas = 0
         @Volatile var lista: List<Artist>? = null
 
-        override suspend fun obtenerArtistas(): Result<List<Artist>> {
+        override suspend fun getArtists(): Result<List<Artist>> {
             consultas++
-            return real.obtenerArtistas().also { resultado -> resultado.onSuccess { lista = it } }
+            return real.getArtists().also { resultado -> resultado.onSuccess { lista = it } }
         }
     }
 
@@ -143,7 +143,7 @@ class ArtistasE2ETest {
         return rule.onNodeWithTag(tagArtista(artista))
     }
 
-    private fun buscar(texto: String) {
+    private fun search(texto: String) {
         rule.onNodeWithTag(TagListaArtistas).performScrollToNode(hasTestTag(TagBuscadorArtistas))
         rule.onNodeWithTag(TagBuscadorArtistas).performTextInput(texto)
         rule.waitForIdle()
@@ -257,7 +257,7 @@ class ArtistasE2ETest {
 
             val primerObjetivo = candidatos.first()
             val terminoUno = substringDiscriminante(primerObjetivo, lista)
-            buscar(terminoUno)
+            search(terminoUno)
             contadorDice(textoContador(1))
             fila(primerObjetivo).assertIsDisplayed()
             (lista - primerObjetivo).forEach { noAparece(it) }
@@ -268,7 +268,7 @@ class ArtistasE2ETest {
             if (candidatos.size > 1) {
                 val segundoObjetivo = candidatos[1]
                 val terminoDos = substringDiscriminante(segundoObjetivo, lista)
-                buscar(terminoDos.uppercase(Locale.ROOT))
+                search(terminoDos.uppercase(Locale.ROOT))
                 contadorDice(textoContador(1))
                 fila(segundoObjetivo).assertIsDisplayed()
                 (lista - segundoObjetivo).forEach { noAparece(it) }
@@ -290,10 +290,10 @@ class ArtistasE2ETest {
             val lista = verArtistasReales(evidencia)
             val termino = terminoSinCoincidencias(lista)
 
-            buscar(termino)
+            search(termino)
             Espresso.closeSoftKeyboard()
-            esperarA(TagVacioArtistas)
-            rule.onNodeWithTag(TagVacioArtistas).assertTextEquals("No se encontraron artistas")
+            esperarA(TagEmptyArtistas)
+            rule.onNodeWithTag(TagEmptyArtistas).assertTextEquals("No se encontraron artistas")
             rule.onNodeWithText("Prueba con otro nombre.").assertIsDisplayed()
             rule.onNodeWithTag(TagBuscadorArtistas).assertTextEquals(termino)
             lista.forEach { noAparece(it) }
@@ -308,7 +308,7 @@ class ArtistasE2ETest {
 
     /** FN03-ESC04: seleccionar un artista real lleva a su detalle y "Atrás" vuelve con la búsqueda. */
     @Test
-    fun seleccionarUnArtistaLlevaASuDetalleYAtrasVuelveAlListado() {
+    fun selectUnArtistaLlevaASuDetalleYAtrasVuelveAlListado() {
         val evidencia = "FN03_ESC04"
         ActivityScenario.launch(MainActivity::class.java).use {
             val lista = verArtistasReales(evidencia)
@@ -320,23 +320,23 @@ class ArtistasE2ETest {
             val objetivo = candidatos.first()
             val termino = substringDiscriminante(objetivo, lista)
 
-            buscar(termino)
+            search(termino)
             Espresso.closeSoftKeyboard()
             (lista - objetivo).forEach { noAparece(it) }
             EvidenciaE2E.capturar(rule, evidencia, "02_busqueda_objetivo")
             fila(objetivo).performClick()
 
-            esperarA(TagDetalleArtista)
+            esperarA(TagArtistDetail)
             esperarQueDesaparezca(TagArtistas)
             // El nombre ya no viaja en la ruta: aparece cuando termina la consulta del detalle al backend.
-            esperarA(TagNombreDetalleArtista)
-            rule.onNodeWithTag(TagNombreDetalleArtista).assertTextEquals(objetivo.name)
-            rule.onNodeWithTag(TagTipoDetalleArtista).assertTextEquals(etiquetaDe(objetivo))
+            esperarA(TagNombreArtistDetail)
+            rule.onNodeWithTag(TagNombreArtistDetail).assertTextEquals(objetivo.name)
+            rule.onNodeWithTag(TagTipoArtistDetail).assertTextEquals(etiquetaDe(objetivo))
             EvidenciaE2E.capturar(rule, evidencia, "03_detalle_objetivo")
 
             rule.onNodeWithTag(TagAtras).performClick()
             esperarA(TagArtistas)
-            esperarQueDesaparezca(TagDetalleArtista)
+            esperarQueDesaparezca(TagArtistDetail)
             rule.onNodeWithTag(TagBuscadorArtistas).assertTextEquals(termino)
             fila(objetivo).assertIsDisplayed()
             (lista - objetivo).forEach { noAparece(it) }
@@ -402,8 +402,8 @@ class ArtistasE2ETest {
         ActivityScenario.launch(MainActivity::class.java).use {
             abrirArtistasComoVisitante(evidencia)
 
-            esperarA(TagVacioArtistas)
-            rule.onNodeWithTag(TagVacioArtistas).assertTextEquals("No se encontraron artistas")
+            esperarA(TagEmptyArtistas)
+            rule.onNodeWithTag(TagEmptyArtistas).assertTextEquals("No se encontraron artistas")
             rule.onAllNodesWithTag(TagContadorArtistas).assertCountEquals(0)
             EvidenciaE2E.capturar(rule, evidencia, "02_sin_artistas")
         }
@@ -423,7 +423,7 @@ class ArtistasE2ETest {
             val objetivo = candidatos.last()
             val termino = substringDiscriminante(objetivo, lista)
 
-            buscar(termino)
+            search(termino)
             Espresso.closeSoftKeyboard()
             fila(objetivo).assertIsDisplayed()
             (lista - objetivo).forEach { noAparece(it) }

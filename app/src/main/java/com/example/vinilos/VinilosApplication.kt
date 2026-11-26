@@ -5,7 +5,7 @@ import coil.ImageLoader
 import coil.ImageLoaderFactory
 import coil.disk.DiskCache
 import com.example.vinilos.data.local.VinilosDb
-import com.example.vinilos.data.remote.AgenteDeUsuarioInterceptor
+import com.example.vinilos.data.remote.UserAgentInterceptor
 import okhttp3.OkHttpClient
 
 class VinilosApplication : Application(), ImageLoaderFactory {
@@ -18,7 +18,7 @@ class VinilosApplication : Application(), ImageLoaderFactory {
 
     override fun onCreate() {
         super.onCreate()
-        val db = VinilosDb.crear(this)
+        val db = VinilosDb.create(this)
         container = AppContainer(
             albumDao = db.albumDao(),
             coleccionistaDao = db.coleccionistaDao(),
@@ -40,7 +40,7 @@ class VinilosApplication : Application(), ImageLoaderFactory {
         ImageLoader.Builder(this)
             .okHttpClient {
                 OkHttpClient.Builder()
-                    .addInterceptor(AgenteDeUsuarioInterceptor("Vinilos/${BuildConfig.VERSION_NAME} (Android)"))
+                    .addInterceptor(UserAgentInterceptor("Vinilos/${BuildConfig.VERSION_NAME} (Android)"))
                     .build()
             }
             .diskCache {

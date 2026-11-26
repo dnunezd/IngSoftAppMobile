@@ -1,10 +1,10 @@
 package com.example.vinilos.data.repository
 
 import android.database.sqlite.SQLiteException
-import com.example.vinilos.data.local.FavoritoDao
+import com.example.vinilos.data.local.FavoriteDao
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.remote.CollectorApi
-import com.example.vinilos.data.remote.RecursoNoEncontrado
+import com.example.vinilos.data.remote.ResourceNotFound
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.remote.conVersion
 import kotlinx.coroutines.CoroutineDispatcher
@@ -24,7 +24,7 @@ import kotlinx.coroutines.withContext
 class FavoriteRepositoryImpl(
     private val adaptador: ServiceAdapter,
     private val api: CollectorApi = adaptador.api(),
-    private val favoritoDao: FavoritoDao? = null,
+    private val favoritoDao: FavoriteDao? = null,
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : FavoriteRepository {
 
@@ -43,15 +43,15 @@ class FavoriteRepositoryImpl(
      */
     override suspend fun esFavorito(collectorId: Int, artistId: Int): Result<Boolean> =
         withContext(dispatcher) {
-            adaptador.llamar {
+            adaptador.call {
                 val respuesta = api.getFavoritePerformers(collectorId).conVersion()
                 respuesta.valor.mapNotNull { it.id }.distinct() to respuesta.version
             }
-                .onSuccess { (ids, version) -> guardarFavoritos(collectorId, ids, version) }
+                .onSuccess { (ids, version) -> saveFavorites(collectorId, ids, version) }
                 .map { (ids, _) -> artistId in ids }
         }
 
-    private suspend fun guardarFavoritos(collectorId: Int, ids: List<Int>, version: String?) = escribir {
+    private suspend fun saveFavorites(collectorId: Int, ids: List<Int>, version: String?) = escribir {
         if (versiones.igual(collectorId, version)) return@escribir
         val copia = copias.getOrPut(collectorId) { CopiaTabla { it } }
         val cambios = copia.cambiosPara(ids)
@@ -76,7 +76,7 @@ class FavoriteRepositoryImpl(
      * y la siguiente comprobación reemplaza los favoritos. Un fallo del almacenamiento no cambia el resultado;
      * la cancelación y los errores de programación se relanzan.
      */
-    private suspend fun escribir(bloque: suspend FavoritoDao.() -> Unit) {
+    private suspend fun escribir(bloque: suspend FavoriteDao.() -> Unit) {
         val dao = favoritoDao ?: return
         escritura.withLock {
             try {
@@ -89,9 +89,9 @@ class FavoriteRepositoryImpl(
         }
     }
 
-    override suspend fun agregarFavorito(collectorId: Int, artistId: Int, tipo: ArtistType): Result<Unit> =
+    override suspend fun addFavorite(collectorId: Int, artistId: Int, tipo: ArtistType): Result<Unit> =
         withContext(dispatcher) {
-            val resultado = adaptador.llamar {
+            val resultado = adaptador.call {
                 when (tipo) {
                     ArtistType.BANDA -> api.addFavoriteBand(collectorId, artistId)
                     ArtistType.MUSICO -> api.addFavoriteMusician(collectorId, artistId)
@@ -99,8 +99,8 @@ class FavoriteRepositoryImpl(
                 Unit
             }
             val error = resultado.exceptionOrNull()
-            if (error is RecursoNoEncontrado) {
-                Result.failure(ArtistaNoDisponible(error.cause))
+            if (error is ResourceNotFound) {
+                Result.failure(ArtistNotAvailable(error.cause))
             } else {
                 resultado.onSuccess {
                     escribir {

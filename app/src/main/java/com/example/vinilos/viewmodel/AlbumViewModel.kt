@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.repository.AlbumRepository
-import com.example.vinilos.data.repository.AlbumNoDisponible
-import com.example.vinilos.data.remote.ErrorDeCarga
+import com.example.vinilos.data.repository.AlbumNotAvailable
+import com.example.vinilos.data.remote.LoadError
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -13,7 +13,7 @@ import kotlinx.coroutines.launch
 
 class AlbumViewModel(id: Int, private val repositorio: AlbumRepository) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<AlbumUiState>(AlbumUiState.Cargando)
+    private val _uiState = MutableStateFlow<AlbumUiState>(AlbumUiState.Loading)
     val uiState = _uiState.asStateFlow()
 
     private var idActual = id
@@ -25,18 +25,18 @@ class AlbumViewModel(id: Int, private val repositorio: AlbumRepository) : ViewMo
      * depender de la clave de navegación, que se borra apenas se dispara [actualizar] (ver [cancionAgregada]).
      * Así, si la Activity se recrea mientras el aviso está en pantalla, no se repite el GET /albums/{id}.
      */
-    private val _avisoCancionAgregada = MutableStateFlow(false)
-    val avisoCancionAgregada = _avisoCancionAgregada.asStateFlow()
+    private val _avisoTrackAgregada = MutableStateFlow(false)
+    val avisoTrackAgregada = _avisoTrackAgregada.asStateFlow()
 
     /** Se llama una sola vez al volver del formulario de agregar canción con éxito. */
     fun cancionAgregada() {
-        _avisoCancionAgregada.value = true
+        _avisoTrackAgregada.value = true
         actualizar()
     }
 
     /** La pantalla ya mostró el aviso de "Canción agregada". */
-    fun avisoCancionAgregadaMostrado() {
-        _avisoCancionAgregada.value = false
+    fun avisoTrackAgregadaMostrado() {
+        _avisoTrackAgregada.value = false
     }
 
     fun cargarAlbum(id: Int) {
@@ -44,14 +44,14 @@ class AlbumViewModel(id: Int, private val repositorio: AlbumRepository) : ViewMo
         cargar()
     }
 
-    fun reintentar() {
+    fun retry() {
         if (_uiState.value == AlbumUiState.Error) cargar()
     }
 
     /** La pantalla ya mostró el aviso de que no se pudo actualizar el detalle guardado. */
     fun avisoMostrado() {
         val estado = _uiState.value
-        if (estado is AlbumUiState.Exito && estado.errorAlActualizar) {
+        if (estado is AlbumUiState.Success && estado.errorAlActualizar) {
             _uiState.value = estado.copy(errorAlActualizar = false)
         }
     }
@@ -62,7 +62,7 @@ class AlbumViewModel(id: Int, private val repositorio: AlbumRepository) : ViewMo
      * empezar.
      */
     fun actualizar() {
-        cargar(visible = (_uiState.value as? AlbumUiState.Exito)?.album)
+        cargar(visible = (_uiState.value as? AlbumUiState.Success)?.album)
     }
 
     init {
@@ -78,22 +78,22 @@ class AlbumViewModel(id: Int, private val repositorio: AlbumRepository) : ViewMo
         val consulta = ++consultaVigente
         val id = idActual
         carga?.cancel()
-        _uiState.value = visible?.let { AlbumUiState.Exito(it, actualizando = true) } ?: AlbumUiState.Cargando
+        _uiState.value = visible?.let { AlbumUiState.Success(it, actualizando = true) } ?: AlbumUiState.Loading
         carga = viewModelScope.launch {
             // Con un álbum a la vista, ese hace las veces de lo guardado.
-            val guardado = visible ?: repositorio.obtenerAlbumGuardado(id)
+            val guardado = visible ?: repositorio.getCachedAlbum(id)
             if (consulta != consultaVigente) return@launch
-            if (visible == null && guardado != null) _uiState.value = AlbumUiState.Exito(guardado, actualizando = true)
+            if (visible == null && guardado != null) _uiState.value = AlbumUiState.Success(guardado, actualizando = true)
 
-            val resultado = repositorio.obtenerAlbum(id)
+            val resultado = repositorio.getAlbum(id)
             if (consulta != consultaVigente) return@launch
             _uiState.value = resultado.fold(
-                onSuccess = { AlbumUiState.Exito(it) },
+                onSuccess = { AlbumUiState.Success(it) },
                 onFailure = {
                     when (it) {
-                        is AlbumNoDisponible -> AlbumUiState.NoDisponible
-                        is ErrorDeCarga ->
-                            guardado?.let { album -> AlbumUiState.Exito(album, errorAlActualizar = true) }
+                        is AlbumNotAvailable -> AlbumUiState.NotAvailable
+                        is LoadError ->
+                            guardado?.let { album -> AlbumUiState.Success(album, errorAlActualizar = true) }
                                 ?: AlbumUiState.Error
                         else -> throw it
                     }

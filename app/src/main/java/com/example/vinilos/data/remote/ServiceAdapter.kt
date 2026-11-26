@@ -18,13 +18,13 @@ import java.lang.reflect.Type
 import java.util.concurrent.TimeUnit
 
 /** Error único de carga: sin conexión, tiempo agotado, error del servidor o respuesta ilegible. */
-open class ErrorDeCarga(causa: Throwable? = null) : Exception("No se pudo cargar la información", causa)
+open class LoadError(causa: Throwable? = null) : Exception("No se pudo cargar la información", causa)
 
 /**
  * El backend respondió 404: lo consultado no existe. Sigue siendo un [ErrorDeCarga] para quien no necesite
  * distinguirlo; los repositorios que sí, lo traducen a su propio error sin conocer el protocolo HTTP.
  */
-class RecursoNoEncontrado(causa: Throwable? = null) : ErrorDeCarga(causa)
+class ResourceNotFound(causa: Throwable? = null) : LoadError(causa)
 
 /**
  * Único punto de acceso al backend BackVynils: construye el cliente de red una sola vez,
@@ -50,21 +50,21 @@ class ServiceAdapter(
      * lectura de la respuesta se reportan como [ErrorDeCarga] (un 404, como [RecursoNoEncontrado]); la
      * cancelación se relanza.
      */
-    suspend fun <T> llamar(bloque: suspend () -> T): Result<T> =
+    suspend fun <T> call(bloque: suspend () -> T): Result<T> =
         try {
             Result.success(bloque())
         } catch (e: CancellationException) {
             throw e
         } catch (e: IOException) {
-            Result.failure(ErrorDeCarga(e))
+            Result.failure(LoadError(e))
         } catch (e: HttpException) {
-            Result.failure(if (e.code() == HTTP_NO_ENCONTRADO) RecursoNoEncontrado(e) else ErrorDeCarga(e))
+            Result.failure(if (e.code() == HTTP_NO_ENCONTRADO) ResourceNotFound(e) else LoadError(e))
         } catch (e: JsonParseException) {
-            Result.failure(ErrorDeCarga(e))
+            Result.failure(LoadError(e))
         } catch (e: KotlinNullPointerException) {
             // Retrofit la lanza cuando la respuesta llega sin cuerpo o con "null" y la función declara
             // un tipo no nulo. Los NullPointerException del código propio no se atrapan.
-            Result.failure(ErrorDeCarga(e))
+            Result.failure(LoadError(e))
         }
 
     /**

@@ -1,4 +1,4 @@
-package com.example.vinilos.ui.crear
+package com.example.vinilos.ui.create
 
 import android.app.LocaleManager
 import android.os.Build
@@ -15,7 +15,7 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.example.vinilos.data.model.Collector
 import com.example.vinilos.data.model.Session
 import com.example.vinilos.ui.theme.VinilosTheme
-import com.example.vinilos.viewmodel.CrearAlbumUiState
+import com.example.vinilos.viewmodel.CreateAlbumUiState
 import org.junit.After
 import org.junit.Assume.assumeTrue
 import org.junit.Before
@@ -55,10 +55,10 @@ class SelectorFechaEnOtroIdiomaTest {
         escenario = ActivityScenario.launch(ComponentActivity::class.java).onActivity {
             it.setContent {
                 VinilosTheme {
-                    PantallaCrearAlbum(
-                        estado = CrearAlbumUiState(),
+                    CreateAlbumScreen(
+                        estado = CreateAlbumUiState(),
                         session = Session.Collector(Collector(100, "Manolo Bellon", "manollo@caracol.com.co")),
-                        acciones = AccionesCrearAlbum()
+                        acciones = CreateAlbumActions()
                     )
                 }
             }

@@ -16,7 +16,7 @@ import com.example.vinilos.data.local.VinilosDb
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.ui.artistas.TagErrorArtistas
-import com.example.vinilos.ui.artistas.TagNombreDetalleArtista
+import com.example.vinilos.ui.artistas.TagNombreArtistDetail
 import com.example.vinilos.ui.artistas.tagArtista
 import com.example.vinilos.ui.ingreso.TagAtras
 import com.example.vinilos.ui.ingreso.TagEntrarVisitante
@@ -104,8 +104,8 @@ class ArtistasSinConexionE2ETest {
         rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
         abrirListado()
         abrir(queen)
-        esperarA(TagNombreDetalleArtista)
-        rule.onNodeWithTag(TagNombreDetalleArtista).assertTextEquals("Queen")
+        esperarA(TagNombreArtistDetail)
+        rule.onNodeWithTag(TagNombreArtistDetail).assertTextEquals("Queen")
         atras()
         esperarA(tagArtista(queen))
         atras()
@@ -125,7 +125,7 @@ class ArtistasSinConexionE2ETest {
 
             abrir(queen)
             esperarTexto("No se pudo actualizar el artista")
-            rule.onNodeWithTag(TagNombreDetalleArtista).assertTextEquals("Queen")
+            rule.onNodeWithTag(TagNombreArtistDetail).assertTextEquals("Queen")
             assertTrue(rule.onAllNodesWithText("No se pudo cargar el artista").fetchSemanticsNodes().isEmpty())
         }
     }

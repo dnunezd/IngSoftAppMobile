@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 
 class ArtistsViewModel(private val repositorio: ArtistRepository) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<ArtistsUiState>(ArtistsUiState.Cargando)
+    private val _uiState = MutableStateFlow<ArtistsUiState>(ArtistsUiState.Loading)
     val uiState: StateFlow<ArtistsUiState> = _uiState.asStateFlow()
 
     private var carga: Job? = null
@@ -22,21 +22,21 @@ class ArtistsViewModel(private val repositorio: ArtistRepository) : ViewModel() 
         cargar()
     }
 
-    fun reintentar() {
+    fun retry() {
         cargar()
     }
 
     /** Filtra en el dispositivo; solo tiene efecto cuando el listado ya está cargado. */
-    fun buscar(texto: String) {
+    fun search(texto: String) {
         _uiState.update { estado ->
-            if (estado is ArtistsUiState.Exito) estado.copy(consulta = texto) else estado
+            if (estado is ArtistsUiState.Success) estado.copy(consulta = texto) else estado
         }
     }
 
     /** La pantalla ya mostró el aviso de que no se pudo actualizar el listado guardado. */
     fun avisoMostrado() {
         _uiState.update { estado ->
-            if (estado is ArtistsUiState.Exito) estado.copy(errorAlActualizar = false) else estado
+            if (estado is ArtistsUiState.Success) estado.copy(errorAlActualizar = false) else estado
         }
     }
 
@@ -48,24 +48,24 @@ class ArtistsViewModel(private val repositorio: ArtistRepository) : ViewModel() 
     private fun cargar() {
         val consulta = ++consultaVigente
         carga?.cancel()
-        _uiState.value = ArtistsUiState.Cargando
+        _uiState.value = ArtistsUiState.Loading
         carga = viewModelScope.launch {
-            val guardados = repositorio.obtenerArtistasGuardados()
+            val guardados = repositorio.getCachedArtists()
             if (consulta != consultaVigente) return@launch
-            if (guardados.isNotEmpty()) _uiState.value = ArtistsUiState.Exito(guardados, actualizando = true)
+            if (guardados.isNotEmpty()) _uiState.value = ArtistsUiState.Success(guardados, actualizando = true)
 
-            val resultado = repositorio.obtenerArtistas()
+            val resultado = repositorio.getArtists()
             if (consulta != consultaVigente) return@launch
-            val busqueda = (_uiState.value as? ArtistsUiState.Exito)?.consulta.orEmpty()
+            val busqueda = (_uiState.value as? ArtistsUiState.Success)?.consulta.orEmpty()
             _uiState.value = resultado.fold(
                 onSuccess = { lista ->
-                    if (lista.isEmpty()) ArtistsUiState.Vacio else ArtistsUiState.Exito(lista, busqueda)
+                    if (lista.isEmpty()) ArtistsUiState.Empty else ArtistsUiState.Success(lista, busqueda)
                 },
                 onFailure = {
                     if (guardados.isEmpty()) {
                         ArtistsUiState.Error
                     } else {
-                        ArtistsUiState.Exito(guardados, busqueda, errorAlActualizar = true)
+                        ArtistsUiState.Success(guardados, busqueda, errorAlActualizar = true)
                     }
                 }
             )

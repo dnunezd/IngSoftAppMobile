@@ -11,10 +11,10 @@ class RepositorioFalso(
 ) : CollectorRepository {
     var consultas = 0
 
-    override suspend fun obtenerColeccionistas(): Result<List<Collector>> {
+    override suspend fun getCollectors(): Result<List<Collector>> {
         consultas++
         return resultado
     }
 
-    override suspend fun obtenerColeccionistasGuardados(): List<Collector> = guardados
+    override suspend fun getCachedCollectors(): List<Collector> = guardados
 }

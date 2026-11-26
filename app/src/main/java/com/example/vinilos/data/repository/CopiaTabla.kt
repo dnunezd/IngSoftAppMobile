@@ -1,6 +1,6 @@
 package com.example.vinilos.data.repository
 
-import com.example.vinilos.data.local.CambiosDeTabla
+import com.example.vinilos.data.local.TableChanges
 
 /**
  * Copia en memoria de lo último que un repositorio escribió en una tabla de Room (optimizar-cache-e-imagenes,
@@ -26,21 +26,21 @@ internal class CopiaTabla<K, E>(private val claveDe: (E) -> K) {
      * Qué escribir para que la tabla entera quede igual a [nuevas]: con la copia completa, solo las filas nuevas
      * o distintas y las claves que ya no llegan; si no, reemplazar la tabla.
      */
-    fun cambiosPara(nuevas: List<E>): CambiosDeTabla<K, E> {
-        if (!completa) return CambiosDeTabla.reemplazar(nuevas)
+    fun cambiosPara(nuevas: List<E>): TableChanges<K, E> {
+        if (!completa) return TableChanges.reemplazar(nuevas)
         val clavesNuevas = nuevas.mapTo(HashSet(), claveDe)
-        val guardar = nuevas.filter { filas[claveDe(it)] != it }
+        val save = nuevas.filter { filas[claveDe(it)] != it }
         val borrar = filas.keys.filter { it !in clavesNuevas }
-        return CambiosDeTabla.diferencias(guardar, borrar)
+        return TableChanges.diferencias(save, borrar)
     }
 
     /** Refleja unos cambios que ya quedaron escritos en Room. */
-    fun aplicar(cambios: CambiosDeTabla<K, E>) {
+    fun aplicar(cambios: TableChanges<K, E>) {
         if (cambios.reemplazarTodo) {
-            filas = cambios.guardar.associateBy(claveDe)
+            filas = cambios.save.associateBy(claveDe)
             completa = true
         } else {
-            filas = filas - cambios.borrar.toSet() + cambios.guardar.associateBy(claveDe)
+            filas = filas - cambios.borrar.toSet() + cambios.save.associateBy(claveDe)
         }
     }
 

@@ -21,7 +21,7 @@ import androidx.compose.ui.test.swipeDown
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso
-import com.example.vinilos.data.model.AlbumResumen
+import com.example.vinilos.data.model.AlbumSummary
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.repository.AlbumRepository
 import com.example.vinilos.data.repository.AlbumRepositoryImpl
@@ -77,11 +77,11 @@ class CatalogoE2ETest {
         private val real: AlbumRepository = AlbumRepositoryImpl(ServiceAdapter(BuildConfig.BASE_URL))
     ) : AlbumRepository by real {
         @Volatile var consultasCatalogo = 0
-        @Volatile var catalogo: List<AlbumResumen>? = null
+        @Volatile var catalogo: List<AlbumSummary>? = null
 
-        override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> {
+        override suspend fun getAlbums(): Result<List<AlbumSummary>> {
             consultasCatalogo++
-            return real.obtenerAlbumes().also { resultado -> resultado.onSuccess { catalogo = it } }
+            return real.getAlbums().also { resultado -> resultado.onSuccess { catalogo = it } }
         }
     }
 
@@ -102,13 +102,13 @@ class CatalogoE2ETest {
         EvidenciaE2E.capturar(rule, evidencia, paso)
     }
 
-    private fun esperarElCatalogoReal(): List<AlbumResumen> {
+    private fun esperarElCatalogoReal(): List<AlbumSummary> {
         rule.waitUntil(15_000) { albumes.catalogo != null }
         return requireNotNull(albumes.catalogo)
     }
 
     /** Desde el inicio (que queda en la evidencia como [pasoInicio]) abre el catálogo real. */
-    private fun verAlbumes(evidencia: String, pasoInicio: String): List<AlbumResumen> {
+    private fun verAlbumes(evidencia: String, pasoInicio: String): List<AlbumSummary> {
         esperarA(TagInicio)
         EvidenciaE2E.capturar(rule, evidencia, pasoInicio)
         rule.onNodeWithTag(TagVerAlbumes).performScrollTo().performClick()
@@ -129,14 +129,14 @@ class CatalogoE2ETest {
      * por sí hace esperas e IO real) la haría impráctica; esta muestra alcanza para comprobar que
      * los datos reales llegan bien a la pantalla sin recorrer el catálogo completo.
      */
-    private fun muestraDelCatalogo(catalogo: List<AlbumResumen>, tamano: Int = 5): List<AlbumResumen> {
+    private fun muestraDelCatalogo(catalogo: List<AlbumSummary>, tamano: Int = 5): List<AlbumSummary> {
         val primeros = catalogo.take(tamano)
         val ultimo = catalogo.lastOrNull()
         return if (ultimo != null && ultimo !in primeros) primeros + ultimo else primeros
     }
 
     /** Comprueba, sobre una muestra del catálogo real, que se vea con los mismos datos y en orden. */
-    private fun comprobarLosAlbumesDelCatalogoReal(catalogo: List<AlbumResumen>) {
+    private fun comprobarLosAlbumesDelCatalogoReal(catalogo: List<AlbumSummary>) {
         rule.onNodeWithTag(TagContadorCatalogo).assertTextEquals(textoContador(catalogo.size))
         val muestra = muestraDelCatalogo(catalogo)
         muestra.forEach { album ->

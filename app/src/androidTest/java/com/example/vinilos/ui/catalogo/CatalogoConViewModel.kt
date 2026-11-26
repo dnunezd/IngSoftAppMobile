@@ -15,7 +15,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.vinilos.RepositorioAlbumesFalso
-import com.example.vinilos.data.model.AlbumResumen
+import com.example.vinilos.data.model.AlbumSummary
 import com.example.vinilos.data.model.Session
 import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.AlbumsViewModel
@@ -28,11 +28,11 @@ fun CatalogoConViewModel(repositorio: RepositorioAlbumesFalso) {
     )
     val estado by viewModel.uiState.collectAsStateWithLifecycle()
     VinilosTheme {
-        PantallaCatalogo(
+        CatalogScreen(
             estado = estado,
             session = Session.Visitor,
             onActualizar = viewModel::actualizar,
-            onReintentar = viewModel::reintentar,
+            onReintentar = viewModel::retry,
             onAvisoMostrado = viewModel::avisoMostrado,
             onSeleccionar = {},
             onAtras = {}
@@ -42,7 +42,7 @@ fun CatalogoConViewModel(repositorio: RepositorioAlbumesFalso) {
 
 /** Álbumes "Álbum 01" a "Álbum NN" con ids 1 a NN, ya en orden alfabético. */
 fun albumesDePrueba(cantidad: Int) = (1..cantidad).map { n ->
-    AlbumResumen(n, "Álbum %02d".format(n), null, "Rock", "Artista $n", "19${(n % 90) + 10}")
+    AlbumSummary(n, "Álbum %02d".format(n), null, "Rock", "Artista $n", "19${(n % 90) + 10}")
 }
 
 /** Tags de las tarjetas de álbum en el orden en que están en la cuadrícula. */

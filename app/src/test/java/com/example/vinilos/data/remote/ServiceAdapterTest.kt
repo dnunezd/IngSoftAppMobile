@@ -55,7 +55,7 @@ class ServiceAdapterTest {
     }
 
     @Test
-    fun llamadaExitosaDevuelveLosDatos() = runTest {
+    fun llamadaSuccesssaDevuelveLosDatos() = runTest {
         // Arrange: el servidor responderá 200 con este JSON.
         servidor.enqueue(
             MockResponse()
@@ -68,7 +68,7 @@ class ServiceAdapterTest {
         val api = adaptador.api<ApiDePrueba>()
 
         // Act: la solicitud se ejecuta a través del adaptador.
-        val resultado = adaptador.llamar { api.obtenerPrueba() }
+        val resultado = adaptador.call { api.obtenerPrueba() }
 
         // Assert: debe ser exitosa y devolver el valor que envió el servidor.
         assertTrue(resultado.isSuccess)
@@ -86,39 +86,39 @@ class ServiceAdapterTest {
         val adaptador = ServiceAdapter(servidor.url("/").toString())
         val api = adaptador.api<ApiDePrueba>()
 
-        val resultado = adaptador.llamar { api.obtenerPrueba() }
+        val resultado = adaptador.call { api.obtenerPrueba() }
 
         assertTrue(resultado.isFailure)
         val error = resultado.exceptionOrNull()
-        assertTrue(error is ErrorDeCarga)
+        assertTrue(error is LoadError)
         assertTrue(error!!.cause is HttpException)
         assertEquals(404, (error.cause as HttpException).code())
     }
 
     @Test
-    fun respuesta404SeReportaComoRecursoNoEncontrado() = runTest {
+    fun respuesta404SeReportaComoResourceNotFound() = runTest {
         servidor.enqueue(MockResponse().setResponseCode(404))
         val adaptador = ServiceAdapter(servidor.url("/").toString())
         val api = adaptador.api<ApiDePrueba>()
 
-        val error = adaptador.llamar { api.obtenerPrueba() }.exceptionOrNull()
+        val error = adaptador.call { api.obtenerPrueba() }.exceptionOrNull()
 
         // Los repositorios lo distinguen sin conocer HTTP; para los demás sigue siendo un error de carga.
-        assertTrue(error is RecursoNoEncontrado)
-        assertTrue(error is ErrorDeCarga)
+        assertTrue(error is ResourceNotFound)
+        assertTrue(error is LoadError)
     }
 
     @Test
-    fun otrosErroresHttpNoSonRecursoNoEncontrado() = runTest {
+    fun otrosErroresHttpNoSonResourceNotFound() = runTest {
         servidor.enqueue(MockResponse().setResponseCode(500))
         servidor.enqueue(MockResponse().setResponseCode(400))
         val adaptador = ServiceAdapter(servidor.url("/").toString())
         val api = adaptador.api<ApiDePrueba>()
 
         repeat(2) {
-            val error = adaptador.llamar { api.obtenerPrueba() }.exceptionOrNull()
-            assertTrue(error is ErrorDeCarga)
-            assertTrue(error !is RecursoNoEncontrado)
+            val error = adaptador.call { api.obtenerPrueba() }.exceptionOrNull()
+            assertTrue(error is LoadError)
+            assertTrue(error !is ResourceNotFound)
         }
     }
 
@@ -128,11 +128,11 @@ class ServiceAdapterTest {
         val adaptador = ServiceAdapter(servidor.url("/").toString())
         val api = adaptador.api<ApiDePrueba>()
 
-        val resultado = adaptador.llamar { api.obtenerPrueba() }
+        val resultado = adaptador.call { api.obtenerPrueba() }
 
         assertTrue(resultado.isFailure)
         val error = resultado.exceptionOrNull()
-        assertTrue(error is ErrorDeCarga)
+        assertTrue(error is LoadError)
         assertTrue(error!!.cause is HttpException)
         assertEquals(500, (error.cause as HttpException).code())
     }
@@ -143,11 +143,11 @@ class ServiceAdapterTest {
         val adaptador = ServiceAdapter(servidor.url("/").toString())
         val api = adaptador.api<ApiDePrueba>()
 
-        val resultado = adaptador.llamar { api.obtenerPrueba() }
+        val resultado = adaptador.call { api.obtenerPrueba() }
 
         assertTrue(resultado.isFailure)
         val error = resultado.exceptionOrNull()
-        assertTrue(error is ErrorDeCarga)
+        assertTrue(error is LoadError)
         assertTrue(error!!.cause is IOException)
         assertTrue(error.cause !is HttpException)
     }
@@ -158,11 +158,11 @@ class ServiceAdapterTest {
         val adaptador = ServiceAdapter(servidor.url("/").toString())
         val api = adaptador.api<ApiDePrueba>()
 
-        val resultado = adaptador.llamar { api.obtenerPrueba() }
+        val resultado = adaptador.call { api.obtenerPrueba() }
 
         assertTrue(resultado.isFailure)
         val error = resultado.exceptionOrNull()
-        assertTrue(error is ErrorDeCarga)
+        assertTrue(error is LoadError)
         assertTrue(error!!.cause is SocketTimeoutException)
     }
 
@@ -172,11 +172,11 @@ class ServiceAdapterTest {
         val adaptador = ServiceAdapter(servidor.url("/").toString())
         val api = adaptador.api<ApiDePrueba>()
 
-        val resultado = adaptador.llamar { api.obtenerPrueba() }
+        val resultado = adaptador.call { api.obtenerPrueba() }
 
         assertTrue(resultado.isFailure)
         val error = resultado.exceptionOrNull()
-        assertTrue(error is ErrorDeCarga)
+        assertTrue(error is LoadError)
         assertTrue(error!!.cause is JsonParseException)
     }
 
@@ -186,9 +186,9 @@ class ServiceAdapterTest {
         servidor.enqueue(MockResponse().setBody("null"))
         val api = adaptador.api<ApiDePrueba>()
 
-        val resultado = adaptador.llamar { api.obtenerPrueba() }
+        val resultado = adaptador.call { api.obtenerPrueba() }
 
-        assertTrue(resultado.exceptionOrNull() is ErrorDeCarga)
+        assertTrue(resultado.exceptionOrNull() is LoadError)
     }
 
     @Test
@@ -196,16 +196,16 @@ class ServiceAdapterTest {
         servidor.enqueue(MockResponse().setResponseCode(204))
         val api = adaptador.api<ApiDePrueba>()
 
-        val resultado = adaptador.llamar { api.obtenerPrueba() }
+        val resultado = adaptador.call { api.obtenerPrueba() }
 
-        assertTrue(resultado.exceptionOrNull() is ErrorDeCarga)
+        assertTrue(resultado.exceptionOrNull() is LoadError)
     }
 
     @Test
     fun unNullPointerExceptionDelCodigoNoSeOculta() = runTest {
         // Solo el cuerpo vacío de Retrofit es un fallo de carga; un NPE propio es un error de programación.
         try {
-            adaptador.llamar<DatosPrueba> { throw NullPointerException("Error de programación") }
+            adaptador.call<DatosPrueba> { throw NullPointerException("Error de programación") }
             fail("El NullPointerException debe propagarse")
         } catch (error: NullPointerException) {
             assertEquals("Error de programación", error.message)
@@ -218,7 +218,7 @@ class ServiceAdapterTest {
         val cancelacion = CancellationException("Consulta cancelada")
 
         try {
-            adaptador.llamar<DatosPrueba> { throw cancelacion }
+            adaptador.call<DatosPrueba> { throw cancelacion }
             fail("La cancelación debe propagarse")
         } catch (error: CancellationException) {
             assertSame(cancelacion, error)
@@ -226,14 +226,14 @@ class ServiceAdapterTest {
     }
 
     @Test
-    fun respuestaExitosaSeEntregaTalCual() = runTest {
+    fun respuestaSuccesssaSeEntregaTalCual() = runTest {
         servidor.enqueue(
             MockResponse().setBody(
                 """[{"id": 100, "name": "Manolo Bellon", "email": "manollo@caracol.com.co"}]"""
             )
         )
 
-        val resultado = adaptador.llamar { api.getCollectors().conVersion().valor }
+        val resultado = adaptador.call { api.getCollectors().conVersion().valor }
 
         val lista = resultado.getOrThrow()
         assertEquals(1, lista.size)
@@ -243,60 +243,60 @@ class ServiceAdapterTest {
     }
 
     @Test
-    fun respuestaVaciaEsUnExitoConListaVacia() = runTest {
+    fun respuestaVaciaEsUnSuccessConListaVacia() = runTest {
         servidor.enqueue(MockResponse().setBody("[]"))
 
-        assertEquals(emptyList<CollectorDto>(), adaptador.llamar { api.getCollectors().conVersion().valor }.getOrThrow())
+        assertEquals(emptyList<CollectorDto>(), adaptador.call { api.getCollectors().conVersion().valor }.getOrThrow())
     }
 
     @Test
-    fun errorDelServidorSeTraduceAErrorDeCarga() = runTest {
+    fun errorDelServidorSeTraduceALoadError() = runTest {
         servidor.enqueue(MockResponse().setResponseCode(500))
 
-        assertTrue(adaptador.llamar { api.getCollectors().conVersion().valor }.exceptionOrNull() is ErrorDeCarga)
+        assertTrue(adaptador.call { api.getCollectors().conVersion().valor }.exceptionOrNull() is LoadError)
     }
 
     @Test
-    fun errorDeCliente404SeTraduceAErrorDeCarga() = runTest {
+    fun errorDeCliente404SeTraduceALoadError() = runTest {
         servidor.enqueue(MockResponse().setResponseCode(404))
 
-        assertTrue(adaptador.llamar { api.getCollectors().conVersion().valor }.exceptionOrNull() is ErrorDeCarga)
+        assertTrue(adaptador.call { api.getCollectors().conVersion().valor }.exceptionOrNull() is LoadError)
     }
 
     @Test
-    fun sinConexionSeTraduceAErrorDeCarga() = runTest {
+    fun sinConexionSeTraduceALoadError() = runTest {
         servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
 
-        assertTrue(adaptador.llamar { api.getCollectors().conVersion().valor }.exceptionOrNull() is ErrorDeCarga)
+        assertTrue(adaptador.call { api.getCollectors().conVersion().valor }.exceptionOrNull() is LoadError)
     }
 
     @Test
-    fun tiempoDeEsperaAgotadoSeTraduceAErrorDeCarga() = runTest {
+    fun tiempoDeEsperaAgotadoSeTraduceALoadError() = runTest {
         servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE))
 
-        assertTrue(adaptador.llamar { api.getCollectors().conVersion().valor }.exceptionOrNull() is ErrorDeCarga)
+        assertTrue(adaptador.call { api.getCollectors().conVersion().valor }.exceptionOrNull() is LoadError)
     }
 
     @Test
-    fun jsonMalformadoSeTraduceAErrorDeCarga() = runTest {
+    fun jsonMalformadoSeTraduceALoadError() = runTest {
         servidor.enqueue(MockResponse().setBody("esto no es json"))
 
-        assertTrue(adaptador.llamar { api.getCollectors().conVersion().valor }.exceptionOrNull() is ErrorDeCarga)
+        assertTrue(adaptador.call { api.getCollectors().conVersion().valor }.exceptionOrNull() is LoadError)
     }
 
     @Test
-    fun jsonConEstructuraInesperadaSeTraduceAErrorDeCarga() = runTest {
+    fun jsonConEstructuraInesperadaSeTraduceALoadError() = runTest {
         // Gson lanza IllegalStateException si llega un objeto donde se espera una lista.
         servidor.enqueue(MockResponse().setBody("""{"mensaje": "no es una lista"}"""))
 
-        assertTrue(adaptador.llamar { api.getCollectors().conVersion().valor }.exceptionOrNull() is ErrorDeCarga)
+        assertTrue(adaptador.call { api.getCollectors().conVersion().valor }.exceptionOrNull() is LoadError)
     }
 
     @Test
     fun laCancelacionSeRelanzaYNoSeConvierteEnError() = runTest {
         var relanzada = false
         try {
-            adaptador.llamar<List<CollectorDto>> { throw CancellationException("cancelado") }
+            adaptador.call<List<CollectorDto>> { throw CancellationException("cancelado") }
         } catch (e: CancellationException) {
             relanzada = true
         }
@@ -305,10 +305,10 @@ class ServiceAdapterTest {
     }
 
     @Test
-    fun otrosFallosNoSeConfundenConErrorDeCarga() = runTest {
+    fun otrosFallosNoSeConfundenConLoadError() = runTest {
         var lanzada: Throwable? = null
         try {
-            adaptador.llamar<List<CollectorDto>> { error("error de programación") }
+            adaptador.call<List<CollectorDto>> { error("error de programación") }
         } catch (e: IllegalStateException) {
             lanzada = e
         }
@@ -321,10 +321,10 @@ class ServiceAdapterTest {
         servidor.enqueue(MockResponse().setResponseCode(500))
         servidor.enqueue(MockResponse().setBody("""[{"id": 1, "name": "A", "email": "a@a.com"}]"""))
 
-        val primero = adaptador.llamar { api.getCollectors().conVersion().valor }
-        val segundo = adaptador.llamar { api.getCollectors().conVersion().valor }
+        val primero = adaptador.call { api.getCollectors().conVersion().valor }
+        val segundo = adaptador.call { api.getCollectors().conVersion().valor }
 
-        assertTrue(primero.exceptionOrNull() is ErrorDeCarga)
+        assertTrue(primero.exceptionOrNull() is LoadError)
         assertEquals(1, segundo.getOrThrow().size)
     }
 
@@ -353,8 +353,8 @@ class ServiceAdapterTest {
         servidor.enqueue(MockResponse().setResponseCode(304).setHeader("ETag", "W/\"abc\""))
 
         conCache { adaptador, api ->
-            assertEquals("Vinilo", adaptador.llamar { api.obtenerPrueba() }.getOrThrow().nombre)
-            val repetida = adaptador.llamar { api.obtenerPrueba() }
+            assertEquals("Vinilo", adaptador.call { api.obtenerPrueba() }.getOrThrow().nombre)
+            val repetida = adaptador.call { api.obtenerPrueba() }
 
             assertEquals("Vinilo", repetida.getOrThrow().nombre)
         }
@@ -369,9 +369,9 @@ class ServiceAdapterTest {
         servidor.enqueue(MockResponse().setResponseCode(304).setHeader("ETag", "W/\"v2\""))
 
         conCache { adaptador, api ->
-            adaptador.llamar { api.obtenerPrueba() }
-            assertEquals("Despues", adaptador.llamar { api.obtenerPrueba() }.getOrThrow().nombre)
-            assertEquals("Despues", adaptador.llamar { api.obtenerPrueba() }.getOrThrow().nombre)
+            adaptador.call { api.obtenerPrueba() }
+            assertEquals("Despues", adaptador.call { api.obtenerPrueba() }.getOrThrow().nombre)
+            assertEquals("Despues", adaptador.call { api.obtenerPrueba() }.getOrThrow().nombre)
         }
         servidor.takeRequest()
         servidor.takeRequest()
@@ -384,22 +384,22 @@ class ServiceAdapterTest {
         servidor.enqueue(MockResponse().setResponseCode(304).setHeader("ETag", "W/\"abc\""))
 
         conCache { adaptador, api ->
-            adaptador.llamar { api.obtenerPrueba() }
-            assertEquals("Vinilo", adaptador.llamar { api.obtenerPrueba() }.getOrThrow().nombre)
+            adaptador.call { api.obtenerPrueba() }
+            assertEquals("Vinilo", adaptador.call { api.obtenerPrueba() }.getOrThrow().nombre)
         }
         assertEquals(2, servidor.requestCount)
     }
 
     @Test
-    fun conCacheSinConexionSeReportaElErrorDeCargaAunqueHayaRespuestaGuardada() = runTest {
+    fun conCacheSinConexionSeReportaElLoadErrorAunqueHayaRespuestaGuardada() = runTest {
         servidor.enqueue(respuestaConVersion("W/\"abc\""))
         // OkHttp reintenta una conexión fallida: se encolan varias desconexiones.
         repeat(3) { servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START)) }
 
         conCache { adaptador, api ->
-            adaptador.llamar { api.obtenerPrueba() }
+            adaptador.call { api.obtenerPrueba() }
 
-            assertTrue(adaptador.llamar { api.obtenerPrueba() }.exceptionOrNull() is ErrorDeCarga)
+            assertTrue(adaptador.call { api.obtenerPrueba() }.exceptionOrNull() is LoadError)
         }
     }
 
@@ -410,8 +410,8 @@ class ServiceAdapterTest {
         val adaptador = ServiceAdapter(servidor.url("/").toString(), ServiceAdapter.clientePorDefecto())
         val api = adaptador.api<ApiDePrueba>()
 
-        adaptador.llamar { api.obtenerPrueba() }
-        adaptador.llamar { api.obtenerPrueba() }
+        adaptador.call { api.obtenerPrueba() }
+        adaptador.call { api.obtenerPrueba() }
 
         servidor.takeRequest()
         assertEquals(null, servidor.takeRequest().getHeader("If-None-Match"))
@@ -420,11 +420,11 @@ class ServiceAdapterTest {
     // ---------- Versión de la respuesta (optimizar-cache-e-imagenes, D3) ----------
 
     @Test
-    fun unaRespuestaExitosaEntregaSuVersion() = runTest {
+    fun unaRespuestaSuccesssaEntregaSuVersion() = runTest {
         servidor.enqueue(respuestaConVersion("W/\"abc\""))
         val api = adaptador.api<ApiConVersion>()
 
-        val resultado = adaptador.llamar { api.obtenerPrueba().conVersion() }.getOrThrow()
+        val resultado = adaptador.call { api.obtenerPrueba().conVersion() }.getOrThrow()
 
         assertEquals(ConVersion(DatosPrueba("Vinilo"), "W/\"abc\""), resultado)
     }
@@ -434,37 +434,37 @@ class ServiceAdapterTest {
         servidor.enqueue(MockResponse().setBody("""{"nombre":"Vinilo"}"""))
         val api = adaptador.api<ApiConVersion>()
 
-        assertEquals(null, adaptador.llamar { api.obtenerPrueba().conVersion() }.getOrThrow().version)
+        assertEquals(null, adaptador.call { api.obtenerPrueba().conVersion() }.getOrThrow().version)
     }
 
     @Test
-    fun conVersionUn404SigueSiendoRecursoNoEncontrado() = runTest {
+    fun conVersionUn404SigueSiendoResourceNotFound() = runTest {
         servidor.enqueue(MockResponse().setResponseCode(404))
         val api = adaptador.api<ApiConVersion>()
 
-        val error = adaptador.llamar { api.obtenerPrueba().conVersion() }.exceptionOrNull()
+        val error = adaptador.call { api.obtenerPrueba().conVersion() }.exceptionOrNull()
 
-        assertTrue(error is RecursoNoEncontrado)
+        assertTrue(error is ResourceNotFound)
         assertEquals(404, (error?.cause as HttpException).code())
     }
 
     @Test
-    fun conVersionUn500EsErrorDeCargaSinSerRecursoNoEncontrado() = runTest {
+    fun conVersionUn500EsLoadErrorSinSerResourceNotFound() = runTest {
         servidor.enqueue(MockResponse().setResponseCode(500))
         val api = adaptador.api<ApiConVersion>()
 
-        val error = adaptador.llamar { api.obtenerPrueba().conVersion() }.exceptionOrNull()
+        val error = adaptador.call { api.obtenerPrueba().conVersion() }.exceptionOrNull()
 
-        assertTrue(error is ErrorDeCarga)
-        assertTrue(error !is RecursoNoEncontrado)
+        assertTrue(error is LoadError)
+        assertTrue(error !is ResourceNotFound)
     }
 
     @Test
-    fun conVersionUnCuerpoNuloEsErrorDeCarga() = runTest {
+    fun conVersionUnCuerpoNuloEsLoadError() = runTest {
         servidor.enqueue(MockResponse().setBody("null"))
         val api = adaptador.api<ApiConVersion>()
 
-        assertTrue(adaptador.llamar { api.obtenerPrueba().conVersion() }.exceptionOrNull() is ErrorDeCarga)
+        assertTrue(adaptador.call { api.obtenerPrueba().conVersion() }.exceptionOrNull() is LoadError)
     }
 
     @Test
@@ -475,9 +475,9 @@ class ServiceAdapterTest {
         try {
             val adaptador = ServiceAdapter(servidor.url("/").toString(), cliente)
             val api = adaptador.api<ApiConVersion>()
-            adaptador.llamar { api.obtenerPrueba().conVersion() }
+            adaptador.call { api.obtenerPrueba().conVersion() }
 
-            val repetida = adaptador.llamar { api.obtenerPrueba().conVersion() }.getOrThrow()
+            val repetida = adaptador.call { api.obtenerPrueba().conVersion() }.getOrThrow()
 
             assertEquals(ConVersion(DatosPrueba("Vinilo"), "W/\"abc\""), repetida)
         } finally {
