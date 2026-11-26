@@ -1,8 +1,9 @@
 """Ayuda para trazar el recorrido: ejecuta acciones y muestra los textos de la pantalla.
 
 Uso: python explorar.py <serial> "accion1" "accion2" ...
-Acciones: instalar:<apk> | abrir | tocar:<texto>[#indice] | debajo:<ancla>|<texto> | deslizar | atras |
-          escribir:<texto> | teclado | esperar:<texto> | ver
+Acciones: instalar:<apk> | abrir | tocar:<texto>[#indice] | parcial:<texto> | debajo:<ancla>|<texto> |
+          deslizar | atras | escribir:<texto> | teclado | esperar:<texto> | ver
+  `tocar` busca el texto exacto; `parcial`, cualquier elemento cuyo texto lo contenga (sin distinguir mayúsculas).
 """
 import sys
 

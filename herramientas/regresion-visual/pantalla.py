@@ -5,11 +5,31 @@ por texto y guarda capturas con `screencap`. Así el mismo recorrido sirve para 
 """
 import os
 import re
+import shutil
 import subprocess
 import time
 import xml.etree.ElementTree as ET
 
-ADB = os.path.join(os.environ.get("LOCALAPPDATA", ""), "Android", "Sdk", "platform-tools", "adb.exe")
+
+def _ruta_adb():
+    """adb del SDK de Android y, si no está, el del PATH.
+
+    El SDK va primero porque en algunas máquinas el `adb` del PATH es otra versión que no es la del SDK. Se busca en
+    ANDROID_HOME, en ANDROID_SDK_ROOT y en la ubicación por defecto de Android Studio en Windows, macOS y Linux.
+    """
+    ejecutable = "adb.exe" if os.name == "nt" else "adb"
+    candidatos = [os.environ.get("ANDROID_HOME"), os.environ.get("ANDROID_SDK_ROOT")]
+    if os.environ.get("LOCALAPPDATA"):
+        candidatos.append(os.path.join(os.environ["LOCALAPPDATA"], "Android", "Sdk"))
+    candidatos += [os.path.expanduser("~/Library/Android/sdk"), os.path.expanduser("~/Android/Sdk")]
+    for sdk in filter(None, candidatos):
+        ruta = os.path.join(sdk, "platform-tools", ejecutable)
+        if os.path.exists(ruta):
+            return ruta
+    return shutil.which("adb") or ejecutable
+
+
+ADB = _ruta_adb()
 PAQUETE = "com.example.vinilos"
 ACTIVIDAD = f"{PAQUETE}/.MainActivity"
 

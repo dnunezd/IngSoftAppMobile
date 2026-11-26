@@ -14,6 +14,7 @@ Compara cada versión de la app con la anterior, con dos métodos. Aquí solo es
 ## Requisitos
 
 - Python 3 con Pillow (`pip install pillow`).
+- adb del SDK de Android. Se busca en `ANDROID_HOME`, `ANDROID_SDK_ROOT` y la ubicación por defecto de Android Studio (Windows, macOS y Linux), y si no está, en el `PATH`.
 - Un dispositivo o emulador y BackVynils local con `adb reverse tcp:3000 tcp:3000`. El método 2 necesita Android 13 o superior para fijar el idioma de la app.
 - De cada versión, la app y sus pruebas compiladas con `-PbaseUrl=http://localhost:3000/`, cada una en su propia carpeta para no tocar la rama actual:
 
