@@ -15,12 +15,12 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.espresso.Espresso
 import com.example.vinilos.data.local.VinilosDb
-import com.example.vinilos.ui.ingreso.TagAtras
-import com.example.vinilos.ui.ingreso.TagBuscador
-import com.example.vinilos.ui.ingreso.TagEntrarColeccionista
-import com.example.vinilos.ui.ingreso.TagMensajeError
-import com.example.vinilos.ui.ingreso.tagColeccionista
-import com.example.vinilos.ui.inicio.TagInicio
+import com.example.vinilos.ui.entry.TagAtras
+import com.example.vinilos.ui.entry.TagBuscador
+import com.example.vinilos.ui.entry.TagEntrarColeccionista
+import com.example.vinilos.ui.entry.TagMensajeError
+import com.example.vinilos.ui.entry.tagColeccionista
+import com.example.vinilos.ui.home.TagInicio
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.SocketPolicy
@@ -31,9 +31,9 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * Selector de coleccionistas guardado (add-cache-consultas, HU00), con la pila de red real contra
- * `MockWebServer` y la base de Room en memoria. Volver al ingreso descarta el ViewModel del selector, así
- * que entrar de nuevo repite la carga sin reiniciar la app.
+ * Saved collector selector (add-cache-consultas, HU00), using the real network stack against
+ * `MockWebServer` and the in-memory Room database. Going back to login discards the selector's ViewModel, so
+ * entering again repeats the load without restarting the app.
  */
 class ColeccionistasSinConexionE2ETest {
 
@@ -48,7 +48,7 @@ class ColeccionistasSinConexionE2ETest {
         servidor = MockWebServer().apply { start() }
         val contexto: Context = ApplicationProvider.getApplicationContext()
         db = Room.inMemoryDatabaseBuilder(contexto, VinilosDb::class.java).build()
-        // "localhost" es uno de los hosts con HTTP permitido en network_security_config.xml.
+        // "localhost" is one of the hosts allowed over HTTP in network_security_config.xml.
         ApplicationProvider.getApplicationContext<VinilosApplication>().container =
             AppContainer(baseUrl = "http://localhost:${servidor.port}/", coleccionistaDao = db.coleccionistaDao())
     }
@@ -68,7 +68,7 @@ class ColeccionistasSinConexionE2ETest {
 
     private fun responder(cuerpo: String) = servidor.enqueue(MockResponse().setBody(cuerpo))
 
-    /** El servidor corta la conexión: es lo que ve la app sin red o con el backend caído. */
+    /** The server cuts the connection: this is what the app sees with no network or a down backend. */
     private fun servidorCaido() =
         servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
 
@@ -111,7 +111,7 @@ class ColeccionistasSinConexionE2ETest {
             rule.onNodeWithTag(TagBuscador).performTextInput("monsalve")
             rule.onNodeWithTag(tagColeccionista(101)).assertIsDisplayed()
             rule.onNodeWithTag(tagColeccionista(100)).assertDoesNotExist()
-            // En pantallas chicas (API 23), con el teclado abierto el aviso tapa la tarjeta y se lleva el toque.
+            // On small screens (API 23), with the keyboard open the notice covers the card and intercepts the tap.
             Espresso.closeSoftKeyboard()
             esperarQueSeOculteElAviso()
             rule.onNodeWithTag(tagColeccionista(101)).performClick()

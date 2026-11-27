@@ -4,9 +4,9 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 
 /**
- * Fila del catálogo guardado en el dispositivo (add-cache-catalogo). Tiene los mismos campos que
- * [com.example.vinilos.data.model.AlbumResumen]: solo se guarda lo que el catálogo muestra. La portada
- * es la URL; la imagen la guarda Coil en su propia caché.
+ * Row of the catalog stored on the device (add-cache-catalogo). It has the same fields as
+ * [com.example.vinilos.data.model.AlbumResumen]: only what the catalog displays is stored. The cover
+ * is the URL; the image itself is stored by Coil in its own cache.
  */
 @Entity(tableName = "albumes")
 data class AlbumEntity(

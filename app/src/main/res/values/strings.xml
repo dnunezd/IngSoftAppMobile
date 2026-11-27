@@ -1,4 +1,6 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Idioma en que la app muestra sus textos: los formatos de fecha y número lo siguen (internacionalizar-ingles). -->
+    <string name="idioma">es</string>
     <string name="app_name">Vinilos</string>
     <string name="marca">Vinilo</string>
     <string name="logo_descripcion">Logo de Vinilo</string>
@@ -20,6 +22,7 @@
     <string name="ingreso_coleccionista_etiqueta">PRO</string>
     <string name="ingreso_coleccionista_chip">Mi bóveda &amp; Vinilos</string>
     <string name="ingreso_entrar">Entrar</string>
+    <string name="ingreso_entrar_como">Entrar como %1$s</string>
 
     <!-- Selector de coleccionista -->
     <string name="coleccionistas_chip_curado">Curated Vinyls</string>
@@ -65,6 +68,7 @@
     <!-- Los tres puntos son el texto exacto del mockup. -->
     <string name="artistas_buscar" tools:ignore="TypographyEllipsis">Buscar artista por nombre...</string>
     <string name="artistas_lista">Artistas</string>
+    <string name="artistas_lista_descripcion">Artistas, lista</string>
     <plurals name="artistas_contador">
         <item quantity="one">%d artista</item>
         <item quantity="other">%d artistas</item>
@@ -158,6 +162,7 @@
     <string name="crear_titular_1">Nuevo</string>
     <string name="crear_titular_2">álbum</string>
     <string name="crear_subtitulo">Ingresa la información para catalogar tu vinilo en el archivo central.</string>
+    <string name="crear_campo_anuncio">%1$s, obligatorio</string>
     <string name="crear_nombre">Nombre del álbum</string>
     <string name="crear_nombre_indicacion">Ej. Abbey Road</string>
     <string name="crear_portada">Portada (URL)</string>
@@ -190,9 +195,12 @@
     <string name="detalle_sin_calificaciones">Sin calificaciones</string>
     <string name="detalle_canciones">Canciones</string>
     <string name="detalle_comentarios">Comentarios</string>
+    <string name="detalle_agregar_cancion">Agregar canción</string>
     <string name="detalle_promedio">Promedio de calificaciones</string>
+    <string name="detalle_promedio_estrellas">de 5 estrellas</string>
     <string name="detalle_calificacion">%1$d / 5</string>
     <string name="detalle_portada">Portada del álbum</string>
+    <string name="detalle_portada_con_nombre">Portada del álbum, %1$s</string>
     <string name="detalle_artistas">Artistas</string>
     <string name="detalle_artista_imagen">Imagen de %1$s</string>
     <string name="detalle_estreno">Estreno</string>
@@ -203,4 +211,73 @@
     <string name="detalle_error_actualizar">No pudimos actualizar el álbum</string>
     <string name="detalle_actualizando">Actualizando álbum</string>
     <string name="detalle_reintentar">Reintentar</string>
+    <!-- Agregar canción a un álbum (HU08) -->
+    <string name="agregar_cancion_titulo">Agregar canción</string>
+    <string name="agregar_cancion_nombre">Nombre</string>
+    <string name="agregar_cancion_duracion">Duración</string>
+    <string name="agregar_cancion_campo_obligatorio">Campo obligatorio</string>
+    <string name="agregar_cancion_error_formato">Usa el formato m:ss, por ejemplo 5:05</string>
+    <string name="agregar_cancion_guardar">Guardar</string>
+    <string name="agregar_cancion_guardando">Guardando…</string>
+    <string name="agregar_cancion_cancelar">Cancelar</string>
+    <string name="agregar_cancion_error_envio">No se pudo agregar la canción, intenta de nuevo</string>
+    <string name="agregar_cancion_exito">Canción agregada</string>
+    <string name="agregar_cancion_exito_detalle">Se asoció a %1$s</string>
+    <string name="agregar_cancion_cerrar_aviso">Cerrar aviso</string>
+    <string name="agregar_cancion_album_no_disponible">El álbum ya no está disponible</string>
+    <string name="agregar_cancion_volver">Volver</string>
+    <string name="agregar_cancion_album_destino">Álbum destino</string>
+    <string name="agregar_cancion_datos_cancion">Datos de la canción</string>
+
+    <string name="detalle_comentar">Comentar álbum</string>
+    <!-- Comentar un álbum (HU09) -->
+    <string name="comentar_encabezado">Comentar álbum</string>
+    <string name="comentar_calificando">Calificando álbum</string>
+    <string name="comentar_coleccionista">%1$s (Coleccionista)</string>
+    <string name="comentar_pregunta">¿Qué te pareció este vinilo?</string>
+    <string name="comentar_subtitulo">Tu experiencia sobre el máster, prensado y audio</string>
+    <string name="comentar_estrella">%1$d de 5 estrellas</string>
+    <string name="comentar_nivel">%1$s (%2$d/5)</string>
+    <string name="comentar_nivel_1">Muy malo</string>
+    <string name="comentar_nivel_2">Malo</string>
+    <string name="comentar_nivel_3">Regular</string>
+    <string name="comentar_nivel_4">Bueno</string>
+    <string name="comentar_nivel_5">Excelente</string>
+    <string name="comentar_opinion">Escribe tu opinión</string>
+    <string name="comentar_publico">Comentario público para la comunidad</string>
+    <string name="comentar_contador">%1$d / %2$d</string>
+    <string name="comentar_publicar">Publicar comentario</string>
+    <string name="comentar_publicando" tools:ignore="TypographyEllipsis">Publicando...</string>
+    <string name="comentar_error">No se pudo publicar, intenta de nuevo</string>
+    <string name="comentar_cargando">Cargando álbum</string>
+    <string name="comentar_error_album">No pudimos cargar el álbum</string>
+    <string name="comentar_reintentar">Reintentar</string>
+    <string name="comentar_descartar_titulo">¿Descartar comentario?</string>
+    <string name="comentar_descartar_texto">Tienes un comentario en redacción. Si sales ahora, se perderán los cambios que has escrito.</string>
+    <string name="comentar_continuar">Continuar escribiendo</string>
+    <string name="comentar_descartar">Descartar y salir</string>
+    <string name="comentar_publicado">Comentario publicado</string>
+    <string name="comentar_publicado_titulo">¡Comentario publicado exitosamente!</string>
+    <string name="comentar_publicado_texto">Tu apreciación audiófila ya forma parte de la bitácora viva del vinilo.</string>
+    <string name="comentar_ilustracion">Vinilo con la marca de publicado</string>
+    <string name="comentar_album_resenado">Álbum reseñado</string>
+    <string name="comentar_aceptar">Aceptar</string>
+
+    <!-- Agregar un álbum a un artista (HU15) -->
+    <string name="asociar_agregar_album">Agregar álbum</string>
+    <string name="asociar_titulo">Asociar álbum a %1$s</string>
+    <string name="asociar_buscar" tools:ignore="TypographyEllipsis">Buscar álbum por título...</string>
+    <string name="asociar_limpiar_busqueda">Borrar búsqueda</string>
+    <string name="asociar_cerrar">Cerrar</string>
+    <string name="asociar_ya_asociado">Ya asociado</string>
+    <string name="asociar_asociar">Asociar</string>
+    <string name="asociar_cancelar">Cancelar</string>
+    <string name="asociar_asociando">Asociando álbum</string>
+    <string name="asociar_album_asociado">Álbum asociado</string>
+    <string name="asociar_sin_albumes">No hay álbumes para asociar</string>
+    <string name="asociar_sin_resultados">No encontramos álbumes con esa búsqueda</string>
+    <string name="asociar_error">No se pudo asociar el álbum, intenta de nuevo</string>
+    <string name="asociar_cargando" tools:ignore="TypographyEllipsis">Cargando álbumes...</string>
+    <string name="asociar_error_listado">No pudimos cargar los álbumes</string>
+    <string name="asociar_reintentar">Reintentar</string>
 </resources>

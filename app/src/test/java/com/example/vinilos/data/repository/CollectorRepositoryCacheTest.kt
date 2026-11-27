@@ -1,10 +1,10 @@
 package com.example.vinilos.data.repository
 
 import android.database.sqlite.SQLiteException
-import com.example.vinilos.data.local.ColeccionistaDao
-import com.example.vinilos.data.local.ColeccionistaEntity
+import com.example.vinilos.data.local.CollectorDao
+import com.example.vinilos.data.local.CollectorEntity
 import com.example.vinilos.data.model.Collector
-import com.example.vinilos.data.remote.ErrorDeCarga
+import com.example.vinilos.data.remote.LoadError
 import com.example.vinilos.data.remote.ServiceAdapter
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
@@ -17,17 +17,17 @@ import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 
-/** Coleccionistas guardados en el repositorio (add-cache-consultas, D4), con un DAO falso en memoria. */
+/** Cached collectors in the repository (add-cache-consultas, D4), with a fake in-memory DAO. */
 class CollectorRepositoryCacheTest {
 
-    /** Guarda en una lista; [fallaAlLeer] y [fallaAlEscribir] simulan un almacenamiento que no responde. */
-    private class ColeccionistaDaoFalso : ColeccionistaDao() {
-        var filas: List<ColeccionistaEntity> = emptyList()
+    /** Stores in a list; [fallaAlLeer] and [fallaAlEscribir] simulate a storage that doesn't respond. */
+    private class CollectorDaoFalso : CollectorDao() {
+        var filas: List<CollectorEntity> = emptyList()
         var fallaAlLeer: Throwable? = null
         var fallaAlEscribir: Throwable? = null
         var escrituras = 0
 
-        /** Cada escritura que recibió, en orden, con las claves que tocó (optimizar-cache-e-imagenes). */
+        /** Every write it received, in order, with the keys it touched (optimizar-cache-e-imagenes). */
         val operaciones = mutableListOf<String>()
 
         private fun anotar(operacion: String, claves: List<Any> = emptyList()) {
@@ -35,7 +35,7 @@ class CollectorRepositoryCacheTest {
             operaciones += if (claves.isEmpty()) operacion else "$operacion$claves"
         }
 
-        override suspend fun todos(): List<ColeccionistaEntity> {
+        override suspend fun todos(): List<CollectorEntity> {
             fallaAlLeer?.let { throw it }
             return filas.sortedBy { it.posicion }
         }
@@ -45,13 +45,13 @@ class CollectorRepositoryCacheTest {
             filas = emptyList()
         }
 
-        override suspend fun insertar(coleccionistas: List<ColeccionistaEntity>) {
+        override suspend fun insertar(coleccionistas: List<CollectorEntity>) {
             anotar("insertar", coleccionistas.map { it.id })
             filas = filas + coleccionistas
             escrituras++
         }
 
-        override suspend fun guardar(coleccionistas: List<ColeccionistaEntity>) {
+        override suspend fun save(coleccionistas: List<CollectorEntity>) {
             anotar("guardar", coleccionistas.map { it.id })
             filas = filas.filterNot { fila -> coleccionistas.any { it.id == fila.id } } + coleccionistas
         }
@@ -63,13 +63,13 @@ class CollectorRepositoryCacheTest {
     }
 
     private lateinit var servidor: MockWebServer
-    private lateinit var dao: ColeccionistaDaoFalso
+    private lateinit var dao: CollectorDaoFalso
     private lateinit var repositorio: CollectorRepository
 
     @Before
     fun preparar() {
         servidor = MockWebServer().apply { start() }
-        dao = ColeccionistaDaoFalso()
+        dao = CollectorDaoFalso()
         repositorio = CollectorRepositoryImpl(ServiceAdapter(servidor.url("/").toString()), coleccionistaDao = dao)
     }
 
@@ -78,7 +78,7 @@ class CollectorRepositoryCacheTest {
         servidor.shutdown()
     }
 
-    // El backend no los entrega ordenados por id ni por nombre: el selector conserva su orden.
+    // The backend doesn't return them sorted by id or name: the selector preserves their order.
     private val respuesta = """
         [
           {"id": 105, "name": "Zoe Ruiz", "email": "zoe@a.com"},
@@ -91,13 +91,13 @@ class CollectorRepositoryCacheTest {
     private val manolo = Collector(100, "Manolo Bellon", "manollo@caracol.com.co")
 
     @Test
-    fun unaConsultaExitosaReemplazaLoGuardadoEnElOrdenDelBackend() = runTest {
-        dao.filas = listOf(ColeccionistaEntity(999, "Ya no existe", "z@a.com", 0))
+    fun unaConsultaSuccesssaReemplazaLoGuardadoEnElOrdenDelBackend() = runTest {
+        dao.filas = listOf(CollectorEntity(999, "Ya no existe", "z@a.com", 0))
         servidor.enqueue(MockResponse().setBody(respuesta))
 
-        assertEquals(listOf(zoe, manolo), repositorio.obtenerColeccionistas().getOrThrow())
+        assertEquals(listOf(zoe, manolo), repositorio.getCollectors().getOrThrow())
         assertEquals(
-            listOf(ColeccionistaEntity(105, "Zoe Ruiz", "zoe@a.com", 0), ColeccionistaEntity(100, "Manolo Bellon", "manollo@caracol.com.co", 1)),
+            listOf(CollectorEntity(105, "Zoe Ruiz", "zoe@a.com", 0), CollectorEntity(100, "Manolo Bellon", "manollo@caracol.com.co", 1)),
             dao.filas
         )
     }
@@ -105,28 +105,28 @@ class CollectorRepositoryCacheTest {
     @Test
     fun loGuardadoSeDevuelveEnElMismoOrden() = runTest {
         servidor.enqueue(MockResponse().setBody(respuesta))
-        repositorio.obtenerColeccionistas().getOrThrow()
+        repositorio.getCollectors().getOrThrow()
 
-        assertEquals(listOf(zoe, manolo), repositorio.obtenerColeccionistasGuardados())
+        assertEquals(listOf(zoe, manolo), repositorio.getCachedCollectors())
     }
 
     @Test
-    fun unaRespuestaVaciaDejaLoGuardadoVacio() = runTest {
-        dao.filas = listOf(ColeccionistaEntity(100, "Manolo Bellon", "m@a.com", 0))
+    fun unaRespuestaVaciaDejaLoGuardadoEmpty() = runTest {
+        dao.filas = listOf(CollectorEntity(100, "Manolo Bellon", "m@a.com", 0))
         servidor.enqueue(MockResponse().setBody("[]"))
 
-        repositorio.obtenerColeccionistas().getOrThrow()
+        repositorio.getCollectors().getOrThrow()
 
         assertTrue(dao.filas.isEmpty())
     }
 
     @Test
     fun unaConsultaFallidaNoTocaLoGuardado() = runTest {
-        val guardado = listOf(ColeccionistaEntity(100, "Manolo Bellon", "m@a.com", 0))
+        val guardado = listOf(CollectorEntity(100, "Manolo Bellon", "m@a.com", 0))
         dao.filas = guardado
         servidor.enqueue(MockResponse().setResponseCode(500))
 
-        assertTrue(repositorio.obtenerColeccionistas().exceptionOrNull() is ErrorDeCarga)
+        assertTrue(repositorio.getCollectors().exceptionOrNull() is LoadError)
         assertEquals(guardado, dao.filas)
         assertEquals(0, dao.escrituras)
     }
@@ -136,16 +136,16 @@ class CollectorRepositoryCacheTest {
         val sinCache = CollectorRepositoryImpl(ServiceAdapter(servidor.url("/").toString()))
         servidor.enqueue(MockResponse().setBody(respuesta))
 
-        assertTrue(sinCache.obtenerColeccionistasGuardados().isEmpty())
-        assertEquals(listOf(zoe, manolo), sinCache.obtenerColeccionistas().getOrThrow())
+        assertTrue(sinCache.getCachedCollectors().isEmpty())
+        assertEquals(listOf(zoe, manolo), sinCache.getCollectors().getOrThrow())
     }
 
     @Test
     fun siNoSePuedeLeerNoHayNadaGuardado() = runTest {
-        dao.filas = listOf(ColeccionistaEntity(100, "Manolo Bellon", "m@a.com", 0))
+        dao.filas = listOf(CollectorEntity(100, "Manolo Bellon", "m@a.com", 0))
         dao.fallaAlLeer = SQLiteException("disco no disponible")
 
-        assertTrue(repositorio.obtenerColeccionistasGuardados().isEmpty())
+        assertTrue(repositorio.getCachedCollectors().isEmpty())
     }
 
     @Test
@@ -153,7 +153,7 @@ class CollectorRepositoryCacheTest {
         dao.fallaAlEscribir = SQLiteException("disco lleno")
         servidor.enqueue(MockResponse().setBody(respuesta))
 
-        assertEquals(listOf(zoe, manolo), repositorio.obtenerColeccionistas().getOrThrow())
+        assertEquals(listOf(zoe, manolo), repositorio.getCollectors().getOrThrow())
     }
 
     @Test
@@ -161,14 +161,14 @@ class CollectorRepositoryCacheTest {
         dao.fallaAlLeer = CancellationException("cancelada")
 
         try {
-            repositorio.obtenerColeccionistasGuardados()
+            repositorio.getCachedCollectors()
             fail("La cancelación debe relanzarse")
         } catch (e: CancellationException) {
             assertEquals("cancelada", e.message)
         }
     }
 
-    // ---------- Escribir solo lo que cambió (optimizar-cache-e-imagenes, D4 y D5) ----------
+    // ---------- Write only what changed (optimizar-cache-e-imagenes, D4 and D5) ----------
 
     private fun coleccionistas(vararg pares: Pair<Int, String>, version: String? = null) = MockResponse()
         .setBody(pares.joinToString(prefix = "[", postfix = "]") { (id, nombre) ->
@@ -180,10 +180,10 @@ class CollectorRepositoryCacheTest {
     fun conLaMismaVersionNoSeEscribeNada() = runTest {
         servidor.enqueue(coleccionistas(1 to "Ana", 2 to "Beto", version = "W/\"v1\""))
         servidor.enqueue(coleccionistas(1 to "Ana", 2 to "Beto", version = "W/\"v1\""))
-        repositorio.obtenerColeccionistas().getOrThrow()
+        repositorio.getCollectors().getOrThrow()
         dao.operaciones.clear()
 
-        assertEquals(listOf(1, 2), repositorio.obtenerColeccionistas().getOrThrow().map { it.id })
+        assertEquals(listOf(1, 2), repositorio.getCollectors().getOrThrow().map { it.id })
 
         assertEquals(emptyList<String>(), dao.operaciones)
     }
@@ -192,10 +192,10 @@ class CollectorRepositoryCacheTest {
     fun conOtraVersionYElMismoContenidoNoSeEscribeNada() = runTest {
         servidor.enqueue(coleccionistas(1 to "Ana", version = "W/\"v1\""))
         servidor.enqueue(coleccionistas(1 to "Ana", version = "W/\"v2\""))
-        repositorio.obtenerColeccionistas().getOrThrow()
+        repositorio.getCollectors().getOrThrow()
         dao.operaciones.clear()
 
-        repositorio.obtenerColeccionistas().getOrThrow()
+        repositorio.getCollectors().getOrThrow()
 
         assertEquals(emptyList<String>(), dao.operaciones)
     }
@@ -204,10 +204,10 @@ class CollectorRepositoryCacheTest {
     fun unColeccionistaNuevoAlPrincipioEscribeSoloLasFilasQueCambiaronDePosicion() = runTest {
         servidor.enqueue(coleccionistas(1 to "Ana", 2 to "Beto", version = "W/\"v1\""))
         servidor.enqueue(coleccionistas(3 to "Carla", 1 to "Ana", 2 to "Beto", version = "W/\"v2\""))
-        repositorio.obtenerColeccionistas().getOrThrow()
+        repositorio.getCollectors().getOrThrow()
         dao.operaciones.clear()
 
-        repositorio.obtenerColeccionistas().getOrThrow()
+        repositorio.getCollectors().getOrThrow()
 
         assertEquals(listOf("guardar[3, 1, 2]"), dao.operaciones)
         assertEquals(listOf(3, 1, 2), dao.filas.sortedBy { it.posicion }.map { it.id })
@@ -217,10 +217,10 @@ class CollectorRepositoryCacheTest {
     fun unColeccionistaQueYaNoLlegaSeBorraSoloPorSuId() = runTest {
         servidor.enqueue(coleccionistas(1 to "Ana", 2 to "Beto", version = "W/\"v1\""))
         servidor.enqueue(coleccionistas(1 to "Ana", version = "W/\"v2\""))
-        repositorio.obtenerColeccionistas().getOrThrow()
+        repositorio.getCollectors().getOrThrow()
         dao.operaciones.clear()
 
-        repositorio.obtenerColeccionistas().getOrThrow()
+        repositorio.getCollectors().getOrThrow()
 
         assertEquals(listOf("borrarPorId[2]"), dao.operaciones)
         assertEquals(listOf(1), dao.filas.map { it.id })
@@ -231,13 +231,13 @@ class CollectorRepositoryCacheTest {
         servidor.enqueue(coleccionistas(1 to "Ana", version = "W/\"v1\""))
         servidor.enqueue(coleccionistas(1 to "Ana Nueva", version = "W/\"v2\""))
         servidor.enqueue(coleccionistas(1 to "Ana Nueva", version = "W/\"v2\""))
-        repositorio.obtenerColeccionistas().getOrThrow()
+        repositorio.getCollectors().getOrThrow()
         dao.fallaAlEscribir = SQLiteException("disco lleno")
-        repositorio.obtenerColeccionistas().getOrThrow()
+        repositorio.getCollectors().getOrThrow()
         dao.fallaAlEscribir = null
         dao.operaciones.clear()
 
-        repositorio.obtenerColeccionistas().getOrThrow()
+        repositorio.getCollectors().getOrThrow()
 
         assertEquals("borrarTodos", dao.operaciones.first())
         assertEquals(listOf("Ana Nueva"), dao.filas.map { it.nombre })
@@ -248,10 +248,10 @@ class CollectorRepositoryCacheTest {
         servidor.enqueue(coleccionistas(1 to "Ana", version = "W/\"v1\""))
         servidor.enqueue(coleccionistas(1 to "Ana Nueva", version = "W/\"v2\""))
         servidor.enqueue(coleccionistas(1 to "Ana", version = "W/\"v1\""))
-        repositorio.obtenerColeccionistas().getOrThrow()
+        repositorio.getCollectors().getOrThrow()
         dao.fallaAlEscribir = CancellationException("cancelada")
         try {
-            repositorio.obtenerColeccionistas()
+            repositorio.getCollectors()
             fail("La cancelación debe relanzarse")
         } catch (e: CancellationException) {
             assertEquals("cancelada", e.message)
@@ -259,7 +259,7 @@ class CollectorRepositoryCacheTest {
         dao.fallaAlEscribir = null
         dao.operaciones.clear()
 
-        repositorio.obtenerColeccionistas().getOrThrow()
+        repositorio.getCollectors().getOrThrow()
 
         assertEquals("borrarTodos", dao.operaciones.first())
     }

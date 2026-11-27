@@ -1,10 +1,10 @@
 package com.example.vinilos.data.repository
 
 import android.database.sqlite.SQLiteException
-import com.example.vinilos.data.local.FavoritoDao
-import com.example.vinilos.data.local.FavoritoEntity
+import com.example.vinilos.data.local.FavoriteDao
+import com.example.vinilos.data.local.FavoriteEntity
 import com.example.vinilos.data.model.ArtistType
-import com.example.vinilos.data.remote.ErrorDeCarga
+import com.example.vinilos.data.remote.LoadError
 import com.example.vinilos.data.remote.ServiceAdapter
 import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.MockResponse
@@ -16,16 +16,16 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-/** Favoritos confirmados guardados en el repositorio (add-cache-consultas, D4), con un DAO falso en memoria. */
+/** Confirmed favorites saved in the repository (add-cache-consultas, D4), with a fake in-memory DAO. */
 class FavoriteRepositoryCacheTest {
 
-    /** Guarda en memoria; [fallaAlLeer] y [fallaAlEscribir] simulan un almacenamiento que no responde. */
-    private class FavoritoDaoFalso : FavoritoDao() {
-        var filas: Set<FavoritoEntity> = emptySet()
+    /** Stores in memory; [fallaAlLeer] and [fallaAlEscribir] simulate storage that does not respond. */
+    private class FavoriteDaoFalso : FavoriteDao() {
+        var filas: Set<FavoriteEntity> = emptySet()
         var fallaAlLeer: Throwable? = null
         var fallaAlEscribir: Throwable? = null
 
-        /** Cada escritura que recibió, en orden, con las claves que tocó (optimizar-cache-e-imagenes). */
+        /** Every write it received, in order, with the keys it touched (optimizar-cache-e-imagenes). */
         val operaciones = mutableListOf<String>()
 
         private fun anotar(operacion: String, claves: List<Any> = emptyList()) {
@@ -35,7 +35,7 @@ class FavoriteRepositoryCacheTest {
 
         override suspend fun existe(coleccionistaId: Int, artistaId: Int): Boolean {
             fallaAlLeer?.let { throw it }
-            return FavoritoEntity(coleccionistaId, artistaId) in filas
+            return FavoriteEntity(coleccionistaId, artistaId) in filas
         }
 
         override suspend fun deColeccionista(coleccionistaId: Int): List<Int> {
@@ -48,7 +48,7 @@ class FavoriteRepositoryCacheTest {
             filas = filas.filterNot { it.coleccionistaId == coleccionistaId }.toSet()
         }
 
-        override suspend fun insertar(favoritos: List<FavoritoEntity>) {
+        override suspend fun insertar(favoritos: List<FavoriteEntity>) {
             anotar("insertar", favoritos.map { it.artistaId })
             filas = filas + favoritos
         }
@@ -60,13 +60,13 @@ class FavoriteRepositoryCacheTest {
     }
 
     private lateinit var servidor: MockWebServer
-    private lateinit var dao: FavoritoDaoFalso
+    private lateinit var dao: FavoriteDaoFalso
     private lateinit var repositorio: FavoriteRepository
 
     @Before
     fun preparar() {
         servidor = MockWebServer().apply { start() }
-        dao = FavoritoDaoFalso()
+        dao = FavoriteDaoFalso()
         repositorio = FavoriteRepositoryImpl(ServiceAdapter(servidor.url("/").toString()), favoritoDao = dao)
     }
 
@@ -77,46 +77,46 @@ class FavoriteRepositoryCacheTest {
 
     @Test
     fun comprobarReemplazaLosFavoritosDeEseColeccionistaSinTocarLosDeOtro() = runTest {
-        dao.filas = setOf(FavoritoEntity(100, 1), FavoritoEntity(101, 1))
+        dao.filas = setOf(FavoriteEntity(100, 1), FavoriteEntity(101, 1))
         servidor.enqueue(MockResponse().setBody("""[{"id": 5, "name": "Queen"}, {"id": 8}]"""))
 
         assertFalse(repositorio.esFavorito(collectorId = 100, artistId = 1).getOrThrow())
 
-        assertEquals(setOf(FavoritoEntity(100, 5), FavoritoEntity(100, 8), FavoritoEntity(101, 1)), dao.filas)
+        assertEquals(setOf(FavoriteEntity(100, 5), FavoriteEntity(100, 8), FavoriteEntity(101, 1)), dao.filas)
     }
 
     @Test
     fun unaComprobacionFallidaNoTocaLoGuardado() = runTest {
-        dao.filas = setOf(FavoritoEntity(100, 5))
+        dao.filas = setOf(FavoriteEntity(100, 5))
         servidor.enqueue(MockResponse().setResponseCode(500))
 
-        assertTrue(repositorio.esFavorito(100, 5).exceptionOrNull() is ErrorDeCarga)
-        assertEquals(setOf(FavoritoEntity(100, 5)), dao.filas)
+        assertTrue(repositorio.esFavorito(100, 5).exceptionOrNull() is LoadError)
+        assertEquals(setOf(FavoriteEntity(100, 5)), dao.filas)
     }
 
     @Test
-    fun agregarConExitoGuardaElFavorito() = runTest {
+    fun agregarConSuccessGuardaElFavorito() = runTest {
         servidor.enqueue(MockResponse().setBody("""{"id": 8}"""))
 
-        repositorio.agregarFavorito(100, 8, ArtistType.MUSICO).getOrThrow()
+        repositorio.addFavorite(100, 8, ArtistType.MUSICO).getOrThrow()
 
         assertTrue(repositorio.esFavoritoGuardado(100, 8))
     }
 
     @Test
-    fun agregarSinExitoNoGuardaNada() = runTest {
+    fun agregarSinSuccessNoGuardaNada() = runTest {
         servidor.enqueue(MockResponse().setResponseCode(500))
         servidor.enqueue(MockResponse().setResponseCode(404))
 
-        assertTrue(repositorio.agregarFavorito(100, 8, ArtistType.MUSICO).exceptionOrNull() is ErrorDeCarga)
-        assertTrue(repositorio.agregarFavorito(100, 8, ArtistType.MUSICO).exceptionOrNull() is ArtistaNoDisponible)
+        assertTrue(repositorio.addFavorite(100, 8, ArtistType.MUSICO).exceptionOrNull() is LoadError)
+        assertTrue(repositorio.addFavorite(100, 8, ArtistType.MUSICO).exceptionOrNull() is ArtistNotAvailable)
 
         assertTrue(dao.filas.isEmpty())
     }
 
     @Test
     fun esFavoritoGuardadoRespondePorColeccionistaYArtista() = runTest {
-        dao.filas = setOf(FavoritoEntity(100, 5))
+        dao.filas = setOf(FavoriteEntity(100, 5))
 
         assertTrue(repositorio.esFavoritoGuardado(100, 5))
         assertFalse(repositorio.esFavoritoGuardado(101, 5))
@@ -134,7 +134,7 @@ class FavoriteRepositoryCacheTest {
 
     @Test
     fun siNoSePuedeLeerNadaEsFavoritoGuardado() = runTest {
-        dao.filas = setOf(FavoritoEntity(100, 5))
+        dao.filas = setOf(FavoriteEntity(100, 5))
         dao.fallaAlLeer = SQLiteException("disco no disponible")
 
         assertFalse(repositorio.esFavoritoGuardado(100, 5))
@@ -147,10 +147,10 @@ class FavoriteRepositoryCacheTest {
         servidor.enqueue(MockResponse().setBody("""{"id": 8}"""))
 
         assertTrue(repositorio.esFavorito(100, 5).getOrThrow())
-        assertTrue(repositorio.agregarFavorito(100, 8, ArtistType.BANDA).isSuccess)
+        assertTrue(repositorio.addFavorite(100, 8, ArtistType.BANDA).isSuccess)
     }
 
-    // ---------- Escribir solo lo que cambió (optimizar-cache-e-imagenes, D4 y D5) ----------
+    // ---------- Write only what changed (optimizar-cache-e-imagenes, D4 y D5) ----------
 
     private fun favoritos(vararg ids: Int, version: String? = null) = MockResponse()
         .setBody(ids.joinToString(prefix = "[", postfix = "]") { """{"id": $it}""" })
@@ -185,10 +185,10 @@ class FavoriteRepositoryCacheTest {
     fun siElFavoritoSeQuitaEnElBackendYVuelveLaVersionAnteriorLoGuardadoSeCorrige() = runTest {
         servidor.enqueue(favoritos(version = "W/\"f0\""))
         servidor.enqueue(MockResponse().setBody("""{"id": 7}"""))
-        // Alguien quitó el favorito en el backend: vuelve a responder la versión de antes de agregarlo.
+        // Someone removed the favorite in the backend: it responds again with the version from before adding it.
         servidor.enqueue(favoritos(version = "W/\"f0\""))
         repositorio.esFavorito(100, 7).getOrThrow()
-        repositorio.agregarFavorito(100, 7, ArtistType.BANDA).getOrThrow()
+        repositorio.addFavorite(100, 7, ArtistType.BANDA).getOrThrow()
         assertTrue(repositorio.esFavoritoGuardado(100, 7))
 
         assertFalse(repositorio.esFavorito(100, 7).getOrThrow())

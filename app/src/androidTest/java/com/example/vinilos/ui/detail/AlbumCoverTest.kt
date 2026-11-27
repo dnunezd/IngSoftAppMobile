@@ -1,0 +1,75 @@
+package com.example.vinilos.ui.detail
+
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toPixelMap
+import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.unit.dp
+import androidx.test.filters.SdkSuppress
+import com.example.vinilos.ui.theme.VinilosTheme
+import org.junit.Assert.assertTrue
+import org.junit.Rule
+import org.junit.Test
+
+class AlbumCoverTest {
+    @get:Rule
+    val rule = createComposeRule()
+
+    @Test
+    @SdkSuppress(minSdkVersion = 26) // captureToImage uses PixelCopy, available since API 26.
+    fun sinUrlMuestraLaPortadaConElIconoDeRespaldo() {
+        rule.setContent {
+            VinilosTheme { AlbumCover(url = null, modifier = Modifier.size(160.dp)) }
+        }
+
+        rule.onNodeWithContentDescription("Portada del álbum").assertIsDisplayed()
+        assertTrue("Sin URL debe dibujarse el ícono sobre el fondo", dibujaAlgoSobreElFondo())
+    }
+
+    @Test
+    fun conUnaUrlNoRompeLaPantallaMientrasCargaOFalla() {
+        rule.setContent {
+            VinilosTheme { AlbumCover(url = "https://example.com/portada.jpg", modifier = Modifier.size(160.dp)) }
+        }
+
+        rule.onNodeWithContentDescription("Portada del álbum").assertIsDisplayed()
+    }
+
+    @Test
+    @SdkSuppress(minSdkVersion = 26)
+    fun unaUrlEnBlancoSeTrataComoAusenteYMuestraElIconoDeRespaldo() {
+        rule.setContent {
+            VinilosTheme { AlbumCover(url = " \t ", modifier = Modifier.size(160.dp)) }
+        }
+
+        rule.onNodeWithContentDescription("Portada del álbum").assertIsDisplayed()
+        assertTrue("Una URL en blanco debe dibujar el ícono sobre el fondo", dibujaAlgoSobreElFondo())
+    }
+
+    @Test
+    fun sinTamanoDelLlamadorLaPortadaSigueVisible() {
+        rule.setContent {
+            VinilosTheme { AlbumCover(url = null) }
+        }
+
+        rule.onNodeWithContentDescription("Portada del álbum").assertIsDisplayed()
+    }
+
+    /**
+     * The fallback icon is drawn by Coil inside the same image, so it has no node of its own: this checks
+     * that there are pixels different from the background, which is sampled from the corner (the icon is centered).
+     */
+    private fun dibujaAlgoSobreElFondo(): Boolean {
+        val pixeles = rule.onNodeWithContentDescription("Portada del álbum").captureToImage().toPixelMap()
+        val fondo = pixeles[0, 0]
+        for (x in 0 until pixeles.width) {
+            for (y in 0 until pixeles.height) {
+                if (pixeles[x, y] != fondo) return true
+            }
+        }
+        return false
+    }
+}

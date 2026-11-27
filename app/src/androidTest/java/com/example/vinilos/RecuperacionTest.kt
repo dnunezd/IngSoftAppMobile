@@ -10,17 +10,17 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
-import com.example.vinilos.ui.catalogo.TagErrorCatalogo
-import com.example.vinilos.ui.catalogo.TagReintentarCatalogo
-import com.example.vinilos.ui.catalogo.tagAlbum
-import com.example.vinilos.ui.ingreso.TagEntrarColeccionista
-import com.example.vinilos.ui.ingreso.TagEntrarVisitante
-import com.example.vinilos.ui.ingreso.TagMensajeError
-import com.example.vinilos.ui.ingreso.TagReintentar
-import com.example.vinilos.ui.ingreso.TagVisitanteError
-import com.example.vinilos.ui.ingreso.tagColeccionista
-import com.example.vinilos.ui.inicio.TagInicio
-import com.example.vinilos.ui.inicio.TagVerAlbumes
+import com.example.vinilos.ui.catalog.TagErrorCatalogo
+import com.example.vinilos.ui.catalog.TagReintentarCatalogo
+import com.example.vinilos.ui.catalog.tagAlbum
+import com.example.vinilos.ui.entry.TagEntrarColeccionista
+import com.example.vinilos.ui.entry.TagEntrarVisitante
+import com.example.vinilos.ui.entry.TagMensajeError
+import com.example.vinilos.ui.entry.TagReintentar
+import com.example.vinilos.ui.entry.TagVisitanteError
+import com.example.vinilos.ui.entry.tagColeccionista
+import com.example.vinilos.ui.home.TagInicio
+import com.example.vinilos.ui.home.TagVerAlbumes
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.SocketPolicy
@@ -31,9 +31,9 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * Recuperación ante fallos del backend, sin pasos manuales ni infraestructura: la app usa su pila
- * de red real (Retrofit y OkHttp) contra un servidor local que la prueba hace caer y volver con
- * `MockWebServer`. Corre solo con el dispositivo, sin Docker ni `adb reverse`.
+ * Recovery from backend failures, with no manual steps or infrastructure: the app uses its real
+ * network stack (Retrofit and OkHttp) against a local server that the test brings down and back up
+ * with `MockWebServer`. Runs with just the device, no Docker or `adb reverse` needed.
  */
 class RecuperacionTest {
 
@@ -52,7 +52,7 @@ class RecuperacionTest {
     @Before
     fun iniciarServidor() {
         servidor = MockWebServer().apply { start() }
-        // "localhost" es uno de los hosts con HTTP permitido en network_security_config.xml.
+        // "localhost" is one of the hosts with HTTP allowed in network_security_config.xml.
         ApplicationProvider.getApplicationContext<VinilosApplication>().container =
             AppContainer(baseUrl = "http://localhost:${servidor.port}/")
     }
@@ -62,7 +62,7 @@ class RecuperacionTest {
         servidor.shutdown()
     }
 
-    /** El servidor corta la conexión: es lo que ve la app cuando el backend está caído. */
+    /** The server cuts the connection: this is what the app sees when the backend is down. */
     private fun servidorCaido() =
         servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
 
@@ -80,7 +80,7 @@ class RecuperacionTest {
         rule.onNodeWithTag(TagEntrarColeccionista).performScrollTo().performClick()
     }
 
-    private fun reintentar() {
+    private fun retry() {
         esperarA(TagReintentar)
         rule.onNodeWithTag(TagReintentar).performClick()
     }
@@ -96,9 +96,9 @@ class RecuperacionTest {
             rule.onNodeWithText("No pudimos cargar los coleccionistas").assertIsDisplayed()
             rule.onNodeWithTag(TagVisitanteError).assertIsDisplayed()
 
-            // El servidor "vuelve" y la persona pulsa Reintentar.
+            // The server "comes back" and the person taps Retry.
             servidorSano()
-            reintentar()
+            retry()
 
             esperarA(tagColeccionista(100))
             rule.onNodeWithText("Manolo Bellon").assertIsDisplayed()
@@ -117,7 +117,7 @@ class RecuperacionTest {
             rule.onNodeWithText("No pudimos cargar los coleccionistas").assertIsDisplayed()
 
             servidorSano()
-            reintentar()
+            retry()
 
             esperarA(tagColeccionista(101))
             rule.onNodeWithText("Jaime Monsalve").assertIsDisplayed()
@@ -125,7 +125,7 @@ class RecuperacionTest {
     }
 
     @Test
-    fun variosReintentosFallidosSeguidosDeUnoExitosoMuestranLaLista() {
+    fun variosReintentosFallidosSeguidosDeUnoSuccesssoMuestranLaLista() {
         servidorCaido()
         servidorConErrorInterno()
         servidorCaido()
@@ -136,16 +136,16 @@ class RecuperacionTest {
             esperarPeticiones(1)
             esperarA(TagMensajeError)
 
-            // Cada reintento fallido vuelve a mostrar el mensaje de error con "Reintentar".
+            // Each failed retry shows the error message with "Reintentar" again.
             repeat(2) { vez ->
-                reintentar()
+                retry()
                 esperarPeticiones(vez + 2)
                 esperarA(TagMensajeError)
                 rule.onNodeWithText("No pudimos cargar los coleccionistas").assertIsDisplayed()
                 rule.onNodeWithTag(TagReintentar).assertIsDisplayed()
             }
 
-            reintentar()
+            retry()
 
             esperarA(tagColeccionista(100))
             rule.onNodeWithText("Manolo Bellon").assertIsDisplayed()

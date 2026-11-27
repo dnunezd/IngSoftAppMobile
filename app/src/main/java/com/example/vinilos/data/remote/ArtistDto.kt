@@ -1,8 +1,8 @@
 package com.example.vinilos.data.remote
 
 /**
- * Solo los campos de `Musician` y `Band` que usa el listado. Gson ignora el resto (description,
- * birthDate, creationDate, albums, musicians, performerPrizes) y deja en null los que falten.
+ * Only the fields of `Musician` and `Band` used by the listing. Gson ignores the rest (description,
+ * birthDate, creationDate, albums, musicians, performerPrizes) and leaves missing ones as null.
  */
 data class MusicianDto(
     val id: Int?,
@@ -16,8 +16,8 @@ data class BandDto(
     val image: String?
 )
 
-/** Respuesta de `GET /musicians/{id}` y `GET /bands/{id}`: cada recurso llena su fecha y solo la banda trae integrantes. */
-data class ArtistaDetalleDto(
+/** Response from `GET /musicians/{id}` and `GET /bands/{id}`: each resource fills its own date and only the band has members. */
+data class ArtistDetailDto(
     val id: Int?,
     val name: String?,
     val image: String?,
@@ -28,6 +28,9 @@ data class ArtistaDetalleDto(
     val musicians: List<IntegranteDto>?,
     val performerPrizes: List<PremiacionArtistaDto>?
 )
+
+/** Element of the body of `PUT /bands/{id}/albums`: the backend only reads the id. */
+data class IdAlbumDto(val id: Int)
 
 data class AlbumArtistaDto(
     val id: Int?,
@@ -42,19 +45,19 @@ data class IntegranteDto(
     val image: String?
 )
 
-/** Premiación dentro del artista: solo trae su id y su fecha, sin el premio. */
+/** Award within the artist: it only carries its id and its date, without the prize itself. */
 data class PremiacionArtistaDto(
     val id: Int?,
     val premiationDate: String?
 )
 
-/** Elemento de `GET /performerprizes`: su [id] es el de la premiación, no el del premio. */
-data class PremiacionDto(
+/** Element of `GET /performerprizes`: its [id] is the award's, not the prize's. */
+data class AwardDto(
     val id: Int?,
-    val prize: PremioDto?
+    val prize: PrizeDto?
 )
 
-data class PremioDto(
+data class PrizeDto(
     val name: String?,
     val organization: String?
 )

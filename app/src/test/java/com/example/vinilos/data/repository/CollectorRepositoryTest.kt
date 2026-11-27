@@ -3,7 +3,7 @@ package com.example.vinilos.data.repository
 import com.example.vinilos.data.model.Collector
 import com.example.vinilos.data.remote.CollectorApi
 import com.example.vinilos.data.remote.CollectorDto
-import com.example.vinilos.data.remote.ErrorDeCarga
+import com.example.vinilos.data.remote.LoadError
 import com.example.vinilos.data.remote.PerformerDto
 import com.example.vinilos.data.remote.ServiceAdapter
 import kotlinx.coroutines.CancellationException
@@ -20,7 +20,7 @@ import org.junit.Test
 import retrofit2.Response
 import java.util.concurrent.TimeUnit
 
-/** Mapeo de DTO a modelo; la traducción de errores de red se prueba en `ServiceAdapterTest`. */
+/** DTO-to-model mapping; network error translation is tested in `ServiceAdapterTest`. */
 class CollectorRepositoryTest {
 
     private lateinit var servidor: MockWebServer
@@ -56,7 +56,7 @@ class CollectorRepositoryTest {
             )
         )
 
-        val resultado = repositorio.obtenerColeccionistas()
+        val resultado = repositorio.getCollectors()
 
         assertEquals(
             listOf(
@@ -72,7 +72,7 @@ class CollectorRepositoryTest {
     fun respuestaVaciaDevuelveListaVacia() = runTest {
         servidor.enqueue(MockResponse().setBody("[]"))
 
-        assertEquals(emptyList<Collector>(), repositorio.obtenerColeccionistas().getOrThrow())
+        assertEquals(emptyList<Collector>(), repositorio.getCollectors().getOrThrow())
     }
 
     @Test
@@ -85,7 +85,7 @@ class CollectorRepositoryTest {
 
         assertEquals(
             listOf(Collector(7, "Con extras", "x@a.com")),
-            repositorio.obtenerColeccionistas().getOrThrow()
+            repositorio.getCollectors().getOrThrow()
         )
     }
 
@@ -106,36 +106,36 @@ class CollectorRepositoryTest {
 
         assertEquals(
             listOf(Collector(4, "Completo", "ok@a.com")),
-            repositorio.obtenerColeccionistas().getOrThrow()
+            repositorio.getCollectors().getOrThrow()
         )
     }
 
     @Test
-    fun elErrorDelAdaptadorSePropagaComoErrorDeCarga() = runTest {
+    fun elErrorDelAdaptadorSePropagaComoLoadError() = runTest {
         servidor.enqueue(MockResponse().setResponseCode(500))
 
-        assertTrue(repositorio.obtenerColeccionistas().exceptionOrNull() is ErrorDeCarga)
+        assertTrue(repositorio.getCollectors().exceptionOrNull() is LoadError)
     }
 
     @Test
-    fun sinConexionSeTraduceAErrorDeCarga() = runTest {
+    fun sinConexionSeTraduceALoadError() = runTest {
         servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
 
-        assertTrue(repositorio.obtenerColeccionistas().exceptionOrNull() is ErrorDeCarga)
+        assertTrue(repositorio.getCollectors().exceptionOrNull() is LoadError)
     }
 
     @Test
-    fun tiempoDeEsperaAgotadoSeTraduceAErrorDeCarga() = runTest {
+    fun tiempoDeEsperaAgotadoSeTraduceALoadError() = runTest {
         servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.NO_RESPONSE))
 
-        assertTrue(repositorio.obtenerColeccionistas().exceptionOrNull() is ErrorDeCarga)
+        assertTrue(repositorio.getCollectors().exceptionOrNull() is LoadError)
     }
 
     @Test
-    fun jsonMalformadoSeTraduceAErrorDeCarga() = runTest {
+    fun jsonMalformadoSeTraduceALoadError() = runTest {
         servidor.enqueue(MockResponse().setBody("esto no es json"))
 
-        assertTrue(repositorio.obtenerColeccionistas().exceptionOrNull() is ErrorDeCarga)
+        assertTrue(repositorio.getCollectors().exceptionOrNull() is LoadError)
     }
 
     @Test
@@ -156,7 +156,7 @@ class CollectorRepositoryTest {
         var relanzada = false
         try {
             CollectorRepositoryImpl(ServiceAdapter(servidor.url("/").toString()), api)
-                .obtenerColeccionistas()
+                .getCollectors()
         } catch (e: CancellationException) {
             relanzada = true
         }

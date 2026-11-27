@@ -8,11 +8,11 @@ import retrofit2.http.Path
 
 interface AlbumApi {
     @GET("albums")
-    suspend fun obtenerAlbumes(): Response<List<AlbumDto>>
+    suspend fun getAlbums(): Response<List<AlbumDto>>
 
     @GET("albums/{id}")
-    suspend fun obtenerAlbum(@Path("id") id: Int): Response<AlbumDto>
+    suspend fun getAlbum(@Path("id") id: Int): Response<AlbumDto>
 
     @POST("albums")
-    suspend fun crearAlbum(@Body album: CrearAlbumDto): AlbumDto
+    suspend fun createAlbum(@Body album: CreateAlbumDto): AlbumDto
 }

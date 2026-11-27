@@ -16,12 +16,12 @@ import com.example.vinilos.data.local.VinilosDb
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.ui.artistas.TagErrorArtistas
-import com.example.vinilos.ui.artistas.TagNombreDetalleArtista
+import com.example.vinilos.ui.artistas.TagNombreArtistDetail
 import com.example.vinilos.ui.artistas.tagArtista
-import com.example.vinilos.ui.ingreso.TagAtras
-import com.example.vinilos.ui.ingreso.TagEntrarVisitante
-import com.example.vinilos.ui.inicio.TagInicio
-import com.example.vinilos.ui.inicio.TagVerArtistas
+import com.example.vinilos.ui.entry.TagAtras
+import com.example.vinilos.ui.entry.TagEntrarVisitante
+import com.example.vinilos.ui.home.TagInicio
+import com.example.vinilos.ui.home.TagVerArtistas
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -34,9 +34,9 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * Listado y detalle de artistas guardados (add-cache-consultas, HU03 y HU04), con la pila de red real
- * contra `MockWebServer` y la base de Room en memoria. El listado hace dos consultas en paralelo, así que
- * el servidor responde por ruta y [caido] simula la falta de conexión.
+ * Saved artist list and detail (add-cache-consultas, HU03 and HU04), with the real network stack
+ * against `MockWebServer` and an in-memory Room database. The list issues two parallel queries, so
+ * the server responds by route and [caido] simulates the lack of connectivity.
  */
 class ArtistasSinConexionE2ETest {
 
@@ -70,7 +70,7 @@ class ArtistasSinConexionE2ETest {
         servidor.start()
         val contexto: Context = ApplicationProvider.getApplicationContext()
         db = Room.inMemoryDatabaseBuilder(contexto, VinilosDb::class.java).build()
-        // "localhost" es uno de los hosts con HTTP permitido en network_security_config.xml.
+        // "localhost" is one of the hosts allowed over HTTP in network_security_config.xml.
         ApplicationProvider.getApplicationContext<VinilosApplication>().container =
             AppContainer(baseUrl = "http://localhost:${servidor.port}/", artistaDao = db.artistaDao())
     }
@@ -99,13 +99,13 @@ class ArtistasSinConexionE2ETest {
 
     private fun atras() = rule.onNodeWithTag(TagAtras).performClick()
 
-    /** Con el servidor sano: entra como Visitante, ve el listado y abre el detalle de Queen. */
+    /** With a healthy server: enters as Visitor, sees the list and opens Queen's detail. */
     private fun verListadoYQueenConConexion() {
         rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
         abrirListado()
         abrir(queen)
-        esperarA(TagNombreDetalleArtista)
-        rule.onNodeWithTag(TagNombreDetalleArtista).assertTextEquals("Queen")
+        esperarA(TagNombreArtistDetail)
+        rule.onNodeWithTag(TagNombreArtistDetail).assertTextEquals("Queen")
         atras()
         esperarA(tagArtista(queen))
         atras()
@@ -125,7 +125,7 @@ class ArtistasSinConexionE2ETest {
 
             abrir(queen)
             esperarTexto("No se pudo actualizar el artista")
-            rule.onNodeWithTag(TagNombreDetalleArtista).assertTextEquals("Queen")
+            rule.onNodeWithTag(TagNombreArtistDetail).assertTextEquals("Queen")
             assertTrue(rule.onAllNodesWithText("No se pudo cargar el artista").fetchSemanticsNodes().isEmpty())
         }
     }

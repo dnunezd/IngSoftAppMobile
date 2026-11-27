@@ -1,0 +1,69 @@
+package com.example.vinilos.ui.catalog
+
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
+import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.junit4.ComposeTestRule
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performScrollToNode
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.example.vinilos.RepositorioAlbumesFalso
+import com.example.vinilos.data.model.AlbumSummary
+import com.example.vinilos.data.model.Session
+import com.example.vinilos.ui.theme.VinilosTheme
+import com.example.vinilos.viewmodel.AlbumsViewModel
+
+/** The catalog wired to its real ViewModel (created as in the NavHost) and a network-free repository. */
+@Composable
+fun CatalogoConViewModel(repositorio: RepositorioAlbumesFalso) {
+    val viewModel: AlbumsViewModel = viewModel(
+        factory = viewModelFactory { initializer { AlbumsViewModel(repositorio) } }
+    )
+    val estado by viewModel.uiState.collectAsStateWithLifecycle()
+    VinilosTheme {
+        CatalogScreen(
+            estado = estado,
+            session = Session.Visitor,
+            onActualizar = viewModel::actualizar,
+            onReintentar = viewModel::retry,
+            onAvisoMostrado = viewModel::avisoMostrado,
+            onSeleccionar = {},
+            onAtras = {}
+        )
+    }
+}
+
+/** Albums "Álbum 01" through "Álbum NN" with ids 1 to NN, already in alphabetical order. */
+fun albumesDePrueba(cantidad: Int) = (1..cantidad).map { n ->
+    AlbumSummary(n, "Álbum %02d".format(n), null, "Rock", "Artista $n", "19${(n % 90) + 10}")
+}
+
+/** Tags of the album cards in the order they appear in the grid. */
+fun ComposeTestRule.tagsDeAlbumesEnPantalla(): List<String> =
+    onAllNodes(SemanticsMatcher("es un álbum") {
+        it.config.getOrNull(SemanticsProperties.TestTag)?.startsWith("album_") == true
+    }).fetchSemanticsNodes().map { it.config[SemanticsProperties.TestTag] }
+
+/**
+ * Tags of the album cards in grid order, scrolling it from the beginning
+ * up to each of the [esperados]. On small screens the grid only composes what is
+ * visible, so [tagsDeAlbumesEnPantalla] cannot read the last albums.
+ */
+fun ComposeTestRule.tagsDeAlbumesRecorriendo(esperados: List<String>): List<String> {
+    val cuadricula = onNodeWithTag(TagCuadriculaCatalogo)
+    cuadricula.performScrollToIndex(0)
+    val vistos = LinkedHashSet(tagsDeAlbumesEnPantalla())
+    esperados.forEach { tag ->
+        cuadricula.performScrollToNode(hasTestTag(tag))
+        vistos += tagsDeAlbumesEnPantalla()
+    }
+    cuadricula.performScrollToIndex(0)
+    return vistos.toList()
+}

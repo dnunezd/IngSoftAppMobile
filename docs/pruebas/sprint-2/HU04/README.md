@@ -52,6 +52,6 @@ En la revisión del PR se corrió la clase 3 veces por dispositivo, en paralelo,
 ```bash
 ./gradlew installDebug installDebugAndroidTest        # backend desplegado (por defecto)
 adb shell rm -rf /sdcard/Android/data/com.example.vinilos/files/e2e-evidencia
-adb shell am instrument -w -e class com.example.vinilos.ArtistaDetalleE2ETest com.example.vinilos.test/androidx.test.runner.AndroidJUnitRunner
+adb shell am instrument -w -e class com.example.vinilos.ArtistaDetalleE2ETest com.example.vinilos.test/com.example.vinilos.VinilosTestRunner
 adb pull /sdcard/Android/data/com.example.vinilos/files/e2e-evidencia ./e2e-evidencia
 ```

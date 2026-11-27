@@ -2,20 +2,20 @@ package com.example.vinilos.data.repository
 
 import com.example.vinilos.data.model.ArtistType
 
-/** Se lanza cuando el backend confirma con un 404 que el artista ya no existe (HU10). */
-class ArtistaNoDisponible(causa: Throwable? = null) : Exception("El artista ya no está disponible", causa)
+/** Thrown when the backend confirms with a 404 that the artist no longer exists (HU10). */
+class ArtistNotAvailable(causa: Throwable? = null) : Exception("El artista ya no está disponible", causa)
 
-/** Favoritos de artista del coleccionista (HU10). La implementación es [FavoriteRepositoryImpl]. */
+/** Artist favorites of the collector (HU10). The implementation is [FavoriteRepositoryImpl]. */
 interface FavoriteRepository {
 
     suspend fun esFavorito(collectorId: Int, artistId: Int): Result<Boolean>
 
-    /** Falla con [ArtistaNoDisponible] si el backend ya no tiene el artista. */
-    suspend fun agregarFavorito(collectorId: Int, artistId: Int, tipo: ArtistType): Result<Unit>
+    /** Fails with [ArtistNotAvailable] if the backend no longer has the artist. */
+    suspend fun addFavorite(collectorId: Int, artistId: Int, tipo: ArtistType): Result<Unit>
 
     /**
-     * Si el backend ya confirmó antes que el artista es favorito de ese coleccionista, según lo guardado
-     * en el dispositivo (add-cache-consultas); `false` si no hay nada guardado o no se pudo leer.
+     * Whether the backend already confirmed before that the artist is a favorite of that collector, according to
+     * what's stored on the device (add-cache-consultas); `false` if nothing is stored or it couldn't be read.
      */
     suspend fun esFavoritoGuardado(collectorId: Int, artistId: Int): Boolean
 }

@@ -4,15 +4,15 @@ import com.example.vinilos.data.model.Collector
 
 sealed interface CollectorsUiState {
 
-    data object Cargando : CollectorsUiState
+    data object Loading : CollectorsUiState
 
     /**
-     * [coleccionistas] es la lista completa del backend; [visibles] es la que resulta de
-     * aplicar la búsqueda [consulta] (nombre o correo, sin distinguir mayúsculas ni tildes).
-     * [actualizando]: se muestra el listado guardado mientras se consulta el backend.
-     * [errorAlActualizar]: esa consulta falló y la pantalla debe avisarlo una vez (add-cache-consultas, D5).
+     * [coleccionistas] is the full backend list; [visibles] is the result of applying the
+     * [consulta] search (name or email, case- and accent-insensitive).
+     * [actualizando]: the cached list is shown while the backend is queried.
+     * [errorAlActualizar]: that query failed and the screen must report it once (add-cache-consultas, D5).
      */
-    data class Exito(
+    data class Success(
         val coleccionistas: List<Collector>,
         val consulta: String = "",
         val actualizando: Boolean = false,
@@ -21,7 +21,7 @@ sealed interface CollectorsUiState {
         val visibles: List<Collector> = filtrar(coleccionistas, consulta)
     }
 
-    data object Vacio : CollectorsUiState
+    data object Empty : CollectorsUiState
 
     data object Error : CollectorsUiState
 }

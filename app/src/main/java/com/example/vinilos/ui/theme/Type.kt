@@ -6,8 +6,8 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 
-// El mockup usa Inter; hasta empaquetarla se usa la fuente sans-serif del sistema con los
-// mismos pesos, tamaños e interlineados.
+// The mockup uses Inter; until it's bundled, the system's sans-serif font is used with the
+// same weights, sizes and line heights.
 private val Familia = FontFamily.SansSerif
 
 val Typography = Typography(

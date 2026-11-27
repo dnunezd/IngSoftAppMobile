@@ -4,9 +4,9 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.vinilos.data.model.Artista
-import com.example.vinilos.data.model.Cancion
-import com.example.vinilos.data.model.Comentario
+import com.example.vinilos.data.model.Performer
+import com.example.vinilos.data.model.Track
+import com.example.vinilos.data.model.Comment
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -18,7 +18,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Caché del catálogo (add-cache-catalogo, D2): la tabla siempre es la última respuesta completa. */
+/** Catalog cache (add-cache-catalogo, D2): the table always holds the latest full response. */
 @RunWith(AndroidJUnit4::class)
 class AlbumDaoTest {
 
@@ -27,7 +27,7 @@ class AlbumDaoTest {
     private lateinit var dao: AlbumDao
 
     @Before
-    fun crearBase() {
+    fun createBase() {
         db = Room.inMemoryDatabaseBuilder(contexto, VinilosDb::class.java).build()
         dao = db.albumDao()
     }
@@ -80,7 +80,7 @@ class AlbumDaoTest {
 
     @Test
     fun guardaYLeeUnCatalogoDelTamanoDelBackend() = runTest {
-        // El backend de los tutores tenía 274 álbumes al medir M4 (add-crear-album/design.md).
+        // The tutors' backend had 274 albums when measured at M4 (add-crear-album/design.md).
         val albumes = (1..274).map { album(it) }
 
         dao.reemplazar(albumes)
@@ -89,9 +89,9 @@ class AlbumDaoTest {
         assertEquals(albumes.toSet(), dao.todos().toSet())
     }
 
-    // ---------- Detalle (add-cache-consultas, D1 y D4) ----------
+    // ---------- Detail (add-cache-consultas, D1 and D4) ----------
 
-    private fun detalle(id: Int, nombre: String = "Álbum $id") = AlbumDetalleEntity(
+    private fun detalle(id: Int, nombre: String = "Álbum $id") = AlbumDetailEntity(
         id = id,
         nombre = nombre,
         portada = "https://portadas.example/$id.jpg",
@@ -99,9 +99,9 @@ class AlbumDaoTest {
         genero = "Salsa",
         disquera = "Elektra",
         fechaLanzamiento = "1984-08-01T00:00:00.000Z",
-        canciones = listOf(Cancion("Decisiones", "5:05"), Cancion("GDBD", "4:30")),
-        artistas = listOf(Artista("Rubén Blades", null)),
-        comentarios = listOf(Comentario("Excelente", 5), Comentario("Sin calificación", null))
+        canciones = listOf(Track("Decisiones", "5:05"), Track("GDBD", "4:30")),
+        artistas = listOf(Performer("Rubén Blades", null)),
+        comentarios = listOf(Comment("Excelente", 5), Comment("Sin calificación", null))
     )
 
     @Test
@@ -110,17 +110,17 @@ class AlbumDaoTest {
     }
 
     @Test
-    fun guardarDetalleLoLeeConSusListas() = runTest {
-        dao.guardarDetalle(detalle(100))
+    fun saveDetailLoLeeConSusListas() = runTest {
+        dao.saveDetail(detalle(100))
 
         assertEquals(detalle(100), dao.detalle(100))
     }
 
     @Test
-    fun guardarDetalleReemplazaElAnterior() = runTest {
-        dao.guardarDetalle(detalle(100))
+    fun saveDetailReemplazaElAnterior() = runTest {
+        dao.saveDetail(detalle(100))
 
-        dao.guardarDetalle(detalle(100, nombre = "Nombre nuevo").copy(canciones = emptyList()))
+        dao.saveDetail(detalle(100, nombre = "Nombre nuevo").copy(canciones = emptyList()))
 
         assertEquals(detalle(100, nombre = "Nombre nuevo").copy(canciones = emptyList()), dao.detalle(100))
     }
@@ -140,7 +140,7 @@ class AlbumDaoTest {
     fun reemplazarCatalogoReemplazaLasDosTablas() = runTest {
         dao.reemplazarCatalogo(listOf(album(100), album(101)), listOf(detalle(100), detalle(101)))
 
-        // El 102 no pasó la validación estricta: está en el catálogo pero no tiene detalle.
+        // 102 didn't pass strict validation: it's in the catalog but has no detail.
         dao.reemplazarCatalogo(listOf(album(101), album(102)), listOf(detalle(101, nombre = "Nuevo")))
 
         assertEquals(setOf(album(101), album(102)), dao.todos().toSet())
@@ -179,13 +179,13 @@ class AlbumDaoTest {
         }
     }
 
-    // ---------- Escrituras incrementales (optimizar-cache-e-imagenes, D6) ----------
+    // ---------- Incremental writes (optimizar-cache-e-imagenes, D6) ----------
 
     @Test
-    fun guardarAlbumesCambiaSoloLasFilasRecibidas() = runTest {
+    fun saveAlbumsCambiaSoloLasFilasRecibidas() = runTest {
         dao.reemplazar(listOf(album(100), album(101)))
 
-        dao.guardarAlbumes(listOf(album(101, "Nombre nuevo"), album(102)))
+        dao.saveAlbums(listOf(album(101, "Nombre nuevo"), album(102)))
 
         assertEquals(setOf(album(100), album(101, "Nombre nuevo"), album(102)), dao.todos().toSet())
     }
@@ -195,8 +195,8 @@ class AlbumDaoTest {
         dao.reemplazarCatalogo(listOf(album(100), album(101)), listOf(detalle(100), detalle(101)))
 
         dao.aplicarCatalogo(
-            CambiosDeTabla.diferencias(listOf(album(102)), listOf(100)),
-            CambiosDeTabla.diferencias(listOf(detalle(101, "Nombre nuevo")), listOf(100))
+            TableChanges.diferencias(listOf(album(102)), listOf(100)),
+            TableChanges.diferencias(listOf(detalle(101, "Nombre nuevo")), listOf(100))
         )
 
         assertEquals(setOf(album(101), album(102)), dao.todos().toSet())
@@ -209,8 +209,8 @@ class AlbumDaoTest {
         dao.reemplazarCatalogo(listOf(album(100)), listOf(detalle(100), detalle(999)))
 
         dao.aplicarCatalogo(
-            CambiosDeTabla.diferencias(listOf(album(101)), emptyList()),
-            CambiosDeTabla.reemplazar(listOf(detalle(101)))
+            TableChanges.diferencias(listOf(album(101)), emptyList()),
+            TableChanges.reemplazar(listOf(detalle(101)))
         )
 
         assertEquals(setOf(album(100), album(101)), dao.todos().toSet())
@@ -224,8 +224,8 @@ class AlbumDaoTest {
         dao.reemplazarCatalogo((1..1200).map { album(it) }, (1..1200).map { detalle(it) })
 
         dao.aplicarCatalogo(
-            CambiosDeTabla.diferencias(emptyList(), (1..1199).toList()),
-            CambiosDeTabla.diferencias(emptyList(), (2..1200).toList())
+            TableChanges.diferencias(emptyList(), (1..1199).toList()),
+            TableChanges.diferencias(emptyList(), (2..1200).toList())
         )
 
         assertEquals(listOf(1200), dao.todos().map { it.id })
@@ -239,13 +239,13 @@ class AlbumDaoTest {
 
         try {
             dao.aplicarCatalogo(
-                CambiosDeTabla.diferencias(listOf(album(101)), listOf(100)),
-                // Un id repetido hace fallar la inserción después de cambiar el catálogo.
-                CambiosDeTabla.reemplazar(listOf(detalle(1), detalle(1)))
+                TableChanges.diferencias(listOf(album(101)), listOf(100)),
+                // A duplicate id makes the insertion fail after the catalog has already changed.
+                TableChanges.reemplazar(listOf(detalle(1), detalle(1)))
             )
             fail("La inserción con un id repetido debía fallar")
         } catch (e: SQLiteConstraintException) {
-            // Esperado.
+            // Expected.
         }
 
         assertEquals(listOf(album(100)), dao.todos())

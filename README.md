@@ -62,7 +62,7 @@ Va del 2 al 15 de noviembre de 2026. Su primer release será **`v2.0.0` – Spri
 
 La versión publicada es `1.1.0` (`versionCode` 2), en el release [`v1.1.0`](https://github.com/dnunezd/IngSoftAppMobile/releases/tag/v1.1.0) sobre `main`, con el APK `vinilos-v1.1.0.apk` adjunto. El identificador de la app es `com.example.vinilos` y funciona desde Android 6.0 (API 23). Para instalarla sin compilar, descarga el APK del release en el teléfono y ábrelo.
 
-El primer release del Sprint 2 será **`v2.0.0` – Sprint 2**. `app/build.gradle.kts` ya tiene `versionName` `2.0.0` y `versionCode` 3. Los releases siguen el formato `v<versión> – Sprint <n>`, como `v1.1.0 – Sprint 1`.
+Los releases del Sprint 2 fueron **`v2.0.0`** y **`v2.1.0`**; el siguiente será **`v2.2.0` – Sprint 2**. `app/build.gradle.kts` ya tiene `versionName` `2.2.0` y `versionCode` 5. Los releases siguen el formato `v<versión> – Sprint <n>`, como `v1.1.0 – Sprint 1`.
 
 Para cada release:
 
@@ -156,7 +156,7 @@ Agrega `-PbaseUrl=...` para usar el backend local. Si hay varios dispositivos co
 | Tipo                                  | Comando                                                                                                                                                                                                                                                                                                                                                                                                                                  | Cantidad           | Necesita                                                            |
 |---------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------|---------------------------------------------------------------------|
 | Lint y unitarias (lo que corre la CI) | `./gradlew lint testDebugUnitTest --continue`                                                                                                                                                                                                                                                                                                                                                                                            | 220 unitarias      | Nada                                                                |
-| Instrumentadas sin E2E                | `./gradlew connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.notClass=com.example.vinilos.IngresoE2ETest,com.example.vinilos.CatalogoE2ETest,com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest,com.example.vinilos.ArtistasE2ETest,com.example.vinilos.ArtistaDetalleE2ETest,com.example.vinilos.CrearAlbumE2ETest,com.example.vinilos.ArtistasFavoritosE2ETest"` | 112                | Dispositivo                                                         |
+| Instrumentadas sin E2E                | `./gradlew connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.notClass=com.example.vinilos.EntryE2ETest,com.example.vinilos.CatalogE2ETest,com.example.vinilos.AlbumDetailE2ETest,com.example.vinilos.navigation.AlbumDetailBackendRealTest,com.example.vinilos.ArtistsE2ETest,com.example.vinilos.ArtistDetailE2ETest,com.example.vinilos.CreateAlbumE2ETest,com.example.vinilos.FavoriteArtistsE2ETest,com.example.vinilos.AddTrackE2ETest,com.example.vinilos.AddCommentE2ETest,com.example.vinilos.AssociateAlbumE2ETest"` | 112                | Dispositivo                                                         |
 | Todas las instrumentadas (con E2E)    | `./gradlew connectedDebugAndroidTest -PbaseUrl=http://localhost:3000/`                                                                                                                                                                                                                                                                                                                                                                   | 131 (112 + 19 E2E) | Dispositivo, backend local con datos y `adb reverse` en un teléfono |
 
 - El dispositivo debe estar **desbloqueado y con la pantalla encendida** durante toda la corrida.
@@ -171,26 +171,31 @@ Las E2E recorren la app contra el backend real. Cada escenario se nombra con el 
 
 | Clase                         | Historia | Escenarios                                                                    |
 |-------------------------------|----------|-------------------------------------------------------------------------------|
-| `IngresoE2ETest`              | HU00     | `FN00-ESC01` a `ESC03`, más una prueba de navegación                          |
-| `CatalogoE2ETest`             | HU01     | `FN01-ESC01` a `ESC05`                                                        |
-| `AlbumDetalleE2ETest`         | HU02     | `FN02-ESC01`                                                                  |
-| `AlbumDetalleBackendRealTest` | HU02     | `FN02-ESC02` y `ESC03`                                                        |
-| `ArtistasE2ETest`             | HU03     | `FN03-ESC01` a `ESC07`                                                        |
-| `ArtistaDetalleE2ETest`       | HU04     | `FN04-ESC01` a `ESC07`                                                        |
-| `CrearAlbumE2ETest`           | HU07     | `FN07-ESC01` a `ESC07` (crea y borra álbumes: correr contra BackVynils local) |
-| `ArtistasFavoritosE2ETest`    | HU10     | `FN10-ESC01` a `ESC08` (agrega favoritos: correr contra BackVynils local)     |
+| `EntryE2ETest`                | HU00     | `FN00-ESC01` a `ESC03`, más una prueba de navegación                          |
+| `CatalogE2ETest`              | HU01     | `FN01-ESC01` a `ESC05`                                                        |
+| `AlbumDetailE2ETest`          | HU02     | `FN02-ESC01`                                                                  |
+| `AlbumDetailBackendRealTest`  | HU02     | `FN02-ESC02` y `ESC03`                                                        |
+| `ArtistsE2ETest`              | HU03     | `FN03-ESC01` a `ESC07`                                                        |
+| `ArtistDetailE2ETest`         | HU04     | `FN04-ESC01` a `ESC07`                                                        |
+| `CreateAlbumE2ETest`          | HU07     | `FN07-ESC01` a `ESC07` (crea y borra álbumes: correr contra BackVynils local) |
+| `FavoriteArtistsE2ETest`      | HU10     | `FN10-ESC01` a `ESC08` (agrega favoritos: correr contra BackVynils local)     |
+| `AddTrackE2ETest`             | HU08     | `FN08-ESC01` a `ESC07` (agrega canciones: correr contra BackVynils local)     |
+| `AddCommentE2ETest`           | HU09     | `FN09-ESC01` a `ESC03` (publica comentarios: correr contra BackVynils local)  |
+| `AssociateAlbumE2ETest`       | HU15     | `FN15-ESC01` a `ESC03` (asocia álbumes: correr contra BackVynils local)       |
 
-Total: **41 pruebas E2E**. Para correrlas y traer la evidencia (con `connectedDebugAndroidTest` la app se desinstala al terminar y la evidencia se pierde):
+Total: **54 pruebas E2E**. Para correrlas y traer la evidencia (con `connectedDebugAndroidTest` la app se desinstala al terminar y la evidencia se pierde):
 
 ```bash
 ./gradlew installDebug installDebugAndroidTest -PbaseUrl=http://localhost:3000/
 adb reverse tcp:3000 tcp:3000                    # solo en un teléfono
 adb shell rm -rf /storage/emulated/0/Android/data/com.example.vinilos/files/e2e-evidencia
-adb shell am instrument -w -e class com.example.vinilos.IngresoE2ETest,com.example.vinilos.CatalogoE2ETest,com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest,com.example.vinilos.ArtistasE2ETest,com.example.vinilos.ArtistaDetalleE2ETest,com.example.vinilos.CrearAlbumE2ETest,com.example.vinilos.ArtistasFavoritosE2ETest com.example.vinilos.test/androidx.test.runner.AndroidJUnitRunner
+adb shell am instrument -w -e class com.example.vinilos.EntryE2ETest,com.example.vinilos.CatalogE2ETest,com.example.vinilos.AlbumDetailE2ETest,com.example.vinilos.navigation.AlbumDetailBackendRealTest,com.example.vinilos.ArtistsE2ETest,com.example.vinilos.ArtistDetailE2ETest,com.example.vinilos.CreateAlbumE2ETest,com.example.vinilos.FavoriteArtistsE2ETest,com.example.vinilos.AddTrackE2ETest,com.example.vinilos.AddCommentE2ETest,com.example.vinilos.AssociateAlbumE2ETest com.example.vinilos.test/com.example.vinilos.VinilosTestRunner
 adb pull /storage/emulated/0/Android/data/com.example.vinilos/files/e2e-evidencia ./e2e-evidencia
 ```
 
-Debe terminar en `OK (41 tests)`. En Git Bash antepone `MSYS_NO_PATHCONV=1` a los `adb` que llevan rutas del dispositivo.
+Debe terminar en `OK (54 tests)`. En Git Bash antepone `MSYS_NO_PATHCONV=1` a los `adb` que llevan rutas del dispositivo.
+
+Las pruebas buscan textos en español. El runner `VinilosTestRunner` deja la app en español en Android 13 o superior aunque el sistema esté en inglés; por debajo de API 33 el dispositivo debe estar en español.
 
 ## Problemas frecuentes
 

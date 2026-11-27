@@ -2,20 +2,26 @@ package com.example.vinilos.data.repository
 
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
-import com.example.vinilos.data.model.ArtistaDetalle
+import com.example.vinilos.data.model.ArtistDetail
 
-/** Artistas (músicos y bandas) de la app. La implementación es [ArtistRepositoryImpl]. */
+/** App's artists (musicians and bands). The implementation is [ArtistRepositoryImpl]. */
 interface ArtistRepository {
 
-    /** Músicos y bandas en un solo listado ordenado por nombre (HU03). */
-    suspend fun obtenerArtistas(): Result<List<Artist>>
+    /** Musicians and bands in a single listing sorted by name (HU03). */
+    suspend fun getArtists(): Result<List<Artist>>
 
-    /** Detalle del artista según su tipo (HU04). */
-    suspend fun obtenerDetalle(tipo: ArtistType, id: Int): Result<ArtistaDetalle>
+    /** Artist detail according to its type (HU04). */
+    suspend fun getDetail(tipo: ArtistType, id: Int): Result<ArtistDetail>
 
-    /** Último listado guardado en el dispositivo (add-cache-consultas), ordenado por nombre; vacío si no hay. */
-    suspend fun obtenerArtistasGuardados(): List<Artist>
+    /** Last listing stored on the device (add-cache-consultas), sorted by name; empty if there's none. */
+    suspend fun getCachedArtists(): List<Artist>
 
-    /** Detalle guardado de un artista que ya se abrió; `null` si no hay o no se pudo leer. */
-    suspend fun obtenerDetalleGuardado(tipo: ArtistType, id: Int): ArtistaDetalle?
+    /** Stored detail of an artist already opened; `null` if there's none or it couldn't be read. */
+    suspend fun getCachedDetail(tipo: ArtistType, id: Int): ArtistDetail?
+
+    /**
+     * Adds album [idAlbum] to the artist without removing it from its other performers (HU15). Any failure,
+     * including a 404, is a `LoadError`.
+     */
+    suspend fun associateAlbum(tipo: ArtistType, idArtista: Int, idAlbum: Int): Result<Unit>
 }
