@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 
 class ArtistsViewModel(private val repositorio: ArtistRepository) : ViewModel() {
 
-    private val _uiState = MutableStateFlow<ArtistsUiState>(ArtistsUiState.Cargando)
+    private val _uiState = MutableStateFlow<ArtistsUiState>(ArtistsUiState.Loading)
     val uiState: StateFlow<ArtistsUiState> = _uiState.asStateFlow()
 
     private var carga: Job? = null
@@ -22,50 +22,50 @@ class ArtistsViewModel(private val repositorio: ArtistRepository) : ViewModel() 
         cargar()
     }
 
-    fun reintentar() {
+    fun retry() {
         cargar()
     }
 
-    /** Filtra en el dispositivo; solo tiene efecto cuando el listado ya está cargado. */
-    fun buscar(texto: String) {
+    /** Filters on-device; only takes effect once the list is already loaded. */
+    fun search(texto: String) {
         _uiState.update { estado ->
-            if (estado is ArtistsUiState.Exito) estado.copy(consulta = texto) else estado
+            if (estado is ArtistsUiState.Success) estado.copy(consulta = texto) else estado
         }
     }
 
-    /** La pantalla ya mostró el aviso de que no se pudo actualizar el listado guardado. */
+    /** The screen already showed the notice that the saved list couldn't be refreshed. */
     fun avisoMostrado() {
         _uiState.update { estado ->
-            if (estado is ArtistsUiState.Exito) estado.copy(errorAlActualizar = false) else estado
+            if (estado is ArtistsUiState.Success) estado.copy(errorAlActualizar = false) else estado
         }
     }
 
     /**
-     * Con un listado guardado, lo muestra de inmediato mientras consulta, y un fallo de la consulta solo
-     * activa el aviso. Sin nada guardado, se comporta como antes: `Cargando` y `Error` si falla. La
-     * búsqueda escrita mientras tanto se conserva (add-cache-consultas, D5).
+     * With a saved list, it's shown immediately while querying, and a query failure only
+     * triggers the notice. With nothing saved, it behaves as before: `Loading` and `Error` if it fails. The
+     * search text typed in the meantime is preserved (add-cache-consultas, D5).
      */
     private fun cargar() {
         val consulta = ++consultaVigente
         carga?.cancel()
-        _uiState.value = ArtistsUiState.Cargando
+        _uiState.value = ArtistsUiState.Loading
         carga = viewModelScope.launch {
-            val guardados = repositorio.obtenerArtistasGuardados()
+            val guardados = repositorio.getCachedArtists()
             if (consulta != consultaVigente) return@launch
-            if (guardados.isNotEmpty()) _uiState.value = ArtistsUiState.Exito(guardados, actualizando = true)
+            if (guardados.isNotEmpty()) _uiState.value = ArtistsUiState.Success(guardados, actualizando = true)
 
-            val resultado = repositorio.obtenerArtistas()
+            val resultado = repositorio.getArtists()
             if (consulta != consultaVigente) return@launch
-            val busqueda = (_uiState.value as? ArtistsUiState.Exito)?.consulta.orEmpty()
+            val busqueda = (_uiState.value as? ArtistsUiState.Success)?.consulta.orEmpty()
             _uiState.value = resultado.fold(
                 onSuccess = { lista ->
-                    if (lista.isEmpty()) ArtistsUiState.Vacio else ArtistsUiState.Exito(lista, busqueda)
+                    if (lista.isEmpty()) ArtistsUiState.Empty else ArtistsUiState.Success(lista, busqueda)
                 },
                 onFailure = {
                     if (guardados.isEmpty()) {
                         ArtistsUiState.Error
                     } else {
-                        ArtistsUiState.Exito(guardados, busqueda, errorAlActualizar = true)
+                        ArtistsUiState.Success(guardados, busqueda, errorAlActualizar = true)
                     }
                 }
             )

@@ -6,9 +6,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 
 /**
- * Colores del botón principal de un formulario. Deshabilitado usa un par de la paleta con contraste
- * suficiente; mientras se envía ([enviando]) conserva el naranja pleno con el texto blanco (4,86:1), porque
- * el naranja atenuado bajaba a 3,08:1.
+ * Colors for a form's main button. Disabled state uses a palette pair with sufficient
+ * contrast; while submitting ([enviando]) it keeps the full orange with white text (4.86:1), because
+ * the dimmed orange dropped to 3.08:1.
  */
 @Composable
 fun coloresBotonPrincipal(enviando: Boolean = false): ButtonColors =

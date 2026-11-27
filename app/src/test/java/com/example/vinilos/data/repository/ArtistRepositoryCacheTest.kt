@@ -1,14 +1,14 @@
 package com.example.vinilos.data.repository
 
 import android.database.sqlite.SQLiteException
-import com.example.vinilos.data.local.ArtistaDao
-import com.example.vinilos.data.local.ArtistaDetalleEntity
-import com.example.vinilos.data.local.ArtistaEntity
+import com.example.vinilos.data.local.ArtistDao
+import com.example.vinilos.data.local.ArtistDetailEntity
+import com.example.vinilos.data.local.ArtistEntity
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
-import com.example.vinilos.data.model.ArtistaDetalle
-import com.example.vinilos.data.remote.ErrorDeCarga
-import com.example.vinilos.data.remote.RecursoNoEncontrado
+import com.example.vinilos.data.model.ArtistDetail
+import com.example.vinilos.data.remote.LoadError
+import com.example.vinilos.data.remote.ResourceNotFound
 import com.example.vinilos.data.remote.ServiceAdapter
 import kotlinx.coroutines.test.runTest
 import okhttp3.mockwebserver.Dispatcher
@@ -22,17 +22,17 @@ import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
-/** Listado y detalle de artistas guardados (add-cache-consultas, D4), con un DAO falso en memoria. */
+/** Listing and detail of cached artists (add-cache-consultas, D4), with a fake in-memory DAO. */
 class ArtistRepositoryCacheTest {
 
-    /** Guarda en memoria; [fallaAlLeer] y [fallaAlEscribir] simulan un almacenamiento que no responde. */
-    private class ArtistaDaoFalso : ArtistaDao() {
-        var filas: List<ArtistaEntity> = emptyList()
-        var detalles: Map<Pair<ArtistType, Int>, ArtistaDetalleEntity> = emptyMap()
+    /** Stores in memory; [fallaAlLeer] and [fallaAlEscribir] simulate a storage that doesn't respond. */
+    private class ArtistDaoFalso : ArtistDao() {
+        var filas: List<ArtistEntity> = emptyList()
+        var detalles: Map<Pair<ArtistType, Int>, ArtistDetailEntity> = emptyMap()
         var fallaAlLeer: Throwable? = null
         var fallaAlEscribir: Throwable? = null
 
-        /** Cada escritura que recibió, en orden, con las claves que tocó (optimizar-cache-e-imagenes). */
+        /** Every write it received, in order, with the keys it touched (optimizar-cache-e-imagenes). */
         val operaciones = mutableListOf<String>()
 
         private fun anotar(operacion: String, claves: List<Any> = emptyList()) {
@@ -40,7 +40,7 @@ class ArtistRepositoryCacheTest {
             operaciones += if (claves.isEmpty()) operacion else "$operacion$claves"
         }
 
-        override suspend fun todos(): List<ArtistaEntity> {
+        override suspend fun todos(): List<ArtistEntity> {
             fallaAlLeer?.let { throw it }
             return filas
         }
@@ -50,17 +50,17 @@ class ArtistRepositoryCacheTest {
             filas = emptyList()
         }
 
-        override suspend fun insertar(artistas: List<ArtistaEntity>) {
+        override suspend fun insertar(artistas: List<ArtistEntity>) {
             anotar("insertar", artistas.map { it.id })
             filas = filas + artistas
         }
 
-        override suspend fun detalle(tipo: ArtistType, id: Int): ArtistaDetalleEntity? {
+        override suspend fun detalle(tipo: ArtistType, id: Int): ArtistDetailEntity? {
             fallaAlLeer?.let { throw it }
             return detalles[tipo to id]
         }
 
-        override suspend fun guardarDetalle(detalle: ArtistaDetalleEntity) {
+        override suspend fun saveDetail(detalle: ArtistDetailEntity) {
             anotar("guardarDetalle", listOf(detalle.id))
             detalles = detalles + ((detalle.tipo to detalle.id) to detalle)
         }
@@ -70,7 +70,7 @@ class ArtistRepositoryCacheTest {
             detalles = detalles - (tipo to id)
         }
 
-        override suspend fun guardarArtistas(artistas: List<ArtistaEntity>) {
+        override suspend fun saveArtists(artistas: List<ArtistEntity>) {
             anotar("guardarArtistas", artistas.map { it.id })
             filas = filas.filterNot { fila -> artistas.any { it.tipo == fila.tipo && it.id == fila.id } } + artistas
         }
@@ -82,13 +82,13 @@ class ArtistRepositoryCacheTest {
     }
 
     private lateinit var servidor: MockWebServer
-    private lateinit var dao: ArtistaDaoFalso
+    private lateinit var dao: ArtistDaoFalso
     private lateinit var repositorio: ArtistRepository
 
-    // Las dos consultas del listado van en paralelo, así que se responde por ruta y no en orden.
+    // The two listing requests run in parallel, so responses are dispatched by path rather than order.
     private var musicos: MockResponse = MockResponse().setBody("[]")
     private var bandas: MockResponse = MockResponse().setBody("[]")
-    private val otrasRutas = mutableMapOf<String, MockResponse>()
+    private val otrasRoutes = mutableMapOf<String, MockResponse>()
 
     @Before
     fun preparar() {
@@ -97,11 +97,11 @@ class ArtistRepositoryCacheTest {
             override fun dispatch(request: RecordedRequest): MockResponse = when (request.path) {
                 "/musicians" -> musicos
                 "/bands" -> bandas
-                else -> otrasRutas[request.path] ?: MockResponse().setResponseCode(404)
+                else -> otrasRoutes[request.path] ?: MockResponse().setResponseCode(404)
             }
         }
         servidor.start()
-        dao = ArtistaDaoFalso()
+        dao = ArtistDaoFalso()
         repositorio = ArtistRepositoryImpl(ServiceAdapter(servidor.url("/").toString()), artistaDao = dao)
     }
 
@@ -110,17 +110,17 @@ class ArtistRepositoryCacheTest {
         servidor.shutdown()
     }
 
-    private fun fila(tipo: ArtistType, id: Int, nombre: String) = ArtistaEntity(tipo, id, nombre, null)
+    private fun fila(tipo: ArtistType, id: Int, nombre: String) = ArtistEntity(tipo, id, nombre, null)
 
-    // ---------- Listado (HU03) ----------
+    // ---------- Listing (HU03) ----------
 
     @Test
-    fun unListadoExitosoReemplazaLoGuardado() = runTest {
+    fun unListadoSuccesssoReemplazaLoGuardado() = runTest {
         dao.filas = listOf(fila(ArtistType.BANDA, 999, "Ya no existe"))
         musicos = MockResponse().setBody("""[{"id": 7, "name": "Freddie Mercury", "image": null}]""")
         bandas = MockResponse().setBody("""[{"id": 7, "name": "Queen", "image": null}]""")
 
-        repositorio.obtenerArtistas().getOrThrow()
+        repositorio.getArtists().getOrThrow()
 
         assertEquals(
             setOf(fila(ArtistType.MUSICO, 7, "Freddie Mercury"), fila(ArtistType.BANDA, 7, "Queen")),
@@ -138,7 +138,7 @@ class ArtistRepositoryCacheTest {
 
         assertEquals(
             listOf("alberto Barros", "Ástor Piazzolla", "Zeta"),
-            repositorio.obtenerArtistasGuardados().map { it.name }
+            repositorio.getCachedArtists().map { it.name }
         )
     }
 
@@ -148,7 +148,7 @@ class ArtistRepositoryCacheTest {
 
         assertEquals(
             listOf(Artist(7, "Freddie Mercury", null, ArtistType.MUSICO), Artist(7, "Queen", null, ArtistType.BANDA)),
-            repositorio.obtenerArtistasGuardados()
+            repositorio.getCachedArtists()
         )
     }
 
@@ -159,74 +159,74 @@ class ArtistRepositoryCacheTest {
         musicos = MockResponse().setBody("""[{"id": 2, "name": "Rubén Blades", "image": null}]""")
         bandas = MockResponse().setResponseCode(500)
 
-        assertTrue(repositorio.obtenerArtistas().exceptionOrNull() is ErrorDeCarga)
+        assertTrue(repositorio.getArtists().exceptionOrNull() is LoadError)
         assertEquals(guardado, dao.filas)
     }
 
-    // ---------- Detalle (HU04) ----------
+    // ---------- Detail (HU04) ----------
 
     private val queenJson = """
         {"id": 101, "name": "Queen", "image": "https://img/queen.jpg", "description": "Banda británica",
          "creationDate": "1970-01-01T00:00:00.000Z", "albums": [], "musicians": [], "performerPrizes": []}
     """.trimIndent()
 
-    private val queen = ArtistaDetalle(
+    private val queen = ArtistDetail(
         101, "Queen", "https://img/queen.jpg", "Banda británica", ArtistType.BANDA, "1970-01-01T00:00:00.000Z",
         emptyList(), emptyList(), emptyList()
     )
 
-    private fun guardado(detalle: ArtistaDetalle) = ArtistaDetalleEntity(
+    private fun guardado(detalle: ArtistDetail) = ArtistDetailEntity(
         detalle.tipo, detalle.id, detalle.nombre, detalle.imagen, detalle.descripcion, detalle.fecha,
         detalle.integrantes, detalle.albumes, detalle.premios
     )
 
     @Test
     fun abrirElDetalleConConexionLoGuarda() = runTest {
-        otrasRutas["/bands/101"] = MockResponse().setBody(queenJson)
+        otrasRoutes["/bands/101"] = MockResponse().setBody(queenJson)
 
-        assertEquals(queen, repositorio.obtenerDetalle(ArtistType.BANDA, 101).getOrThrow())
+        assertEquals(queen, repositorio.getDetail(ArtistType.BANDA, 101).getOrThrow())
         assertEquals(guardado(queen), dao.detalles[ArtistType.BANDA to 101])
     }
 
     @Test
-    fun obtenerDetalleGuardadoDistingueElTipo() = runTest {
+    fun getCachedDetailDistingueElTipo() = runTest {
         dao.detalles = mapOf((ArtistType.BANDA to 101) to guardado(queen))
 
-        assertEquals(queen, repositorio.obtenerDetalleGuardado(ArtistType.BANDA, 101))
-        assertNull(repositorio.obtenerDetalleGuardado(ArtistType.MUSICO, 101))
+        assertEquals(queen, repositorio.getCachedDetail(ArtistType.BANDA, 101))
+        assertNull(repositorio.getCachedDetail(ArtistType.MUSICO, 101))
     }
 
     @Test
-    fun un404BorraElDetalleGuardadoYSigueSiendoErrorDeCarga() = runTest {
+    fun un404BorraElDetalleGuardadoYSigueSiendoLoadError() = runTest {
         dao.detalles = mapOf((ArtistType.BANDA to 101) to guardado(queen))
-        otrasRutas["/bands/101"] = MockResponse().setResponseCode(404)
+        otrasRoutes["/bands/101"] = MockResponse().setResponseCode(404)
 
-        val error = repositorio.obtenerDetalle(ArtistType.BANDA, 101).exceptionOrNull()
+        val error = repositorio.getDetail(ArtistType.BANDA, 101).exceptionOrNull()
 
-        assertTrue(error is RecursoNoEncontrado)
-        assertTrue(error is ErrorDeCarga)
+        assertTrue(error is ResourceNotFound)
+        assertTrue(error is LoadError)
         assertTrue(dao.detalles.isEmpty())
     }
 
     @Test
     fun unFalloDeRedNoTocaElDetalleGuardado() = runTest {
         dao.detalles = mapOf((ArtistType.BANDA to 101) to guardado(queen))
-        otrasRutas["/bands/101"] = MockResponse().setResponseCode(500)
+        otrasRoutes["/bands/101"] = MockResponse().setResponseCode(500)
 
-        assertTrue(repositorio.obtenerDetalle(ArtistType.BANDA, 101).exceptionOrNull() is ErrorDeCarga)
+        assertTrue(repositorio.getDetail(ArtistType.BANDA, 101).exceptionOrNull() is LoadError)
         assertEquals(guardado(queen), dao.detalles[ArtistType.BANDA to 101])
     }
 
-    // ---------- Sin DAO y fallos del almacenamiento ----------
+    // ---------- Without DAO and storage failures ----------
 
     @Test
     fun sinDaoNoHayNadaGuardadoYSeConsultaComoAntes() = runTest {
         val sinCache = ArtistRepositoryImpl(ServiceAdapter(servidor.url("/").toString()))
-        otrasRutas["/bands/101"] = MockResponse().setBody(queenJson)
+        otrasRoutes["/bands/101"] = MockResponse().setBody(queenJson)
 
-        assertTrue(sinCache.obtenerArtistasGuardados().isEmpty())
-        assertNull(sinCache.obtenerDetalleGuardado(ArtistType.BANDA, 101))
-        assertEquals(queen, sinCache.obtenerDetalle(ArtistType.BANDA, 101).getOrThrow())
+        assertTrue(sinCache.getCachedArtists().isEmpty())
+        assertNull(sinCache.getCachedDetail(ArtistType.BANDA, 101))
+        assertEquals(queen, sinCache.getDetail(ArtistType.BANDA, 101).getOrThrow())
     }
 
     @Test
@@ -235,21 +235,21 @@ class ArtistRepositoryCacheTest {
         dao.detalles = mapOf((ArtistType.BANDA to 101) to guardado(queen))
         dao.fallaAlLeer = SQLiteException("disco no disponible")
 
-        assertTrue(repositorio.obtenerArtistasGuardados().isEmpty())
-        assertNull(repositorio.obtenerDetalleGuardado(ArtistType.BANDA, 101))
+        assertTrue(repositorio.getCachedArtists().isEmpty())
+        assertNull(repositorio.getCachedDetail(ArtistType.BANDA, 101))
     }
 
     @Test
     fun siNoSePuedeEscribirSeDevuelveIgualLaRespuestaDeRed() = runTest {
         dao.fallaAlEscribir = SQLiteException("disco lleno")
         bandas = MockResponse().setBody("""[{"id": 101, "name": "Queen", "image": null}]""")
-        otrasRutas["/bands/101"] = MockResponse().setBody(queenJson)
+        otrasRoutes["/bands/101"] = MockResponse().setBody(queenJson)
 
-        assertEquals(listOf(Artist(101, "Queen", null, ArtistType.BANDA)), repositorio.obtenerArtistas().getOrThrow())
-        assertEquals(queen, repositorio.obtenerDetalle(ArtistType.BANDA, 101).getOrThrow())
+        assertEquals(listOf(Artist(101, "Queen", null, ArtistType.BANDA)), repositorio.getArtists().getOrThrow())
+        assertEquals(queen, repositorio.getDetail(ArtistType.BANDA, 101).getOrThrow())
     }
 
-    // ---------- Escribir solo lo que cambió (optimizar-cache-e-imagenes, D4 y D5) ----------
+    // ---------- Write only what changed (optimizar-cache-e-imagenes, D4 and D5) ----------
 
     private fun conVersion(cuerpo: String, version: String? = null) =
         MockResponse().setBody(cuerpo).apply { if (version != null) setHeader("ETag", version) }
@@ -265,11 +265,11 @@ class ArtistRepositoryCacheTest {
     @Test
     fun elListadoConLasMismasVersionesNoSeEscribe() = runTest {
         responderListado(freddieJson, queenListadoJson, "W/\"m1\"", "W/\"b1\"")
-        repositorio.obtenerArtistas().getOrThrow()
+        repositorio.getArtists().getOrThrow()
         dao.operaciones.clear()
         responderListado(freddieJson, queenListadoJson, "W/\"m1\"", "W/\"b1\"")
 
-        assertEquals(2, repositorio.obtenerArtistas().getOrThrow().size)
+        assertEquals(2, repositorio.getArtists().getOrThrow().size)
 
         assertEquals(emptyList<String>(), dao.operaciones)
     }
@@ -277,11 +277,11 @@ class ArtistRepositoryCacheTest {
     @Test
     fun elListadoSinVersionDeUnaParteYConElMismoContenidoNoSeEscribe() = runTest {
         responderListado(freddieJson, queenListadoJson, "W/\"m1\"", null)
-        repositorio.obtenerArtistas().getOrThrow()
+        repositorio.getArtists().getOrThrow()
         dao.operaciones.clear()
         responderListado(freddieJson, queenListadoJson, "W/\"m1\"", null)
 
-        repositorio.obtenerArtistas().getOrThrow()
+        repositorio.getArtists().getOrThrow()
 
         assertEquals(emptyList<String>(), dao.operaciones)
     }
@@ -289,7 +289,7 @@ class ArtistRepositoryCacheTest {
     @Test
     fun unArtistaNuevoEscribeSoloSuFila() = runTest {
         responderListado(freddieJson, queenListadoJson, "W/\"m1\"", "W/\"b1\"")
-        repositorio.obtenerArtistas().getOrThrow()
+        repositorio.getArtists().getOrThrow()
         dao.operaciones.clear()
         responderListado(
             freddieJson,
@@ -298,7 +298,7 @@ class ArtistRepositoryCacheTest {
             "W/\"b2\""
         )
 
-        repositorio.obtenerArtistas().getOrThrow()
+        repositorio.getArtists().getOrThrow()
 
         assertEquals(listOf("guardarArtistas[8]"), dao.operaciones)
         assertEquals(3, dao.filas.size)
@@ -307,11 +307,11 @@ class ArtistRepositoryCacheTest {
     @Test
     fun unArtistaQueYaNoLlegaSeBorraSoloConSuTipo() = runTest {
         responderListado(freddieJson, queenListadoJson, "W/\"m1\"", "W/\"b1\"")
-        repositorio.obtenerArtistas().getOrThrow()
+        repositorio.getArtists().getOrThrow()
         dao.operaciones.clear()
         responderListado("[]", queenListadoJson, "W/\"m2\"", "W/\"b1\"")
 
-        repositorio.obtenerArtistas().getOrThrow()
+        repositorio.getArtists().getOrThrow()
 
         assertEquals(listOf("borrarArtistas[7]"), dao.operaciones)
         assertEquals(listOf(fila(ArtistType.BANDA, 7, "Queen")), dao.filas)
@@ -319,34 +319,34 @@ class ArtistRepositoryCacheTest {
 
     @Test
     fun elDetalleConLaMismaVersionNoSeEscribeDosVeces() = runTest {
-        otrasRutas["/bands/101"] = conVersion(queenJson, "W/\"q1\"")
-        repositorio.obtenerDetalle(ArtistType.BANDA, 101).getOrThrow()
-        otrasRutas["/bands/101"] = conVersion(queenJson, "W/\"q1\"")
+        otrasRoutes["/bands/101"] = conVersion(queenJson, "W/\"q1\"")
+        repositorio.getDetail(ArtistType.BANDA, 101).getOrThrow()
+        otrasRoutes["/bands/101"] = conVersion(queenJson, "W/\"q1\"")
 
-        repositorio.obtenerDetalle(ArtistType.BANDA, 101).getOrThrow()
+        repositorio.getDetail(ArtistType.BANDA, 101).getOrThrow()
 
         assertEquals(listOf("guardarDetalle[101]"), dao.operaciones)
     }
 
-    private val queenConPremioJson = """
+    private val queenConPrizeJson = """
         {"id": 101, "name": "Queen", "image": "https://img/queen.jpg", "description": "Banda británica",
          "creationDate": "1970-01-01T00:00:00.000Z", "albums": [], "musicians": [],
          "performerPrizes": [{"id": 100, "premiationDate": "1978-12-10T00:00:00.000Z"}]}
     """.trimIndent()
 
-    private fun premiaciones(nombrePremio: String) =
-        """[{"id": 100, "prize": {"name": "$nombrePremio", "organization": "Academia"}}]"""
+    private fun premiaciones(nombrePrize: String) =
+        """[{"id": 100, "prize": {"name": "$nombrePrize", "organization": "Academia"}}]"""
 
     @Test
     fun elDetalleSeGuardaSiSoloCambiaronLasPremiacionesDeEseArtista() = runTest {
-        otrasRutas["/bands/101"] = conVersion(queenConPremioJson, "W/\"q1\"")
-        otrasRutas["/performerprizes"] = conVersion(premiaciones("Grammy"), "W/\"p1\"")
-        repositorio.obtenerDetalle(ArtistType.BANDA, 101).getOrThrow()
+        otrasRoutes["/bands/101"] = conVersion(queenConPrizeJson, "W/\"q1\"")
+        otrasRoutes["/performerprizes"] = conVersion(premiaciones("Grammy"), "W/\"p1\"")
+        repositorio.getDetail(ArtistType.BANDA, 101).getOrThrow()
         dao.operaciones.clear()
-        otrasRutas["/bands/101"] = conVersion(queenConPremioJson, "W/\"q1\"")
-        otrasRutas["/performerprizes"] = conVersion(premiaciones("Grammy Award"), "W/\"p2\"")
+        otrasRoutes["/bands/101"] = conVersion(queenConPrizeJson, "W/\"q1\"")
+        otrasRoutes["/performerprizes"] = conVersion(premiaciones("Grammy Award"), "W/\"p2\"")
 
-        repositorio.obtenerDetalle(ArtistType.BANDA, 101).getOrThrow()
+        repositorio.getDetail(ArtistType.BANDA, 101).getOrThrow()
 
         assertEquals(listOf("guardarDetalle[101]"), dao.operaciones)
         assertEquals(listOf("Grammy Award"), dao.detalles[ArtistType.BANDA to 101]?.premios?.map { it.nombre })
@@ -354,32 +354,32 @@ class ArtistRepositoryCacheTest {
 
     @Test
     fun elDetalleNoSeGuardaSiCambioOtraPremiacionPeroNoLaDeEseArtista() = runTest {
-        otrasRutas["/bands/101"] = conVersion(queenConPremioJson, "W/\"q1\"")
-        otrasRutas["/performerprizes"] = conVersion(premiaciones("Grammy"), "W/\"p1\"")
-        repositorio.obtenerDetalle(ArtistType.BANDA, 101).getOrThrow()
+        otrasRoutes["/bands/101"] = conVersion(queenConPrizeJson, "W/\"q1\"")
+        otrasRoutes["/performerprizes"] = conVersion(premiaciones("Grammy"), "W/\"p1\"")
+        repositorio.getDetail(ArtistType.BANDA, 101).getOrThrow()
         dao.operaciones.clear()
-        otrasRutas["/bands/101"] = conVersion(queenConPremioJson, "W/\"q1\"")
-        otrasRutas["/performerprizes"] = conVersion(
+        otrasRoutes["/bands/101"] = conVersion(queenConPrizeJson, "W/\"q1\"")
+        otrasRoutes["/performerprizes"] = conVersion(
             """[{"id": 100, "prize": {"name": "Grammy", "organization": "Academia"}},
                 {"id": 200, "prize": {"name": "Otro premio", "organization": "Otra"}}]""",
             "W/\"p2\""
         )
 
-        repositorio.obtenerDetalle(ArtistType.BANDA, 101).getOrThrow()
+        repositorio.getDetail(ArtistType.BANDA, 101).getOrThrow()
 
         assertEquals(emptyList<String>(), dao.operaciones)
     }
 
     @Test
     fun trasUn404ElDetalleConLaVersionAnteriorVuelveAGuardarse() = runTest {
-        otrasRutas["/bands/101"] = conVersion(queenJson, "W/\"q1\"")
-        repositorio.obtenerDetalle(ArtistType.BANDA, 101).getOrThrow()
-        otrasRutas["/bands/101"] = MockResponse().setResponseCode(404)
-        repositorio.obtenerDetalle(ArtistType.BANDA, 101)
+        otrasRoutes["/bands/101"] = conVersion(queenJson, "W/\"q1\"")
+        repositorio.getDetail(ArtistType.BANDA, 101).getOrThrow()
+        otrasRoutes["/bands/101"] = MockResponse().setResponseCode(404)
+        repositorio.getDetail(ArtistType.BANDA, 101)
         dao.operaciones.clear()
-        otrasRutas["/bands/101"] = conVersion(queenJson, "W/\"q1\"")
+        otrasRoutes["/bands/101"] = conVersion(queenJson, "W/\"q1\"")
 
-        repositorio.obtenerDetalle(ArtistType.BANDA, 101).getOrThrow()
+        repositorio.getDetail(ArtistType.BANDA, 101).getOrThrow()
 
         assertEquals(listOf("guardarDetalle[101]"), dao.operaciones)
     }
@@ -387,15 +387,15 @@ class ArtistRepositoryCacheTest {
     @Test
     fun trasUnFalloAlGuardarElListadoSinCambiosSeVuelveAGuardar() = runTest {
         responderListado(freddieJson, queenListadoJson, "W/\"m1\"", "W/\"b1\"")
-        repositorio.obtenerArtistas().getOrThrow()
+        repositorio.getArtists().getOrThrow()
         dao.fallaAlEscribir = SQLiteException("disco lleno")
         responderListado("[]", queenListadoJson, "W/\"m2\"", "W/\"b1\"")
-        repositorio.obtenerArtistas().getOrThrow()
+        repositorio.getArtists().getOrThrow()
         dao.fallaAlEscribir = null
         dao.operaciones.clear()
         responderListado("[]", queenListadoJson, "W/\"m2\"", "W/\"b1\"")
 
-        repositorio.obtenerArtistas().getOrThrow()
+        repositorio.getArtists().getOrThrow()
 
         assertEquals("borrarTodos", dao.operaciones.first())
         assertEquals(listOf(fila(ArtistType.BANDA, 7, "Queen")), dao.filas)

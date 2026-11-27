@@ -6,10 +6,11 @@ import android.os.LocaleList
 import androidx.test.runner.AndroidJUnitRunner
 
 /**
- * Las pruebas instrumentadas buscan textos en español. Desde que la app también está en inglés
- * (internacionalizar-ingles, D7), en un emulador con el sistema en inglés la app saldría en inglés
- * y esas búsquedas fallarían. En Android 13 o superior se fija el idioma de la app en español antes
- * de abrir cualquier pantalla. En versiones anteriores la app sigue el idioma del dispositivo.
+ * The instrumented tests search for Spanish text. Since the app is now also available in English
+ * (internacionalizar-ingles, D7), on an emulator with the system set to English the app would
+ * launch in English and those searches would fail. On Android 13 or higher, the app's locale is
+ * forced to Spanish before opening any screen. On earlier versions the app still follows the
+ * device's locale.
  */
 class VinilosTestRunner : AndroidJUnitRunner() {
 

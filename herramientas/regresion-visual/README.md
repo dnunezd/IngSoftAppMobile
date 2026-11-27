@@ -31,12 +31,18 @@ Todas las versiones se corren seguidas, en el mismo dispositivo y contra el mism
 ```bash
 C1=IngresoE2ETest,CatalogoE2ETest,AlbumDetalleE2ETest,ArtistasE2ETest,navigation.AlbumDetalleBackendRealTest
 C2=$C1,ArtistaDetalleE2ETest,ArtistasFavoritosE2ETest,CrearAlbumE2ETest,ArtistasSinConexionE2ETest,CatalogoSinConexionE2ETest,ColeccionistasSinConexionE2ETest,DetalleAlbumSinConexionE2ETest,FavoritosSinConexionE2ETest
+# C1 y C2 son los nombres de clase de v1.1.0 y v2.2.0 (están en español en esas etiquetas y no cambian).
+# Desde develop las clases están en inglés: EntryE2ETest,CatalogE2ETest,AlbumDetailE2ETest,ArtistsE2ETest,
+# navigation.AlbumDetailBackendRealTest,ArtistDetailE2ETest,FavoriteArtistsE2ETest,CreateAlbumE2ETest,
+# ArtistasSinConexionE2ETest,CatalogoSinConexionE2ETest,ColeccionistasSinConexionE2ETest,
+# DetalleAlbumSinConexionE2ETest,FavoritosSinConexionE2ETest (usa esta lista, por ejemplo en $C3, al comparar contra develop).
+C3=EntryE2ETest,CatalogE2ETest,AlbumDetailE2ETest,ArtistsE2ETest,navigation.AlbumDetailBackendRealTest,ArtistDetailE2ETest,FavoriteArtistsE2ETest,CreateAlbumE2ETest,ArtistasSinConexionE2ETest,CatalogoSinConexionE2ETest,ColeccionistasSinConexionE2ETest,DetalleAlbumSinConexionE2ETest,FavoritosSinConexionE2ETest
 R=androidx.test.runner.AndroidJUnitRunner        # desde develop: com.example.vinilos.VinilosTestRunner
 
 # Dos corridas por versión (a y b) para medir el ruido
 python correr_e2e.py <serial> v1.1.0-app.apk v1.1.0-test.apk $R e2e/v1.1.0-a $C1
 python correr_e2e.py <serial> v2.2.0-app.apk v2.2.0-test.apk $R e2e/v2.2.0-a $C2
-# ...y las corridas b, y develop con su runner
+# ...y las corridas b, y develop con su runner y $C3
 
 # Ruido: cada versión consigo misma
 python comparar_e2e.py e2e/v1.1.0-a e2e/v1.1.0-b cmp/ruido-v1.1.0 v1.1.0 "v1.1.0 (2.ª)"

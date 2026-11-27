@@ -7,18 +7,18 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
 /**
- * Base local de la app: caché de solo lectura de las consultas al backend. Versión 1, el catálogo
- * (add-cache-catalogo); versión 2, coleccionistas, detalle de álbum, artistas y favoritos
+ * App's local database: a read-only cache of backend queries. Version 1, the catalog
+ * (add-cache-catalogo); version 2, collectors, album detail, artists and favorites
  * (add-cache-consultas).
  */
 @Database(
     entities = [
         AlbumEntity::class,
-        AlbumDetalleEntity::class,
-        ColeccionistaEntity::class,
-        ArtistaEntity::class,
-        ArtistaDetalleEntity::class,
-        FavoritoEntity::class
+        AlbumDetailEntity::class,
+        CollectorEntity::class,
+        ArtistEntity::class,
+        ArtistDetailEntity::class,
+        FavoriteEntity::class
     ],
     version = 3,
     exportSchema = true
@@ -27,19 +27,19 @@ import androidx.room.TypeConverters
 abstract class VinilosDb : RoomDatabase() {
 
     abstract fun albumDao(): AlbumDao
-    abstract fun coleccionistaDao(): ColeccionistaDao
-    abstract fun artistaDao(): ArtistaDao
-    abstract fun favoritoDao(): FavoritoDao
+    abstract fun coleccionistaDao(): CollectorDao
+    abstract fun artistaDao(): ArtistDao
+    abstract fun favoritoDao(): FavoriteDao
 
     companion object {
         private const val NOMBRE = "vinilos.db"
 
         /**
-         * La base es una caché que la siguiente consulta vuelve a llenar, así que un cambio de esquema
-         * la borra en lugar de migrar datos (add-cache-catalogo D6, add-cache-consultas D1). La versión 3 guarda
- * las fechas del artista en ISO en lugar de en español (internacionalizar-ingles).
+         * The database is a cache that the next query fills again, so a schema change wipes it
+         * instead of migrating data (add-cache-catalogo D6, add-cache-consultas D1). Version 3 stores
+ * the artist's dates in ISO instead of in Spanish (internacionalizar-ingles).
          */
-        fun crear(context: Context): VinilosDb =
+        fun create(context: Context): VinilosDb =
             Room.databaseBuilder(context, VinilosDb::class.java, NOMBRE)
                 .fallbackToDestructiveMigration(dropAllTables = false)
                 .build()

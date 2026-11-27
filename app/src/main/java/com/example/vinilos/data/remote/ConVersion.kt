@@ -5,16 +5,16 @@ import retrofit2.HttpException
 import retrofit2.Response
 
 /**
- * Cuerpo de una respuesta exitosa junto con su versión, la cabecera `ETag` que asigna el backend. Con ella,
- * los repositorios saben si la respuesta cambió respecto de lo último que guardaron (optimizar-cache-e-imagenes,
- * D3). Una respuesta 304 que entrega la caché HTTP trae la misma `ETag`.
+ * Body of a successful response along with its version, the `ETag` header assigned by the backend. With it,
+ * the repositories know whether the response changed relative to the last one they stored (optimizar-cache-e-imagenes,
+ * D3). A 304 response delivered by the HTTP cache carries the same `ETag`.
  */
 data class ConVersion<out T>(val valor: T, val version: String?)
 
 /**
- * Para usar dentro de [ServiceAdapter.llamar]: una respuesta no exitosa se lanza como [HttpException] y una sin
- * cuerpo como [JsonParseException]. Así `llamar` las traduce igual que cuando la interfaz devuelve el cuerpo
- * directo (un 404 sigue siendo [RecursoNoEncontrado]).
+ * For use inside [ServiceAdapter.llamar]: an unsuccessful response is thrown as [HttpException] and one without
+ * a body as [JsonParseException]. That way `llamar` translates them the same way it does when the interface returns the
+ * body directly (a 404 is still [RecursoNoEncontrado]).
  */
 fun <T> Response<T>.conVersion(): ConVersion<T> {
     if (!isSuccessful) throw HttpException(this)

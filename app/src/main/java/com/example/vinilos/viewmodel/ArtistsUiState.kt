@@ -4,15 +4,15 @@ import com.example.vinilos.data.model.Artist
 
 sealed interface ArtistsUiState {
 
-    data object Cargando : ArtistsUiState
+    data object Loading : ArtistsUiState
 
     /**
-     * [artistas] es el listado completo ya ordenado; [visibles] es el que resulta de aplicar la
-     * búsqueda [consulta] por nombre (sin distinguir mayúsculas ni tildes).
-     * [actualizando]: se muestra el listado guardado mientras se consulta el backend.
-     * [errorAlActualizar]: esa consulta falló y la pantalla debe avisarlo una vez (add-cache-consultas, D5).
+     * [artistas] is the full list, already sorted; [visibles] is the result of applying the
+     * [consulta] search by name (case- and accent-insensitive).
+     * [actualizando]: the cached list is shown while the backend is queried.
+     * [errorAlActualizar]: that query failed and the screen must report it once (add-cache-consultas, D5).
      */
-    data class Exito(
+    data class Success(
         val artistas: List<Artist>,
         val consulta: String = "",
         val actualizando: Boolean = false,
@@ -21,7 +21,7 @@ sealed interface ArtistsUiState {
         val visibles: List<Artist> = filtrar(artistas, consulta)
     }
 
-    data object Vacio : ArtistsUiState
+    data object Empty : ArtistsUiState
 
     data object Error : ArtistsUiState
 }

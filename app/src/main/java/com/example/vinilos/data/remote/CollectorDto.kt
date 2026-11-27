@@ -1,8 +1,8 @@
 package com.example.vinilos.data.remote
 
 /**
- * Solo los campos de `CollectorDetail` que usa la app. Gson ignora el resto (comments,
- * favoritePerformers, collectorAlbums, telephone) y deja en null los que falten.
+ * Only the fields of `CollectorDetail` used by the app. Gson ignores the rest (comments,
+ * favoritePerformers, collectorAlbums, telephone) and leaves missing ones as null.
  */
 data class CollectorDto(
     val id: Int?,

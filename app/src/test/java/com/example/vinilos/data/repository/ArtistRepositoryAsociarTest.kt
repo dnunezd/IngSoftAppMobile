@@ -1,7 +1,7 @@
 package com.example.vinilos.data.repository
 
 import com.example.vinilos.data.model.ArtistType
-import com.example.vinilos.data.remote.ErrorDeCarga
+import com.example.vinilos.data.remote.LoadError
 import com.example.vinilos.data.remote.ServiceAdapter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancelAndJoin
@@ -21,8 +21,8 @@ import org.junit.Test
 import java.util.concurrent.TimeUnit
 
 /**
- * Asociar un álbum a un artista (HU15, add-agregar-album-artista D1). Los cuerpos de respuesta imitan los
- * de BackVynils verificados el 2026-11-19: el `POST` de músico devuelve el álbum y el `PUT` de banda la banda.
+ * Associate an album with an artist (HU15, add-agregar-album-artista D1). The response bodies mimic those
+ * from BackVynils verified on 2026-11-19: the musician's `POST` returns the album and the band's `PUT` returns the band.
  */
 class ArtistRepositoryAsociarTest {
 
@@ -67,52 +67,52 @@ class ArtistRepositoryAsociarTest {
 
     private fun cuerpoDelPut() = synchronized(peticiones) { peticiones.single { it.method == "PUT" }.body.readUtf8() }
 
-    // ---------- Músico ----------
+    // ---------- Musician ----------
 
     @Test
     fun aUnMusicoLoAsociaConElPostDelMusico() = runTest {
         respuestas["POST /musicians/100/albums/102"] = MockResponse().setBody("""{"id": 102, "name": "A Night at the Opera"}""")
 
-        val resultado = repositorio.asociarAlbum(ArtistType.MUSICO, 100, 102)
+        val resultado = repositorio.associateAlbum(ArtistType.MUSICO, 100, 102)
 
         assertTrue(resultado.isSuccess)
         assertEquals(listOf("POST /musicians/100/albums/102"), rutas())
     }
 
     @Test
-    fun unErrorDelServidorAlAsociarAUnMusicoEsErrorDeCarga() = runTest {
+    fun unErrorDelServidorAlAsociarAUnMusicoEsLoadError() = runTest {
         respuestas["POST /musicians/100/albums/102"] = MockResponse().setResponseCode(500)
 
-        val error = repositorio.asociarAlbum(ArtistType.MUSICO, 100, 102).exceptionOrNull()
+        val error = repositorio.associateAlbum(ArtistType.MUSICO, 100, 102).exceptionOrNull()
 
-        assertTrue("Fue $error", error is ErrorDeCarga)
+        assertTrue("Fue $error", error is LoadError)
     }
 
     @Test
-    fun unMusicoOAlbumInexistenteEsErrorDeCarga() = runTest {
-        // Sin respuesta configurada, el servidor falso responde 404, como BackVynils.
-        val error = repositorio.asociarAlbum(ArtistType.MUSICO, 999, 102).exceptionOrNull()
+    fun unMusicoOAlbumInexistenteEsLoadError() = runTest {
+        // Without a configured response, the fake server responds with 404, like BackVynils.
+        val error = repositorio.associateAlbum(ArtistType.MUSICO, 999, 102).exceptionOrNull()
 
-        assertTrue("Fue $error", error is ErrorDeCarga)
+        assertTrue("Fue $error", error is LoadError)
     }
 
     @Test
-    fun sinConexionAlAsociarEsErrorDeCarga() = runTest {
+    fun sinConexionAlAsociarEsLoadError() = runTest {
         respuestas["POST /musicians/100/albums/102"] = MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AFTER_REQUEST)
 
-        val error = repositorio.asociarAlbum(ArtistType.MUSICO, 100, 102).exceptionOrNull()
+        val error = repositorio.associateAlbum(ArtistType.MUSICO, 100, 102).exceptionOrNull()
 
-        assertTrue("Fue $error", error is ErrorDeCarga)
+        assertTrue("Fue $error", error is LoadError)
     }
 
-    // ---------- Banda ----------
+    // ---------- Band ----------
 
     @Test
     fun aUnaBandaLaAsociaConSusAlbumesActualesMasElNuevo() = runTest {
         respuestas["GET /bands/101"] = MockResponse().setBody(queenConDosAlbumes)
         respuestas["PUT /bands/101/albums"] = MockResponse().setBody(queenConDosAlbumes)
 
-        val resultado = repositorio.asociarAlbum(ArtistType.BANDA, 101, 100)
+        val resultado = repositorio.associateAlbum(ArtistType.BANDA, 101, 100)
 
         assertTrue(resultado.isSuccess)
         assertEquals(listOf("GET /bands/101", "PUT /bands/101/albums"), rutas())
@@ -124,7 +124,7 @@ class ArtistRepositoryAsociarTest {
         respuestas["GET /bands/101"] = MockResponse().setBody(queenConDosAlbumes)
         respuestas["PUT /bands/101/albums"] = MockResponse().setBody(queenConDosAlbumes)
 
-        repositorio.asociarAlbum(ArtistType.BANDA, 101, 100)
+        repositorio.associateAlbum(ArtistType.BANDA, 101, 100)
 
         assertTrue(rutas().none { it.startsWith("POST") })
     }
@@ -134,7 +134,7 @@ class ArtistRepositoryAsociarTest {
         respuestas["GET /bands/101"] = MockResponse().setBody(queenConDosAlbumes)
         respuestas["PUT /bands/101/albums"] = MockResponse().setBody(queenConDosAlbumes)
 
-        assertTrue(repositorio.asociarAlbum(ArtistType.BANDA, 101, 103).isSuccess)
+        assertTrue(repositorio.associateAlbum(ArtistType.BANDA, 101, 103).isSuccess)
 
         assertEquals("""[{"id":102},{"id":103}]""", cuerpoDelPut())
     }
@@ -144,7 +144,7 @@ class ArtistRepositoryAsociarTest {
         respuestas["GET /bands/101"] = MockResponse().setBody("""{"id": 101, "name": "Queen", "albums": []}""")
         respuestas["PUT /bands/101/albums"] = MockResponse().setBody("""{"id": 101, "name": "Queen", "albums": []}""")
 
-        assertTrue(repositorio.asociarAlbum(ArtistType.BANDA, 101, 100).isSuccess)
+        assertTrue(repositorio.associateAlbum(ArtistType.BANDA, 101, 100).isSuccess)
 
         assertEquals("""[{"id":100}]""", cuerpoDelPut())
     }
@@ -153,20 +153,20 @@ class ArtistRepositoryAsociarTest {
     fun siNoPuedeLeerLosAlbumesDeLaBandaNoEnviaElPut() = runTest {
         respuestas["GET /bands/101"] = MockResponse().setResponseCode(500)
 
-        val error = repositorio.asociarAlbum(ArtistType.BANDA, 101, 100).exceptionOrNull()
+        val error = repositorio.associateAlbum(ArtistType.BANDA, 101, 100).exceptionOrNull()
 
-        assertTrue("Fue $error", error is ErrorDeCarga)
+        assertTrue("Fue $error", error is LoadError)
         assertEquals(listOf("GET /bands/101"), rutas())
     }
 
     @Test
     fun siLaBandaLlegaSinListaDeAlbumesNoEnviaElPut() = runTest {
-        // Sin "albums" no se sabe qué tiene la banda: un PUT solo con el nuevo le borraría los demás.
+        // Without "albums" there's no way to know what the band has: a PUT with only the new one would erase the rest.
         respuestas["GET /bands/101"] = MockResponse().setBody("""{"id": 101, "name": "Queen"}""")
 
-        val error = repositorio.asociarAlbum(ArtistType.BANDA, 101, 100).exceptionOrNull()
+        val error = repositorio.associateAlbum(ArtistType.BANDA, 101, 100).exceptionOrNull()
 
-        assertTrue("Fue $error", error is ErrorDeCarga)
+        assertTrue("Fue $error", error is LoadError)
         assertEquals(listOf("GET /bands/101"), rutas())
     }
 
@@ -176,30 +176,30 @@ class ArtistRepositoryAsociarTest {
             """{"id": 101, "name": "Queen", "albums": [{"name": "Sin id"}, {"id": 103, "name": "A Day at the Races"}]}"""
         )
 
-        val error = repositorio.asociarAlbum(ArtistType.BANDA, 101, 100).exceptionOrNull()
+        val error = repositorio.associateAlbum(ArtistType.BANDA, 101, 100).exceptionOrNull()
 
-        assertTrue("Fue $error", error is ErrorDeCarga)
+        assertTrue("Fue $error", error is LoadError)
         assertEquals(listOf("GET /bands/101"), rutas())
     }
 
     @Test
-    fun unErrorDelPutDeBandaEsErrorDeCarga() = runTest {
+    fun unErrorDelPutDeBandaEsLoadError() = runTest {
         respuestas["GET /bands/101"] = MockResponse().setBody(queenConDosAlbumes)
         respuestas["PUT /bands/101/albums"] = MockResponse().setResponseCode(500)
 
-        val error = repositorio.asociarAlbum(ArtistType.BANDA, 101, 100).exceptionOrNull()
+        val error = repositorio.associateAlbum(ArtistType.BANDA, 101, 100).exceptionOrNull()
 
-        assertTrue("Fue $error", error is ErrorDeCarga)
+        assertTrue("Fue $error", error is LoadError)
     }
 
-    // ---------- Cancelación ----------
+    // ---------- Cancellation ----------
 
     @Test
-    fun laCancelacionSePropagaSinConvertirseEnErrorDeCarga() = runTest {
+    fun laCancelacionSePropagaSinConvertirseEnLoadError() = runTest {
         respuestas["POST /musicians/100/albums/102"] = MockResponse().setHeadersDelay(5, TimeUnit.SECONDS)
         var resultado: Result<Unit>? = null
 
-        val tarea = launch(Dispatchers.IO) { resultado = repositorio.asociarAlbum(ArtistType.MUSICO, 100, 102) }
+        val tarea = launch(Dispatchers.IO) { resultado = repositorio.associateAlbum(ArtistType.MUSICO, 100, 102) }
         servidor.takeRequest(2, TimeUnit.SECONDS)
         tarea.cancelAndJoin()
 
