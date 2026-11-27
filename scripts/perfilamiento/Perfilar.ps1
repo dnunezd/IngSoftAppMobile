@@ -1,6 +1,7 @@
 ﻿<#
 .SYNOPSIS
-  Automatiza la guía manual de perfilamiento de Vinilos (docs/performance/guia-manual.md).
+  Automatiza la guía manual de perfilamiento de Vinilos (docs/performance/guia-manual.md), que sigue el
+  plan de pruebas de rendimiento del Sprint 3: HU01, HU02, HU03, HU04, HU07, HU08, HU09, HU10 y HU15.
 
 .DESCRIPTION
   -Accion Validar   Revisa el dispositivo, el backend, los APK y Android Studio. No cambia nada.
@@ -8,9 +9,11 @@
                     instala y deja listo adb reverse.
   -Accion Ejecutar  Por cada HU hace las dos grabaciones de la guía, cada una con la app reiniciada sin
                     datos: 1) Live Telemetry y Network Inspector; 2) Java/Kotlin Allocations. Maneja la
-                    app con los pasos de la guía (una acción y 5 s), anota el segundo de la grabación en
+                    app con los pasos del plan (una acción y su espera de 5, 3 o 2 s), anota el segundo de la grabación en
                     que ocurre cada paso y se detiene con instrucciones cuando hay que hacer algo en el
-                    Profiler: iniciar y detener las tareas y exportar lo grabado.
+                    Profiler: iniciar y detener las tareas y exportar lo grabado. Antes y después de cada
+                    grabación deja los datos de prueba del BackVynils local como estaban (favoritos,
+                    álbumes, canciones, comentarios y asociaciones que crean los recorridos).
 
   -Version elige qué código se perfila: un tag o commit (p. ej. v2.1.0) o, sin ella, la rama actual.
   Para un tag, Preparar lo saca en build\perfilamiento\fuente-<versión> y, si le faltan, le aplica los
@@ -67,9 +70,9 @@ param(
     # Carpeta del repositorio BackVynils (donde está su docker-compose.yml).
     [string]$RutaBackend,
 
-    # HU a perfilar, en orden (hu01, hu02, hu03, hu04, hu07, hu10). Por defecto, las seis de la guía.
-    # Se validan más abajo: con pwsh -File la lista "hu01,hu02" llega como un solo texto.
-    [string[]]$Escenarios = @('hu01', 'hu02', 'hu03', 'hu04', 'hu07', 'hu10'),
+    # HU a perfilar, en orden (hu01, hu02, hu03, hu04, hu07, hu08, hu09, hu10, hu15). Por defecto, las
+    # nueve del plan. Se validan más abajo: con pwsh -File la lista "hu01,hu02" llega como un solo texto.
+    [string[]]$Escenarios = @('hu01', 'hu02', 'hu03', 'hu04', 'hu07', 'hu08', 'hu09', 'hu10', 'hu15'),
 
     # Grabaciones de cada HU: telemetria = 1 (Live Telemetry + Network Inspector);
     # asignaciones = 2 (Java/Kotlin Allocations).
@@ -91,7 +94,7 @@ function Separar-Lista([string[]]$Valores, [string[]]$Permitidos, [string]$Nombr
     if ($invalidos.Count) { throw "-$Nombre no admite: $($invalidos -join ', '). Valores posibles: $($Permitidos -join ', ')." }
     $lista
 }
-$Escenarios = Separar-Lista $Escenarios @('hu01', 'hu02', 'hu03', 'hu04', 'hu07', 'hu10') 'Escenarios'
+$Escenarios = Separar-Lista $Escenarios @('hu01', 'hu02', 'hu03', 'hu04', 'hu07', 'hu08', 'hu09', 'hu10', 'hu15') 'Escenarios'
 $Grabaciones = Separar-Lista $Grabaciones @('telemetria', 'asignaciones') 'Grabaciones'
 
 # La salida de adb llega en UTF-8: sin esto, una consola con otra página de códigos la lee mal
@@ -475,16 +478,41 @@ function Reiniciar-EnFrio {
     # El comando de la guía: detener, borrar los datos (caché fría) y abrir en el ingreso.
     Adb shell am force-stop $Paquete | Out-Null
     Adb shell pm clear $Paquete | Out-Null
+    # Los recorridos buscan textos en español ("Agregar Favorito", "Aceptar"). Desde API 33 se fija el
+    # idioma de la app aunque el teléfono esté en otro; pm clear lo borra, así que va después.
+    if ([int](Adb shell getprop ro.build.version.sdk) -ge 33) { Adb shell cmd locale set-app-locales $Paquete --locales es-419 | Out-Null }
     Adb shell am start -n "$Paquete/com.example.vinilos.MainActivity" | Out-Null
     Start-Sleep -Seconds 3
 }
 
 function Correr-Recorrido([string]$Metodo, [int]$Numero) {
-    $salida = Adb shell am instrument -w -r -e grabacion $Numero -e class "$PaqueteRecorridos.Recorridos#$Metodo" "$PaqueteRecorridos/androidx.test.runner.AndroidJUnitRunner"
+    # El recorrido corre dentro del teléfono y deja su salida en un archivo. Por Wi-Fi, un
+    # "adb shell am instrument" esperado desde el computador a veces no recibe la línea final y se
+    # queda colgado aunque el recorrido ya terminó; así, el script lee el archivo hasta ver el final.
+    $archivo = "/data/local/tmp/recorrido-$Metodo.txt"
+    Adb shell "rm -f $archivo" | Out-Null
+    $instrumento = "am instrument -w -r -e grabacion $Numero -e class $PaqueteRecorridos.Recorridos#$Metodo $PaqueteRecorridos/androidx.test.runner.AndroidJUnitRunner"
+    Adb shell "nohup $instrumento > $archivo 2>&1 &" | Out-Null
+    $limite = [Diagnostics.Stopwatch]::StartNew()
+    $salida = ''
+    while ($limite.Elapsed.TotalMinutes -lt 6) {
+        Start-Sleep -Seconds 2
+        # Un microcorte del Wi-Fi puede quitar el adb reverse: se vuelve a poner en cada vuelta.
+        Adb reverse tcp:3000 tcp:3000 | Out-Null
+        $salida = Adb shell "cat $archivo"
+        if ($salida -match 'INSTRUMENTATION_CODE:') { break }
+        # El runner a veces no escribe su cierre (INSTRUMENTATION_CODE) aunque la prueba ya terminó:
+        # basta el estado final de la prueba (0 = pasó; -1, -2 o -4 = falló o se omitió).
+        if ($salida -match "test=$Metodo\s+INSTRUMENTATION_STATUS_CODE: (0|-1|-2|-3|-4)\s*$") { break }
+    }
+    $terminado = $salida -match 'INSTRUMENTATION_CODE:' -or $salida -match "test=$Metodo\s+INSTRUMENTATION_STATUS_CODE: (0|-1|-2|-3|-4)\s*$"
+    # Si el runner quedó vivo sin cerrar, se detiene para que no ocupe el teléfono en la siguiente grabación.
+    Adb shell "am force-stop $PaqueteRecorridos" | Out-Null
+    if (-not $terminado) { $salida += "`nError: el recorrido no terminó en 6 minutos." }
     $pasos = @([regex]::Matches($salida, 'INSTRUMENTATION_STATUS: paso=(\d+)\|(\d+)\|([^\r\n]*)') | ForEach-Object {
             [pscustomobject]@{ Numero = [int]$_.Groups[1].Value; Milis = [long]$_.Groups[2].Value; Accion = $_.Groups[3].Value }
         })
-    $exito = $salida -match 'OK \(1 test\)'
+    $exito = $salida -match 'OK \(1 test\)' -or $salida -match "test=$Metodo\s+INSTRUMENTATION_STATUS_CODE: 0\s*$"
     if (-not $exito) {
         # Solo el comienzo del error: el resto es la misma traza repetida.
         $detalle = ($salida -split "`n" | Where-Object { $_ -match 'stack=|Exception|Error|at com\.example' } | Select-Object -First 8) -join "`n"
@@ -493,20 +521,60 @@ function Correr-Recorrido([string]$Metodo, [int]$Numero) {
     [pscustomobject]@{ Exito = $exito; Pasos = $pasos }
 }
 
-function Quitar-Favoritos {
-    # HU10 necesita que Queen no sea favorito de Manolo Bellon (100). La app no deja quitarlos y la API
-    # tampoco: DELETE /collectors/{id}/bands/{id} responde 204 sin borrar (deleteCollectorPerformer
-    # filtra la lista pero no guarda el resultado). Se quitan en la base del BackVynils local.
+function Psql([string]$Sentencia) {
+    # Ejecuta SQL en la base del BackVynils local (contenedor db). Para lo que la API no deja deshacer.
     $archivo = Join-Path $RutaBackend 'docker-compose.yml'
     $anterior = $ErrorActionPreference
     $ErrorActionPreference = 'Continue'
     try {
         $contenedor = (& docker compose -f $archivo ps -q db 2>$null | Select-Object -First 1)
         if (-not $contenedor) { throw "No encuentro el contenedor db de BackVynils ($archivo)." }
-        & docker exec $contenedor psql -U postgres -d vinyls -q -c 'DELETE FROM performer_collectors_collector WHERE "collectorId" = 100;' 2>&1 | Out-Null
+        & docker exec $contenedor psql -U postgres -d vinyls -q -c $Sentencia 2>&1 | Out-Null
     } finally { $ErrorActionPreference = $anterior }
+}
+
+function Quitar-Favoritos {
+    # HU10 necesita que Queen no sea favorito de Manolo Bellon (100). La app no deja quitarlos y la API
+    # tampoco: DELETE /collectors/{id}/bands/{id} responde 204 sin borrar (deleteCollectorPerformer
+    # filtra la lista pero no guarda el resultado). Se quitan en la base del BackVynils local.
+    Psql 'DELETE FROM performer_collectors_collector WHERE "collectorId" = 100;'
     $favoritos = Invoke-RestMethod "$UrlBackend/collectors/100/performers"
     if (@($favoritos | Where-Object { $_.id -eq 101 }).Count) { throw 'Queen sigue como favorito del coleccionista 100: no se pudo quitar.' }
+}
+
+function Borrar-CancionesDePrueba {
+    # HU08 agrega a Poeta del pueblo (101) la canción "Perf 1" o "Perf 2". Se borra antes y después de
+    # cada grabación para que todas vean el mismo álbum (la API no tiene DELETE de canciones).
+    Psql 'DELETE FROM track WHERE "albumId" = 101 AND name LIKE ''Perf %'';'
+    $album = Invoke-RestMethod "$UrlBackend/albums/101"
+    if (@($album.tracks | Where-Object { $_.name -like 'Perf *' }).Count) { throw 'Poeta del pueblo sigue con canciones "Perf": no se pudieron borrar.' }
+}
+
+function Borrar-ComentariosDePrueba {
+    # HU09 comenta Poeta del pueblo (101) con un texto que empieza por "Perf ". Se borra antes y después
+    # de cada grabación para no publicar comentarios repetidos.
+    Psql 'DELETE FROM comment WHERE "albumId" = 101 AND description LIKE ''Perf %'';'
+    $album = Invoke-RestMethod "$UrlBackend/albums/101"
+    if (@($album.comments | Where-Object { $_.description -like 'Perf *' }).Count) { throw 'Poeta del pueblo sigue con comentarios "Perf": no se pudieron borrar.' }
+}
+
+function Quitar-AsociacionDePrueba {
+    # HU15 asocia A Night at the Opera (102) a Rubén Blades (100). Se quita antes y después de cada
+    # grabación para que el álbum siga disponible (la API no tiene DELETE de esa asociación).
+    Psql 'DELETE FROM performer_albums_album WHERE "performerId" = 100 AND "albumId" = 102;'
+    $musico = Invoke-RestMethod "$UrlBackend/musicians/100"
+    if (@($musico.albums | Where-Object { $_.id -eq 102 }).Count) { throw 'A Night at the Opera sigue asociado a Rubén Blades: no se pudo quitar.' }
+}
+
+function Restaurar-Datos([string]$Id) {
+    # Deja los datos de prueba como los espera el recorrido de la HU (antes) o como estaban (después).
+    switch ($Id) {
+        'hu07' { Borrar-AlbumesDePrueba; Escribir-Resultado 'OK' 'Álbumes "Perf" borrados por la API.' }
+        'hu08' { Borrar-CancionesDePrueba; Escribir-Resultado 'OK' 'Canciones "Perf" de Poeta del pueblo borradas en la base local.' }
+        'hu09' { Borrar-ComentariosDePrueba; Escribir-Resultado 'OK' 'Comentarios "Perf" de Poeta del pueblo borrados en la base local.' }
+        'hu10' { Quitar-Favoritos; Escribir-Resultado 'OK' 'Favoritos del coleccionista 100 quitados en la base local.' }
+        'hu15' { Quitar-AsociacionDePrueba; Escribir-Resultado 'OK' 'A Night at the Opera sin asociar a Rubén Blades en la base local.' }
+    }
 }
 
 function Borrar-AlbumesDePrueba {
@@ -549,10 +617,25 @@ $Definiciones = [ordered]@{
             'Red: `GET /collectors` al entrar y `POST /albums` (tamaño, código de respuesta y duración); después, el refresco del catálogo.',
             'CPU: al abrir el formulario, al cargar la vista previa de la portada y al enviar.',
             'Asignaciones: lo que se crea mientras se escribe en el formulario, y las clases `AlbumNuevo` y `OpcionesAlbum`.') }
+    hu08 = @{ Carpeta = 'HU08'; Titulo = 'HU08 · Asociar tracks con un álbum'; Revisar = @(
+            'Red: `POST /albums/101/tracks` (tamaño, código de respuesta y duración) y la consulta del detalle al volver.',
+            'CPU: al abrir el formulario, al escribir y validar los campos, y durante el envío (hilo principal).',
+            'Memoria: inicial, durante el diligenciamiento y al terminar.',
+            'Asignaciones: el estado del formulario (`AddTrackUiState`) y la actualización del detalle del álbum.') }
+    hu09 = @{ Carpeta = 'HU09'; Titulo = 'HU09 · Comentar un álbum'; Revisar = @(
+            'Red: `POST /albums/101/comments` (tamaño, código de respuesta y duración) y la consulta del detalle al volver.',
+            'CPU: al elegir la calificación, al escribir la opinión y durante la publicación (hilo principal).',
+            'Memoria: del formulario y del texto, y al volver al detalle.',
+            'Asignaciones: el estado de la pantalla de comentar (`AddCommentUiState`) con cada letra.') }
     hu10 = @{ Carpeta = 'HU10'; Titulo = 'HU10 · Agregar artistas a favoritos'; Revisar = @(
             'Red: `GET /collectors/100/performers`, `POST /collectors/100/bands/101`, y si al reabrir vuelve a consultar.',
             'CPU y memoria: en el cambio de estado del botón.',
             'Asignaciones: las clases de favorito y de coleccionista.') }
+    hu15 = @{ Carpeta = 'HU15'; Titulo = 'HU15 · Asociar un álbum a un artista'; Revisar = @(
+            'Red: `GET /albums` al abrir la ventana, la asociación del álbum 102 con el músico 100 y la consulta del artista después.',
+            'CPU: durante la búsqueda (cada letra) y la asociación (hilo principal).',
+            'Memoria: de la ventana y sus resultados (portadas).',
+            'Asignaciones: lo que se crea con cada cambio de la búsqueda y al actualizar la discografía.') }
 }
 
 $ArchivosPorHu = @('connections.json', 'connections.png', 'live-telemetry.asdb', 'live-telemetry.png', 'track-memory.asdb', 'track-memory.png')
@@ -609,7 +692,7 @@ function Escribir-Analisis($Definicion, [string]$Archivo, [int]$Numero, [string[
             '',
             "- **Dispositivo:** $($Contexto.Dispositivo)",
             "- **App:** $Paquete $($Contexto.Version) (depurable), fase $Fase, perfilada por $Propietario",
-            "- **Pasos:** los de docs/performance/guia-manual.md: $Pausa s de reposo en el ingreso y luego una acción y $Pausa s; la app se reinicia sin datos antes de cada grabación.",
+            "- **Pasos:** los del plan de pruebas de rendimiento (docs/performance/guia-manual.md): $Pausa s de reposo en el ingreso y luego cada acción con su espera (5, 3 o 2 s; hasta 10 s en los envíos); la app se reinicia sin datos antes de cada grabación.",
             '',
             '## Grabación 1 · Live Telemetry y Network Inspector',
             '',
@@ -663,7 +746,7 @@ function Escribir-Analisis($Definicion, [string]$Archivo, [int]$Numero, [string[
 function Grabar($Definicion, [string]$Id, [string]$Carpeta, [string]$Analisis, [string]$Grabacion, $Contexto) {
     $numero = if ($Grabacion -eq 'telemetria') { 1 } else { 2 }
     Escribir-Titulo "$($Definicion.Titulo) · grabación $numero de 2"
-    if ($Id -eq 'hu10') { Quitar-Favoritos; Escribir-Resultado 'OK' 'Favoritos del coleccionista 100 quitados en la base local.' }
+    Restaurar-Datos $Id
     Reiniciar-EnFrio
     Escribir-Resultado 'OK' 'App reiniciada sin datos, en el ingreso. NO toques el teléfono.'
 
@@ -753,7 +836,7 @@ function Grabar($Definicion, [string]$Id, [string]$Carpeta, [string]$Analisis, [
             ) (Join-Path $Carpeta 'track-memory.asdb')
         }
     }
-    if ($Id -eq 'hu07') { Borrar-AlbumesDePrueba; Escribir-Resultado 'OK' 'Álbumes "Perf" borrados por la API.' }
+    Restaurar-Datos $Id
 
     $archivos = if ($numero -eq 1) { '`live-telemetry.png`, `live-telemetry.asdb`, `connections.png`, `connections.json`' } else { '`track-memory.png`, `track-memory.asdb`' }
     $origen = if ($ancla) { 'segundos del cronómetro "Recording" de Studio (±2 s)' } else { 'segundos desde el reposo inicial; sin cronómetro de Studio' }

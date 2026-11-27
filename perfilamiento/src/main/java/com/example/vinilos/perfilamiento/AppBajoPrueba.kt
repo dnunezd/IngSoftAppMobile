@@ -206,9 +206,16 @@ class AppBajoPrueba {
      * para que se vea lo que cuesta cada uno. No pasa por el teclado del teléfono, que autocorregiría
      * las teclas simuladas ("perfilamiento" → "Perfila miento") y las haría muy lentas.
      */
-    fun escribirLetraPorLetra(tag: String, texto: String, pausaMilis: Long = 60) {
+    fun escribirLetraPorLetra(tag: String, texto: String, pausaMilis: Long = 60) =
+        escribirLetraPorLetra(tag(tag), texto, pausaMilis)
+
+    /**
+     * Igual, pero buscando el campo con cualquier selector. Sirve dentro de las hojas inferiores y los
+     * diálogos de Compose: son otra ventana y allí los `testTag` no se exponen como resource-id.
+     */
+    fun escribirLetraPorLetra(campo: BySelector, texto: String, pausaMilis: Long = 60) {
         for (largo in 1..texto.length) {
-            conReintento { esperarA(tag, 5_000).text = texto.take(largo) }
+            conReintento { esperarA(campo, 5_000).text = texto.take(largo) }
             SystemClock.sleep(pausaMilis)
         }
     }

@@ -1,7 +1,9 @@
 # Guía: perfilamiento automatizado
 
 `scripts/perfilamiento/Perfilar.ps1` hace la [guía manual](guia-manual.md) sin tocar el teléfono:
-maneja la app con los mismos pasos de cada HU (una acción y 5 s), reinicia la app sin datos antes de
+maneja la app con los mismos pasos de cada HU del plan de pruebas de rendimiento del Sprint 3 (HU01,
+HU02, HU03, HU04, HU07, HU08, HU09, HU10 y HU15; cada paso, una acción y su espera de 5, 3 o 2 s),
+deja los datos de prueba del backend como los espera cada HU, reinicia la app sin datos antes de
 cada grabación, anota el segundo de la grabación en que ocurre cada paso, toma las capturas de la
 ventana de Android Studio y arma el análisis de cada HU. Lo manual es iniciar y detener las tareas del
 Profiler, dejar a la vista lo que se captura y exportar lo
@@ -24,8 +26,11 @@ Hay dos fases, cada una con el código que le corresponde:
 
 | Fase | Código | Comandos |
 |---|---|---|
-| `baseline` | La línea base, sin micro-optimizaciones: el release v2.1.0 | `-Accion Preparar -Version v2.1.0` y luego `-Accion Ejecutar -Version v2.1.0 -Fase baseline` |
-| `latest` | Con las micro-optimizaciones: el código de esta rama | `-Accion Preparar` y luego `-Accion Ejecutar -Fase latest` |
+| `baseline` | La versión antes de optimizar, un tag (en el Sprint 2 fue el release v2.1.0) | `-Accion Preparar -Version <tag>` y luego `-Accion Ejecutar -Version <tag> -Fase baseline` |
+| `latest` | El código de esta rama (en el Sprint 3, `develop` con HU08, HU09 y HU15) | `-Accion Preparar` y luego `-Accion Ejecutar -Fase latest` |
+
+Un tag anterior a una HU no tiene su pantalla: `baseline` solo sirve para las HU que esa versión ya
+incluye (por ejemplo, v3.0.0 no tiene HU08).
 
 ```powershell
 .\scripts\perfilamiento\Perfilar.ps1 -Accion Preparar                        # compila e instala la rama
@@ -48,7 +53,8 @@ o la terminal de Android Studio), no en segundo plano.
   defecto, el nombre comercial que informa el teléfono o, si no lo informa, su modelo.
 - `-CarpetaResultados` cambia la carpeta raíz de los resultados (por defecto `docs/performance/resultados`
   de este repositorio); sirve para correr el script desde otra copia de la rama.
-- `-Escenarios hu01,hu02,...` elige las HU (por defecto las seis) y `-Grabaciones telemetria` o
+- `-Escenarios hu01,hu02,...` elige las HU (por defecto las nueve: `hu01`, `hu02`, `hu03`, `hu04`,
+  `hu07`, `hu08`, `hu09`, `hu10` y `hu15`) y `-Grabaciones telemetria` o
   `asignaciones` una sola de las dos grabaciones.
 - `-SinStudio` corre los recorridos sin pausas de Android Studio: sirve para probar que la app se deja
   manejar antes de grabar.
@@ -80,8 +86,8 @@ En cada grabación:
 1. Cuando la tarea ya graba, el script pide escribir lo que marca el cronómetro **Recording**
    (`mm:ss`). Con eso convierte la hora de cada paso en el segundo de la grabación (±2 s).
 2. Corre el recorrido de la HU (`perfilamiento/.../Recorridos.kt`): 5 s de reposo en el ingreso y
-   luego los pasos de la guía, cada uno seguido de 5 s. Si el paso abre otra pantalla, los 5 s cuentan
-   desde que aparece.
+   luego los pasos de la guía, cada uno seguido de su espera (5, 3 o 2 s; en los envíos, la respuesta
+   del backend, hasta 10 s). Si el paso abre otra pantalla, la espera cuenta desde que aparece.
 3. Guía las exportaciones: deja la carpeta de destino en el portapapeles, dice el nombre del archivo y
    no sigue hasta encontrarlo (o hasta que se salte con `s`).
 4. Escribe en el análisis de la HU el bloque de esa grabación: la tabla de pasos con la columna **Seg.**, la
@@ -92,19 +98,25 @@ Los `.asdb` se vuelven a abrir en Android Studio con **Past Recordings** > **Imp
 
 Datos del backend:
 
-- Antes de cada grabación de la HU10 quita los favoritos del coleccionista 100, para que Queen empiece
-  sin serlo. Lo hace en la base del Docker local (`docker compose ps -q db` + `psql`), porque el
-  `DELETE` de favoritos de BackVynils responde 204 sin borrar nada.
-- Después de cada grabación de la HU07 borra por la API solo los álbumes `Perf*` ("Perf 1" en la
-  grabación 1, "Perf 2" en la 2), para que ambas grabaciones vean el mismo catálogo. Si el filtro
-  abarcara todo el catálogo, no borra nada.
+Antes y después de cada grabación deja los datos como los espera la HU, para que todas las
+grabaciones vean lo mismo y no se acumule lo que crean los recorridos. Lo que la API no deja deshacer
+lo hace en la base del Docker local (`docker compose ps -q db` + `psql`), y luego comprueba por la API
+que quedó bien:
+
+| HU | Qué deja | Cómo |
+|---|---|---|
+| HU07 | Sin álbumes `Perf*` ("Perf 1" en la grabación 1, "Perf 2" en la 2) | `DELETE /albums/{id}` de la API. Si el filtro abarcara todo el catálogo, no borra nada. |
+| HU08 | Poeta del pueblo (101) sin canciones `Perf` | `psql` (la API no borra canciones) |
+| HU09 | Poeta del pueblo (101) sin comentarios `Perf` | `psql` (la API no borra comentarios) |
+| HU10 | Queen sin ser favorito del coleccionista 100 | `psql`: el `DELETE` de favoritos de BackVynils responde 204 sin borrar nada |
+| HU15 | A Night at the Opera (102) sin asociar a Rubén Blades (100) | `psql` (la API no quita esa asociación) |
 
 ## Qué deja en `docs/performance/resultados/`
 
 ```
 <propietario>--<dispositivo>/       p. ej. jeffrey-diaz--motorola-edge-30
 ├── dispositivo.txt                 datos del teléfono (se escribe a mano, ver el de cada carpeta)
-└── HU01/ … HU10/
+└── HU01/ … HU15/                   HU01, HU02, HU03, HU04, HU07, HU08, HU09, HU10 y HU15
     ├── baseline/                   la fase (-Fase)
     │   ├── connections.json
     │   ├── connections.png
@@ -114,8 +126,8 @@ Datos del backend:
     │   └── track-memory.png
     └── latest/                     los mismos 6 archivos
 analisis/<propietario>--<dispositivo>/
-├── baseline/HU01.md … HU10.md
-└── latest/HU01.md … HU10.md
+├── baseline/HU01.md … HU15.md
+└── latest/HU01.md … HU15.md
 ```
 
 El análisis va aparte, en `analisis/`, para que cada carpeta de HU tenga solo lo grabado en Studio.
@@ -126,10 +138,14 @@ mano se conserva.
 
 ## A tener en cuenta
 
-- Los recorridos usan los datos de ejemplo de BackVynils: álbum 100 (Buscando América), músico 100
-  (Rubén Blades Bellido de Luna), banda 101 (Queen) y coleccionista 100 (Manolo Bellon).
+- Los recorridos usan los datos de ejemplo de BackVynils: álbumes 100 (Buscando América), 101 (Poeta
+  del pueblo) y 102 (A Night at the Opera), músico 100 (Rubén Blades Bellido de Luna), banda 101 (Queen)
+  y coleccionista 100 (Manolo Bellon). El detalle está en [Datos de prueba](guia-manual.md#datos-de-prueba).
+- La HU10 no quita el favorito, aunque el plan lo pide: la app no permite quitar favoritos.
+- Los recorridos buscan algunos textos en español ("Agregar Favorito", "Aceptar" del calendario). Desde
+  API 33 el script fija la app en español tras cada `pm clear`; por debajo, el teléfono debe estar en español.
 - UI Automator corre en su propio proceso, pero para encontrar los elementos la app arma su árbol de
   accesibilidad: en Allocations pueden aparecer objetos `AccessibilityNodeInfo` que no son de la app.
-- En la HU03 y la HU07 el texto se escribe letra por letra (un cambio de texto por letra), para que se
+- En la HU03, HU07, HU08, HU09 y HU15 el texto se escribe letra por letra (un cambio de texto por letra), para que se
   vea lo que cuesta cada cambio. Se pone directo en el campo y no con teclas simuladas, porque el
   teclado del teléfono las autocorrige ("perfilamiento" quedaba "Perfila miento") y las vuelve muy lentas.
