@@ -26,7 +26,7 @@ sealed interface ArtistsUiState {
     data object Error : ArtistsUiState
 }
 
-private fun filtrar(artistas: List<Artist>, consulta: String): List<Artist> {
+internal fun filtrar(artistas: List<Artist>, consulta: String): List<Artist> {
     val buscado = normalizar(consulta.trim())
     if (buscado.isEmpty()) return artistas
     return artistas.filter { buscado in normalizar(it.name) }
