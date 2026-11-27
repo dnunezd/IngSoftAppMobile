@@ -27,7 +27,7 @@ import com.example.vinilos.data.remote.CreateAlbumDto
 import com.example.vinilos.data.remote.IdAlbumDto
 import com.example.vinilos.data.remote.MusicianDto
 import com.example.vinilos.data.remote.PerformerDto
-import com.example.vinilos.data.remote.PremiacionDto
+import com.example.vinilos.data.remote.AwardDto
 import com.example.vinilos.data.remote.ServiceAdapter
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Runnable
@@ -124,9 +124,9 @@ class RepositoriosDispatcherTest {
         override suspend fun getBands(): Response<List<BandDto>> = Response.success(listOf(BandDto(1, "Queen", null))).also { anotarHilo() }
         override suspend fun getMusician(id: Int): Response<ArtistDetailDto> = Response.success(detalleDto).also { anotarHilo() }
         override suspend fun getBand(id: Int): Response<ArtistDetailDto> = Response.success(detalleDto).also { anotarHilo() }
-        override suspend fun getPerformerPrizes(): Response<List<PremiacionDto>> = Response.success(emptyList<PremiacionDto>()).also { anotarHilo() }
+        override suspend fun getPerformerPrizes(): Response<List<AwardDto>> = Response.success(emptyList<AwardDto>()).also { anotarHilo() }
         override suspend fun associateAlbumWithPerformer(id: Int, albumId: Int): Response<Unit> = Response.success(Unit).also { anotarHilo() }
-        override suspend fun reemplazarAlbumesDeBanda(id: Int, albumes: List<IdAlbumDto>): Response<Unit> =
+        override suspend fun replaceBandAlbums(id: Int, albumes: List<IdAlbumDto>): Response<Unit> =
             Response.success(Unit).also { anotarHilo() }
     }
 

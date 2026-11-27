@@ -2,7 +2,7 @@ package com.example.vinilos.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.vinilos.data.model.AlbumArtista
+import com.example.vinilos.data.model.ArtistAlbum
 import com.example.vinilos.data.model.AlbumSummary
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.remote.LoadError
@@ -51,7 +51,7 @@ class ArtistDetailViewModel(
         val albumes = if (detalle.albumes.any { it.id == album.id }) {
             detalle.albumes
         } else {
-            detalle.albumes + AlbumArtista(album.id, album.nombre, album.portada, album.anio)
+            detalle.albumes + ArtistAlbum(album.id, album.nombre, album.portada, album.anio)
         }
         _uiState.value = estado.copy(
             detalle = detalle.copy(albumes = albumes),

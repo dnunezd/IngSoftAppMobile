@@ -14,7 +14,7 @@ interface CommentApi {
 data class NewCommentDto(
     val description: String,
     val rating: Int,
-    val collector: ColeccionistaRefDto
+    val collector: CollectorRefDto
 )
 
-data class ColeccionistaRefDto(val id: Int)
+data class CollectorRefDto(val id: Int)

@@ -1,7 +1,7 @@
 package com.example.vinilos.viewmodel
 
 import com.example.vinilos.MainDispatcherRule
-import com.example.vinilos.data.model.AlbumArtista
+import com.example.vinilos.data.model.ArtistAlbum
 import com.example.vinilos.data.model.AlbumSummary
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
@@ -196,11 +196,11 @@ class ArtistDetailViewModelTest {
 
     private val ruben = ArtistDetail(
         100, "Rubén Blades Bellido de Luna", null, null, ArtistType.MUSICO, null, emptyList(),
-        listOf(AlbumArtista(100, "Buscando América", "p100", "1984"), AlbumArtista(101, "Poeta del pueblo", "p101", null)),
+        listOf(ArtistAlbum(100, "Buscando América", "p100", "1984"), ArtistAlbum(101, "Poeta del pueblo", "p101", null)),
         emptyList()
     )
     private val noche = AlbumSummary(102, "A Night at the Opera", "p102", "Rock", "Queen", "1975")
-    private val nocheEnElDetalle = AlbumArtista(102, "A Night at the Opera", "p102", "1975")
+    private val nocheEnElDetalle = ArtistAlbum(102, "A Night at the Opera", "p102", "1975")
 
     private fun kotlinx.coroutines.test.TestScope.rubenCargado(repositorio: ArtistRepositoryFalso): ArtistDetailViewModel {
         val viewModel = ArtistDetailViewModel(ArtistType.MUSICO, 100, repositorio)

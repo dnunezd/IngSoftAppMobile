@@ -1,10 +1,10 @@
 package com.example.vinilos.data.repository
 
-import com.example.vinilos.data.model.AlbumArtista
+import com.example.vinilos.data.model.ArtistAlbum
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.ArtistDetail
-import com.example.vinilos.data.model.IntegranteArtista
+import com.example.vinilos.data.model.ArtistMember
 import com.example.vinilos.data.model.ArtistPrize
 import com.example.vinilos.data.remote.LoadError
 import com.example.vinilos.data.remote.ServiceAdapter
@@ -206,7 +206,7 @@ class ArtistRepositoryTest {
                 tipo = ArtistType.MUSICO,
                 fecha = "1948-07-16T00:00:00.000Z",
                 integrantes = emptyList(),
-                albumes = listOf(AlbumArtista(100, "Buscando América", "https://img/ba.jpg", "1984")),
+                albumes = listOf(ArtistAlbum(100, "Buscando América", "https://img/ba.jpg", "1984")),
                 premios = emptyList()
             ),
             detalle
@@ -237,7 +237,7 @@ class ArtistRepositoryTest {
                 descripcion = "Banda británica",
                 tipo = ArtistType.BANDA,
                 fecha = "1970-01-01T00:00:00.000Z",
-                integrantes = listOf(IntegranteArtista(100, "Freddie Mercury", "https://img/freddie.jpg")),
+                integrantes = listOf(ArtistMember(100, "Freddie Mercury", "https://img/freddie.jpg")),
                 albumes = emptyList(),
                 premios = emptyList()
             ),

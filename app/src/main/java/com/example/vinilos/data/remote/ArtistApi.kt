@@ -22,7 +22,7 @@ interface ArtistApi {
     suspend fun getBand(@Path("id") id: Int): Response<ArtistDetailDto>
 
     @GET("performerprizes")
-    suspend fun getPerformerPrizes(): Response<List<PremiacionDto>>
+    suspend fun getPerformerPrizes(): Response<List<AwardDto>>
 
     /** Adds the musician to the album's performers without removing the others (HU15). */
     @POST("musicians/{id}/albums/{albumId}")
@@ -34,5 +34,5 @@ interface ArtistApi {
      * used: it would leave the band as the album's only performer (add-agregar-album-artista, D1).
      */
     @PUT("bands/{id}/albums")
-    suspend fun reemplazarAlbumesDeBanda(@Path("id") id: Int, @Body albumes: List<IdAlbumDto>): Response<Unit>
+    suspend fun replaceBandAlbums(@Path("id") id: Int, @Body albumes: List<IdAlbumDto>): Response<Unit>
 }

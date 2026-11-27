@@ -18,10 +18,10 @@ import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.ui.artistas.TagErrorArtistas
 import com.example.vinilos.ui.artistas.TagNombreArtistDetail
 import com.example.vinilos.ui.artistas.tagArtista
-import com.example.vinilos.ui.ingreso.TagAtras
-import com.example.vinilos.ui.ingreso.TagEntrarVisitante
-import com.example.vinilos.ui.inicio.TagInicio
-import com.example.vinilos.ui.inicio.TagVerArtistas
+import com.example.vinilos.ui.entry.TagAtras
+import com.example.vinilos.ui.entry.TagEntrarVisitante
+import com.example.vinilos.ui.home.TagInicio
+import com.example.vinilos.ui.home.TagVerArtistas
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer

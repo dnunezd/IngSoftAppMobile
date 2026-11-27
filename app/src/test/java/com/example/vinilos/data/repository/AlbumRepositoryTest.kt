@@ -3,7 +3,7 @@ package com.example.vinilos.data.repository
 import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.NewAlbum
 import com.example.vinilos.data.model.AlbumSummary
-import com.example.vinilos.data.model.Artista
+import com.example.vinilos.data.model.Performer
 import com.example.vinilos.data.model.Track
 import com.example.vinilos.data.model.Comment
 import com.example.vinilos.data.remote.AlbumApi
@@ -82,7 +82,7 @@ class AlbumRepositoryTest {
             disquera = "Elektra",
             fechaLanzamiento = "1984-08-01",
             canciones = listOf(Track("Decisiones", "5:00")),
-            artistas = listOf(Artista("Ruben Blades", "https://example.com/artista.jpg")),
+            artistas = listOf(Performer("Ruben Blades", "https://example.com/artista.jpg")),
             comentarios = listOf(Comment("Excelente", 5))
         )
 
@@ -199,7 +199,7 @@ class AlbumRepositoryTest {
         val album = repositorio.getAlbum(102).getOrThrow()
 
         assertEquals(emptyList<Track>(), album.canciones)
-        assertEquals(emptyList<Artista>(), album.artistas)
+        assertEquals(emptyList<Performer>(), album.artistas)
         assertEquals(emptyList<Comment>(), album.comentarios)
         assertEquals(null, album.portada)
         assertEquals("/albums/102", servidor.takeRequest(1, TimeUnit.SECONDS)?.path)

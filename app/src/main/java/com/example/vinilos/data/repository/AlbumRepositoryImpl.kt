@@ -8,7 +8,7 @@ import com.example.vinilos.data.local.TableChanges
 import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.NewAlbum
 import com.example.vinilos.data.model.AlbumSummary
-import com.example.vinilos.data.model.Artista
+import com.example.vinilos.data.model.Performer
 import com.example.vinilos.data.model.Track
 import com.example.vinilos.data.model.Comment
 import com.example.vinilos.data.model.fechaIsoUtc
@@ -306,7 +306,7 @@ class AlbumRepositoryImpl(
             Track(requerido(it.name, "track.name"), requerido(it.duration, "track.duration"))
         },
         artistas = performers.orEmpty().map {
-            Artista(requerido(it.name, "performer.name"), it.image)
+            Performer(requerido(it.name, "performer.name"), it.image)
         },
         comentarios = comments.orEmpty().map {
             Comment(requerido(it.description, "comment.description"), it.rating)

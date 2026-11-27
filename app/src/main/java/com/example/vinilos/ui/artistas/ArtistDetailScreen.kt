@@ -70,21 +70,21 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import com.example.vinilos.R
-import com.example.vinilos.data.model.AlbumArtista
+import com.example.vinilos.data.model.ArtistAlbum
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.ArtistDetail
-import com.example.vinilos.data.model.IntegranteArtista
+import com.example.vinilos.data.model.ArtistMember
 import com.example.vinilos.data.model.ArtistPrize
 import com.example.vinilos.data.model.formatearFechaONula
 import com.example.vinilos.ui.idiomaDeLaApp
-import com.example.vinilos.ui.detalle.AlbumCover
-import com.example.vinilos.ui.ingreso.AvisoUnaVez
-import com.example.vinilos.ui.ingreso.IndicadorActualizando
+import com.example.vinilos.ui.detail.AlbumCover
+import com.example.vinilos.ui.entry.OneTimeNotice
+import com.example.vinilos.ui.entry.RefreshingIndicator
 import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.ArtistDetailUiState
 import com.example.vinilos.viewmodel.AssociateAlbumUiState
 import com.example.vinilos.viewmodel.FavoriteUiState
-import com.example.vinilos.ui.ingreso.encabezado
+import com.example.vinilos.ui.entry.heading
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -153,13 +153,13 @@ fun ArtistDetailScreen(
     }
     val exito = estado as? ArtistDetailUiState.Success
     val avisos = remember { SnackbarHostState() }
-    AvisoUnaVez(
+    OneTimeNotice(
         mostrar = exito?.errorAlActualizar == true,
         mensaje = stringResource(R.string.artista_error_actualizar),
         avisos = avisos,
         onMostrado = onAvisoMostrado
     )
-    AvisoUnaVez(
+    OneTimeNotice(
         mostrar = exito?.mostrarAlbumAsociado == true,
         mensaje = stringResource(R.string.asociar_album_asociado),
         avisos = avisos,
@@ -178,7 +178,7 @@ fun ArtistDetailScreen(
                 stringResource(R.string.artista_titulo),
                 onAtras,
                 accion = if (exito?.actualizando == true) {
-                    { IndicadorActualizando(descripcionActualizando, TagActualizandoArtistDetail) }
+                    { RefreshingIndicator(descripcionActualizando, TagActualizandoArtistDetail) }
                 } else {
                     null
                 }
@@ -194,8 +194,8 @@ fun ArtistDetailScreen(
                 when (estado) {
                     ArtistDetailUiState.Loading -> {
                         item { Loading() }
-                        item { TarjetaEsqueleto() }
-                        items(FILAS_DE_RELLENO) { FilaEsqueleto() }
+                        item { SkeletonCard() }
+                        items(FILAS_DE_RELLENO) { SkeletonRow() }
                     }
                     ArtistDetailUiState.Error -> item {
                         ErrorArtistas(stringResource(R.string.artista_error), onReintentar)
@@ -230,7 +230,7 @@ private fun LazyListScope.contenido(
     onAgregarAlbum: ((Set<Int>) -> Unit)?
 ) {
     item(key = "tarjeta_principal") {
-        TarjetaPrincipal(
+        MainCard(
             detalle = detalle,
             estadoFavorito = estadoFavorito,
             onAgregarFavorito = onAgregarFavorito,
@@ -240,7 +240,7 @@ private fun LazyListScope.contenido(
     }
     if (detalle.tipo == ArtistType.BANDA) {
         item {
-            TituloSeccion(
+            SectionTitle(
                 titulo = R.string.artista_integrantes,
                 contador = R.plurals.artista_integrantes_contador,
                 cantidad = detalle.integrantes.size,
@@ -249,30 +249,30 @@ private fun LazyListScope.contenido(
         }
         item {
             if (detalle.integrantes.isEmpty()) {
-                BloqueEmpty(R.string.artista_sin_integrantes, rememberVectorPainter(Icons.Outlined.Person))
+                EmptyBlock(R.string.artista_sin_integrantes, rememberVectorPainter(Icons.Outlined.Person))
             } else {
-                FilaIntegrantes(detalle.integrantes)
+                MembersRow(detalle.integrantes)
             }
         }
     }
     item {
-        TituloSeccion(
+        SectionTitle(
             titulo = R.string.artista_albumes,
             contador = R.plurals.artista_albumes_contador,
             cantidad = detalle.albumes.size,
             tagContador = TagContadorAlbumes,
             accion = onAgregarAlbum?.let { agregar ->
-                { BotonAgregarAlbum { agregar(detalle.albumes.map { it.id }.toSet()) } }
+                { AddAlbumButton { agregar(detalle.albumes.map { it.id }.toSet()) } }
             }
         )
     }
     if (detalle.albumes.isEmpty()) {
-        item { BloqueEmpty(R.string.artista_sin_albumes, painterResource(R.drawable.ic_cat_album)) }
+        item { EmptyBlock(R.string.artista_sin_albumes, painterResource(R.drawable.ic_cat_album)) }
     } else {
-        items(detalle.albumes, key = { "album_${it.id}" }) { FilaAlbum(it, onSeleccionarAlbum) }
+        items(detalle.albumes, key = { "album_${it.id}" }) { AlbumRow(it, onSeleccionarAlbum) }
     }
     item {
-        TituloSeccion(
+        SectionTitle(
             titulo = R.string.artista_premios,
             contador = R.plurals.artista_premios_contador,
             cantidad = detalle.premios.size,
@@ -280,14 +280,14 @@ private fun LazyListScope.contenido(
         )
     }
     if (detalle.premios.isEmpty()) {
-        item { BloqueEmpty(R.string.artista_sin_premios, painterResource(R.drawable.ic_det_trofeo)) }
+        item { EmptyBlock(R.string.artista_sin_premios, painterResource(R.drawable.ic_det_trofeo)) }
     } else {
-        items(detalle.premios, key = { "premio_${it.id}" }) { FilaPrize(it) }
+        items(detalle.premios, key = { "premio_${it.id}" }) { PrizeRow(it) }
     }
 }
 
 @Composable
-private fun TarjetaPrincipal(
+private fun MainCard(
     detalle: ArtistDetail,
     estadoFavorito: FavoriteUiState?,
     onAgregarFavorito: () -> Unit,
@@ -327,7 +327,7 @@ private fun TarjetaPrincipal(
         EtiquetaTipo(detalle.tipo, Modifier.testTag(TagTipoArtistDetail))
         val idioma = idiomaDeLaApp()
         remember(detalle.fecha, idioma) { formatearFechaONula(detalle.fecha, idioma) }
-            ?.let { BloqueFecha(detalle.tipo, it) }
+            ?.let { DateBlock(detalle.tipo, it) }
         detalle.descripcion?.let {
             Text(
                 text = it,
@@ -339,7 +339,7 @@ private fun TarjetaPrincipal(
             )
         }
         if (estadoFavorito != null) {
-            SeccionFavorito(
+            FavoriteSection(
                 nombre = detalle.nombre,
                 estado = estadoFavorito,
                 onAgregar = onAgregarFavorito,
@@ -352,7 +352,7 @@ private fun TarjetaPrincipal(
 
 /** Favorite button and its associated messages (HU10); fully hidden for the Visitor. */
 @Composable
-private fun SeccionFavorito(
+private fun FavoriteSection(
     nombre: String,
     estado: FavoriteUiState,
     onAgregar: () -> Unit,
@@ -365,10 +365,10 @@ private fun SeccionFavorito(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         when (estado) {
-            FavoriteUiState.NotAvailable -> TarjetaFavoritoNotAvailable(onVolverAlListado)
+            FavoriteUiState.NotAvailable -> FavoriteNotAvailableCard(onVolverAlListado)
             // Saving retries with the same add action (onAgregar); the error
             // card replaces the main button instead of showing alongside it.
-            FavoriteUiState.ErrorGuardado -> TarjetaErrorGuardado(
+            FavoriteUiState.ErrorGuardado -> SaveErrorCard(
                 onReintentar = onAgregar,
                 modifier = Modifier.testTag(TagErrorFavorito)
             )
@@ -402,7 +402,7 @@ private fun SeccionFavorito(
                 }
 
                 if (esFavorito) {
-                    NotaBloqueoTemporalFavorito()
+                    FavoriteLockNotice()
                 }
 
                 if (estado == FavoriteUiState.ErrorComprobacion) {
@@ -433,7 +433,7 @@ private fun SeccionFavorito(
 
 /** Note below the button already marked as favorite: confirms it's already a favorite (HU10). */
 @Composable
-private fun NotaBloqueoTemporalFavorito() {
+private fun FavoriteLockNotice() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -462,7 +462,7 @@ private fun NotaBloqueoTemporalFavorito() {
  * in album creation (HU07): errorContainer background, warning icon and retry button.
  */
 @Composable
-private fun TarjetaErrorGuardado(onReintentar: () -> Unit, modifier: Modifier = Modifier) {
+private fun SaveErrorCard(onReintentar: () -> Unit, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -497,7 +497,7 @@ private fun TarjetaErrorGuardado(onReintentar: () -> Unit, modifier: Modifier = 
 
 /** Card shown when the artist no longer exists in the backend (HU10): message and return to the list. */
 @Composable
-private fun TarjetaFavoritoNotAvailable(onVolverAlListado: () -> Unit) {
+private fun FavoriteNotAvailableCard(onVolverAlListado: () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -542,7 +542,7 @@ private fun TarjetaFavoritoNotAvailable(onVolverAlListado: () -> Unit) {
 }
 
 @Composable
-private fun BloqueFecha(tipo: ArtistType, fecha: String) {
+private fun DateBlock(tipo: ArtistType, fecha: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -573,7 +573,7 @@ private fun BloqueFecha(tipo: ArtistType, fecha: String) {
 
 /** Section title, with the counter on the right only when there are items. */
 @Composable
-private fun TituloSeccion(
+private fun SectionTitle(
     @StringRes titulo: Int,
     @PluralsRes contador: Int,
     cantidad: Int,
@@ -591,7 +591,7 @@ private fun TituloSeccion(
             text = stringResource(titulo),
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.weight(1f).encabezado()
+            modifier = Modifier.weight(1f).heading()
         )
         if (cantidad > 0) {
             Text(
@@ -607,7 +607,7 @@ private fun TituloSeccion(
 
 /** "Add album" next to the albums section title, only for the Collector (HU15). */
 @Composable
-private fun BotonAgregarAlbum(onClick: () -> Unit) {
+private fun AddAlbumButton(onClick: () -> Unit) {
     Button(
         onClick = onClick,
         shape = RoundedCornerShape(50),
@@ -623,7 +623,7 @@ private fun BotonAgregarAlbum(onClick: () -> Unit) {
 
 /** Section with no items: gray block with an icon and the message, as in the Figma frame. */
 @Composable
-private fun BloqueEmpty(@StringRes mensaje: Int, icono: Painter) {
+private fun EmptyBlock(@StringRes mensaje: Int, icono: Painter) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -649,17 +649,17 @@ private fun BloqueEmpty(@StringRes mensaje: Int, icono: Painter) {
 
 /** Members are not selectable: no criterion requires it and the mockup shows no indicator. */
 @Composable
-private fun FilaIntegrantes(integrantes: List<IntegranteArtista>) {
+private fun MembersRow(integrantes: List<ArtistMember>) {
     LazyRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        items(integrantes, key = { it.id }) { Integrante(it) }
+        items(integrantes, key = { it.id }) { Member(it) }
     }
 }
 
 @Composable
-private fun Integrante(integrante: IntegranteArtista) {
+private fun Member(integrante: ArtistMember) {
     val porDefecto = painterResource(R.drawable.ic_artista_por_defecto)
     Column(
         modifier = Modifier
@@ -692,7 +692,7 @@ private fun Integrante(integrante: IntegranteArtista) {
 }
 
 @Composable
-private fun FilaAlbum(album: AlbumArtista, onSeleccionar: (Int) -> Unit) {
+private fun AlbumRow(album: ArtistAlbum, onSeleccionar: (Int) -> Unit) {
     val descripcion = stringResource(R.string.artistas_seleccionar_descripcion, album.nombre)
     Row(
         modifier = Modifier
@@ -740,7 +740,7 @@ private fun FilaAlbum(album: AlbumArtista, onSeleccionar: (Int) -> Unit) {
 }
 
 @Composable
-private fun FilaPrize(premio: ArtistPrize) {
+private fun PrizeRow(premio: ArtistPrize) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -810,7 +810,7 @@ private fun Loading() {
 
 /** Placeholder card while loading, with the same shape as the main card. */
 @Composable
-private fun TarjetaEsqueleto() {
+private fun SkeletonCard() {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -820,16 +820,16 @@ private fun TarjetaEsqueleto() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Relleno(Modifier.size(112.dp), CircleShape)
-        Relleno(Modifier.width(180.dp).height(24.dp), CircleShape)
-        Relleno(Modifier.width(70.dp).height(22.dp), CircleShape)
-        Relleno(Modifier.fillMaxWidth().height(52.dp), RoundedCornerShape(16.dp))
+        Filler(Modifier.size(112.dp), CircleShape)
+        Filler(Modifier.width(180.dp).height(24.dp), CircleShape)
+        Filler(Modifier.width(70.dp).height(22.dp), CircleShape)
+        Filler(Modifier.fillMaxWidth().height(52.dp), RoundedCornerShape(16.dp))
     }
 }
 
 /** Placeholder row while loading, with the same shape as an album row. */
 @Composable
-private fun FilaEsqueleto() {
+private fun SkeletonRow() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -839,16 +839,16 @@ private fun FilaEsqueleto() {
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Relleno(Modifier.size(56.dp), EsquinaMiniatura)
+        Filler(Modifier.size(56.dp), EsquinaMiniatura)
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Relleno(Modifier.width(150.dp).height(14.dp), CircleShape)
-            Relleno(Modifier.width(60.dp).height(12.dp), CircleShape)
+            Filler(Modifier.width(150.dp).height(14.dp), CircleShape)
+            Filler(Modifier.width(60.dp).height(12.dp), CircleShape)
         }
     }
 }
 
 @Composable
-private fun Relleno(modifier: Modifier, forma: Shape) {
+private fun Filler(modifier: Modifier, forma: Shape) {
     Box(modifier.clip(forma).background(MaterialTheme.colorScheme.surfaceVariant))
 }
 
@@ -865,10 +865,10 @@ private val BandaDeEjemplo = ArtistDetail(
     descripcion = "Banda británica de rock formada en Londres en 1970.",
     tipo = ArtistType.BANDA,
     fecha = "1970-01-01T00:00:00.000Z",
-    integrantes = listOf(IntegranteArtista(1, "Brian May", null), IntegranteArtista(2, "Roger Taylor", null)),
+    integrantes = listOf(ArtistMember(1, "Brian May", null), ArtistMember(2, "Roger Taylor", null)),
     albumes = listOf(
-        AlbumArtista(103, "A Day at the Races", null, "1976"),
-        AlbumArtista(102, "A Night at the Opera", null, "1975")
+        ArtistAlbum(103, "A Day at the Races", null, "1976"),
+        ArtistAlbum(102, "A Night at the Opera", null, "1975")
     ),
     premios = listOf(ArtistPrize(1, "Grammy Award", "NARAS", "1978-12-10T00:00:00.000Z"))
 )

@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.vinilos.data.model.Artista
+import com.example.vinilos.data.model.Performer
 import com.example.vinilos.data.model.Track
 import com.example.vinilos.data.model.Comment
 import kotlinx.coroutines.test.runTest
@@ -100,7 +100,7 @@ class AlbumDaoTest {
         disquera = "Elektra",
         fechaLanzamiento = "1984-08-01T00:00:00.000Z",
         canciones = listOf(Track("Decisiones", "5:05"), Track("GDBD", "4:30")),
-        artistas = listOf(Artista("Rubén Blades", null)),
+        artistas = listOf(Performer("Rubén Blades", null)),
         comentarios = listOf(Comment("Excelente", 5), Comment("Sin calificación", null))
     )
 

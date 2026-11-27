@@ -27,10 +27,10 @@ import com.example.vinilos.data.repository.AlbumRepository
 import com.example.vinilos.data.repository.AlbumRepositoryImpl
 import com.example.vinilos.data.repository.CollectorRepositoryImpl
 import com.example.vinilos.e2e.EvidenciaE2E
-import com.example.vinilos.ui.catalogo.TagContadorCatalogo
-import com.example.vinilos.ui.catalogo.TagCreateAlbumCatalogo
-import com.example.vinilos.ui.catalogo.TagRolActivo
-import com.example.vinilos.ui.catalogo.tagNewAlbum
+import com.example.vinilos.ui.catalog.TagContadorCatalogo
+import com.example.vinilos.ui.catalog.TagCreateAlbumCatalogo
+import com.example.vinilos.ui.catalog.TagRolActivo
+import com.example.vinilos.ui.catalog.tagNewAlbum
 import com.example.vinilos.ui.create.TagAvisoCampos
 import com.example.vinilos.ui.create.TagCancelarCrear
 import com.example.vinilos.ui.create.TagCreateAlbum
@@ -43,11 +43,11 @@ import com.example.vinilos.ui.create.TagGeneroAlbum
 import com.example.vinilos.ui.create.TagNombreAlbum
 import com.example.vinilos.ui.create.TagAlbumCover
 import com.example.vinilos.ui.create.tagFieldError
-import com.example.vinilos.ui.ingreso.TagEntrarColeccionista
-import com.example.vinilos.ui.ingreso.TagEntrarVisitante
-import com.example.vinilos.ui.ingreso.tagColeccionista
-import com.example.vinilos.ui.inicio.TagInicio
-import com.example.vinilos.ui.inicio.TagVerAlbumes
+import com.example.vinilos.ui.entry.TagEntrarColeccionista
+import com.example.vinilos.ui.entry.TagEntrarVisitante
+import com.example.vinilos.ui.entry.tagColeccionista
+import com.example.vinilos.ui.home.TagInicio
+import com.example.vinilos.ui.home.TagVerAlbumes
 import com.example.vinilos.viewmodel.AlbumField
 import java.util.Calendar
 import java.util.Locale
@@ -122,7 +122,7 @@ class CreateAlbumE2ETest {
     }
 
     /** Valid form data; the name carries the timestamp so it isn't confused with another album. */
-    private data class Formulario(
+    private data class Form(
         val nombre: String = "E2E FN07 ${System.currentTimeMillis()}",
         val portada: String = "https://upload.wikimedia.org/wikipedia/en/4/42/Beatles_-_Abbey_Road.jpg",
         val genero: String = "Rock",
@@ -212,7 +212,7 @@ class CreateAlbumE2ETest {
         rule.waitForIdle()
     }
 
-    private fun llenar(formulario: Formulario, portada: String = formulario.portada) {
+    private fun llenar(formulario: Form, portada: String = formulario.portada) {
         escribir(TagNombreAlbum, formulario.nombre)
         escribir(TagAlbumCover, portada)
         elegirPrimerDiaDelMes()
@@ -228,7 +228,7 @@ class CreateAlbumE2ETest {
     }
 
     /** All fields keep what was typed or chosen. */
-    private fun formularioConserva(formulario: Formulario) {
+    private fun formularioConserva(formulario: Form) {
         rule.onNodeWithTag(TagNombreAlbum).performScrollTo().assertTextEquals(formulario.nombre)
         rule.onNodeWithTag(TagAlbumCover).performScrollTo().assertTextEquals(formulario.portada)
         seleccionMuestra(TagFechaAlbum, fechaVisibleEsperada)
@@ -294,7 +294,7 @@ class CreateAlbumE2ETest {
     @Test
     fun createUnAlbumValidoLoGuardaYLoMuestraEnElCatalogo() {
         val evidencia = "FN07_ESC02"
-        val formulario = Formulario()
+        val formulario = Form()
         val antes = albumesEnElBackend()
 
         ActivityScenario.launch(MainActivity::class.java).use {
@@ -330,7 +330,7 @@ class CreateAlbumE2ETest {
     @Test
     fun cancelarUnFormularioConDatosNoGuardaNada() {
         val evidencia = "FN07_ESC03"
-        val formulario = Formulario()
+        val formulario = Form()
         val antes = albumesEnElBackend()
 
         ActivityScenario.launch(MainActivity::class.java).use {
@@ -379,7 +379,7 @@ class CreateAlbumE2ETest {
     @Test
     fun unaPortadaInvalidaMuestraElMensajeYNoSeEnviaNada() {
         val evidencia = "FN07_ESC05"
-        val formulario = Formulario()
+        val formulario = Form()
         val antes = albumesEnElBackend()
 
         ActivityScenario.launch(MainActivity::class.java).use {
@@ -404,7 +404,7 @@ class CreateAlbumE2ETest {
     @Test
     fun alGirarLaPantallaElFormularioConservaLoEscritoYElegido() {
         val evidencia = "FN07_ESC06"
-        val formulario = Formulario()
+        val formulario = Form()
 
         ActivityScenario.launch(MainActivity::class.java).use { escenario ->
             entrarComoColeccionista(primerColeccionistaReal(), evidencia)
@@ -437,7 +437,7 @@ class CreateAlbumE2ETest {
     @Test
     fun conElBackendCaidoSeConservanLosDatosYReintentarCreaElAlbum() {
         val evidencia = "FN07_ESC07"
-        val formulario = Formulario()
+        val formulario = Form()
         val idCreado = 500
         var caido = true
         var creado = false

@@ -38,7 +38,7 @@ class ServiceAdapter(
     private val retrofit: Retrofit = Retrofit.Builder()
         .baseUrl(baseUrl)
         .client(cliente)
-        .addConverterFactory(LecturaComoErrorDeFormato(GsonConverterFactory.create()))
+        .addConverterFactory(FormatErrorConverterFactory(GsonConverterFactory.create()))
         .build()
 
     fun <T> api(clase: Class<T>): T = retrofit.create(clase)
@@ -73,7 +73,7 @@ class ServiceAdapter(
      * the response, so that [llamar] reports it as [LoadError] without hiding other
      * `IllegalStateException`s, which are programming errors.
      */
-    private class LecturaComoErrorDeFormato(private val gson: Converter.Factory) : Converter.Factory() {
+    private class FormatErrorConverterFactory(private val gson: Converter.Factory) : Converter.Factory() {
         override fun responseBodyConverter(
             type: Type,
             annotations: Array<out Annotation>,

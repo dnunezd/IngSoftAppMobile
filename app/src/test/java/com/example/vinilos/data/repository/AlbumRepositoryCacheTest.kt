@@ -6,7 +6,7 @@ import com.example.vinilos.data.local.AlbumDetailEntity
 import com.example.vinilos.data.local.AlbumEntity
 import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.AlbumSummary
-import com.example.vinilos.data.model.Artista
+import com.example.vinilos.data.model.Performer
 import com.example.vinilos.data.model.Track
 import com.example.vinilos.data.model.Comment
 import com.example.vinilos.data.remote.LoadError
@@ -269,7 +269,7 @@ class AlbumRepositoryCacheTest {
         descripcion = "Salsa urbana", genero = "Salsa", disquera = "Elektra",
         fechaLanzamiento = "1984-08-01T00:00:00.000Z",
         canciones = listOf(Track("Decisiones", "5:05")),
-        artistas = listOf(Artista("Rubén Blades", null)),
+        artistas = listOf(Performer("Rubén Blades", null)),
         comentarios = listOf(Comment("Excelente", 5))
     )
 

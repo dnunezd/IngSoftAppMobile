@@ -38,14 +38,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import com.example.vinilos.R
 import com.example.vinilos.data.model.Session
-import com.example.vinilos.ui.catalogo.HeaderWithRole
-import com.example.vinilos.ui.detalle.AlbumCover
+import com.example.vinilos.ui.catalog.HeaderWithRole
+import com.example.vinilos.ui.detail.AlbumCover
 import com.example.vinilos.viewmodel.AddTrackUiState
 import com.example.vinilos.viewmodel.TrackField
 import com.example.vinilos.viewmodel.TrackSubmission
 import com.example.vinilos.viewmodel.TrackError
 import com.example.vinilos.viewmodel.TargetAlbumInfo
-import com.example.vinilos.ui.ingreso.encabezado
+import com.example.vinilos.ui.entry.heading
 import com.example.vinilos.ui.theme.coloresBotonPrincipal
 import com.example.vinilos.ui.idiomaDeLaApp
 
@@ -147,7 +147,7 @@ fun AddTrackScreen(
                     stringResource(R.string.agregar_cancion_datos_cancion),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.encabezado()
+                    modifier = Modifier.heading()
                 )
                 CampoTextoTrack(
                     valor = estado.nombre,

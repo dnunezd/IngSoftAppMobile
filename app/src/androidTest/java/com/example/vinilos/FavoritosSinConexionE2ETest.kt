@@ -23,11 +23,11 @@ import com.example.vinilos.ui.artistas.TagErrorFavorito
 import com.example.vinilos.ui.artistas.TagNombreArtistDetail
 import com.example.vinilos.ui.artistas.TagReintentarFavorito
 import com.example.vinilos.ui.artistas.tagArtista
-import com.example.vinilos.ui.ingreso.TagAtras
-import com.example.vinilos.ui.ingreso.TagEntrarColeccionista
-import com.example.vinilos.ui.ingreso.tagColeccionista
-import com.example.vinilos.ui.inicio.TagInicio
-import com.example.vinilos.ui.inicio.TagVerArtistas
+import com.example.vinilos.ui.entry.TagAtras
+import com.example.vinilos.ui.entry.TagEntrarColeccionista
+import com.example.vinilos.ui.entry.tagColeccionista
+import com.example.vinilos.ui.home.TagInicio
+import com.example.vinilos.ui.home.TagVerArtistas
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer

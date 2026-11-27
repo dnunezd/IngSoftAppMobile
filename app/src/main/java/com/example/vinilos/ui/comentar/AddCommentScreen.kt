@@ -59,15 +59,15 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.vinilos.R
 import com.example.vinilos.data.model.Album
-import com.example.vinilos.data.model.Artista
+import com.example.vinilos.data.model.Performer
 import com.example.vinilos.data.model.Collector
 import com.example.vinilos.data.model.Session
-import com.example.vinilos.ui.catalogo.HeaderWithRole
-import com.example.vinilos.ui.detalle.AlbumCover
-import com.example.vinilos.ui.ingreso.ChipEtiqueta
-import com.example.vinilos.ui.ingreso.iniciales
+import com.example.vinilos.ui.catalog.HeaderWithRole
+import com.example.vinilos.ui.detail.AlbumCover
+import com.example.vinilos.ui.entry.TagChip
+import com.example.vinilos.ui.entry.iniciales
 import com.example.vinilos.ui.theme.coloresBotonPrincipal
-import com.example.vinilos.ui.ingreso.encabezado
+import com.example.vinilos.ui.entry.heading
 import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.CargaAlbum
 import com.example.vinilos.viewmodel.AddCommentUiState
@@ -137,22 +137,22 @@ fun AddCommentScreen(
             CargaAlbum.Error -> ErrorAlbum(acciones.onReintentarAlbum)
             is CargaAlbum.Listo -> {
                 val nombre = (session as? Session.Collector)?.collector?.name.orEmpty()
-                Desplazable {
+                Scrollable {
                     if (estado.publicado) {
-                        ContenidoPublicado(album.album, nombre, estado, acciones.onSalir)
+                        PublishedContent(album.album, nombre, estado, acciones.onSalir)
                     } else {
-                        Formulario(album.album, nombre, estado, acciones)
+                        Form(album.album, nombre, estado, acciones)
                     }
                 }
             }
         }
     }
 
-    if (estado.confirmarDescarte) DialogoDescartar(acciones)
+    if (estado.confirmarDescarte) DiscardDialog(acciones)
 }
 
 @Composable
-private fun Desplazable(contenido: @Composable () -> Unit) {
+private fun Scrollable(contenido: @Composable () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -205,14 +205,14 @@ private fun ErrorAlbum(onReintentar: () -> Unit) {
 // ---------- Form ----------
 
 @Composable
-private fun Formulario(album: Album, coleccionista: String, estado: AddCommentUiState, acciones: AddCommentActions) {
-    TarjetaAlbum(album, coleccionista)
-    Tarjeta {
+private fun Form(album: Album, coleccionista: String, estado: AddCommentUiState, acciones: AddCommentActions) {
+    AlbumCard(album, coleccionista)
+    CardContainer {
         Text(
             stringResource(R.string.comentar_pregunta),
             style = MaterialTheme.typography.titleLarge,
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().encabezado()
+            modifier = Modifier.fillMaxWidth().heading()
         )
         Text(
             stringResource(R.string.comentar_subtitulo),
@@ -221,16 +221,16 @@ private fun Formulario(album: Album, coleccionista: String, estado: AddCommentUi
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth()
         )
-        Estrellas(estado.calificacion, habilitadas = !estado.enviando, onCalificar = acciones.onCalificar)
-        TextoNivel(estado.calificacion)
+        Stars(estado.calificacion, habilitadas = !estado.enviando, onCalificar = acciones.onCalificar)
+        LevelText(estado.calificacion)
         Opinion(estado, acciones.onOpinion)
-        if (estado.envio == EnvioComment.Fallido) ErrorPublicar()
-        BotonPublicar(estado, acciones.onPublicar)
+        if (estado.envio == EnvioComment.Fallido) PublishError()
+        PublishButton(estado, acciones.onPublicar)
     }
 }
 
 @Composable
-private fun Tarjeta(contenido: @Composable ColumnScope.() -> Unit) {
+private fun CardContainer(contenido: @Composable ColumnScope.() -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -244,8 +244,8 @@ private fun Tarjeta(contenido: @Composable ColumnScope.() -> Unit) {
 }
 
 @Composable
-private fun TarjetaAlbum(album: Album, coleccionista: String) {
-    Tarjeta {
+private fun AlbumCard(album: Album, coleccionista: String) {
+    CardContainer {
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalAlignment = Alignment.CenterVertically) {
             AlbumCover(
                 url = album.portada,
@@ -275,7 +275,7 @@ private fun TarjetaAlbum(album: Album, coleccionista: String) {
             }
         }
         if (coleccionista.isNotEmpty()) {
-            ChipEtiqueta(
+            TagChip(
                 texto = stringResource(R.string.comentar_coleccionista, coleccionista),
                 fondo = MaterialTheme.colorScheme.surfaceVariant,
                 contenido = MaterialTheme.colorScheme.onSurface
@@ -291,7 +291,7 @@ private fun datosDelAlbum(album: Album): String =
         .joinToString(" · ")
 
 @Composable
-private fun Estrellas(
+private fun Stars(
     calificacion: Int?,
     habilitadas: Boolean,
     onCalificar: (Int) -> Unit,
@@ -329,7 +329,7 @@ private fun Estrellas(
 
 /** Stars in the published summary: not actionable, and announced as a single element ("4 of 5 stars"). */
 @Composable
-private fun EstrellasSoloLectura(calificacion: Int?) {
+private fun ReadOnlyStars(calificacion: Int?) {
     val valor = calificacion ?: 0
     val descripcion = stringResource(R.string.comentar_estrella, valor)
     Row(
@@ -350,7 +350,7 @@ private fun EstrellasSoloLectura(calificacion: Int?) {
 }
 
 @Composable
-private fun TextoNivel(calificacion: Int?) {
+private fun LevelText(calificacion: Int?) {
     val nivel = nivelCalificacion(calificacion) ?: return
     Text(
         stringResource(R.string.comentar_nivel, stringResource(nivel.texto), requireNotNull(calificacion)),
@@ -407,7 +407,7 @@ private fun Opinion(estado: AddCommentUiState, onOpinion: (String) -> Unit) {
 }
 
 @Composable
-private fun ErrorPublicar() {
+private fun PublishError() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -428,7 +428,7 @@ private fun ErrorPublicar() {
 }
 
 @Composable
-private fun BotonPublicar(estado: AddCommentUiState, onPublicar: () -> Unit) {
+private fun PublishButton(estado: AddCommentUiState, onPublicar: () -> Unit) {
     Button(
         onClick = onPublicar,
         enabled = estado.puedePublicar,
@@ -455,7 +455,7 @@ private fun BotonPublicar(estado: AddCommentUiState, onPublicar: () -> Unit) {
 }
 
 @Composable
-private fun DialogoDescartar(acciones: AddCommentActions) {
+private fun DiscardDialog(acciones: AddCommentActions) {
     AlertDialog(
         onDismissRequest = acciones.onContinuarEscribiendo,
         icon = { Icon(Icons.Filled.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.primary) },
@@ -481,8 +481,8 @@ private fun DialogoDescartar(acciones: AddCommentActions) {
 // ---------- Success (D6) ----------
 
 @Composable
-private fun ContenidoPublicado(album: Album, coleccionista: String, estado: AddCommentUiState, onAceptar: () -> Unit) {
-    Tarjeta {
+private fun PublishedContent(album: Album, coleccionista: String, estado: AddCommentUiState, onAceptar: () -> Unit) {
+    CardContainer {
         Row(
             modifier = Modifier
                 .align(Alignment.CenterHorizontally)
@@ -500,12 +500,12 @@ private fun ContenidoPublicado(album: Album, coleccionista: String, estado: AddC
                 color = MaterialTheme.colorScheme.onPrimaryContainer
             )
         }
-        IlustracionPublicado(Modifier.align(Alignment.CenterHorizontally))
+        PublishedIllustration(Modifier.align(Alignment.CenterHorizontally))
         Text(
             stringResource(R.string.comentar_publicado_titulo),
             style = MaterialTheme.typography.titleLarge,
             textAlign = TextAlign.Center,
-            modifier = Modifier.fillMaxWidth().encabezado()
+            modifier = Modifier.fillMaxWidth().heading()
         )
         Text(
             stringResource(R.string.comentar_publicado_texto),
@@ -553,7 +553,7 @@ private fun ContenidoPublicado(album: Album, coleccionista: String, estado: AddC
                 }
                 Text(coleccionista, style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
             }
-            EstrellasSoloLectura(estado.calificacion)
+            ReadOnlyStars(estado.calificacion)
             Text(
                 "«${estado.opinion.trim()}»",
                 style = MaterialTheme.typography.bodyMedium,
@@ -581,7 +581,7 @@ private fun ContenidoPublicado(album: Album, coleccionista: String, estado: AddC
 
 /** Vinyl with the published mark, as in the success mockup. */
 @Composable
-private fun IlustracionPublicado(modifier: Modifier = Modifier) {
+private fun PublishedIllustration(modifier: Modifier = Modifier) {
     Box(modifier.size(152.dp)) {
         Image(
             painter = painterResource(R.drawable.vinilo_logo),
@@ -611,7 +611,7 @@ private val SesionDeEjemplo = Session.Collector(Collector(101, "Jaime Monsalve",
 private val AlbumDeEjemplo = Album(
     id = 100, nombre = "Buscando América", portada = null, descripcion = "Salsa urbana", genero = "Salsa",
     disquera = "Elektra", fechaLanzamiento = "1984-08-01T00:00:00.000Z", canciones = emptyList(),
-    artistas = listOf(Artista("Rubén Blades", null)), comentarios = emptyList()
+    artistas = listOf(Performer("Rubén Blades", null)), comentarios = emptyList()
 )
 
 private val AccionesDeEjemplo = AddCommentActions({}, {}, {}, {}, {}, {}, {})

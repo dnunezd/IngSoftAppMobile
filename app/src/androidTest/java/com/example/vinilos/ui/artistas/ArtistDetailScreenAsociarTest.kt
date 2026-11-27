@@ -7,7 +7,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
-import com.example.vinilos.data.model.AlbumArtista
+import com.example.vinilos.data.model.ArtistAlbum
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.ArtistDetail
 import com.example.vinilos.ui.theme.VinilosTheme
@@ -26,7 +26,7 @@ class ArtistDetailScreenAsociarTest {
     private val ruben = ArtistDetail(
         id = 100, nombre = "Rubén Blades", imagen = null, descripcion = null, tipo = ArtistType.MUSICO,
         fecha = null, integrantes = emptyList(),
-        albumes = listOf(AlbumArtista(100, "Buscando América", null, "1984"), AlbumArtista(101, "Poeta del pueblo", null, "1984")),
+        albumes = listOf(ArtistAlbum(100, "Buscando América", null, "1984"), ArtistAlbum(101, "Poeta del pueblo", null, "1984")),
         premios = emptyList()
     )
 

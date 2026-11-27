@@ -21,7 +21,7 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
-import com.example.vinilos.ui.ingreso.TagAtras
+import com.example.vinilos.ui.entry.TagAtras
 import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.ArtistsUiState
 import org.junit.Assert.assertEquals

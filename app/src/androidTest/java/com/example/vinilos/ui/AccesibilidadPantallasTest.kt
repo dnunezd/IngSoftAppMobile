@@ -20,11 +20,11 @@ import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.tryPerformAccessibilityChecks
 import com.example.vinilos.data.model.Album
-import com.example.vinilos.data.model.AlbumArtista
+import com.example.vinilos.data.model.ArtistAlbum
 import com.example.vinilos.data.model.AlbumSummary
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
-import com.example.vinilos.data.model.Artista
+import com.example.vinilos.data.model.Performer
 import com.example.vinilos.data.model.ArtistDetail
 import com.example.vinilos.data.model.Track
 import com.example.vinilos.data.model.Collector
@@ -32,18 +32,18 @@ import com.example.vinilos.data.model.Comment
 import com.example.vinilos.data.model.Session
 import com.example.vinilos.ui.artistas.ArtistsScreen
 import com.example.vinilos.ui.artistas.ArtistDetailScreen
-import com.example.vinilos.ui.catalogo.CatalogScreen
+import com.example.vinilos.ui.catalog.CatalogScreen
 import com.example.vinilos.ui.create.AddTrackActions
 import com.example.vinilos.ui.create.CreateAlbumActions
 import com.example.vinilos.ui.create.AddTrackScreen
 import com.example.vinilos.ui.create.CreateAlbumScreen
-import com.example.vinilos.ui.detalle.AlbumContent
-import com.example.vinilos.ui.detalle.TagAddTrackDetalle
-import com.example.vinilos.ui.detalle.TagListaDetalleAlbum
-import com.example.vinilos.ui.detalle.presentarAlbum
-import com.example.vinilos.ui.ingreso.CollectorsScreen
-import com.example.vinilos.ui.ingreso.EntryScreen
-import com.example.vinilos.ui.inicio.HomeScreen
+import com.example.vinilos.ui.detail.AlbumContent
+import com.example.vinilos.ui.detail.TagAddTrackDetalle
+import com.example.vinilos.ui.detail.TagListaDetalleAlbum
+import com.example.vinilos.ui.detail.presentarAlbum
+import com.example.vinilos.ui.entry.CollectorsScreen
+import com.example.vinilos.ui.entry.EntryScreen
+import com.example.vinilos.ui.home.HomeScreen
 import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.AddTrackUiState
 import com.example.vinilos.viewmodel.AlbumsUiState
@@ -99,7 +99,7 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
 
     private val album = Album(
         100, "Buscando América", null, "Álbum de Rubén Blades y Seis del Solar", "Salsa", "Elektra",
-        "1984-08-01", listOf(Track("Decisiones", "5:05")), listOf(Artista("Rubén Blades", null)),
+        "1984-08-01", listOf(Track("Decisiones", "5:05")), listOf(Performer("Rubén Blades", null)),
         listOf(Comment("Excelente", 5))
     )
 
@@ -111,16 +111,16 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
         val raices = rule.onAllNodes(isRoot())
         raices.fetchSemanticsNodes().indices.forEach { raices[it].tryPerformAccessibilityChecks() }
         encabezados.forEach {
-            val encabezado = hasText(it, substring = true) and isHeading()
+            val heading = hasText(it, substring = true) and isHeading()
             // In a long list (or with the font at 200%) the title may not be composed yet.
-            val yaCompuesto = rule.onAllNodes(encabezado).fetchSemanticsNodes().isNotEmpty()
+            val yaCompuesto = rule.onAllNodes(heading).fetchSemanticsNodes().isNotEmpty()
             if (!yaCompuesto && rule.onAllNodes(hasScrollToNodeAction()).fetchSemanticsNodes().isNotEmpty()) {
-                rule.onAllNodes(hasScrollToNodeAction())[0].performScrollToNode(encabezado)
+                rule.onAllNodes(hasScrollToNodeAction())[0].performScrollToNode(heading)
             }
             // There may be several with the same text (bar title and list title): one is enough.
             assertTrue(
                 "Falta el encabezado \"$it\"",
-                rule.onAllNodes(encabezado).fetchSemanticsNodes().isNotEmpty()
+                rule.onAllNodes(heading).fetchSemanticsNodes().isNotEmpty()
             )
         }
     }
@@ -262,7 +262,7 @@ class AccesibilidadPantallasTest(private val escalaDeFuente: Float) {
             estado = ArtistDetailUiState.Success(
                 ArtistDetail(
                     101, "Queen", null, "Banda británica", ArtistType.BANDA, "1970-01-01T00:00:00.000Z",
-                    emptyList(), listOf(AlbumArtista(100, "Bailando con lobos", null, "2020")), emptyList()
+                    emptyList(), listOf(ArtistAlbum(100, "Bailando con lobos", null, "2020")), emptyList()
                 )
             ),
             onSeleccionarAlbum = {}, onReintentar = {}, onAtras = {}

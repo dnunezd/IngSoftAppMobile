@@ -16,10 +16,10 @@ import androidx.room.Room
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import com.example.vinilos.data.local.VinilosDb
-import com.example.vinilos.ui.catalogo.tagAlbum
-import com.example.vinilos.ui.ingreso.TagEntrarVisitante
-import com.example.vinilos.ui.inicio.TagInicio
-import com.example.vinilos.ui.inicio.TagVerAlbumes
+import com.example.vinilos.ui.catalog.tagAlbum
+import com.example.vinilos.ui.entry.TagEntrarVisitante
+import com.example.vinilos.ui.home.TagInicio
+import com.example.vinilos.ui.home.TagVerAlbumes
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.SocketPolicy

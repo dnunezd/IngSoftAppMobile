@@ -46,9 +46,9 @@ import com.example.vinilos.ui.artistas.TagTipoArtistDetail
 import com.example.vinilos.ui.artistas.tagAlbumArtista
 import com.example.vinilos.ui.artistas.tagArtista
 import com.example.vinilos.ui.artistas.tagIntegrante
-import com.example.vinilos.ui.ingreso.TagEntrarVisitante
-import com.example.vinilos.ui.inicio.TagInicio
-import com.example.vinilos.ui.inicio.TagVerArtistas
+import com.example.vinilos.ui.entry.TagEntrarVisitante
+import com.example.vinilos.ui.home.TagInicio
+import com.example.vinilos.ui.home.TagVerArtistas
 import kotlinx.coroutines.runBlocking
 import okhttp3.mockwebserver.Dispatcher
 import okhttp3.mockwebserver.MockResponse

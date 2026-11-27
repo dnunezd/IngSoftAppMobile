@@ -4,9 +4,9 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.example.vinilos.data.model.AlbumArtista
+import com.example.vinilos.data.model.ArtistAlbum
 import com.example.vinilos.data.model.ArtistType
-import com.example.vinilos.data.model.IntegranteArtista
+import com.example.vinilos.data.model.ArtistMember
 import com.example.vinilos.data.model.ArtistPrize
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -46,8 +46,8 @@ class ArtistDaoTest {
         imagen = null,
         descripcion = "Banda británica",
         fecha = "1970-01-01T00:00:00.000Z",
-        integrantes = listOf(IntegranteArtista(1, "Freddie Mercury", null)),
-        albumes = listOf(AlbumArtista(100, "A Night at the Opera", "https://img.example/100.jpg", "1975")),
+        integrantes = listOf(ArtistMember(1, "Freddie Mercury", null)),
+        albumes = listOf(ArtistAlbum(100, "A Night at the Opera", "https://img.example/100.jpg", "1975")),
         premios = listOf(ArtistPrize(7, "Grammy", "Academia", null))
     )
 

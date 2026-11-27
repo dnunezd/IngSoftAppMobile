@@ -97,8 +97,8 @@ import com.example.vinilos.data.model.anioUtc
 import com.example.vinilos.data.model.fechaSeleccionable
 import com.example.vinilos.data.model.fechaVisible
 import com.example.vinilos.data.model.hoyEnUtc
-import com.example.vinilos.ui.catalogo.HeaderWithRole
-import com.example.vinilos.ui.detalle.AlbumCover
+import com.example.vinilos.ui.catalog.HeaderWithRole
+import com.example.vinilos.ui.detail.AlbumCover
 import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.AlbumField
 import com.example.vinilos.viewmodel.CreateAlbumUiState
@@ -106,8 +106,8 @@ import com.example.vinilos.viewmodel.EnvioAlbum
 import com.example.vinilos.viewmodel.FieldError
 import com.example.vinilos.viewmodel.LimiteDescripcion
 import com.example.vinilos.viewmodel.portadaValida
-import com.example.vinilos.ui.ingreso.decorativo
-import com.example.vinilos.ui.ingreso.encabezado
+import com.example.vinilos.ui.entry.decorative
+import com.example.vinilos.ui.entry.heading
 import java.util.Locale
 import java.util.TimeZone
 import com.example.vinilos.ui.idiomaDeLaApp
@@ -189,21 +189,21 @@ fun CreateAlbumScreen(
                     .padding(horizontal = 20.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Titular()
-                if (estado.errores.isNotEmpty()) AvisoCampos()
-                TarjetaCampos(estado, acciones)
-                if (estado.envio == EnvioAlbum.Fallido) ErrorEnvio()
-                Botones(estado, acciones)
+                Header()
+                if (estado.errores.isNotEmpty()) FieldsNotice()
+                FieldsCard(estado, acciones)
+                if (estado.envio == EnvioAlbum.Fallido) SubmitError()
+                Buttons(estado, acciones)
             }
         }
     }
 }
 
 @Composable
-private fun Titular() {
+private fun Header() {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(
-            modifier = Modifier.encabezado(),
+            modifier = Modifier.heading(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -231,8 +231,8 @@ private fun Titular() {
 }
 
 @Composable
-private fun AvisoCampos() {
-    TarjetaError(
+private fun FieldsNotice() {
+    ErrorCard(
         titulo = stringResource(R.string.crear_aviso_titulo),
         detalle = stringResource(R.string.crear_aviso_detalle),
         modifier = Modifier.testTag(TagAvisoCampos)
@@ -240,15 +240,15 @@ private fun AvisoCampos() {
 }
 
 @Composable
-private fun ErrorEnvio() {
-    TarjetaError(
+private fun SubmitError() {
+    ErrorCard(
         titulo = stringResource(R.string.crear_error_envio),
         modifier = Modifier.testTag(TagErrorEnvio)
     )
 }
 
 @Composable
-private fun TarjetaError(titulo: String, modifier: Modifier = Modifier, detalle: String? = null) {
+private fun ErrorCard(titulo: String, modifier: Modifier = Modifier, detalle: String? = null) {
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -280,7 +280,7 @@ private fun TarjetaError(titulo: String, modifier: Modifier = Modifier, detalle:
 }
 
 @Composable
-private fun TarjetaCampos(estado: CreateAlbumUiState, acciones: CreateAlbumActions) {
+private fun FieldsCard(estado: CreateAlbumUiState, acciones: CreateAlbumActions) {
     val habilitado = !estado.enviando
     Column(
         modifier = Modifier
@@ -290,8 +290,8 @@ private fun TarjetaCampos(estado: CreateAlbumUiState, acciones: CreateAlbumActio
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        Campo(stringResource(R.string.crear_nombre), estado, AlbumField.Nombre) {
-            CampoTexto(
+        Field(stringResource(R.string.crear_nombre), estado, AlbumField.Nombre) {
+            InputTextField(
                 etiqueta = stringResource(R.string.crear_campo_anuncio, stringResource(R.string.crear_nombre)),
                 valor = estado.nombre,
                 onCambio = acciones.onNombre,
@@ -306,9 +306,9 @@ private fun TarjetaCampos(estado: CreateAlbumUiState, acciones: CreateAlbumActio
                 modifier = Modifier.testTag(TagNombreAlbum)
             )
         }
-        Campo(stringResource(R.string.crear_portada), estado, AlbumField.Portada) {
+        Field(stringResource(R.string.crear_portada), estado, AlbumField.Portada) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                CampoTexto(
+                InputTextField(
                     etiqueta = stringResource(R.string.crear_campo_anuncio, stringResource(R.string.crear_portada)),
                     valor = estado.portada,
                     onCambio = acciones.onPortada,
@@ -338,8 +338,8 @@ private fun TarjetaCampos(estado: CreateAlbumUiState, acciones: CreateAlbumActio
                 }
             }
         }
-        Campo(stringResource(R.string.crear_fecha), estado, AlbumField.Fecha) {
-            CampoFecha(
+        Field(stringResource(R.string.crear_fecha), estado, AlbumField.Fecha) {
+            DateField(
                 etiqueta = stringResource(R.string.crear_campo_anuncio, stringResource(R.string.crear_fecha)),
                 fechaMillis = estado.fechaMillis,
                 conError = AlbumField.Fecha in estado.errores,
@@ -347,8 +347,8 @@ private fun TarjetaCampos(estado: CreateAlbumUiState, acciones: CreateAlbumActio
                 onFecha = acciones.onFecha
             )
         }
-        Campo(stringResource(R.string.crear_genero), estado, AlbumField.Genero) {
-            CampoOpciones(
+        Field(stringResource(R.string.crear_genero), estado, AlbumField.Genero) {
+            OptionsField(
                 etiqueta = stringResource(R.string.crear_campo_anuncio, stringResource(R.string.crear_genero)),
                 valor = estado.genero,
                 opciones = GenerosAlbum,
@@ -360,8 +360,8 @@ private fun TarjetaCampos(estado: CreateAlbumUiState, acciones: CreateAlbumActio
                 tag = TagGeneroAlbum
             )
         }
-        Campo(stringResource(R.string.crear_disquera), estado, AlbumField.Disquera) {
-            CampoOpciones(
+        Field(stringResource(R.string.crear_disquera), estado, AlbumField.Disquera) {
+            OptionsField(
                 etiqueta = stringResource(R.string.crear_campo_anuncio, stringResource(R.string.crear_disquera)),
                 valor = estado.disquera,
                 opciones = DisquerasAlbum,
@@ -373,7 +373,7 @@ private fun TarjetaCampos(estado: CreateAlbumUiState, acciones: CreateAlbumActio
                 tag = TagDisqueraAlbum
             )
         }
-        Campo(
+        Field(
             etiqueta = stringResource(R.string.crear_descripcion),
             estado = estado,
             campo = AlbumField.Descripcion,
@@ -386,7 +386,7 @@ private fun TarjetaCampos(estado: CreateAlbumUiState, acciones: CreateAlbumActio
                 )
             }
         ) {
-            CampoDescripcion(
+            DescriptionField(
                 etiqueta = stringResource(R.string.crear_campo_anuncio, stringResource(R.string.crear_descripcion)),
                 valor = estado.descripcion,
                 onCambio = acciones.onDescripcion,
@@ -399,7 +399,7 @@ private fun TarjetaCampos(estado: CreateAlbumUiState, acciones: CreateAlbumActio
 
 /** Label with an asterisk, the field's control, and its error message. */
 @Composable
-private fun Campo(
+private fun Field(
     etiqueta: String,
     estado: CreateAlbumUiState,
     campo: AlbumField,
@@ -416,7 +416,7 @@ private fun Campo(
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.onSurface,
                 // The field already announces its label and that it's required: no need to read it separately.
-                modifier = Modifier.decorativo()
+                modifier = Modifier.decorative()
             )
             Spacer(Modifier.weight(1f))
             extra()
@@ -455,7 +455,7 @@ private fun bordeDe(conError: Boolean): Color =
 
 /** Common pill shape for fields, with the same look as the artist search. */
 @Composable
-private fun Pildora(
+private fun Pill(
     conError: Boolean,
     modifier: Modifier = Modifier,
     contenido: @Composable RowScope.() -> Unit
@@ -476,7 +476,7 @@ private fun Pildora(
 }
 
 @Composable
-private fun IconoCampo(icono: Int) {
+private fun FieldIcon(icono: Int) {
     Icon(
         painter = painterResource(icono),
         contentDescription = null,
@@ -486,7 +486,7 @@ private fun IconoCampo(icono: Int) {
 }
 
 @Composable
-private fun TextoIndicacion(texto: String) {
+private fun HintText(texto: String) {
     Text(
         text = texto,
         style = MaterialTheme.typography.bodyLarge,
@@ -495,7 +495,7 @@ private fun TextoIndicacion(texto: String) {
 }
 
 @Composable
-private fun CampoTexto(
+private fun InputTextField(
     etiqueta: String,
     valor: String,
     onCambio: (String) -> Unit,
@@ -518,10 +518,10 @@ private fun CampoTexto(
             .fillMaxWidth()
             .semantics { contentDescription = etiqueta },
         decorationBox = { campo ->
-            Pildora(conError) {
-                IconoCampo(icono)
+            Pill(conError) {
+                FieldIcon(icono)
                 Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-                    if (valor.isEmpty()) TextoIndicacion(indicacion)
+                    if (valor.isEmpty()) HintText(indicacion)
                     campo()
                 }
             }
@@ -530,7 +530,7 @@ private fun CampoTexto(
 }
 
 @Composable
-private fun CampoDescripcion(
+private fun DescriptionField(
     etiqueta: String,
     valor: String,
     onCambio: (String) -> Unit,
@@ -574,7 +574,7 @@ private fun CampoDescripcion(
 
 /** Read-only field: the date can only be chosen from the picker. */
 @Composable
-private fun CampoFecha(
+private fun DateField(
     etiqueta: String,
     fechaMillis: Long?,
     conError: Boolean,
@@ -584,7 +584,7 @@ private fun CampoFecha(
     var abierto by rememberSaveable { mutableStateOf(false) }
     // The description includes the value: without it TalkBack would only read the label, not the chosen date.
     val descripcion = "$etiqueta, ${fechaMillis?.let { fechaVisible(it) } ?: stringResource(R.string.crear_fecha_indicacion)}"
-    Pildora(
+    Pill(
         conError = conError,
         modifier = Modifier
             .clip(CircleShape)
@@ -614,11 +614,11 @@ private fun CampoFecha(
                 color = MaterialTheme.colorScheme.onSurface
             )
         } else {
-            TextoIndicacion(stringResource(R.string.crear_fecha_indicacion))
+            HintText(stringResource(R.string.crear_fecha_indicacion))
         }
     }
     if (abierto) {
-        SelectorFecha(
+        DateSelector(
             fechaMillis = fechaMillis,
             onAceptar = {
                 onFecha(it)
@@ -634,13 +634,13 @@ private fun CampoFecha(
  * including its state, stays inside [EnIdiomaDeLaApp]. The Dialog's content is wrapped again.
  */
 @Composable
-private fun SelectorFecha(fechaMillis: Long?, onAceptar: (Long) -> Unit, onCerrar: () -> Unit) {
-    EnAppLanguage { SelectorFechaEnIdioma(fechaMillis, onAceptar, onCerrar) }
+private fun DateSelector(fechaMillis: Long?, onAceptar: (Long) -> Unit, onCerrar: () -> Unit) {
+    InAppLanguage { LocalizedDateSelector(fechaMillis, onAceptar, onCerrar) }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SelectorFechaEnIdioma(fechaMillis: Long?, onAceptar: (Long) -> Unit, onCerrar: () -> Unit) {
+private fun LocalizedDateSelector(fechaMillis: Long?, onAceptar: (Long) -> Unit, onCerrar: () -> Unit) {
     val hoy = remember { hoyEnUtc(System.currentTimeMillis(), TimeZone.getDefault()) }
     val selector = rememberDatePickerState(
         initialSelectedDateMillis = fechaMillis,
@@ -657,7 +657,7 @@ private fun SelectorFechaEnIdioma(fechaMillis: Long?, onAceptar: (Long) -> Unit,
     // Dialog opens another composition that provides the device's context and resources again: the
     // app's language applies inside it too, or else Material's texts would come out in the device's language.
     Dialog(onDismissRequest = onCerrar, properties = DialogProperties(usePlatformDefaultWidth = false)) {
-        EnAppLanguage {
+        InAppLanguage {
             Surface(
                 shape = RoundedCornerShape(28.dp),
                 color = MaterialTheme.colorScheme.surface,
@@ -714,7 +714,7 @@ private fun SelectorFechaEnIdioma(fechaMillis: Long?, onAceptar: (Long) -> Unit,
  */
 @SuppressLint("AppBundleLocaleChanges")
 @Composable
-private fun EnAppLanguage(contenido: @Composable () -> Unit) {
+private fun InAppLanguage(contenido: @Composable () -> Unit) {
     val configuracion = LocalConfiguration.current
     val contexto = LocalContext.current
     val idioma = idiomaDeLaApp()
@@ -738,7 +738,7 @@ private fun EnAppLanguage(contenido: @Composable () -> Unit) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun CampoOpciones(
+private fun OptionsField(
     etiqueta: String,
     valor: String?,
     opciones: List<String>,
@@ -755,7 +755,7 @@ private fun CampoOpciones(
         expanded = abierto,
         onExpandedChange = { if (habilitado) abierto = it }
     ) {
-        Pildora(
+        Pill(
             conError = conError,
             modifier = Modifier
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, habilitado)
@@ -772,7 +772,7 @@ private fun CampoOpciones(
                     }
                 }
         ) {
-            IconoCampo(icono)
+            FieldIcon(icono)
             Box(modifier = Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
                 if (valor != null) {
                     Text(
@@ -781,7 +781,7 @@ private fun CampoOpciones(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                 } else {
-                    TextoIndicacion(indicacion)
+                    HintText(indicacion)
                 }
             }
             Icon(
@@ -805,7 +805,7 @@ private fun CampoOpciones(
 }
 
 @Composable
-private fun Botones(estado: CreateAlbumUiState, acciones: CreateAlbumActions) {
+private fun Buttons(estado: CreateAlbumUiState, acciones: CreateAlbumActions) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Button(
             onClick = acciones.onCrear,

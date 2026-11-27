@@ -22,7 +22,7 @@ import com.example.vinilos.RepositorioArtistasFalso
 import com.example.vinilos.RepositorioFalso
 import com.example.vinilos.RepositorioFavoritosFalso
 import com.example.vinilos.data.model.Album
-import com.example.vinilos.data.model.AlbumArtista
+import com.example.vinilos.data.model.ArtistAlbum
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.ArtistDetail
@@ -48,27 +48,27 @@ import com.example.vinilos.ui.artistas.TagNombreArtistDetail
 import com.example.vinilos.ui.artistas.TagTipoArtistDetail
 import com.example.vinilos.ui.artistas.tagAlbumArtista
 import com.example.vinilos.ui.artistas.tagArtista
-import com.example.vinilos.ui.catalogo.TagCatalogo
-import com.example.vinilos.ui.catalogo.TagCuadriculaCatalogo
-import com.example.vinilos.ui.catalogo.TagRolActivo
-import com.example.vinilos.ui.catalogo.tagAlbum
+import com.example.vinilos.ui.catalog.TagCatalogo
+import com.example.vinilos.ui.catalog.TagCuadriculaCatalogo
+import com.example.vinilos.ui.catalog.TagRolActivo
+import com.example.vinilos.ui.catalog.tagAlbum
 import com.example.vinilos.ui.create.TagCancelarAddTrack
 import com.example.vinilos.ui.create.TagDuracionTrack
 import com.example.vinilos.ui.create.TagGuardarTrack
 import com.example.vinilos.ui.create.TagNombreTrack
-import com.example.vinilos.ui.detalle.TagAddTrackDetalle
-import com.example.vinilos.ui.detalle.TagListaDetalleAlbum
+import com.example.vinilos.ui.detail.TagAddTrackDetalle
+import com.example.vinilos.ui.detail.TagListaDetalleAlbum
 import com.example.vinilos.data.model.AlbumSummary
-import com.example.vinilos.ui.ingreso.TagAtras
-import com.example.vinilos.ui.ingreso.TagBuscador
-import com.example.vinilos.ui.ingreso.TagEntrarColeccionista
-import com.example.vinilos.ui.ingreso.TagEntrarVisitante
-import com.example.vinilos.ui.ingreso.TagReintentar
-import com.example.vinilos.ui.ingreso.TagVisitanteError
-import com.example.vinilos.ui.ingreso.tagColeccionista
-import com.example.vinilos.ui.inicio.TagInicio
-import com.example.vinilos.ui.inicio.TagVerAlbumes
-import com.example.vinilos.ui.inicio.TagVerArtistas
+import com.example.vinilos.ui.entry.TagAtras
+import com.example.vinilos.ui.entry.TagBuscador
+import com.example.vinilos.ui.entry.TagEntrarColeccionista
+import com.example.vinilos.ui.entry.TagEntrarVisitante
+import com.example.vinilos.ui.entry.TagReintentar
+import com.example.vinilos.ui.entry.TagVisitanteError
+import com.example.vinilos.ui.entry.tagColeccionista
+import com.example.vinilos.ui.home.TagInicio
+import com.example.vinilos.ui.home.TagVerAlbumes
+import com.example.vinilos.ui.home.TagVerArtistas
 import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.SessionViewModel
 import org.junit.Assert.assertEquals
@@ -91,7 +91,7 @@ class VinilosNavHostTest {
     private val ruben = Artist(100, "Rubén Blades Bellido de Luna", null, ArtistType.MUSICO)
     private val detalleQueen = ArtistDetail(
         101, "Queen", null, "Banda británica", ArtistType.BANDA, "1970-01-01T00:00:00.000Z", emptyList(),
-        listOf(AlbumArtista(100, "Bailando con lobos", null, "2020")), emptyList()
+        listOf(ArtistAlbum(100, "Bailando con lobos", null, "2020")), emptyList()
     )
     private val detalleRuben = ArtistDetail(
         100, "Rubén Blades Bellido de Luna", null, "Cantante", ArtistType.MUSICO, "1948-07-16T00:00:00.000Z",
@@ -506,7 +506,7 @@ class VinilosNavHostTest {
 
         // What the backend would respond when the detail is queried again.
         artistas.detalles = artistas.detalles + ((ArtistType.MUSICO to 100) to Result.success(
-            detalleRuben.copy(albumes = listOf(AlbumArtista(100, "Bailando con lobos", null, "2020")))
+            detalleRuben.copy(albumes = listOf(ArtistAlbum(100, "Bailando con lobos", null, "2020")))
         ))
         rule.onNodeWithTag(TagListaAsociar).performScrollToNode(hasTestTag(tagAlbumAsociable(100)))
         rule.onNodeWithTag(tagAlbumAsociable(100)).performClick()

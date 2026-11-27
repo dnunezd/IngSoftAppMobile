@@ -1,7 +1,7 @@
 package com.example.vinilos.data.repository
 
 import com.example.vinilos.data.model.NewComment
-import com.example.vinilos.data.remote.ColeccionistaRefDto
+import com.example.vinilos.data.remote.CollectorRefDto
 import com.example.vinilos.data.remote.CommentApi
 import com.example.vinilos.data.remote.NewCommentDto
 import com.example.vinilos.data.remote.ServiceAdapter
@@ -30,6 +30,6 @@ class CommentRepositoryImpl(
     private fun NewComment.aDto() = NewCommentDto(
         description = descripcion,
         rating = calificacion,
-        collector = ColeccionistaRefDto(coleccionistaId)
+        collector = CollectorRefDto(coleccionistaId)
     )
 }

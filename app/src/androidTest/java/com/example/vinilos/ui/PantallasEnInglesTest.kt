@@ -32,10 +32,10 @@ import com.example.vinilos.ui.comentar.AddCommentActions
 import com.example.vinilos.ui.comentar.AddCommentScreen
 import com.example.vinilos.ui.create.CreateAlbumActions
 import com.example.vinilos.ui.create.CreateAlbumScreen
-import com.example.vinilos.ui.detalle.AlbumContent
-import com.example.vinilos.ui.detalle.presentarAlbum
-import com.example.vinilos.ui.ingreso.EntryScreen
-import com.example.vinilos.ui.inicio.HomeScreen
+import com.example.vinilos.ui.detail.AlbumContent
+import com.example.vinilos.ui.detail.presentarAlbum
+import com.example.vinilos.ui.entry.EntryScreen
+import com.example.vinilos.ui.home.HomeScreen
 import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.ArtistDetailUiState
 import com.example.vinilos.viewmodel.CargaAlbum

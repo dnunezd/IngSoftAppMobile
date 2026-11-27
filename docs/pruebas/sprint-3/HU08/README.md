@@ -2,7 +2,7 @@
 
 ## Pruebas E2E (T08-5)
 
-Clase `AgregarCancionE2ETest` (cambio de OpenSpec [`add-e2e-agregar-tracks`](../../../../openspec/changes/add-e2e-agregar-tracks)). Recorre la app desde el ingreso, como la persona, y cubre todos los casos que pide la [T08-5](https://github.com/dnunezd/IngSoftAppMobile/wiki/HU08). ESC01, ESC02 y ESC04 a ESC07 van contra BackVynils; como agregan canciones, se corren contra el backend **local**. Los del Coleccionista usan un álbum propio (`POST /albums`) que se borra al terminar con sus canciones; ESC07 lo borra a mitad de la prueba para guardar sobre un álbum ya eliminado. ESC03 usa `MockWebServer` para provocar el error con el backend caído.
+Clase `AddTrackE2ETest` (cambio de OpenSpec [`add-e2e-agregar-tracks`](../../../../openspec/changes/add-e2e-agregar-tracks)). Recorre la app desde el ingreso, como la persona, y cubre todos los casos que pide la [T08-5](https://github.com/dnunezd/IngSoftAppMobile/wiki/HU08). ESC01, ESC02 y ESC04 a ESC07 van contra BackVynils; como agregan canciones, se corren contra el backend **local**. Los del Coleccionista usan un álbum propio (`POST /albums`) que se borra al terminar con sus canciones; ESC07 lo borra a mitad de la prueba para guardar sobre un álbum ya eliminado. ESC03 usa `MockWebServer` para provocar el error con el backend caído.
 
 | ID         | Descripción del escenario                                                                                      | Resultado esperado                                                                                                                                                                                                                       | Backend          | Evidencia                 |
 |------------|----------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------|---------------------------|
@@ -55,6 +55,6 @@ Samsung SM-S938B (Android 17), 2026-11-25, contra BackVynils local: `OK (13 test
 ./gradlew installDebug installDebugAndroidTest -PbaseUrl=http://localhost:3000/   # BackVynils local
 adb reverse tcp:3000 tcp:3000                                                     # solo en un teléfono
 adb shell rm -rf /sdcard/Android/data/com.example.vinilos/files/e2e-evidencia
-adb shell am instrument -w -e class com.example.vinilos.AgregarCancionE2ETest com.example.vinilos.test/com.example.vinilos.VinilosTestRunner
+adb shell am instrument -w -e class com.example.vinilos.AddTrackE2ETest com.example.vinilos.test/com.example.vinilos.VinilosTestRunner
 adb pull /sdcard/Android/data/com.example.vinilos/files/e2e-evidencia ./e2e-evidencia
 ```

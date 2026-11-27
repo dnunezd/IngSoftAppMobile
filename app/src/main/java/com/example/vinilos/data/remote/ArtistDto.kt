@@ -52,7 +52,7 @@ data class PremiacionArtistaDto(
 )
 
 /** Element of `GET /performerprizes`: its [id] is the award's, not the prize's. */
-data class PremiacionDto(
+data class AwardDto(
     val id: Int?,
     val prize: PrizeDto?
 )

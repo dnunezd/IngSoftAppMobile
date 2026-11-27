@@ -1,10 +1,10 @@
 package com.example.vinilos.data.local
 
-import com.example.vinilos.data.model.AlbumArtista
-import com.example.vinilos.data.model.Artista
+import com.example.vinilos.data.model.ArtistAlbum
+import com.example.vinilos.data.model.Performer
 import com.example.vinilos.data.model.Track
 import com.example.vinilos.data.model.Comment
-import com.example.vinilos.data.model.IntegranteArtista
+import com.example.vinilos.data.model.ArtistMember
 import com.example.vinilos.data.model.ArtistPrize
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -34,7 +34,7 @@ class ConversoresTest {
 
     @Test
     fun artistasDelAlbumConImagenNula() {
-        val artistas = listOf(Artista("Rubén Blades", null), Artista("Queen", "https://img.example/q.jpg"))
+        val artistas = listOf(Performer("Rubén Blades", null), Performer("Queen", "https://img.example/q.jpg"))
         assertEquals(artistas, conversores.aArtistas(conversores.deArtistas(artistas)))
     }
 
@@ -46,13 +46,13 @@ class ConversoresTest {
 
     @Test
     fun integrantes() {
-        val integrantes = listOf(IntegranteArtista(1, "Freddie Mercury", null), IntegranteArtista(2, "Brian May", "x"))
+        val integrantes = listOf(ArtistMember(1, "Freddie Mercury", null), ArtistMember(2, "Brian May", "x"))
         assertEquals(integrantes, conversores.aIntegrantes(conversores.deIntegrantes(integrantes)))
     }
 
     @Test
     fun albumesDelArtistaConPortadaYAnioNulos() {
-        val albumes = listOf(AlbumArtista(100, "A Night at the Opera", null, null), AlbumArtista(101, "Jazz", "p", "1978"))
+        val albumes = listOf(ArtistAlbum(100, "A Night at the Opera", null, null), ArtistAlbum(101, "Jazz", "p", "1978"))
         assertEquals(albumes, conversores.aAlbumesArtista(conversores.deAlbumesArtista(albumes)))
     }
 

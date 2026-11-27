@@ -4,7 +4,7 @@ import com.example.vinilos.MainDispatcherRule
 import com.example.vinilos.data.model.Album
 import com.example.vinilos.data.model.NewAlbum
 import com.example.vinilos.data.model.AlbumSummary
-import com.example.vinilos.data.model.Artista
+import com.example.vinilos.data.model.Performer
 import com.example.vinilos.data.model.Track
 import com.example.vinilos.data.remote.LoadError
 import com.example.vinilos.data.repository.AlbumNotAvailable
@@ -165,7 +165,7 @@ class AddTrackViewModelTest {
             disquera = "EMI",
             fechaLanzamiento = "1976-12-10T00:00:00.000Z",
             canciones = emptyList(),
-            artistas = listOf(Artista("Queen", null)),
+            artistas = listOf(Performer("Queen", null)),
             comentarios = emptyList()
         )
 

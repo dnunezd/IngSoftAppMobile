@@ -70,7 +70,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.vinilos.R
 import com.example.vinilos.data.model.AlbumSummary
-import com.example.vinilos.ui.detalle.AlbumCover
+import com.example.vinilos.ui.detail.AlbumCover
 import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.AssociateAlbumUiState
 import com.example.vinilos.viewmodel.ListadoAsociable
@@ -99,7 +99,7 @@ fun tagYaAsociado(id: Int) = "asociar_ya_asociado_$id"
 
 private val EsquinaFila = RoundedCornerShape(16.dp)
 private val EsquinaPortada = RoundedCornerShape(12.dp)
-private val Pildora = RoundedCornerShape(50)
+private val Pill = RoundedCornerShape(50)
 
 /** Actions for the dialog to add an album to an artist (HU15). */
 data class AssociateAlbumActions(
@@ -131,12 +131,12 @@ fun AssociateAlbumDialog(estado: AssociateAlbumUiState, nombreArtista: String, a
         // The visible handle still measures 32 dp; the margin brings its touch target to 48 × 48 dp.
         dragHandle = { BottomSheetDefaults.DragHandle(modifier = Modifier.padding(horizontal = 8.dp)) }
     ) {
-        ContenidoAsociar(estado, nombreArtista, acciones)
+        AssociateContent(estado, nombreArtista, acciones)
     }
 }
 
 @Composable
-private fun ContenidoAsociar(estado: AssociateAlbumUiState, nombreArtista: String, acciones: AssociateAlbumActions) {
+private fun AssociateContent(estado: AssociateAlbumUiState, nombreArtista: String, acciones: AssociateAlbumActions) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -145,17 +145,17 @@ private fun ContenidoAsociar(estado: AssociateAlbumUiState, nombreArtista: Strin
             .navigationBarsPadding(),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Encabezado(nombreArtista, cerrarActivo = !estado.asociando, onCerrar = acciones.onCancelar)
-        BarraBusqueda(estado.busqueda, acciones.onBuscar)
-        Listado(estado, acciones)
-        if (estado.errorAlAsociar) ErrorAlAsociar()
-        Botones(estado, acciones)
+        Header(nombreArtista, cerrarActivo = !estado.asociando, onCerrar = acciones.onCancelar)
+        SearchBar(estado.busqueda, acciones.onBuscar)
+        Listing(estado, acciones)
+        if (estado.errorAlAsociar) AssociateError()
+        Buttons(estado, acciones)
         Spacer(Modifier.size(4.dp))
     }
 }
 
 @Composable
-private fun Encabezado(nombreArtista: String, cerrarActivo: Boolean, onCerrar: () -> Unit) {
+private fun Header(nombreArtista: String, cerrarActivo: Boolean, onCerrar: () -> Unit) {
     // Initial focus goes to the title: on Android 8 or earlier, the dialog would auto-focus the search field and open the
     // keyboard, leaving the list without space. Also, TalkBack announces first which artist it's being added to.
     val foco = remember { FocusRequester() }
@@ -195,7 +195,7 @@ private fun Encabezado(nombreArtista: String, cerrarActivo: Boolean, onCerrar: (
 }
 
 @Composable
-private fun BarraBusqueda(texto: String, onBuscar: (String) -> Unit) {
+private fun SearchBar(texto: String, onBuscar: (String) -> Unit) {
     TextField(
         value = texto,
         onValueChange = onBuscar,
@@ -211,7 +211,7 @@ private fun BarraBusqueda(texto: String, onBuscar: (String) -> Unit) {
                 }
             }
         },
-        shape = Pildora,
+        shape = Pill,
         colors = TextFieldDefaults.colors(
             focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
             unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
@@ -225,7 +225,7 @@ private fun BarraBusqueda(texto: String, onBuscar: (String) -> Unit) {
 }
 
 @Composable
-private fun ColumnScope.Listado(estado: AssociateAlbumUiState, acciones: AssociateAlbumActions) {
+private fun ColumnScope.Listing(estado: AssociateAlbumUiState, acciones: AssociateAlbumActions) {
     when (estado.listado) {
         ListadoAsociable.Loading -> Row(
             modifier = Modifier
@@ -260,8 +260,8 @@ private fun ColumnScope.Listado(estado: AssociateAlbumUiState, acciones: Associa
             TextButton(onClick = acciones.onReintentarCarga) { Text(stringResource(R.string.asociar_reintentar)) }
         }
         is ListadoAsociable.Listo -> {
-            if (estado.sinDisponibles) Mensaje(R.string.asociar_sin_albumes, TagEmptyAsociar)
-            if (estado.sinResultados) Mensaje(R.string.asociar_sin_resultados, TagSinResultadosAsociar)
+            if (estado.sinDisponibles) Message(R.string.asociar_sin_albumes, TagEmptyAsociar)
+            if (estado.sinResultados) Message(R.string.asociar_sin_resultados, TagSinResultadosAsociar)
             LazyColumn(
                 modifier = Modifier
                     .weight(1f, fill = false)
@@ -270,7 +270,7 @@ private fun ColumnScope.Listado(estado: AssociateAlbumUiState, acciones: Associa
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(estado.visibles, key = { it.id }) { album ->
-                    FilaAsociable(
+                    AssociableRow(
                         album = album,
                         yaAsociado = estado.yaAsociado(album.id),
                         elegido = estado.seleccionado == album.id,
@@ -285,7 +285,7 @@ private fun ColumnScope.Listado(estado: AssociateAlbumUiState, acciones: Associa
 
 /** Centered message with the disc icon, like the empty blocks in the detail screen. */
 @Composable
-private fun Mensaje(@StringRes texto: Int, tag: String) {
+private fun Message(@StringRes texto: Int, tag: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -316,7 +316,7 @@ private fun Mensaje(@StringRes texto: Int, tag: String) {
  * "Already associated" label; its text keeps full color to avoid losing contrast (D7).
  */
 @Composable
-private fun FilaAsociable(
+private fun AssociableRow(
     album: AlbumSummary,
     yaAsociado: Boolean,
     elegido: Boolean,
@@ -375,9 +375,9 @@ private fun FilaAsociable(
                 )
             }
             // With enlarged font the label goes below the year: next to it, it left the title truncated.
-            if (yaAsociado && fuenteAmpliada) EtiquetaYaAsociado(album.id)
+            if (yaAsociado && fuenteAmpliada) AlreadyAssociatedTag(album.id)
         }
-        if (yaAsociado && !fuenteAmpliada) EtiquetaYaAsociado(album.id)
+        if (yaAsociado && !fuenteAmpliada) AlreadyAssociatedTag(album.id)
         RadioButton(
             selected = elegido,
             onClick = null,
@@ -388,7 +388,7 @@ private fun FilaAsociable(
 }
 
 @Composable
-private fun ErrorAlAsociar() {
+private fun AssociateError() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -415,13 +415,13 @@ private fun ErrorAlAsociar() {
 }
 
 @Composable
-private fun Botones(estado: AssociateAlbumUiState, acciones: AssociateAlbumActions) {
+private fun Buttons(estado: AssociateAlbumUiState, acciones: AssociateAlbumActions) {
     val descripcionAsociando = stringResource(R.string.asociar_asociando)
     Button(
         onClick = acciones.onAsociar,
         enabled = estado.puedeAsociar,
         colors = coloresBotonPrincipal(enviando = estado.asociando),
-        shape = Pildora,
+        shape = Pill,
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 52.dp)
@@ -449,7 +449,7 @@ private fun Botones(estado: AssociateAlbumUiState, acciones: AssociateAlbumActio
     Button(
         onClick = acciones.onCancelar,
         enabled = !estado.asociando,
-        shape = Pildora,
+        shape = Pill,
         colors = ButtonDefaults.buttonColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant,
             contentColor = MaterialTheme.colorScheme.onSurface
@@ -472,20 +472,20 @@ private val previa = listOf(
 )
 
 @Composable
-private fun Previa(estado: AssociateAlbumUiState) = VinilosTheme {
+private fun PreviewWrapper(estado: AssociateAlbumUiState) = VinilosTheme {
     Column(Modifier.background(MaterialTheme.colorScheme.surface)) {
-        ContenidoAsociar(estado, "Rubén Blades", AssociateAlbumActions())
+        AssociateContent(estado, "Rubén Blades", AssociateAlbumActions())
     }
 }
 
 @Preview(showBackground = true, heightDp = 760)
 @Composable
 private fun PreviewSeleccion() =
-    Previa(AssociateAlbumUiState(abierta = true, seleccionado = 102, asociados = setOf(100), listado = ListadoAsociable.Listo(previa)))
+    PreviewWrapper(AssociateAlbumUiState(abierta = true, seleccionado = 102, asociados = setOf(100), listado = ListadoAsociable.Listo(previa)))
 
 @Preview(showBackground = true, heightDp = 760)
 @Composable
-private fun PreviewErrorAlAsociar() = Previa(
+private fun PreviewErrorAlAsociar() = PreviewWrapper(
     AssociateAlbumUiState(
         abierta = true, seleccionado = 102, errorAlAsociar = true, asociados = setOf(100),
         listado = ListadoAsociable.Listo(previa)
@@ -495,26 +495,26 @@ private fun PreviewErrorAlAsociar() = Previa(
 @Preview(showBackground = true)
 @Composable
 private fun PreviewSinDisponibles() =
-    Previa(AssociateAlbumUiState(abierta = true, asociados = setOf(100, 102, 103), listado = ListadoAsociable.Listo(previa)))
+    PreviewWrapper(AssociateAlbumUiState(abierta = true, asociados = setOf(100, 102, 103), listado = ListadoAsociable.Listo(previa)))
 
 @Preview(showBackground = true)
 @Composable
 private fun PreviewSinResultados() =
-    Previa(AssociateAlbumUiState(abierta = true, busqueda = "zzz", listado = ListadoAsociable.Listo(previa)))
+    PreviewWrapper(AssociateAlbumUiState(abierta = true, busqueda = "zzz", listado = ListadoAsociable.Listo(previa)))
 
 @Preview(showBackground = true)
 @Composable
-private fun PreviewLoading() = Previa(AssociateAlbumUiState(abierta = true))
+private fun PreviewLoading() = PreviewWrapper(AssociateAlbumUiState(abierta = true))
 
 @Preview(showBackground = true)
 @Composable
-private fun PreviewErrorListado() = Previa(AssociateAlbumUiState(abierta = true, listado = ListadoAsociable.Error))
+private fun PreviewErrorListado() = PreviewWrapper(AssociateAlbumUiState(abierta = true, listado = ListadoAsociable.Error))
 
 /** Font scale from which the "Already associated" label moves below the year. */
 private const val FuenteAmpliadaAsociar = 1.15f
 
 @Composable
-private fun EtiquetaYaAsociado(id: Int) {
+private fun AlreadyAssociatedTag(id: Int) {
     Text(
         text = stringResource(R.string.asociar_ya_asociado),
         style = MaterialTheme.typography.labelMedium,

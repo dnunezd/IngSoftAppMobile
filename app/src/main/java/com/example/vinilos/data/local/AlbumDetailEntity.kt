@@ -2,7 +2,7 @@ package com.example.vinilos.data.local
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.example.vinilos.data.model.Artista
+import com.example.vinilos.data.model.Performer
 import com.example.vinilos.data.model.Track
 import com.example.vinilos.data.model.Comment
 
@@ -17,6 +17,6 @@ data class AlbumDetailEntity(
     val disquera: String,
     val fechaLanzamiento: String,
     val canciones: List<Track>,
-    val artistas: List<Artista>,
+    val artistas: List<Performer>,
     val comentarios: List<Comment>
 )

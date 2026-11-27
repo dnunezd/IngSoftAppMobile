@@ -4,18 +4,18 @@ import android.database.sqlite.SQLiteException
 import com.example.vinilos.data.local.ArtistDao
 import com.example.vinilos.data.local.ArtistDetailEntity
 import com.example.vinilos.data.local.ArtistEntity
-import com.example.vinilos.data.model.AlbumArtista
+import com.example.vinilos.data.model.ArtistAlbum
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.model.ArtistDetail
-import com.example.vinilos.data.model.IntegranteArtista
+import com.example.vinilos.data.model.ArtistMember
 import com.example.vinilos.data.model.ArtistPrize
 import com.example.vinilos.data.model.formatearFechaONula
 import com.example.vinilos.data.remote.ArtistApi
 import com.example.vinilos.data.remote.ArtistDetailDto
 import com.example.vinilos.data.remote.IdAlbumDto
 import com.example.vinilos.data.remote.PremiacionArtistaDto
-import com.example.vinilos.data.remote.PremiacionDto
+import com.example.vinilos.data.remote.AwardDto
 import com.example.vinilos.data.remote.ResourceNotFound
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.remote.conVersion
@@ -191,7 +191,7 @@ class ArtistRepositoryImpl(
                             ?: throw JsonParseException("La banda llegó sin su lista de álbumes")
                         val ids = actuales.map { it.id ?: throw JsonParseException("Un álbum de la banda llegó sin id") }
                         val nuevos = (ids + idAlbum).distinct().map(::IdAlbumDto)
-                        api.reemplazarAlbumesDeBanda(idArtista, nuevos).exitosa()
+                        api.replaceBandAlbums(idArtista, nuevos).exitosa()
                     }
                 }
             }
@@ -206,7 +206,7 @@ class ArtistRepositoryImpl(
      * Tolerant conversion: only the artist's id and name are required, because the shared backend
      * has test data from other teams and a bad element should not bring down the whole screen.
      */
-    private fun ArtistDetailDto.aDetalle(tipo: ArtistType, premiaciones: List<PremiacionDto>) = ArtistDetail(
+    private fun ArtistDetailDto.aDetalle(tipo: ArtistType, premiaciones: List<AwardDto>) = ArtistDetail(
         id = id ?: throw JsonParseException("El artista no tiene id"),
         nombre = name.conTexto() ?: throw JsonParseException("El artista no tiene nombre"),
         imagen = image,
@@ -214,7 +214,7 @@ class ArtistRepositoryImpl(
         tipo = tipo,
         fecha = fechaValida(if (tipo == ArtistType.MUSICO) birthDate else creationDate),
         integrantes = musicians.orEmpty().mapNotNull { dto ->
-            IntegranteArtista(
+            ArtistMember(
                 dto.id ?: return@mapNotNull null,
                 dto.name.conTexto() ?: return@mapNotNull null,
                 dto.image
@@ -222,7 +222,7 @@ class ArtistRepositoryImpl(
         },
         albumes = albums.orEmpty().mapNotNull { dto ->
             val fecha = fechaValida(dto.releaseDate)
-            AlbumArtista(
+            ArtistAlbum(
                 dto.id ?: return@mapNotNull null,
                 dto.name.conTexto() ?: return@mapNotNull null,
                 dto.cover,
@@ -234,7 +234,7 @@ class ArtistRepositoryImpl(
 
     private fun premios(
         delArtista: List<PremiacionArtistaDto>,
-        premiaciones: List<PremiacionDto>
+        premiaciones: List<AwardDto>
     ): List<ArtistPrize> {
         val premioPorPremiacion = premiaciones.associateBy { it.id }
         return delArtista.mapNotNull { dto ->

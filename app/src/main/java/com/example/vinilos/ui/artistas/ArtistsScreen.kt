@@ -66,15 +66,15 @@ import coil.compose.AsyncImage
 import com.example.vinilos.R
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
-import com.example.vinilos.ui.ingreso.AvisoUnaVez
-import com.example.vinilos.ui.ingreso.ChipEtiqueta
-import com.example.vinilos.ui.ingreso.IndicadorActualizando
-import com.example.vinilos.ui.ingreso.TagAtras
+import com.example.vinilos.ui.entry.OneTimeNotice
+import com.example.vinilos.ui.entry.TagChip
+import com.example.vinilos.ui.entry.RefreshingIndicator
+import com.example.vinilos.ui.entry.TagAtras
 import com.example.vinilos.ui.theme.EtiquetaBandaFondo
 import com.example.vinilos.ui.theme.EtiquetaBandaTexto
 import com.example.vinilos.ui.theme.VinilosTheme
 import com.example.vinilos.viewmodel.ArtistsUiState
-import com.example.vinilos.ui.ingreso.encabezado
+import com.example.vinilos.ui.entry.heading
 
 /** The provisional destination tag is kept: navigation tests reach here through it. */
 const val TagArtistas = "artistas"
@@ -102,7 +102,7 @@ fun ArtistsScreen(
 ) {
     val exito = estado as? ArtistsUiState.Success
     val avisos = remember { SnackbarHostState() }
-    AvisoUnaVez(
+    OneTimeNotice(
         mostrar = exito?.errorAlActualizar == true,
         mensaje = stringResource(R.string.artistas_error_actualizar),
         avisos = avisos,
@@ -121,7 +121,7 @@ fun ArtistsScreen(
                 stringResource(R.string.artistas_titulo),
                 onAtras,
                 accion = if (exito?.actualizando == true) {
-                    { IndicadorActualizando(descripcionActualizando, TagActualizandoArtistas) }
+                    { RefreshingIndicator(descripcionActualizando, TagActualizandoArtistas) }
                 } else {
                     null
                 }
@@ -133,9 +133,9 @@ fun ArtistsScreen(
                 contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
                 verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                item { Titular() }
+                item { Header() }
                 item {
-                    Buscador(
+                    SearchField(
                         consultaInicial = (estado as? ArtistsUiState.Success)?.consulta.orEmpty(),
                         habilitado = estado is ArtistsUiState.Success,
                         onBuscar = onBuscar
@@ -144,7 +144,7 @@ fun ArtistsScreen(
                 when (estado) {
                     ArtistsUiState.Loading -> {
                         item { Loading() }
-                        items(5) { FilaEsqueleto() }
+                        items(5) { SkeletonRow() }
                     }
                     ArtistsUiState.Error -> item { ErrorArtistas(stringResource(R.string.artistas_error), onReintentar) }
                     ArtistsUiState.Empty -> item { Empty(conBusqueda = false) }
@@ -152,9 +152,9 @@ fun ArtistsScreen(
                         if (estado.visibles.isEmpty()) {
                             item { Empty(conBusqueda = true) }
                         } else {
-                            item { EncabezadoLista(estado.visibles.size) }
+                            item { ListHeader(estado.visibles.size) }
                             items(estado.visibles, key = { tagArtista(it) }) { artista ->
-                                FilaArtista(artista, onSeleccionar)
+                                ArtistRow(artista, onSeleccionar)
                             }
                         }
                     }
@@ -193,7 +193,7 @@ internal fun EncabezadoArtistas(titulo: String, onAtras: () -> Unit, accion: (@C
             text = titulo,
             style = MaterialTheme.typography.titleLarge,
             color = MaterialTheme.colorScheme.onBackground,
-            modifier = Modifier.encabezado()
+            modifier = Modifier.heading()
         )
         if (accion != null) {
             Spacer(Modifier.weight(1f))
@@ -203,15 +203,15 @@ internal fun EncabezadoArtistas(titulo: String, onAtras: () -> Unit, accion: (@C
 }
 
 @Composable
-private fun Titular() {
+private fun Header() {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        ChipEtiqueta(
+        TagChip(
             texto = stringResource(R.string.artistas_chip),
             fondo = MaterialTheme.colorScheme.primary,
             contenido = MaterialTheme.colorScheme.onPrimary
         )
         Row(
-            modifier = Modifier.encabezado(),
+            modifier = Modifier.heading(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
@@ -239,7 +239,7 @@ private fun Titular() {
 }
 
 @Composable
-private fun Buscador(consultaInicial: String, habilitado: Boolean, onBuscar: (String) -> Unit) {
+private fun SearchField(consultaInicial: String, habilitado: Boolean, onBuscar: (String) -> Unit) {
     // Local text so typing doesn't depend on the round trip through the ViewModel; the ViewModel keeps
     // the value and rememberSaveable restores it on screen rotation.
     var texto by rememberSaveable { mutableStateOf(consultaInicial) }
@@ -290,7 +290,7 @@ private fun Buscador(consultaInicial: String, habilitado: Boolean, onBuscar: (St
 }
 
 @Composable
-private fun EncabezadoLista(cantidad: Int) {
+private fun ListHeader(cantidad: Int) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -319,7 +319,7 @@ private fun EncabezadoLista(cantidad: Int) {
 }
 
 @Composable
-private fun FilaArtista(artista: Artist, onSeleccionar: (Artist) -> Unit) {
+private fun ArtistRow(artista: Artist, onSeleccionar: (Artist) -> Unit) {
     val descripcion = stringResource(R.string.artistas_seleccionar_descripcion, artista.name)
     val porDefecto = painterResource(
         if (artista.type == ArtistType.BANDA) R.drawable.ic_banda_por_defecto else R.drawable.ic_artista_por_defecto
@@ -408,7 +408,7 @@ private fun Loading() {
 
 /** Placeholder row while loading, with the same shape as an artist row. */
 @Composable
-private fun FilaEsqueleto() {
+private fun SkeletonRow() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
