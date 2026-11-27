@@ -26,8 +26,10 @@ Hay dos fases, cada una con el código que le corresponde:
 
 | Fase | Código | Comandos |
 |---|---|---|
-| `baseline` | La versión antes de optimizar, un tag (en el Sprint 2 fue el release v2.1.0) | `-Accion Preparar -Version <tag>` y luego `-Accion Ejecutar -Version <tag> -Fase baseline` |
-| `latest` | El código de esta rama (en el Sprint 3, `develop` con HU08, HU09 y HU15) | `-Accion Preparar` y luego `-Accion Ejecutar -Fase latest` |
+| `before` | Sprint 3, antes de las micro-optimizaciones: el código de esta rama (`develop` con HU08, HU09 y HU15) | `-Accion Preparar` y luego `-Accion Ejecutar -Fase before` |
+| `after` | Sprint 3, después de las micro-optimizaciones | `-Accion Preparar` con el código optimizado y luego `-Accion Ejecutar -Fase after` |
+| `baseline` | Sprint 2, la línea base: el release v2.1.0 | `-Accion Preparar -Version v2.1.0` y luego `-Accion Ejecutar -Version v2.1.0 -Fase baseline` |
+| `latest` | Sprint 2, con las micro-optimizaciones de ese sprint | `-Accion Preparar` y luego `-Accion Ejecutar -Fase latest` |
 
 Un tag anterior a una HU no tiene su pantalla: `baseline` solo sirve para las HU que esa versión ya
 incluye (por ejemplo, v3.0.0 no tiene HU08).
@@ -35,7 +37,7 @@ incluye (por ejemplo, v3.0.0 no tiene HU08).
 ```powershell
 .\scripts\perfilamiento\Perfilar.ps1 -Accion Preparar                        # compila e instala la rama
 .\scripts\perfilamiento\Perfilar.ps1 -Accion Validar                         # revisa que todo esté listo
-.\scripts\perfilamiento\Perfilar.ps1 -Accion Ejecutar -Fase latest -Escenarios hu01
+.\scripts\perfilamiento\Perfilar.ps1 -Accion Ejecutar -Fase before -Escenarios hu01
 ```
 
 El script hace pausas que esperan respuesta: hay que correrlo en una terminal interactiva (PowerShell
@@ -45,7 +47,7 @@ o la terminal de Android Studio), no en segundo plano.
   `Preparar` anota en `build\perfilamiento\instalada.txt` de qué código es la app que instaló, y
   `Validar` no deja grabar si la app del teléfono es de otro (por ejemplo, la de baseline al grabar
   latest).
-- `-Fase` es `baseline` o `latest` (por defecto `latest`) y es la última carpeta de los resultados.
+- `-Fase` es `before`, `after`, `baseline` o `latest` (por defecto `before`) y es la última carpeta de los resultados.
 - `-Propietario` es quien perfila (p. ej. `jeffrey-diaz`). Por defecto, el primer nombre y el primer
   apellido de `git config user.name`, en minúsculas y sin tildes. Con un nombre de tres palabras no se
   sabe cuál es el apellido: conviene pasarlo.

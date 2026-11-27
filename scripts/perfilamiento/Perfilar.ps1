@@ -20,8 +20,8 @@
   dos parches de scripts\perfilamiento\parches: la compilación "perf" y los testTag visibles para
   UI Automator. No cambian la lógica de la app.
 
-  -Fase es baseline (la línea base, sin micro-optimizaciones: se perfiló con -Version v2.1.0) o
-  latest (con las micro-optimizaciones: el código de la rama actual, sin -Version).
+  -Fase es la carpeta de la fase en los resultados: before (antes de las micro-optimizaciones del
+  Sprint 3) o after (después de ellas). Las del Sprint 2 fueron baseline (-Version v2.1.0) y latest.
 
   Los resultados quedan en docs/performance/resultados/<propietario>--<dispositivo>/HUxx/<fase>/:
     live-telemetry.png  captura de View Live Telemetry (la toma el script)
@@ -36,8 +36,8 @@
 .EXAMPLE
   .\scripts\perfilamiento\Perfilar.ps1 -Accion Preparar
   .\scripts\perfilamiento\Perfilar.ps1 -Accion Validar
-  .\scripts\perfilamiento\Perfilar.ps1 -Accion Ejecutar -Fase latest -Escenarios hu01
-  .\scripts\perfilamiento\Perfilar.ps1 -Accion Ejecutar -Fase latest -Escenarios hu03 -Grabaciones asignaciones
+  .\scripts\perfilamiento\Perfilar.ps1 -Accion Ejecutar -Fase before -Escenarios hu01
+  .\scripts\perfilamiento\Perfilar.ps1 -Accion Ejecutar -Fase before -Escenarios hu03 -Grabaciones asignaciones
   .\scripts\perfilamiento\Perfilar.ps1 -Accion Preparar -Version v2.1.0      # para repetir la línea base
   .\scripts\perfilamiento\Perfilar.ps1 -Accion Ejecutar -Version v2.1.0 -Fase baseline -Escenarios hu01
 #>
@@ -50,9 +50,10 @@ param(
     # Tag o commit a perfilar (p. ej. v2.1.0). Sin él, el código de la rama actual.
     [string]$Version,
 
-    # Fase del perfilamiento: baseline (línea base, sin micro-optimizaciones) o latest (con ellas).
-    [ValidateSet('baseline', 'latest')]
-    [string]$Fase = 'latest',
+    # Fase del perfilamiento: before (antes de las micro-optimizaciones del Sprint 3) o after (después
+    # de ellas). baseline y latest son las fases del Sprint 2.
+    [ValidateSet('before', 'after', 'baseline', 'latest')]
+    [string]$Fase = 'before',
 
     # Quién perfila: primera parte de la carpeta de resultados (p. ej. jeffrey-diaz). Por defecto sale
     # de git config user.name: primer nombre y primer apellido, en minúsculas y sin tildes.
@@ -799,9 +800,12 @@ function Grabar($Definicion, [string]$Id, [string]$Carpeta, [string]$Analisis, [
                 ) 'Presiona Enter y tomaré la captura como live-telemetry.png.') {
                 Capturar-Studio (Join-Path $Carpeta 'live-telemetry.png')
             }
-            if (Pausa 'Capturar la Connection View' @("Las peticiones del recorrido están en el tramo $tramo de la grabación.") @(
+            if (Pausa 'Capturar la Connection View' @(
+                    'El Network Inspector tiene su propio reloj, que empieza cuando se abrió: el tramo de la grabación del Profiler no aplica aquí.',
+                    'La tabla de abajo queda vacía hasta que se selecciona un tramo en la gráfica NETWORK.'
+                ) @(
                     'Abre App Inspection > Network Inspector (la grabación del Profiler sigue).',
-                    "En su línea de tiempo arrastra para seleccionar el tramo $tramo (o todo lo grabado).",
+                    'En la gráfica NETWORK arrastra desde 00.000 hasta el final del eje, para seleccionar todo lo grabado (si no se ve completo, pulsa la lupa con el signo menos).',
                     'Abajo, en "Connection View", verifica que se vean todas las peticiones con Name, Size, Type, Status y Time.',
                     'Deja App Inspection a la vista y aparta el ratón de la tabla.'
                 ) 'Presiona Enter y tomaré la captura como connections.png.') {

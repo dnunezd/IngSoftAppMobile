@@ -61,21 +61,21 @@ Para dejarlo permanente, correr esto una vez y abrir otra consola:
       **Allocations** y capturar la tabla como `track-memory.png`.
    4. En **Past Recordings**, **Export recording** como `track-memory.asdb`.
 5. Guardar todo en `docs/performance/resultados/<propietario>--<dispositivo>/HUxx/<fase>/` (p. ej.
-   `jeffrey-diaz--motorola-edge-30/HU08/latest/`). La fase es `baseline` (la versión antes de optimizar)
-   o `latest` (la app de la rama actual):
+   `jeffrey-diaz--motorola-edge-30/HU08/before/`). En el Sprint 3 la fase es `before` (antes de las
+   micro-optimizaciones) o `after` (después de ellas); en el Sprint 2 fueron `baseline` y `latest`:
 
    ```
    <propietario>--<dispositivo>/
    ├── dispositivo.txt
    └── HU01/
-       ├── baseline/
+       ├── before/
        │   ├── connections.json
        │   ├── connections.png
        │   ├── live-telemetry.asdb
        │   ├── live-telemetry.png
        │   ├── track-memory.asdb
        │   └── track-memory.png
-       └── latest/   (los mismos 6 archivos)
+       └── after/   (los mismos 6 archivos)
    ```
 
    Lo mismo para HU02, HU03, HU04, HU07, HU08, HU09, HU10 y HU15. Los segundos anotados y lo encontrado
