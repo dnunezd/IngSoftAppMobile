@@ -13,38 +13,38 @@ import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
-import com.example.vinilos.data.model.AlbumResumen
+import com.example.vinilos.data.model.AlbumSummary
 import com.example.vinilos.data.model.Artist
 import com.example.vinilos.data.model.ArtistType
-import com.example.vinilos.data.model.ArtistaDetalle
+import com.example.vinilos.data.model.ArtistDetail
 import com.example.vinilos.data.model.Collector
 import com.example.vinilos.ui.artistas.TagBotonAgregarAlbum
 import com.example.vinilos.ui.artistas.TagBusquedaAsociar
 import com.example.vinilos.ui.artistas.TagListaAsociar
-import com.example.vinilos.ui.artistas.TagListaDetalleArtista
-import com.example.vinilos.ui.artistas.TagNombreDetalleArtista
+import com.example.vinilos.ui.artistas.TagListaArtistDetail
+import com.example.vinilos.ui.artistas.TagNombreArtistDetail
 import com.example.vinilos.ui.artistas.TagVentanaAsociar
 import com.example.vinilos.ui.artistas.tagAlbumAsociable
-import com.example.vinilos.ui.artistas.TagProgresoDetalleArtista
+import com.example.vinilos.ui.artistas.TagProgresoArtistDetail
 import com.example.vinilos.ui.artistas.tagArtista
-import com.example.vinilos.ui.catalogo.TagCuadriculaCatalogo
-import com.example.vinilos.ui.catalogo.TagProgresoCatalogo
-import com.example.vinilos.ui.catalogo.TagRolActivo
-import com.example.vinilos.ui.catalogo.albumesDePrueba
-import com.example.vinilos.ui.catalogo.tagAlbum
-import com.example.vinilos.ui.ingreso.TagAtras
-import com.example.vinilos.ui.ingreso.TagEntrarVisitante
-import com.example.vinilos.ui.ingreso.TagBuscador
-import com.example.vinilos.ui.ingreso.TagEntrarColeccionista
-import com.example.vinilos.ui.ingreso.tagColeccionista
-import com.example.vinilos.ui.inicio.TagInicio
-import com.example.vinilos.ui.inicio.TagVerAlbumes
-import com.example.vinilos.ui.inicio.TagVerArtistas
+import com.example.vinilos.ui.catalog.TagCuadriculaCatalogo
+import com.example.vinilos.ui.catalog.TagProgresoCatalogo
+import com.example.vinilos.ui.catalog.TagRolActivo
+import com.example.vinilos.ui.catalog.albumesDePrueba
+import com.example.vinilos.ui.catalog.tagAlbum
+import com.example.vinilos.ui.entry.TagAtras
+import com.example.vinilos.ui.entry.TagEntrarVisitante
+import com.example.vinilos.ui.entry.TagBuscador
+import com.example.vinilos.ui.entry.TagEntrarColeccionista
+import com.example.vinilos.ui.entry.tagColeccionista
+import com.example.vinilos.ui.home.TagInicio
+import com.example.vinilos.ui.home.TagVerAlbumes
+import com.example.vinilos.ui.home.TagVerArtistas
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
-/** Recrea la Activity (lo que pasa al girar la pantalla) y comprueba que no se pierde nada. */
+/** Recreates the Activity (what happens when the screen is rotated) and checks that nothing is lost. */
 class RotacionTest {
 
     @get:Rule
@@ -146,7 +146,7 @@ class RotacionTest {
             Result.success(listOf(queen)),
             mapOf(
                 (ArtistType.BANDA to 101) to Result.success(
-                    ArtistaDetalle(
+                    ArtistDetail(
                         101, "Queen", null, "Banda británica", ArtistType.BANDA, "1970-01-01T00:00:00.000Z",
                         emptyList(), emptyList(), emptyList()
                     )
@@ -160,13 +160,13 @@ class RotacionTest {
             rule.onNodeWithTag(TagEntrarVisitante).performScrollTo().performClick()
             rule.onNodeWithTag(TagVerArtistas).performScrollTo().performClick()
             rule.onNodeWithTag(tagArtista(queen)).performClick()
-            rule.onNodeWithTag(TagNombreDetalleArtista).assertTextEquals("Queen")
+            rule.onNodeWithTag(TagNombreArtistDetail).assertTextEquals("Queen")
 
             escenario.recreate()
             rule.waitForIdle()
 
-            rule.onNodeWithTag(TagNombreDetalleArtista).assertTextEquals("Queen")
-            rule.onNodeWithTag(TagProgresoDetalleArtista).assertDoesNotExist()
+            rule.onNodeWithTag(TagNombreArtistDetail).assertTextEquals("Queen")
+            rule.onNodeWithTag(TagProgresoArtistDetail).assertDoesNotExist()
             assertEquals(1, artistas.consultasDetalle.size)
         }
     }
@@ -178,7 +178,7 @@ class RotacionTest {
             Result.success(listOf(ruben)),
             mapOf(
                 (ArtistType.MUSICO to 100) to Result.success(
-                    ArtistaDetalle(
+                    ArtistDetail(
                         100, "Rubén Blades Bellido de Luna", null, null, ArtistType.MUSICO, null,
                         emptyList(), emptyList(), emptyList()
                     )
@@ -189,8 +189,8 @@ class RotacionTest {
             catalogo = listOf(
                 Result.success(
                     listOf(
-                        AlbumResumen(103, "A Day at the Races", null, "Rock", "Queen", "1976"),
-                        AlbumResumen(102, "A Night at the Opera", null, "Rock", "Queen", "1975")
+                        AlbumSummary(103, "A Day at the Races", null, "Rock", "Queen", "1976"),
+                        AlbumSummary(102, "A Night at the Opera", null, "Rock", "Queen", "1975")
                     )
                 )
             )
@@ -207,7 +207,7 @@ class RotacionTest {
             rule.onNodeWithTag(tagColeccionista(100)).performClick()
             rule.onNodeWithTag(TagVerArtistas).performScrollTo().performClick()
             rule.onNodeWithTag(tagArtista(ruben)).performClick()
-            rule.onNodeWithTag(TagListaDetalleArtista).performScrollToNode(hasTestTag(TagBotonAgregarAlbum))
+            rule.onNodeWithTag(TagListaArtistDetail).performScrollToNode(hasTestTag(TagBotonAgregarAlbum))
             rule.onNodeWithTag(TagBotonAgregarAlbum).performClick()
             rule.waitForIdle()
             rule.onNodeWithTag(TagListaAsociar).performScrollToNode(hasTestTag(tagAlbumAsociable(102)))

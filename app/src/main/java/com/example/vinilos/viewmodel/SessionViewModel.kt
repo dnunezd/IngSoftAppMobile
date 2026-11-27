@@ -8,8 +8,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 /**
- * Sesión compartida por todas las pantallas. Se crea atada a la Activity, por lo que
- * sobrevive a la rotación; no se persiste entre cierres de la app.
+ * Session shared by all screens. It's created tied to the Activity, so it
+ * survives rotation; it isn't persisted across app closures.
  */
 class SessionViewModel : ViewModel() {
 

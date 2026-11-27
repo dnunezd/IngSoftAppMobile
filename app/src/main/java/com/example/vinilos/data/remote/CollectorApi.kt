@@ -9,7 +9,7 @@ interface CollectorApi {
     @GET("collectors")
     suspend fun getCollectors(): Response<List<CollectorDto>>
 
-    /** Favoritos del coleccionista (HU10). Los ids son únicos entre músicos y bandas en el backend. */
+    /** Collector's favorites (HU10). The ids are unique between musicians and bands in the backend. */
     @GET("collectors/{collectorId}/performers")
     suspend fun getFavoritePerformers(@Path("collectorId") collectorId: Int): Response<List<PerformerDto>>
 

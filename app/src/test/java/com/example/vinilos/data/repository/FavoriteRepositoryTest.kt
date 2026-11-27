@@ -2,7 +2,7 @@ package com.example.vinilos.data.repository
 
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.remote.CollectorApi
-import com.example.vinilos.data.remote.ErrorDeCarga
+import com.example.vinilos.data.remote.LoadError
 import com.example.vinilos.data.remote.PerformerDto
 import com.example.vinilos.data.remote.ServiceAdapter
 import kotlinx.coroutines.CancellationException
@@ -67,19 +67,19 @@ class FavoriteRepositoryTest {
     }
 
     @Test
-    fun esFavoritoDevuelveErrorDeCargaSiLaConsultaFalla() = runTest {
+    fun esFavoritoDevuelveLoadErrorSiLaConsultaFalla() = runTest {
         servidor.enqueue(MockResponse().setResponseCode(500))
 
         val resultado = repositorio.esFavorito(collectorId = 100, artistId = 8)
 
-        assertTrue("Un fallo del servidor debe ser ErrorDeCarga", resultado.exceptionOrNull() is ErrorDeCarga)
+        assertTrue("Un fallo del servidor debe ser ErrorDeCarga", resultado.exceptionOrNull() is LoadError)
     }
 
     @Test
-    fun agregarFavoritoUsaElEndpointDeBandaCuandoElTipoEsBanda() = runTest {
+    fun addFavoriteUsaElEndpointDeBandaCuandoElTipoEsBanda() = runTest {
         servidor.enqueue(MockResponse().setBody("""{"id": 8}"""))
 
-        val resultado = repositorio.agregarFavorito(collectorId = 100, artistId = 8, tipo = ArtistType.BANDA)
+        val resultado = repositorio.addFavorite(collectorId = 100, artistId = 8, tipo = ArtistType.BANDA)
 
         assertTrue(resultado.isSuccess)
         val peticion = servidor.takeRequest(1, TimeUnit.SECONDS)
@@ -89,10 +89,10 @@ class FavoriteRepositoryTest {
     }
 
     @Test
-    fun agregarFavoritoUsaElEndpointDeMusicoCuandoElTipoEsMusico() = runTest {
+    fun addFavoriteUsaElEndpointDeMusicoCuandoElTipoEsMusico() = runTest {
         servidor.enqueue(MockResponse().setBody("""{"id": 8}"""))
 
-        repositorio.agregarFavorito(collectorId = 100, artistId = 8, tipo = ArtistType.MUSICO)
+        repositorio.addFavorite(collectorId = 100, artistId = 8, tipo = ArtistType.MUSICO)
 
         val peticion = servidor.takeRequest(1, TimeUnit.SECONDS)
         assertNotNull("Debe guardar el favorito en el backend", peticion)
@@ -100,26 +100,26 @@ class FavoriteRepositoryTest {
     }
 
     @Test
-    fun agregarFavoritoTraduceUn404AArtistaNoDisponible() = runTest {
+    fun addFavoriteTraduceUn404AArtistNotAvailable() = runTest {
         servidor.enqueue(MockResponse().setResponseCode(404))
 
-        val resultado = repositorio.agregarFavorito(collectorId = 100, artistId = 8, tipo = ArtistType.BANDA)
+        val resultado = repositorio.addFavorite(collectorId = 100, artistId = 8, tipo = ArtistType.BANDA)
 
         val error = resultado.exceptionOrNull()
-        assertTrue("El 404 debe indicar artista no disponible, no error de red", error is ArtistaNoDisponible)
+        assertTrue("El 404 debe indicar artista no disponible, no error de red", error is ArtistNotAvailable)
     }
 
     @Test
-    fun agregarFavoritoDevuelveErrorDeCargaSiFallaLaConexion() = runTest {
+    fun addFavoriteDevuelveLoadErrorSiFallaLaConexion() = runTest {
         servidor.enqueue(MockResponse().setResponseCode(500))
 
-        val resultado = repositorio.agregarFavorito(collectorId = 100, artistId = 8, tipo = ArtistType.BANDA)
+        val resultado = repositorio.addFavorite(collectorId = 100, artistId = 8, tipo = ArtistType.BANDA)
 
-        assertTrue("Un fallo del servidor debe ser ErrorDeCarga", resultado.exceptionOrNull() is ErrorDeCarga)
+        assertTrue("Un fallo del servidor debe ser ErrorDeCarga", resultado.exceptionOrNull() is LoadError)
     }
 
     @Test
-    fun cancelarLaComprobacionPropagaLaCancelacionSinErrorDeCarga() = runTest {
+    fun cancelarLaComprobacionPropagaLaCancelacionSinLoadError() = runTest {
         val api = object : CollectorApi {
             override suspend fun getCollectors() = throw NotImplementedError()
             override suspend fun getFavoritePerformers(collectorId: Int): Response<List<PerformerDto>> = awaitCancellation()

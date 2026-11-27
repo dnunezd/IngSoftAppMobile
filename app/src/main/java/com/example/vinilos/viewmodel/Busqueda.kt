@@ -5,7 +5,7 @@ import java.util.Locale
 
 private val MarcasDiacriticas = Regex("\\p{InCombiningDiacriticalMarks}+")
 
-/** Texto comparable en las búsquedas: sin tildes y en minúsculas ("Monsálve" -> "monsalve"). */
+/** Text comparable for searches: without accents and in lowercase ("Monsálve" -> "monsalve"). */
 internal fun normalizar(texto: String): String =
     Normalizer.normalize(texto, Normalizer.Form.NFD)
         .replace(MarcasDiacriticas, "")

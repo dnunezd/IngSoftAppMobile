@@ -13,12 +13,12 @@ import androidx.room.Room
 import androidx.test.core.app.ActivityScenario
 import androidx.test.core.app.ApplicationProvider
 import com.example.vinilos.data.local.VinilosDb
-import com.example.vinilos.ui.catalogo.TagErrorCatalogo
-import com.example.vinilos.ui.catalogo.tagAlbum
-import com.example.vinilos.ui.ingreso.TagAtras
-import com.example.vinilos.ui.ingreso.TagEntrarVisitante
-import com.example.vinilos.ui.inicio.TagInicio
-import com.example.vinilos.ui.inicio.TagVerAlbumes
+import com.example.vinilos.ui.catalog.TagErrorCatalogo
+import com.example.vinilos.ui.catalog.tagAlbum
+import com.example.vinilos.ui.entry.TagAtras
+import com.example.vinilos.ui.entry.TagEntrarVisitante
+import com.example.vinilos.ui.home.TagInicio
+import com.example.vinilos.ui.home.TagVerAlbumes
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
 import okhttp3.mockwebserver.SocketPolicy
@@ -30,9 +30,9 @@ import org.junit.Rule
 import org.junit.Test
 
 /**
- * Catálogo guardado en el dispositivo (add-cache-catalogo), con la pila de red real contra
- * `MockWebServer` y la base de Room en memoria. Salir del catálogo descarta su ViewModel, así que
- * volver a entrar repite la carga inicial sin reiniciar la app.
+ * Catalog saved on the device (add-cache-catalogo), with the real network stack against
+ * `MockWebServer` and an in-memory Room database. Leaving the catalog discards its ViewModel, so
+ * entering again repeats the initial load without restarting the app.
  */
 class CatalogoSinConexionE2ETest {
 
@@ -47,7 +47,7 @@ class CatalogoSinConexionE2ETest {
         servidor = MockWebServer().apply { start() }
         val contexto: Context = ApplicationProvider.getApplicationContext()
         db = Room.inMemoryDatabaseBuilder(contexto, VinilosDb::class.java).build()
-        // "localhost" es uno de los hosts con HTTP permitido en network_security_config.xml.
+        // "localhost" is one of the hosts allowed over HTTP in network_security_config.xml.
         ApplicationProvider.getApplicationContext<VinilosApplication>().container =
             AppContainer(baseUrl = "http://localhost:${servidor.port}/", albumDao = db.albumDao())
     }
@@ -77,7 +77,7 @@ class CatalogoSinConexionE2ETest {
 
     private fun responder(cuerpo: String) = servidor.enqueue(MockResponse().setBody(cuerpo))
 
-    /** El servidor corta la conexión: es lo que ve la app sin red o con el backend caído. */
+    /** The server drops the connection: this is what the app sees without network or with the backend down. */
     private fun servidorCaido() =
         servidor.enqueue(MockResponse().setSocketPolicy(SocketPolicy.DISCONNECT_AT_START))
 

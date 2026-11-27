@@ -17,18 +17,18 @@ import java.io.IOException
 import java.lang.reflect.Type
 import java.util.concurrent.TimeUnit
 
-/** Error único de carga: sin conexión, tiempo agotado, error del servidor o respuesta ilegible. */
-open class ErrorDeCarga(causa: Throwable? = null) : Exception("No se pudo cargar la información", causa)
+/** Single load error: no connection, timeout, server error, or unreadable response. */
+open class LoadError(causa: Throwable? = null) : Exception("No se pudo cargar la información", causa)
 
 /**
- * El backend respondió 404: lo consultado no existe. Sigue siendo un [ErrorDeCarga] para quien no necesite
- * distinguirlo; los repositorios que sí, lo traducen a su propio error sin conocer el protocolo HTTP.
+ * The backend responded 404: the requested resource does not exist. It's still a [LoadError] for callers who don't need
+ * to distinguish it; repositories that do translate it into their own error without knowing about the HTTP protocol.
  */
-class RecursoNoEncontrado(causa: Throwable? = null) : ErrorDeCarga(causa)
+class ResourceNotFound(causa: Throwable? = null) : LoadError(causa)
 
 /**
- * Único punto de acceso al backend BackVynils: construye el cliente de red una sola vez,
- * entrega las interfaces por entidad y traduce los fallos de las consultas a [ErrorDeCarga].
+ * Single access point to the BackVynils backend: builds the network client once,
+ * provides the per-entity interfaces, and translates query failures into [LoadError].
  */
 class ServiceAdapter(
     baseUrl: String,
@@ -38,7 +38,7 @@ class ServiceAdapter(
     private val retrofit: Retrofit = Retrofit.Builder()
         .baseUrl(baseUrl)
         .client(cliente)
-        .addConverterFactory(LecturaComoErrorDeFormato(GsonConverterFactory.create()))
+        .addConverterFactory(FormatErrorConverterFactory(GsonConverterFactory.create()))
         .build()
 
     fun <T> api(clase: Class<T>): T = retrofit.create(clase)
@@ -46,34 +46,34 @@ class ServiceAdapter(
     inline fun <reified T> api(): T = api(T::class.java)
 
     /**
-     * Ejecuta una consulta al backend y devuelve su resultado. Los fallos de red, del servidor o de
-     * lectura de la respuesta se reportan como [ErrorDeCarga] (un 404, como [RecursoNoEncontrado]); la
-     * cancelación se relanza.
+     * Executes a backend query and returns its result. Network, server, or response-reading
+     * failures are reported as [LoadError] (a 404 as [ResourceNotFound]); cancellation
+     * is rethrown.
      */
-    suspend fun <T> llamar(bloque: suspend () -> T): Result<T> =
+    suspend fun <T> call(bloque: suspend () -> T): Result<T> =
         try {
             Result.success(bloque())
         } catch (e: CancellationException) {
             throw e
         } catch (e: IOException) {
-            Result.failure(ErrorDeCarga(e))
+            Result.failure(LoadError(e))
         } catch (e: HttpException) {
-            Result.failure(if (e.code() == HTTP_NO_ENCONTRADO) RecursoNoEncontrado(e) else ErrorDeCarga(e))
+            Result.failure(if (e.code() == HTTP_NO_ENCONTRADO) ResourceNotFound(e) else LoadError(e))
         } catch (e: JsonParseException) {
-            Result.failure(ErrorDeCarga(e))
+            Result.failure(LoadError(e))
         } catch (e: KotlinNullPointerException) {
-            // Retrofit la lanza cuando la respuesta llega sin cuerpo o con "null" y la función declara
-            // un tipo no nulo. Los NullPointerException del código propio no se atrapan.
-            Result.failure(ErrorDeCarga(e))
+            // Retrofit throws it when the response arrives with no body or with "null" and the function declares
+            // a non-null type. NullPointerExceptions from our own code are not caught here.
+            Result.failure(LoadError(e))
         }
 
     /**
-     * Gson lanza `IllegalStateException` cuando la respuesta no tiene la forma esperada (por ejemplo,
-     * un objeto donde se espera una lista). Solo al leer la respuesta se convierte en
-     * [JsonSyntaxException], para que [llamar] la reporte como [ErrorDeCarga] sin ocultar los demás
-     * `IllegalStateException`, que son errores de programación.
+     * Gson throws `IllegalStateException` when the response doesn't have the expected shape (for example,
+     * an object where a list is expected). It's converted into [JsonSyntaxException] only when reading
+     * the response, so that [llamar] reports it as [LoadError] without hiding other
+     * `IllegalStateException`s, which are programming errors.
      */
-    private class LecturaComoErrorDeFormato(private val gson: Converter.Factory) : Converter.Factory() {
+    private class FormatErrorConverterFactory(private val gson: Converter.Factory) : Converter.Factory() {
         override fun responseBodyConverter(
             type: Type,
             annotations: Array<out Annotation>,
@@ -98,9 +98,9 @@ class ServiceAdapter(
     }
 
     /**
-     * Pide al backend confirmar cada respuesta guardada antes de usarla (`max-age=0`): OkHttp siempre envía
-     * `If-None-Match` y nunca entrega lo guardado sin preguntar, aunque el backend o un proxy envíen un
-     * `max-age`. Así, sin conexión la consulta falla como antes y cada pantalla muestra lo que guardó en Room.
+     * Asks the backend to confirm every stored response before using it (`max-age=0`): OkHttp always sends
+     * `If-None-Match` and never serves what's stored without asking, even if the backend or a proxy sends a
+     * `max-age`. This way, without a connection the query fails as before and each screen shows what it stored in Room.
      */
     private object RevalidarConElBackend : Interceptor {
         private val siempreRevalidar = CacheControl.Builder().maxAge(0, TimeUnit.SECONDS).build()
@@ -118,10 +118,10 @@ class ServiceAdapter(
         private const val TAMANO_CACHE_HTTP = 10L * 1024 * 1024
 
         /**
-         * Cliente de red de la API. Con [carpetaCache], guarda las respuestas en una caché HTTP de disco de
-         * 10 MiB y revalida cada consulta repetida con su `ETag`: si nada cambió, el backend responde 304 sin
-         * cuerpo y se usa lo guardado (optimizar-cache-e-imagenes, D2). La carpeta debe ser propia: Coil usa
-         * otra para las imágenes. Sin carpeta (pruebas), el cliente no guarda nada, como antes.
+         * API network client. With [carpetaCache], it stores responses in a 10 MiB disk HTTP cache and
+         * revalidates every repeated query with its `ETag`: if nothing changed, the backend responds 304 with no
+         * body and the stored response is used (optimizar-cache-e-imagenes, D2). The folder must be its own: Coil uses
+         * a different one for images. Without a folder (tests), the client stores nothing, as before.
          */
         fun clientePorDefecto(carpetaCache: File? = null): OkHttpClient = OkHttpClient.Builder()
             .connectTimeout(TIMEOUT_SEGUNDOS, TimeUnit.SECONDS)

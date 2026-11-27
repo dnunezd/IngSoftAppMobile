@@ -7,7 +7,7 @@ import org.junit.Test
 
 class ValidacionAlbumTest {
 
-    private val completo = CrearAlbumUiState(
+    private val completo = CreateAlbumUiState(
         nombre = "Abbey Road",
         portada = "https://example.com/abbey.jpg",
         descripcion = "Undécimo álbum",
@@ -17,21 +17,21 @@ class ValidacionAlbumTest {
     )
 
     @Test
-    fun formularioVacioMarcaLosSeisCamposComoObligatorios() {
+    fun formularioEmptyMarcaLosSeisCamposComoObligatorios() {
         assertEquals(
-            CampoAlbum.entries.associateWith { ErrorCampo.Obligatorio },
-            validarAlbum(CrearAlbumUiState())
+            AlbumField.entries.associateWith { FieldError.Obligatorio },
+            validarAlbum(CreateAlbumUiState())
         )
     }
 
     @Test
-    fun soloEspaciosCuentaComoCampoVacio() {
+    fun soloEspaciosCuentaComoCampoEmpty() {
         val errores = validarAlbum(completo.copy(nombre = "   ", descripcion = "\n "))
 
         assertEquals(
             mapOf(
-                CampoAlbum.Nombre to ErrorCampo.Obligatorio,
-                CampoAlbum.Descripcion to ErrorCampo.Obligatorio
+                AlbumField.Nombre to FieldError.Obligatorio,
+                AlbumField.Descripcion to FieldError.Obligatorio
             ),
             errores
         )
@@ -40,7 +40,7 @@ class ValidacionAlbumTest {
     @Test
     fun portadaConOtroProtocoloEsUrlInvalida() {
         assertEquals(
-            mapOf(CampoAlbum.Portada to ErrorCampo.UrlInvalida),
+            mapOf(AlbumField.Portada to FieldError.UrlInvalida),
             validarAlbum(completo.copy(portada = "ftp://servidor/portada.png"))
         )
     }
@@ -48,7 +48,7 @@ class ValidacionAlbumTest {
     @Test
     fun portadaVaciaEsObligatoriaYNoUrlInvalida() {
         assertEquals(
-            mapOf(CampoAlbum.Portada to ErrorCampo.Obligatorio),
+            mapOf(AlbumField.Portada to FieldError.Obligatorio),
             validarAlbum(completo.copy(portada = " "))
         )
     }

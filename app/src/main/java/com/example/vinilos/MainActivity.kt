@@ -14,13 +14,13 @@ import com.example.vinilos.viewmodel.SessionViewModel
 
 class MainActivity : ComponentActivity() {
 
-    // Atado a la Activity: la sesión es la misma para todas las pantallas y sobrevive a la rotación.
+    // Tied to the Activity: the session is the same for all screens and survives rotation.
     private val sessionViewModel: SessionViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // El tema es siempre claro: los íconos de las barras del sistema deben ser oscuros
-        // aunque el teléfono esté en modo oscuro.
+        // The theme is always light: the system bar icons must be dark
+        // even if the phone is in dark mode.
         enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
             navigationBarStyle = SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT)

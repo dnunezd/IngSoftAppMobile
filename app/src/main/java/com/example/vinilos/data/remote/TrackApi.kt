@@ -7,13 +7,13 @@ import retrofit2.http.Path
 
 interface TrackApi {
     @POST("albums/{albumId}/tracks")
-    suspend fun agregarCancion(
+    suspend fun addTrack(
         @Path("albumId") albumId: Int,
-        @Body cancion: CrearCancionDto
+        @Body cancion: CrearTrackDto
     ): Response<Unit>
 }
 
-data class CrearCancionDto(
+data class CrearTrackDto(
     val name: String,
     val duration: String
 )
