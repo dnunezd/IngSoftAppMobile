@@ -22,11 +22,14 @@ import org.junit.runner.RunWith
  * `adb shell am instrument -w -r -e class com.example.vinilos.perfilamiento.Recorridos#hu01
  *  com.example.vinilos.perfilamiento/androidx.test.runner.AndroidJUnitRunner`
  *
+ * HU08, HU09 y HU15 siguen los pasos de la guía manual: cada paso, una acción y 5 s (en los envíos,
+ * la respuesta del backend, hasta 10 s, y luego los 5 s).
+ *
  * Suponen BackVynils local con los datos de ejemplo (`sql/data.sql`): álbumes 100 Buscando América,
- * 101 Poeta del pueblo y 102 A Night at the Opera; músico 100 Rubén Blades Bellido de Luna (álbumes
- * 100 y 101), banda 101 Queen y coleccionista 100 Manolo Bellon. El script deja los datos en ese
- * estado antes de cada grabación (favoritos de HU10, canción de HU08, comentario de HU09 y
- * asociación de HU15) y borra lo que crea cada recorrido.
+ * 101 Poeta del pueblo, 102 A Night at the Opera y 103 A Day at the Races; músico 100 Rubén Blades
+ * Bellido de Luna (álbumes 100 y 101), banda 101 Queen y coleccionista 100 Manolo Bellon. El script
+ * deja los datos en ese estado antes de cada grabación (favoritos de HU10, canción de HU08,
+ * comentario de HU09 y asociación de HU15) y borra lo que crea cada recorrido.
  */
 @RunWith(AndroidJUnit4::class)
 class Recorridos {
@@ -226,59 +229,64 @@ class Recorridos {
         app.dispositivo.waitForIdle(1_500)
     }
 
-    // ---------- HU08 · Asociar tracks con un álbum (plan 5.6) ----------
+    // ---------- HU08 · Asociar canciones a un álbum (guía manual) ----------
 
-    /** Agrega a Poeta del pueblo la canción "Perf 1" (o "Perf 2") de 5:05; el script la borra después. */
+    /** Agrega a Poeta del pueblo la canción "Perf" de 5:05; el script la borra antes y después. */
     @Test
     fun hu08() {
         reposoInicial()
-        paso(1, "Coleccionista (Manolo Bellon) > Ver álbumes > Poeta del pueblo", TRES) {
-            entrarComoManoloBellon()
-            app.abrirCatalogo()
-            abrirAlbum(ALBUM_PRUEBA)
-        }
-        paso(2, "Abrir la opción para agregar una canción", TRES) {
+        paso(1, "Coleccionista > Entrar > Manolo Bellon", CINCO) { entrarComoManoloBellon() }
+        paso(2, "Ver álbumes", CINCO) { app.abrirCatalogo() }
+        paso(3, "Abrir Poeta del pueblo", CINCO) { abrirAlbum(ALBUM_PRUEBA) }
+        paso(4, "Agregar canción", CINCO) {
             app.tocar("detalle_agregar_cancion")
             app.esperarA("agregar_cancion_formulario")
         }
-        paso(3, "Diligenciar el nombre y la duración 5:05 (el botón se habilita al completarlos)", DOS) {
-            escribirEnCampo("agregar_cancion_nombre", marca)
+        paso(5, "Escribir el nombre; Guardar sigue deshabilitado", CINCO) {
+            escribirEnCampo("agregar_cancion_nombre", NOMBRE_PRUEBA)
+            check(!campo("agregar_cancion_guardar").isEnabled) { "Guardar se habilitó solo con el nombre" }
+        }
+        paso(6, "Escribir la duración; Guardar se habilita", CINCO) {
             escribirEnCampo("agregar_cancion_duracion", DURACION)
+            check(campo("agregar_cancion_guardar").isEnabled) { "Guardar no se habilitó con nombre y duración" }
         }
-        paso(4, "Guardar una sola vez y esperar el regreso al detalle (máximo 10 s)", 0.0) {
+        paso(7, "Tocar Guardar una sola vez; vuelve al detalle con el aviso Canción agregada (hasta 10 s)", CINCO) {
             app.conReintento { campo("agregar_cancion_guardar").click() }
-            app.esperarA("detalle_agregar_cancion", RESPUESTA)
-        }
-        paso(5, "Verificar la canción en el detalle del álbum", CINCO) {
-            checkNotNull(app.buscarDesplazando(By.text(marca), maximo = 8)) { "La canción $marca no aparece en el detalle" }
+            app.esperarA(By.text("Canción agregada"), RESPUESTA)
         }
     }
 
-    // ---------- HU09 · Comentar un álbum (plan 5.7) ----------
+    // ---------- HU09 · Comentar un álbum (guía manual) ----------
 
-    /** Comenta Poeta del pueblo con 4 estrellas; el script borra el comentario después. */
+    /**
+     * Comenta A Day at the Races (sin comentarios) con 4 estrellas; el script borra el comentario
+     * antes y después. El segundo toque en Publicar mientras publica no debe generar otro POST.
+     */
     @Test
     fun hu09() {
         reposoInicial()
-        paso(1, "Coleccionista (Manolo Bellon) > Ver álbumes > Poeta del pueblo", TRES) {
-            entrarComoManoloBellon()
-            app.abrirCatalogo()
-            abrirAlbum(ALBUM_PRUEBA)
-        }
-        paso(2, "Abrir la pantalla para comentar", TRES) {
+        paso(1, "Coleccionista > Entrar > Manolo Bellon", CINCO) { entrarComoManoloBellon() }
+        paso(2, "Ver álbumes", CINCO) { app.abrirCatalogo() }
+        paso(3, "Abrir A Day at the Races (sin comentarios)", CINCO) { abrirAlbum(ALBUM_COMENTAR) }
+        paso(4, "Comentar álbum", CINCO) {
             app.tocar("detalle_comentar")
             app.esperarA("comentar_pantalla")
         }
-        paso(3, "Seleccionar 4 estrellas y escribir el comentario", DOS) {
+        paso(5, "Tocar la cuarta estrella (Bueno (4/5))", CINCO) {
             app.tocar("comentar_estrella_$ESTRELLAS")
             app.esperarA("comentar_nivel", 5_000)
-            escribirEnCampo("comentar_opinion", "$marca: $COMENTARIO")
         }
-        paso(4, "Publicar una sola vez y observar la respuesta (máximo 10 s)", 0.0) {
+        paso(6, "Escribir la opinión y cerrar el teclado; Publicar comentario se habilita", CINCO) {
+            escribirEnCampo("comentar_opinion", OPINION)
+            check(campo("comentar_publicar").isEnabled) { "Publicar comentario no se habilitó" }
+        }
+        paso(7, "Publicar una sola vez y tocar otra vez mientras dice Publicando...; sale ¡Comentario publicado exitosamente! (hasta 10 s)", CINCO) {
             app.conReintento { campo("comentar_publicar").click() }
+            // Segundo toque inmediato, con el botón en "Publicando...": no debe enviar otro comentario.
+            app.dispositivo.findObject(app.tag("comentar_publicar"))?.let { boton -> runCatching { boton.click() } }
             app.esperarA("comentar_publicado", RESPUESTA)
         }
-        paso(5, "Verificar el resultado: comentario publicado", CINCO) {
+        paso(8, "Aceptar; vuelve al detalle con el comentario", CINCO) {
             app.tocar("comentar_aceptar")
             app.esperarA("detalle_comentar")
         }
@@ -327,43 +335,41 @@ class Recorridos {
         app.buscarDesplazando(app.tag("detalle_artista_boton_favorito"), maximo = 6)
             ?: error("No aparece el botón de favorito: ¿se ingresó como coleccionista?")
 
-    // ---------- HU15 · Asociar un álbum a un artista (plan 5.9) ----------
+    // ---------- HU15 · Asociar un álbum a un artista (guía manual) ----------
 
     /**
-     * Asocia A Night at the Opera (102) a Rubén Blades; el script quita la asociación después. La
-     * ventana de asociar es una hoja inferior (otra ventana), donde los `testTag` no se exponen: dentro
-     * de ella se busca por texto y por tipo de campo.
+     * Asocia A Night at the Opera (102) a Rubén Blades (un músico: en una banda la app reemplaza toda
+     * su lista de álbumes); el script quita la asociación antes y después. La ventana de asociar es una
+     * hoja inferior (otra ventana), donde los `testTag` no se exponen: dentro de ella se busca por texto
+     * y por tipo de campo.
      */
     @Test
     fun hu15() {
         reposoInicial()
-        paso(1, "Coleccionista (Manolo Bellon) > Ver artistas > Rubén Blades", TRES) {
-            entrarComoManoloBellon()
-            app.abrirArtistas()
-            abrirArtista("artista_musico_$MUSICO")
-        }
-        paso(2, "Abrir la opción de asociar un álbum", TRES) {
+        paso(1, "Coleccionista > Entrar > Manolo Bellon", CINCO) { entrarComoManoloBellon() }
+        paso(2, "Ver artistas", CINCO) { app.abrirArtistas() }
+        paso(3, "Abrir Rubén Blades Bellido de Luna", CINCO) { abrirArtista("artista_musico_$MUSICO") }
+        paso(4, "Bajar hasta los álbumes y tocar Agregar álbum", CINCO) {
             app.tocar("asociar_boton_agregar")
             app.esperarA(VENTANA_ASOCIAR)
         }
-        paso(3, "Buscar el álbum de prueba (Opera)", TRES) {
+        paso(5, "En Buscar álbum por título..., escribir Night", CINCO) {
             app.conReintento { app.esperarA(BUSQUEDA_EN_VENTANA).click() }
             app.escribirLetraPorLetra(BUSQUEDA_EN_VENTANA, BUSQUEDA_ASOCIAR)
             app.cerrarTeclado()
             app.esperarA(By.text(NOMBRE_ALBUM_ASOCIAR), 5_000)
         }
-        paso(4, "Seleccionar A Night at the Opera (se habilita Asociar)", DOS) {
+        paso(6, "Tocar A Night at the Opera; Asociar se habilita", CINCO) {
             app.conReintento { app.esperarA(By.text(NOMBRE_ALBUM_ASOCIAR)).click() }
         }
-        paso(5, "Asociar una sola vez y esperar la respuesta (máximo 10 s)", 0.0) {
+        paso(7, "Tocar Asociar una sola vez; la ventana se cierra con el aviso Álbum asociado (hasta 10 s)", CINCO) {
             app.conReintento { app.esperarA(By.text("Asociar")).click() }
-            // La hoja se cierra cuando el backend confirma la asociación.
             check(app.dispositivo.wait(Until.gone(VENTANA_ASOCIAR), RESPUESTA)) {
                 "La ventana de asociar no se cerró en ${RESPUESTA / 1000} s: ¿el backend respondió?"
             }
-            app.esperarA("detalle_artista_nombre", RESPUESTA)
+            app.esperarA(By.text("Álbum asociado"), RESPUESTA)
         }
-        paso(6, "Verificar el álbum en la discografía del artista", CINCO) {
+        paso(8, "Bajar hasta los álbumes; aparece A Night at the Opera", CINCO) {
             checkNotNull(app.buscarDesplazando(app.tag("detalle_artista_album_$ALBUM_ASOCIAR"), maximo = 8)) {
                 "A Night at the Opera no aparece en la discografía de Rubén Blades"
             }
@@ -379,7 +385,10 @@ class Recorridos {
         const val ALBUM = 100
         const val ALBUM_PRUEBA = 101
         const val ALBUM_ASOCIAR = 102
-        const val BUSQUEDA_ASOCIAR = "Opera"
+        const val ALBUM_COMENTAR = 103
+        const val NOMBRE_PRUEBA = "Perf"
+        const val OPINION = "Perf: comentario del recorrido de perfilamiento."
+        const val BUSQUEDA_ASOCIAR = "Night"
         const val NOMBRE_ALBUM_ASOCIAR = "A Night at the Opera"
         val VENTANA_ASOCIAR: BySelector = By.textStartsWith("Asociar álbum a ")
         val BUSQUEDA_EN_VENTANA: BySelector = By.clazz("android.widget.EditText")
@@ -390,6 +399,5 @@ class Recorridos {
         const val DURACION = "5:05"
         const val PORTADA = "https://upload.wikimedia.org/wikipedia/en/4/42/Beatles_-_Abbey_Road.jpg"
         const val DESCRIPCION = "Album creado por el recorrido de perfilamiento."
-        const val COMENTARIO = "comentario del recorrido de perfilamiento."
     }
 }

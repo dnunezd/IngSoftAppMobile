@@ -1,8 +1,8 @@
 # Guía manual de perfilamiento
 
 Pasos de HU01, HU02, HU03, HU04, HU07, HU08, HU09, HU10 y HU15, según el **plan de pruebas de
-rendimiento del Sprint 3**. Cada paso es una acción seguida de la espera que indica la columna
-**Espera** (5, 3 o 2 s). En los envíos (crear, guardar, publicar y asociar) se espera la respuesta del
+rendimiento del Sprint 3**. En HU01 a HU07 y HU10, cada paso es una acción seguida de la espera que
+indica la columna **Espera** (5, 3 o 2 s); en HU08, HU09 y HU15, una acción y 5 s. En los envíos (crear, guardar, publicar y asociar) se espera la respuesta del
 backend, hasta 10 s. Antes del primer paso, la app queda 5 s quieta en el ingreso.
 
 Por cada HU se hacen dos grabaciones con los mismos pasos:
@@ -104,7 +104,8 @@ Los recorridos usan los datos de ejemplo de BackVynils (`sql/data.sql`):
 |---|---|
 | Coleccionista 100, Manolo Bellon | HU07, HU08, HU09, HU10 y HU15 |
 | Álbum 100, Buscando América (artistas, canciones y comentarios) | HU02 y HU04 |
-| Álbum 101, Poeta del pueblo | HU08 (canción nueva) y HU09 (comentario nuevo) |
+| Álbum 101, Poeta del pueblo | HU08 (canción nueva) |
+| Álbum 103, A Day at the Races (sin comentarios) | HU09 (comentario nuevo) |
 | Álbum 102, A Night at the Opera | HU15 (se asocia a Rubén Blades) |
 | Músico 100, Rubén Blades Bellido de Luna (álbumes 100 y 101) | HU04 y HU15 |
 | Banda 101, Queen | HU10 |
@@ -115,9 +116,9 @@ automatizado lo hace solo, antes y después):
 
 ```powershell
 # HU08: canciones "Perf" de Poeta del pueblo
-docker compose exec db psql -U postgres -d vinyls -c "DELETE FROM track WHERE \"albumId\" = 101 AND name LIKE 'Perf %';"
-# HU09: comentarios "Perf" de Poeta del pueblo
-docker compose exec db psql -U postgres -d vinyls -c "DELETE FROM comment WHERE \"albumId\" = 101 AND description LIKE 'Perf %';"
+docker compose exec db psql -U postgres -d vinyls -c "DELETE FROM track WHERE \"albumId\" = 101 AND name LIKE 'Perf%';"
+# HU09: comentarios "Perf" de A Day at the Races
+docker compose exec db psql -U postgres -d vinyls -c "DELETE FROM comment WHERE \"albumId\" = 103 AND description LIKE 'Perf%';"
 # HU10: favoritos de Manolo Bellon (la app no deja quitarlos y DELETE de la API no borra)
 docker compose exec db psql -U postgres -d vinyls -c 'DELETE FROM performer_collectors_collector WHERE "collectorId" = 100;'
 # HU15: A Night at the Opera asociado a Rubén Blades
@@ -229,41 +230,69 @@ $albumes | Where-Object { $_.name -like 'Perf*' } | ForEach-Object { Invoke-Rest
 - **CPU:** al abrir el formulario, al cargar la vista previa de la portada y en el hilo principal durante el envío.
 - **Asignaciones:** lo que se crea mientras se escribe en el formulario.
 
-## HU08 · Asociar tracks con un álbum (plan 5.6)
+## HU08 · Asociar canciones a un álbum
 
-Antes de cada grabación, borrar las canciones `Perf` de Poeta del pueblo (ver [Datos de prueba](#datos-de-prueba)).
+En HU08, HU09 y HU15 **cada paso es una acción y luego esperar 5 s**; en el envío, primero se espera la
+respuesta (hasta 10 s) y luego los 5 s.
 
-| # | Acción | Espera | Seg. |
-|---|---|---|---|
-| 1 | Tarjeta **Coleccionista** > **Entrar** > **Manolo Bellon** > **Ver álbumes** > **Poeta del pueblo** | 3 s | |
-| 2 | **Agregar canción** | 3 s | |
-| 3 | Escribir el nombre (`Perf 1` o `Perf 2`) y la duración `5:05`; el botón **Guardar** se habilita al completarlos | 2 s | |
-| 4 | Tocar **Guardar** una sola vez y esperar la respuesta; la app vuelve al detalle del álbum | hasta 10 s | |
-| 5 | Verificar la canción nueva en el detalle del álbum | 5 s | |
+| # | Acción | Seg. |
+|---|---|---|
+| 1 | Tarjeta **Coleccionista** > **Entrar** > **Manolo Bellon** | |
+| 2 | **Ver álbumes** | |
+| 3 | Abrir **Poeta del pueblo** | |
+| 4 | **Agregar canción** | |
+| 5 | Escribir el nombre (valores abajo); **Guardar** sigue deshabilitado | |
+| 6 | Escribir la duración; **Guardar** se habilita | |
+| 7 | Tocar **Guardar** una sola vez; la app vuelve al detalle con el aviso **Canción agregada** (esperar hasta 10 s) | |
 
-**Qué analizar:**
-- **Red:** `POST /albums/101/tracks` (tamaño, código de respuesta y duración) y la consulta del detalle al volver.
-- **CPU:** al abrir el formulario, al escribir y validar los campos, y en el hilo principal durante el envío.
-- **Memoria:** inicial, durante el diligenciamiento y al terminar.
-- **Asignaciones:** el estado del formulario y la actualización del detalle del álbum.
+| Campo | Valor |
+|---|---|
+| Nombre | `Perf` |
+| Duración | `5:05` |
 
-## HU09 · Comentar un álbum (plan 5.7)
-
-Antes de cada grabación, borrar los comentarios `Perf` de Poeta del pueblo (ver [Datos de prueba](#datos-de-prueba)).
-
-| # | Acción | Espera | Seg. |
-|---|---|---|---|
-| 1 | Tarjeta **Coleccionista** > **Entrar** > **Manolo Bellon** > **Ver álbumes** > **Poeta del pueblo** | 3 s | |
-| 2 | **Comentar** | 3 s | |
-| 3 | Elegir **4 estrellas** y escribir `Perf 1: comentario del recorrido de perfilamiento.` (`Perf 2` en la grabación 2) | 2 s | |
-| 4 | Tocar **Publicar** una sola vez y esperar la respuesta | hasta 10 s | |
-| 5 | Verificar que el comentario quedó publicado y tocar **Aceptar** (vuelve al detalle) | 5 s | |
+Antes y después de **cada** grabación, borrar la canción creada (ver [Datos de prueba](#datos-de-prueba)),
+para que la siguiente empiece igual.
 
 **Qué analizar:**
-- **Red:** `POST /albums/101/comments` (tamaño, código de respuesta y duración) y la consulta del detalle al volver.
-- **CPU:** al elegir la calificación, al escribir la opinión y en el hilo principal durante la publicación.
-- **Memoria:** del formulario y del texto.
-- **Asignaciones:** el estado de la pantalla de comentar con cada letra.
+- **Red:** `POST /albums/101/tracks`: tamaño, código de respuesta y duración. Después, el `GET /albums/101`
+  que refresca el detalle.
+- **CPU:** al abrir el formulario, al validar la duración con cada tecla y al guardar. Actividad del hilo
+  principal mientras espera la respuesta.
+- **Memoria:** al abrir el formulario, mientras se escribe y al volver al detalle.
+- **Asignaciones:** lo que se crea mientras se escribe (estado del formulario) y al actualizar el detalle.
+
+## HU09 · Comentar un álbum
+
+| # | Acción | Seg. |
+|---|---|---|
+| 1 | Tarjeta **Coleccionista** > **Entrar** > **Manolo Bellon** | |
+| 2 | **Ver álbumes** | |
+| 3 | Abrir **A Day at the Races** (sin comentarios) | |
+| 4 | **Comentar álbum** (botón abajo) | |
+| 5 | Tocar la cuarta estrella (**Bueno (4/5)**) | |
+| 6 | Escribir la opinión (valor abajo) y cerrar el teclado; **Publicar comentario** se habilita | |
+| 7 | Tocar **Publicar comentario** una sola vez y tocar el botón otra vez mientras dice **Publicando...**; sale **¡Comentario publicado exitosamente!** (esperar hasta 10 s) | |
+| 8 | **Aceptar**; la app vuelve al detalle con el comentario | |
+
+| Campo | Valor |
+|---|---|
+| Opinión | `Perf: comentario del recorrido de perfilamiento.` |
+
+Si al salir aparece **¿Descartar comentario?**, anotarlo, pero no forzarlo saliendo a propósito con el
+borrador.
+
+Antes y después de **cada** grabación, borrar el comentario creado (ver [Datos de prueba](#datos-de-prueba)),
+para que la siguiente empiece igual.
+
+**Qué analizar:**
+- **Red:** `POST /albums/103/comments`: tamaño, código de respuesta y duración. Que el segundo toque no
+  genere otro `POST`. Después, el `GET /albums/103` que refresca el detalle.
+- **CPU:** mientras se escribe y al publicar. Actividad del hilo principal durante la petición y el
+  indicador de carga.
+- **Memoria:** del formulario y del texto, y al volver al detalle.
+- **Asignaciones:** lo que se crea al cambiar el estado (calificación, texto, envío).
+
+Si la publicación tarda, grabar además un **System Trace** durante ese paso.
 
 ## HU10 · Agregar artistas a favoritos (plan 5.8)
 
@@ -290,23 +319,34 @@ quitar favoritos (y en BackVynils el `DELETE` responde 204 sin borrar).
 - **CPU y memoria:** en el cambio de estado del botón y en el hilo principal durante la acción.
 - **Asignaciones:** las clases de favorito y de coleccionista.
 
-## HU15 · Asociar un álbum a un artista (plan 5.9)
+## HU15 · Asociar un álbum a un artista
 
-Antes de cada grabación, quitar la asociación de A Night at the Opera con Rubén Blades (ver
-[Datos de prueba](#datos-de-prueba)). Se usa un músico y no una banda para no tocar las asociaciones
-existentes: en las bandas la app reemplaza la lista completa de álbumes.
+Se usa un músico: en una banda, la app reemplaza toda su lista de álbumes, y un error en el recorrido
+podría quitarle los que ya tiene.
 
-| # | Acción | Espera | Seg. |
-|---|---|---|---|
-| 1 | Tarjeta **Coleccionista** > **Entrar** > **Manolo Bellon** > **Ver artistas** > **Rubén Blades Bellido de Luna** | 3 s | |
-| 2 | **Agregar álbum** (debajo de la discografía) | 3 s | |
-| 3 | Buscar `Opera` y cerrar el teclado | 3 s | |
-| 4 | Seleccionar **A Night at the Opera**; se habilita **Asociar** | 2 s | |
-| 5 | Tocar **Asociar** una sola vez y esperar la respuesta; la ventana se cierra | hasta 10 s | |
-| 6 | Verificar el álbum en la discografía de Rubén Blades | 5 s | |
+| # | Acción | Seg. |
+|---|---|---|
+| 1 | Tarjeta **Coleccionista** > **Entrar** > **Manolo Bellon** | |
+| 2 | **Ver artistas** | |
+| 3 | Abrir **Rubén Blades Bellido de Luna** | |
+| 4 | Bajar hasta los álbumes y tocar **Agregar álbum** | |
+| 5 | En **Buscar álbum por título...**, escribir `Night` | |
+| 6 | Tocar **A Night at the Opera**; **Asociar** se habilita | |
+| 7 | Tocar **Asociar** una sola vez; la ventana se cierra con el aviso **Álbum asociado** (esperar hasta 10 s) | |
+| 8 | Bajar hasta los álbumes; debe aparecer **A Night at the Opera** | |
+
+Antes y después de **cada** grabación, quitar la asociación (ver [Datos de prueba](#datos-de-prueba)); si
+no, en la siguiente sale **Ya asociado**.
 
 **Qué analizar:**
-- **Red:** `GET /albums` al abrir la ventana, la asociación del álbum 102 con el músico 100 y la consulta del artista después.
-- **CPU:** durante la búsqueda (cada letra) y en el hilo principal durante la asociación.
-- **Memoria:** de la ventana y sus resultados (portadas).
-- **Asignaciones:** lo que se crea con cada cambio de la búsqueda y al actualizar la discografía.
+- **Red:**
+  - `GET /albums` al abrir la ventana. Escribir en el buscador no debería generar peticiones.
+  - `POST /musicians/100/albums/102`: tamaño, código de respuesta y duración.
+  - El `GET /musicians/100` que refresca el detalle.
+- **CPU:** con cada tecla de la búsqueda (filtrar y redibujar los resultados) y al asociar. Actividad del
+  hilo principal durante la petición.
+- **Memoria:** de la ventana y sus resultados, con las portadas, y al cerrarla.
+- **Asignaciones:** lo que se crea al cambiar la búsqueda (`String`, listas filtradas) y las clases de
+  álbum (`AlbumSummary`, `ArtistAlbum`).
+
+Si la asociación tarda, grabar además un **System Trace** durante ese paso.

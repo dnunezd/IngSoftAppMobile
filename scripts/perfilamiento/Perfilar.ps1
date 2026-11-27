@@ -543,19 +543,19 @@ function Quitar-Favoritos {
 }
 
 function Borrar-CancionesDePrueba {
-    # HU08 agrega a Poeta del pueblo (101) la canción "Perf 1" o "Perf 2". Se borra antes y después de
-    # cada grabación para que todas vean el mismo álbum (la API no tiene DELETE de canciones).
-    Psql 'DELETE FROM track WHERE "albumId" = 101 AND name LIKE ''Perf %'';'
+    # HU08 agrega a Poeta del pueblo (101) la canción "Perf". Se borra antes y después de cada
+    # grabación para que todas vean el mismo álbum (la API no tiene DELETE de canciones).
+    Psql 'DELETE FROM track WHERE "albumId" = 101 AND name LIKE ''Perf%'';'
     $album = Invoke-RestMethod "$UrlBackend/albums/101"
-    if (@($album.tracks | Where-Object { $_.name -like 'Perf *' }).Count) { throw 'Poeta del pueblo sigue con canciones "Perf": no se pudieron borrar.' }
+    if (@($album.tracks | Where-Object { $_.name -like 'Perf*' }).Count) { throw 'Poeta del pueblo sigue con canciones "Perf": no se pudieron borrar.' }
 }
 
 function Borrar-ComentariosDePrueba {
-    # HU09 comenta Poeta del pueblo (101) con un texto que empieza por "Perf ". Se borra antes y después
-    # de cada grabación para no publicar comentarios repetidos.
-    Psql 'DELETE FROM comment WHERE "albumId" = 101 AND description LIKE ''Perf %'';'
-    $album = Invoke-RestMethod "$UrlBackend/albums/101"
-    if (@($album.comments | Where-Object { $_.description -like 'Perf *' }).Count) { throw 'Poeta del pueblo sigue con comentarios "Perf": no se pudieron borrar.' }
+    # HU09 comenta A Day at the Races (103, sin comentarios) con un texto que empieza por "Perf". Se
+    # borra antes y después de cada grabación para no publicar comentarios repetidos.
+    Psql 'DELETE FROM comment WHERE "albumId" = 103 AND description LIKE ''Perf%'';'
+    $album = Invoke-RestMethod "$UrlBackend/albums/103"
+    if (@($album.comments | Where-Object { $_.description -like 'Perf*' }).Count) { throw 'A Day at the Races sigue con comentarios "Perf": no se pudieron borrar.' }
 }
 
 function Quitar-AsociacionDePrueba {
@@ -571,7 +571,7 @@ function Restaurar-Datos([string]$Id) {
     switch ($Id) {
         'hu07' { Borrar-AlbumesDePrueba; Escribir-Resultado 'OK' 'Álbumes "Perf" borrados por la API.' }
         'hu08' { Borrar-CancionesDePrueba; Escribir-Resultado 'OK' 'Canciones "Perf" de Poeta del pueblo borradas en la base local.' }
-        'hu09' { Borrar-ComentariosDePrueba; Escribir-Resultado 'OK' 'Comentarios "Perf" de Poeta del pueblo borrados en la base local.' }
+        'hu09' { Borrar-ComentariosDePrueba; Escribir-Resultado 'OK' 'Comentarios "Perf" de A Day at the Races borrados en la base local.' }
         'hu10' { Quitar-Favoritos; Escribir-Resultado 'OK' 'Favoritos del coleccionista 100 quitados en la base local.' }
         'hu15' { Quitar-AsociacionDePrueba; Escribir-Resultado 'OK' 'A Night at the Opera sin asociar a Rubén Blades en la base local.' }
     }
@@ -618,24 +618,24 @@ $Definiciones = [ordered]@{
             'CPU: al abrir el formulario, al cargar la vista previa de la portada y al enviar.',
             'Asignaciones: lo que se crea mientras se escribe en el formulario, y las clases `AlbumNuevo` y `OpcionesAlbum`.') }
     hu08 = @{ Carpeta = 'HU08'; Titulo = 'HU08 · Asociar tracks con un álbum'; Revisar = @(
-            'Red: `POST /albums/101/tracks` (tamaño, código de respuesta y duración) y la consulta del detalle al volver.',
-            'CPU: al abrir el formulario, al escribir y validar los campos, y durante el envío (hilo principal).',
-            'Memoria: inicial, durante el diligenciamiento y al terminar.',
-            'Asignaciones: el estado del formulario (`AddTrackUiState`) y la actualización del detalle del álbum.') }
+            'Red: `POST /albums/101/tracks` (tamaño, código de respuesta y duración). Después, el `GET /albums/101` que refresca el detalle.',
+            'CPU: al abrir el formulario, al validar la duración con cada tecla y al guardar. Actividad del hilo principal mientras espera la respuesta.',
+            'Memoria: al abrir el formulario, mientras se escribe y al volver al detalle.',
+            'Asignaciones: lo que se crea mientras se escribe (estado del formulario) y al actualizar el detalle.') }
     hu09 = @{ Carpeta = 'HU09'; Titulo = 'HU09 · Comentar un álbum'; Revisar = @(
-            'Red: `POST /albums/101/comments` (tamaño, código de respuesta y duración) y la consulta del detalle al volver.',
-            'CPU: al elegir la calificación, al escribir la opinión y durante la publicación (hilo principal).',
+            'Red: `POST /albums/103/comments` (tamaño, código de respuesta y duración). Que el segundo toque no genere otro `POST`. Después, el `GET /albums/103` que refresca el detalle.',
+            'CPU: mientras se escribe y al publicar. Actividad del hilo principal durante la petición y el indicador de carga.',
             'Memoria: del formulario y del texto, y al volver al detalle.',
-            'Asignaciones: el estado de la pantalla de comentar (`AddCommentUiState`) con cada letra.') }
+            'Asignaciones: lo que se crea al cambiar el estado (calificación, texto, envío). Si la publicación tarda, grabar además un System Trace durante ese paso.') }
     hu10 = @{ Carpeta = 'HU10'; Titulo = 'HU10 · Agregar artistas a favoritos'; Revisar = @(
             'Red: `GET /collectors/100/performers`, `POST /collectors/100/bands/101`, y si al reabrir vuelve a consultar.',
             'CPU y memoria: en el cambio de estado del botón.',
             'Asignaciones: las clases de favorito y de coleccionista.') }
     hu15 = @{ Carpeta = 'HU15'; Titulo = 'HU15 · Asociar un álbum a un artista'; Revisar = @(
-            'Red: `GET /albums` al abrir la ventana, la asociación del álbum 102 con el músico 100 y la consulta del artista después.',
-            'CPU: durante la búsqueda (cada letra) y la asociación (hilo principal).',
-            'Memoria: de la ventana y sus resultados (portadas).',
-            'Asignaciones: lo que se crea con cada cambio de la búsqueda y al actualizar la discografía.') }
+            'Red: `GET /albums` al abrir la ventana (escribir en el buscador no debería generar peticiones), `POST /musicians/100/albums/102` y el `GET /musicians/100` que refresca el detalle.',
+            'CPU: con cada tecla de la búsqueda (filtrar y redibujar los resultados) y al asociar. Actividad del hilo principal durante la petición.',
+            'Memoria: de la ventana y sus resultados, con las portadas, y al cerrarla.',
+            'Asignaciones: lo que se crea al cambiar la búsqueda (`String`, listas filtradas) y las clases de álbum. Si la asociación tarda, grabar además un System Trace durante ese paso.') }
 }
 
 $ArchivosPorHu = @('connections.json', 'connections.png', 'live-telemetry.asdb', 'live-telemetry.png', 'track-memory.asdb', 'track-memory.png')

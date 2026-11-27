@@ -2,7 +2,7 @@
 
 `scripts/perfilamiento/Perfilar.ps1` hace la [guía manual](guia-manual.md) sin tocar el teléfono:
 maneja la app con los mismos pasos de cada HU del plan de pruebas de rendimiento del Sprint 3 (HU01,
-HU02, HU03, HU04, HU07, HU08, HU09, HU10 y HU15; cada paso, una acción y su espera de 5, 3 o 2 s),
+HU02, HU03, HU04, HU07, HU08, HU09, HU10 y HU15; cada paso, una acción y su espera: 5, 3 o 2 s según el plan, y 5 s en HU08, HU09 y HU15),
 deja los datos de prueba del backend como los espera cada HU, reinicia la app sin datos antes de
 cada grabación, anota el segundo de la grabación en que ocurre cada paso, toma las capturas de la
 ventana de Android Studio y arma el análisis de cada HU. Lo manual es iniciar y detener las tareas del
@@ -106,8 +106,8 @@ que quedó bien:
 | HU | Qué deja | Cómo |
 |---|---|---|
 | HU07 | Sin álbumes `Perf*` ("Perf 1" en la grabación 1, "Perf 2" en la 2) | `DELETE /albums/{id}` de la API. Si el filtro abarcara todo el catálogo, no borra nada. |
-| HU08 | Poeta del pueblo (101) sin canciones `Perf` | `psql` (la API no borra canciones) |
-| HU09 | Poeta del pueblo (101) sin comentarios `Perf` | `psql` (la API no borra comentarios) |
+| HU08 | Poeta del pueblo (101) sin la canción `Perf` | `psql` (la API no borra canciones) |
+| HU09 | A Day at the Races (103) sin el comentario `Perf` | `psql` (la API no borra comentarios) |
 | HU10 | Queen sin ser favorito del coleccionista 100 | `psql`: el `DELETE` de favoritos de BackVynils responde 204 sin borrar nada |
 | HU15 | A Night at the Opera (102) sin asociar a Rubén Blades (100) | `psql` (la API no quita esa asociación) |
 
@@ -138,7 +138,7 @@ mano se conserva.
 
 ## A tener en cuenta
 
-- Los recorridos usan los datos de ejemplo de BackVynils: álbumes 100 (Buscando América), 101 (Poeta
+- Los recorridos usan los datos de ejemplo de BackVynils: álbumes 100 (Buscando América), 103 (A Day at the Races), 101 (Poeta
   del pueblo) y 102 (A Night at the Opera), músico 100 (Rubén Blades Bellido de Luna), banda 101 (Queen)
   y coleccionista 100 (Manolo Bellon). El detalle está en [Datos de prueba](guia-manual.md#datos-de-prueba).
 - La HU10 no quita el favorito, aunque el plan lo pide: la app no permite quitar favoritos.
