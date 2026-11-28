@@ -26,7 +26,7 @@ sealed interface CollectorsUiState {
     data object Error : CollectorsUiState
 }
 
-private fun filtrar(coleccionistas: List<Collector>, consulta: String): List<Collector> {
+internal fun filtrar(coleccionistas: List<Collector>, consulta: String): List<Collector> {
     val buscado = normalizar(consulta.trim())
     if (buscado.isEmpty()) return coleccionistas
     return coleccionistas.filter {
