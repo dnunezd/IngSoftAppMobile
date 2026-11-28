@@ -1,5 +1,7 @@
 # Resultados: HU15 Agregar un álbum a un artista
 
+> Los nombres de las clases, archivos y pruebas se actualizaron a los del código actual después del PR [#122](https://github.com/dnunezd/IngSoftAppMobile/pull/122) (código en inglés). Los resultados son los de la fecha de ejecución.
+
 Ejecución del 2026-11-19 sobre `feature/hu15-agregar-album-artista`, con el cambio OpenSpec `add-agregar-album-artista`. La implementación se hizo con TDD: en cada ciclo las pruebas se escribieron primero y fallaron (rojo) antes del código (verde), y luego se refactorizó. Las pruebas en dispositivo y el recorrido manual usaron un BackVynils local en Docker, nunca el backend de los tutores. Las pruebas E2E son la tarea T15-5 (#56) y no son parte de este cambio.
 
 ## Suites
@@ -19,8 +21,8 @@ En el Motorola se usó un APK con `applicationId` `com.example.vinilos.revision`
 | Ciclo | Rojo | Verde |
 |---|---|---|
 | 1. Repositorio: asociar a un músico o a una banda | 14 fallos (`NotImplementedError`) | 13 + 1 pruebas |
-| 2. `AsociarAlbumViewModel` | 29 de 31 fallan | 31/31 |
-| 3. `ArtistaDetalleViewModel.albumAsociado` | 3 de 5 fallan | 5/5 |
+| 2. `AssociateAlbumViewModel` | 29 de 31 fallan | 31/31 |
+| 3. `ArtistDetailViewModel.albumAsociado` | 3 de 5 fallan | 5/5 |
 | 4. Ventana y botón "Agregar álbum" | 21 de 25 fallan | 25/25 |
 | 5. Integración en `VinilosNavHost` y rotación | 3 de 4 fallan | 4/4 |
 
@@ -32,10 +34,10 @@ Las pruebas que pasaron en rojo comprueban ausencias (por ejemplo, que el Visita
 |---|---|---|
 | `ArtistRepositoryAsociarTest` | 13 | `POST` del músico; `GET` y `PUT` de la banda con los álbumes actuales más el nuevo; sin `PUT` si no se puede leer la lista completa; 404, 500 y sin conexión como `ErrorDeCarga`; cancelación |
 | `RepositoriosDispatcherTest` | 1 | Asociar corre en el dispatcher inyectado |
-| `AsociarAlbumViewModelTest` | 34 | Carga con y sin caché, búsqueda, vacío y sin resultados, selección única, ya asociados, asociar, error, reintento, doble toque, cancelar |
-| `ArtistaDetalleViewModelTest` | 5 | El álbum se agrega a la discografía por año, aviso, nueva consulta y fallo de esa consulta |
-| `VentanaAsociarAlbumTest` | 20 | Un caso por criterio de aceptación, más cargando, error del listado y sin resultados |
-| `PantallaDetalleArtistaAsociarTest` | 6 | Botón solo para el Coleccionista, ids enviados al abrir, título con el artista y "Álbum asociado" |
+| `AssociateAlbumViewModelTest` | 34 | Carga con y sin caché, búsqueda, vacío y sin resultados, selección única, ya asociados, asociar, error, reintento, doble toque, cancelar |
+| `ArtistDetailViewModelTest` | 5 | El álbum se agrega a la discografía por año, aviso, nueva consulta y fallo de esa consulta |
+| `AssociateAlbumDialogTest` | 20 | Un caso por criterio de aceptación, más cargando, error del listado y sin resultados |
+| `ArtistDetailScreenAsociarTest` | 6 | Botón solo para el Coleccionista, ids enviados al abrir, título con el artista y "Álbum asociado" |
 | `VinilosNavHostTest` | 3 | Flujo completo del Coleccionista, cancelar y el Visitante sin botón |
 | `RotacionTest` | 1 | Girar con la ventana abierta conserva búsqueda y selección sin volver a consultar |
 
@@ -45,10 +47,10 @@ Las pruebas que pasaron en rojo comprueban ausencias (por ejemplo, que el Visita
 |---|---|---|---|
 | 1 | Nombre del artista | Título "Asociar álbum a {artista}" | `muestraElNombreDelArtistaAlQueSeLeAgregaElAlbum` |
 | 2 | Botón "Agregar álbum" | Junto al título de la sección de álbumes | `elColeccionistaVeAgregarAlbum` |
-| 3 | Ventana con búsqueda y álbumes con portada, nombre y año | `ModalBottomSheet`; búsqueda sin tildes ni mayúsculas | `cadaAlbumMuestraPortadaNombreYAnio`, `buscarFiltraPorNombreSinTildesNiMayusculas` |
+| 3 | Ventana con búsqueda y álbumes con portada, nombre y año | `ModalBottomSheet`; búsqueda sin tildes ni mayúsculas | `cadaAlbumMuestraPortadaNombreYAnio`, `searchFiltraPorNombreSinTildesNiMayusculas` |
 | 4 | Ya asociados deshabilitados con "Ya asociado" | Fila gris, sin clic | `unAlbumYaAsociadoSeVeDeshabilitadoConLaEtiqueta` |
 | 5 | Un solo álbum a la vez | Filas con rol de botón de opción | `soloQuedaSeleccionadoUnAlbum` |
-| 6 | "Asociar" deshabilitado sin selección | `puedeAsociar` | `asociarEstaDeshabilitadoSinSeleccion` |
+| 6 | "Asociar" deshabilitado sin selección | `puedeAsociar` | `associateEstaDeshabilitadoSinSeleccion` |
 | 7 | Al asociar, "Álbum asociado" | Se cierra la ventana, aviso y discografía actualizada | `elColeccionistaAsociaUnAlbumYLoVeEnLaDiscografiaDelArtista` |
 | 8 | "Cancelar" cierra sin cambios | También el botón de cierre, deslizar y atrás | `cancelarCierraLaVentanaSinAsociar` |
 | 9 | "No hay álbumes para asociar" | Catálogo vacío o todo ya asociado | `sinAlbumesDisponiblesMuestraElMensaje` |
@@ -86,7 +88,7 @@ Revisión de Daniel Nuñez en el PR #114, corregida con TDD (rojo antes del cód
 
 | Punto | Corrección | Prueba |
 |---|---|---|
-| **Necesario:** "Asociar" seguía habilitado con un álbum elegido que la búsqueda dejaba fuera, y se asociaba un álbum que no se veía | La selección se quita cuando el álbum deja de verse (búsqueda o catálogo actualizado) y `puedeAsociar` exige que esté visible. Se cambiaron la spec y D4 | 3 nuevas en `AsociarAlbumViewModelTest` (rojo con 3 fallos) |
+| **Necesario:** "Asociar" seguía habilitado con un álbum elegido que la búsqueda dejaba fuera, y se asociaba un álbum que no se veía | La selección se quita cuando el álbum deja de verse (búsqueda o catálogo actualizado) y `puedeAsociar` exige que esté visible. Se cambiaron la spec y D4 | 3 nuevas en `AssociateAlbumViewModelTest` (rojo con 3 fallos) |
 | TalkBack leía el nombre del álbum dos veces | La portada de la fila es decorativa | `laFilaNoRepiteElNombreConLaDescripcionDeLaPortada` (rojo) |
 | `Naranja` fijo en el radio y el borde | `primary`: 2,73:1 hoy sobre `NaranjaSuave` y 4,0:1 con `NaranjaContraste` (#113) | — |
 | Dos criterios de orden en la discografía | El álbum se agrega al final y lo ordena la nueva consulta | `albumAsociadoLoAgregaAlFinalDeLaDiscografiaYActivaElAviso` (rojo) |
@@ -98,7 +100,7 @@ Revisión de Daniel Nuñez en el PR #114, corregida con TDD (rojo antes del cód
 
 Escenario de la revisión repetido en el Pixel 8 contra BackVynils local: Queen → elegir "Buscando América" → buscar "poeta". "Asociar" queda deshabilitado y no se escribe nada en el backend.
 
-Después de las correcciones: 502 unitarias sin fallos, lint sin errores y 59/59 instrumentadas en el Pixel 8 (`VentanaAsociarAlbumTest`, `PantallaDetalleArtistaAsociarTest`, `VinilosNavHostTest` y `RotacionTest` completas).
+Después de las correcciones: 502 unitarias sin fallos, lint sin errores y 59/59 instrumentadas en el Pixel 8 (`AssociateAlbumDialogTest`, `ArtistDetailScreenAsociarTest`, `VinilosNavHostTest` y `RotacionTest` completas).
 
 ## Guía para las pruebas E2E (T15-5, #56)
 
@@ -106,11 +108,11 @@ Después de las correcciones: 502 unitarias sin fallos, lint sin errores y 59/59
 - **Nunca** usar `DELETE /musicians|bands/{id}/albums/{albumId}` para limpiar: le quita **todos** los álbumes al artista. Tampoco `POST /bands/{id}/albums/{albumId}`: deja a la banda como única intérprete del álbum.
 - **Datos propios:** crear el álbum de la prueba con `POST /albums` y asociarlo desde la app; al terminar, restaurar con `PUT /musicians/{id}/albums` o `PUT /bands/{id}/albums` y la lista original (nunca vacía: con `[]` el backend le quita todos los álbumes).
 - **Error al asociar:** no se puede provocar en el backend real; cubrirlo con `MockWebServer` en la misma clase, como las demás E2E.
-- **Tags:** `TagBotonAgregarAlbum`, `TagVentanaAsociar`, `TagListaAsociar`, `tagAlbumAsociable(id)`, `tagYaAsociado(id)`, `TagBotonAsociar`, `TagCancelarAsociar`, `TagErrorAsociar`, `TagVacioAsociar` y `TagSinResultadosAsociar`, en `ui/artistas/VentanaAsociarAlbum.kt`.
+- **Tags:** `TagBotonAgregarAlbum`, `TagVentanaAsociar`, `TagListaAsociar`, `tagAlbumAsociable(id)`, `tagYaAsociado(id)`, `TagBotonAsociar`, `TagCancelarAsociar`, `TagErrorAsociar`, `TagEmptyAsociar` y `TagSinResultadosAsociar`, en `ui/artistas/AssociateAlbumDialog.kt`.
 
 ## Pruebas E2E (T15-5)
 
-Clase `AgregarAlbumArtistaE2ETest` (cambio de OpenSpec [`add-e2e-agregar-album-artista`](../../../../openspec/changes/add-e2e-agregar-album-artista)). Recorre la app desde el ingreso, como la persona, con los tres escenarios más importantes: la búsqueda sin resultados y cancelar, el flujo completo y el error con reintento. ESC01 y ESC02 van contra BackVynils; como asocian álbumes, se corren contra el backend **local**. Lo que se asocia es siempre un álbum propio (`POST /albums`); al borrarlo al terminar con `DELETE /albums/{id}` desaparece también su relación con el artista, que conserva sus álbumes reales, así que no hace falta restaurar la lista con `PUT` como proponía la guía anterior. ESC03 usa `MockWebServer` para provocar el error.
+Clase `AssociateAlbumE2ETest` (cambio de OpenSpec [`add-e2e-agregar-album-artista`](../../../../openspec/changes/add-e2e-agregar-album-artista)). Recorre la app desde el ingreso, como la persona, con los tres escenarios más importantes: la búsqueda sin resultados y cancelar, el flujo completo y el error con reintento. ESC01 y ESC02 van contra BackVynils; como asocian álbumes, se corren contra el backend **local**. Lo que se asocia es siempre un álbum propio (`POST /albums`); al borrarlo al terminar con `DELETE /albums/{id}` desaparece también su relación con el artista, que conserva sus álbumes reales, así que no hace falta restaurar la lista con `PUT` como proponía la guía anterior. ESC03 usa `MockWebServer` para provocar el error.
 
 | ID         | Descripción del escenario                                 | Resultado esperado                                                                                                                                                                                                                                                                             | Backend          | Evidencia                 |
 |------------|-----------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------|---------------------------|
@@ -133,9 +135,9 @@ Criterios de la HU15 cubiertos por las E2E:
 | 9   | La búsqueda que deja fuera al álbum elegido quita la selección      | ESC01        |
 | 10  | "Cancelar" cierra sin asociar y la ventana vuelve vacía             | ESC01        |
 
-Que el Visitante no vea "Agregar álbum" se cubre en `PantallaDetalleArtistaAsociarTest` y `VinilosNavHostTest` (Compose UI).
+Que el Visitante no vea "Agregar álbum" se cubre en `ArtistDetailScreenAsociarTest` y `VinilosNavHostTest` (Compose UI).
 
-Samsung SM-S938B (Android 17), 2026-11-22, contra BackVynils local: `OK (9 tests)` junto con las E2E de HU08 y HU09, sin escenarios omitidos y con todas las capturas en "Ok"; el músico 100 quedó con los álbumes 100 y 101 y la banda 101 con los álbumes 102 y 103, como antes de la corrida. Para correrlas, ver la sección E2E de [HU08](../HU08/README.md#cómo-correrlas) con la clase `com.example.vinilos.AgregarAlbumArtistaE2ETest`.
+Samsung SM-S938B (Android 17), 2026-11-22, contra BackVynils local: `OK (9 tests)` junto con las E2E de HU08 y HU09, sin escenarios omitidos y con todas las capturas en "Ok"; el músico 100 quedó con los álbumes 100 y 101 y la banda 101 con los álbumes 102 y 103, como antes de la corrida. Para correrlas, ver la sección E2E de [HU08](../HU08/README.md#cómo-correrlas) con la clase `com.example.vinilos.AssociateAlbumE2ETest`.
 
 ## Sin verificar
 

@@ -1,5 +1,7 @@
 # HU08 · Asociar canciones a un álbum: pruebas y evidencia
 
+Las pruebas unitarias y de interfaz, con la prueba de cada criterio de aceptación, están en [resultados.md](resultados.md).
+
 ## Pruebas E2E (T08-5)
 
 Clase `AddTrackE2ETest` (cambio de OpenSpec [`add-e2e-agregar-tracks`](../../../../openspec/changes/add-e2e-agregar-tracks)). Recorre la app desde el ingreso, como la persona, y cubre todos los casos que pide la [T08-5](https://github.com/dnunezd/IngSoftAppMobile/wiki/HU08). ESC01, ESC02 y ESC04 a ESC07 van contra BackVynils; como agregan canciones, se corren contra el backend **local**. Los del Coleccionista usan un álbum propio (`POST /albums`) que se borra al terminar con sus canciones; ESC07 lo borra a mitad de la prueba para guardar sobre un álbum ya eliminado. ESC03 usa `MockWebServer` para provocar el error con el backend caído.

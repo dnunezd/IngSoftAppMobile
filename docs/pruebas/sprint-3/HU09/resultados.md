@@ -1,5 +1,7 @@
 # Resultados: HU09 Comentar un álbum
 
+> Los nombres de las clases, archivos y pruebas se actualizaron a los del código actual después del PR [#122](https://github.com/dnunezd/IngSoftAppMobile/pull/122) (código en inglés). Los resultados son los de la fecha de ejecución.
+
 Ejecución del 2026-11-18 sobre `feature/HU09-comentar-album`, con el cambio OpenSpec `add-comentar-album`. Las pruebas en dispositivo usaron un BackVynils local en Docker (`-PbaseUrl=http://localhost:3000/` con `adb reverse`), nunca el backend de los tutores. Las pruebas E2E son la tarea T09-5 (#51) y no son parte de este cambio.
 
 ## Suites
@@ -8,16 +10,16 @@ Ejecución del 2026-11-18 sobre `feature/HU09-comentar-album`, con el cambio Ope
 |---|---|---|
 | Unitarias (`testDebugUnitTest`) | 449 sin fallos (45 nuevas, escritas antes del código) | JVM |
 | Lint (`lintDebug`) | 0 errores; solo los 2 avisos de navigation 2.10, que son intencionales | JVM |
-| Instrumentadas (`connectedDebugAndroidTest`) | 224 pruebas: 223 pasan y 1 se omite (la de siempre, `ArtistaDetalleE2ETest.unArtistaSinAlbumesNiPremiosMuestraLosMensajesDeVacio`) | Emulador Pixel 8 (API 34) |
+| Instrumentadas (`connectedDebugAndroidTest`) | 224 pruebas: 223 pasan y 1 se omite (la de siempre, `ArtistDetailE2ETest.unArtistaSinAlbumesNiPremiosMuestraLosMensajesDeVacio`) | Emulador Pixel 8 (API 34) |
 | OpenSpec | `openspec validate add-comentar-album --strict` pasa | — |
 
 Pruebas unitarias nuevas:
 
 | Clase | Pruebas | Qué cubre |
 |---|---|---|
-| `ComentarioRepositoryTest` | 5 | Ruta y cuerpo del `POST`, y 404, 400, 500 y sin conexión como `ErrorDeCarga` |
-| `ComentarAlbumUiStateTest` | 10 | `puedePublicar`, `tieneBorrador`, niveles de calificación y límite de 400 |
-| `ComentarAlbumViewModelTest` | 24 | Carga del álbum (incluido un 404), edición, envío, guarda contra dos toques, error, salida y diálogo |
+| `CommentRepositoryTest` | 5 | Ruta y cuerpo del `POST`, y 404, 400, 500 y sin conexión como `ErrorDeCarga` |
+| `AddCommentUiStateTest` | 10 | `puedePublicar`, `tieneBorrador`, niveles de calificación y límite de 400 |
+| `AddCommentViewModelTest` | 24 | Carga del álbum (incluido un 404), edición, envío, guarda contra dos toques, error, salida y diálogo |
 | `AlbumViewModelTest` | 3 | `actualizar()` después de comentar |
 | `RepositoriosDispatcherTest` | 1 | Publicar corre en el dispatcher inyectado |
 | `AppContainerTest` | 2 | El contenedor crea y permite reemplazar el repositorio |
@@ -51,14 +53,14 @@ El backend guardó el comentario con el coleccionista 101 (Jaime Monsalve) y la 
 
 | Punto (@jeffrey-uandes) | Corrección |
 |---|---|
-| Un 404 al cargar el álbum sin guardar dejaba la pantalla en "Cargando" (y en la app la excepción escapaba del `launch`) | `AlbumNoDisponible` también lleva a `CargaAlbum.Error` con "Reintentar"; prueba nueva en `ComentarAlbumViewModelTest` |
+| Un 404 al cargar el álbum sin guardar dejaba la pantalla en "Cargando" (y en la app la excepción escapaba del `launch`) | `AlbumNoDisponible` también lleva a `CargaAlbum.Error` con "Reintentar"; prueba nueva en `AddCommentViewModelTest` |
 | Textos distintos del mockup | Subtítulo "Tu experiencia sobre el máster, prensado y audio" y "Tu apreciación audiófila ya forma parte…" |
 | Faltaba la ilustración del vinilo en el éxito | Vinilo con la marca de publicado (`07_comentario_publicado.jpg`, recapturada) |
 | Imports | `Session` importado en `VinilosNavHost` y orden corregido en `VinilosNavHostTest` |
 
 ## Pruebas E2E (T09-5)
 
-Clase `ComentarAlbumE2ETest` (cambio de OpenSpec [`add-e2e-comentar-album`](../../../../openspec/changes/add-e2e-comentar-album)). Recorre la app desde el ingreso, como la persona, con los tres escenarios más importantes: salir sin publicar, el flujo completo y el error con reintento. ESC01 y ESC02 van contra BackVynils; como publican comentarios, se corren contra el backend **local**, sobre un álbum propio (`POST /albums`) que se borra al terminar con sus comentarios. ESC03 usa `MockWebServer` para provocar el error.
+Clase `AddCommentE2ETest` (cambio de OpenSpec [`add-e2e-comentar-album`](../../../../openspec/changes/add-e2e-comentar-album)). Recorre la app desde el ingreso, como la persona, con los tres escenarios más importantes: salir sin publicar, el flujo completo y el error con reintento. ESC01 y ESC02 van contra BackVynils; como publican comentarios, se corren contra el backend **local**, sobre un álbum propio (`POST /albums`) que se borra al terminar con sus comentarios. ESC03 usa `MockWebServer` para provocar el error.
 
 | ID         | Descripción del escenario                                               | Resultado esperado                                                                                                                                                                                                                                                     | Backend          | Evidencia                 |
 |------------|-------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|------------------|---------------------------|
@@ -79,9 +81,9 @@ Criterios de la HU09 cubiertos por las E2E:
 | 7   | Error al publicar: mensaje y lo escrito conservado              | ESC03        |
 | 8   | Descartar el comentario al salir                                | ESC01        |
 
-La opinión en blanco y el límite de 400 caracteres se cubren en `ComentarAlbumViewModelTest` y `ComentarAlbumUiStateTest` (unitarias). Que el Visitante **no** vea "Comentar álbum" no tiene ahora ninguna prueba automatizada: lo cubría la E2E del Visitante, que se cambió por la de descartar.
+La opinión en blanco y el límite de 400 caracteres se cubren en `AddCommentViewModelTest` y `AddCommentUiStateTest` (unitarias). Que el Visitante **no** vea "Comentar álbum" no tiene ahora ninguna prueba automatizada: lo cubría la E2E del Visitante, que se cambió por la de descartar.
 
-Samsung SM-S938B (Android 17), 2026-11-22, contra BackVynils local: `OK (9 tests)` junto con las E2E de HU08 y HU15, sin escenarios omitidos y con todas las capturas en "Ok"; el backend quedó sin álbumes ni comentarios de prueba. Para correrlas, ver la sección E2E de [HU08](../HU08/README.md#cómo-correrlas) con la clase `com.example.vinilos.ComentarAlbumE2ETest`.
+Samsung SM-S938B (Android 17), 2026-11-22, contra BackVynils local: `OK (9 tests)` junto con las E2E de HU08 y HU15, sin escenarios omitidos y con todas las capturas en "Ok"; el backend quedó sin álbumes ni comentarios de prueba. Para correrlas, ver la sección E2E de [HU08](../HU08/README.md#cómo-correrlas) con la clase `com.example.vinilos.AddCommentE2ETest`.
 
 ## Sin verificar
 
