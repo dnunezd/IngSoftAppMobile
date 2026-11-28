@@ -23,8 +23,8 @@ android {
         applicationId = "com.example.vinilos"
         minSdk = 23
         targetSdk = 37
-        versionCode = 5
-        versionName = "2.2.0"
+        versionCode = 7
+        versionName = "3.1.0"
 
         testInstrumentationRunner = "com.example.vinilos.VinilosTestRunner"
         vectorDrawables {
