@@ -46,35 +46,38 @@ Base técnica del sprint:
 
 Evidencia de pruebas en [`docs/pruebas/sprint-2/`](docs/pruebas/sprint-2).
 
-### Sprint 3 · en curso
+### Sprint 3 · release [`v3.1.0`](https://github.com/dnunezd/IngSoftAppMobile/releases/tag/v3.1.0)
 
-Va del 16 al 28 de noviembre de 2026. Su primer release es **`v3.0.0` – Sprint 3 (Week 7)**, con HU09 y HU15; la versión final del sprint será **`v3.1.0`**. Estado al 22 de noviembre, al cierre de la semana 7: el [milestone](https://github.com/dnunezd/IngSoftAppMobile/milestone/4) tiene 9 issues cerrados y 13 abiertos.
+Cerró el 28 de noviembre de 2026, con los releases [`v3.0.0`](https://github.com/dnunezd/IngSoftAppMobile/releases/tag/v3.0.0) (semana 7, con HU09 y HU15) y [`v3.1.0`](https://github.com/dnunezd/IngSoftAppMobile/releases/tag/v3.1.0) (versión final del sprint).
 
-| Historia                                     | En `develop`                                                                                                                                                                    | En revisión                                                                                                                                                       |
-|----------------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| HU08 · Asociar tracks con un álbum (Lorena Nossa) | —                                                                                                                                                                          | Formulario de nombre y duración `m:ss` desde el detalle del álbum ([#115](https://github.com/dnunezd/IngSoftAppMobile/pull/115)), con mejoras pedidas en la revisión |
-| HU09 · Comentar un álbum (Michael Mora)      | Calificación de 1 a 5 y opinión desde el detalle del álbum, con confirmación, error con lo escrito conservado y aviso al salir sin publicar ([#112](https://github.com/dnunezd/IngSoftAppMobile/pull/112)) | E2E `FN09-ESC01` a `ESC03` ([#116](https://github.com/dnunezd/IngSoftAppMobile/pull/116))                                                                          |
-| HU15 · Agregar un álbum a un artista (Jeffrey Díaz) | Ventana con búsqueda para asociar un álbum a un músico o a una banda desde su detalle, con "Ya asociado" y reintento ([#114](https://github.com/dnunezd/IngSoftAppMobile/pull/114)) | E2E `FN15-ESC01` a `ESC03` ([#116](https://github.com/dnunezd/IngSoftAppMobile/pull/116))                                                                          |
+| Historia                             | Qué hace                                                                                                                                                      | Responsable  | Pull Requests                                                                                                          |
+|--------------------------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------|------------------------------------------------------------------------------------------------------------------------|
+| HU08 · Asociar tracks con un álbum   | Formulario de nombre y duración `m:ss` desde el detalle del álbum, con "Canción agregada", error con lo escrito conservado y aviso si el álbum ya no existe | Lorena Nossa | [#115](https://github.com/dnunezd/IngSoftAppMobile/pull/115), [#116](https://github.com/dnunezd/IngSoftAppMobile/pull/116) |
+| HU09 · Comentar un álbum             | Calificación de 1 a 5 y opinión desde el detalle del álbum, con confirmación, error con lo escrito conservado y aviso al salir sin publicar                  | Michael Mora | [#112](https://github.com/dnunezd/IngSoftAppMobile/pull/112), [#116](https://github.com/dnunezd/IngSoftAppMobile/pull/116) |
+| HU15 · Agregar un álbum a un artista | Ventana con búsqueda para asociar un álbum a un músico o a una banda desde su detalle, con "Ya asociado" y reintento                                        | Jeffrey Díaz | [#114](https://github.com/dnunezd/IngSoftAppMobile/pull/114), [#116](https://github.com/dnunezd/IngSoftAppMobile/pull/116) |
 
-- **Accesibilidad:** hallazgos del Accessibility Scanner corregidos en las ocho pantallas de los Sprints 1 y 2, con fuente ampliada y TalkBack ([#113](https://github.com/dnunezd/IngSoftAppMobile/pull/113)).
-- **Pruebas de reconocimiento:** exploración sistemática con DroidBot y pruebas aleatorias con Monkey de Android en un Motorola Edge 30, sin cierres inesperados ni ANR. Resultados en la [página del Sprint 3](https://github.com/dnunezd/IngSoftAppMobile/wiki/Sprint-3#pruebas-de-reconocimiento) de la wiki.
-- **Pendiente para `v3.1.0`:** integrar HU08 y los E2E de HU08, HU09 y HU15, la regresión funcional de todas las historias, la revisión de accesibilidad de las pantallas nuevas y su perfilamiento.
+Base técnica y calidad del sprint:
+- Accesibilidad en todas las pantallas: Accessibility Scanner, fuente ampliada y TalkBack ([#113](https://github.com/dnunezd/IngSoftAppMobile/pull/113), [#120](https://github.com/dnunezd/IngSoftAppMobile/pull/120)).
+- App en español e inglés, según el idioma del teléfono ([#120](https://github.com/dnunezd/IngSoftAppMobile/pull/120)).
+- Pruebas E2E de HU08, HU09 y HU15 ([#116](https://github.com/dnunezd/IngSoftAppMobile/pull/116)) y regresión entre `v1.1.0`, `v2.2.0` y `develop` ([#121](https://github.com/dnunezd/IngSoftAppMobile/pull/121)).
+- Código fuente en inglés ([#122](https://github.com/dnunezd/IngSoftAppMobile/pull/122)).
+- Micro-optimizaciones de Lint y perfilamiento de las nueve historias en tres dispositivos físicos ([#123](https://github.com/dnunezd/IngSoftAppMobile/pull/123)).
+- Pruebas de reconocimiento con DroidBot (exploración sistemática) y Monkey (aleatorias) en un Motorola Edge 30, sin cierres inesperados ni ANR.
+- Prueba de cada criterio de aceptación documentada por historia ([#124](https://github.com/dnunezd/IngSoftAppMobile/pull/124)).
 
-Evidencia de pruebas en [`docs/pruebas/sprint-3/`](docs/pruebas/sprint-3).
+Evidencia de pruebas en [`docs/pruebas/sprint-3/`](docs/pruebas/sprint-3). La estrategia de pruebas y los resultados de reconocimiento, accesibilidad, regresión y perfilamiento están en la [página del Sprint 3](https://github.com/dnunezd/IngSoftAppMobile/wiki/Sprint-3) de la wiki.
 
 ## Versión y APK
 
-La versión publicada es `2.2.0` (`versionCode` 5), en el release [`v2.2.0` – Sprint 2 (Week 6)](https://github.com/dnunezd/IngSoftAppMobile/releases/tag/v2.2.0) sobre `main`, con el APK `vinilos-v2.2.0.apk` adjunto. El identificador de la app es `com.example.vinilos` y funciona desde Android 6.0 (API 23). Para instalarla sin compilar, descarga el APK del release en el teléfono y ábrelo.
+La versión publicada es `3.1.0` (`versionCode` 7), en el release [`v3.1.0` – Sprint 3 (Week 8)](https://github.com/dnunezd/IngSoftAppMobile/releases/tag/v3.1.0) sobre `main`, con el APK `vinilos-v3.1.0.apk` adjunto. Es la versión final del proyecto. El identificador de la app es `com.example.vinilos` y funciona desde Android 6.0 (API 23). Para instalarla sin compilar, descarga el APK del release en el teléfono y ábrelo.
 
-El siguiente release es **`v3.0.0` – Sprint 3 (Week 7)**: `app/build.gradle.kts` ya tiene `versionName` `3.0.0` y `versionCode` 6. La versión final del Sprint 3 será **`v3.1.0`**. Los releases siguen el formato `v<versión> – Sprint <n> (Week <m>)`, como `v2.2.0 – Sprint 2 (Week 6)`.
+Los releases siguen el formato `v<versión> – Sprint <n> (Week <m>)`, como `v3.0.0 – Sprint 3 (Week 7)`. Para cada release:
 
-Para cada release:
-
-1. Sube `versionCode` en 1 y deja `versionName` igual al tag (por ejemplo `2.0.0` para `v2.0.0`), ambos en `app/build.gradle.kts`.
+1. Sube `versionCode` en 1 y deja `versionName` igual al tag (por ejemplo `3.1.0` para `v3.1.0`), ambos en `app/build.gradle.kts`.
 2. Genera el APK con `./gradlew assembleDebug`. Queda en `app/build/outputs/apk/debug/app-debug.apk` y apunta al backend desplegado. La variante release no está firmada y Android no la instala.
 3. Adjúntalo al release como `vinilos-v<versión>.apk`.
 
-Antes de generarlo, comprueba que el backend desplegado responda (ver [opción A](#opción-a-backend-desplegado-por-los-tutores)). El 22 de noviembre de 2026 no respondía (tiempo de espera agotado), así que los APK de `v2.2.0` y `v3.0.0` se compilaron con `-PbaseUrl=http://localhost:3000/`: solo funcionan con BackVynils local y `adb reverse tcp:3000 tcp:3000`.
+Antes de generarlo, comprueba que el backend desplegado responda (ver [opción A](#opción-a-backend-desplegado-por-los-tutores)). El 28 de noviembre de 2026 seguía sin responder (tiempo de espera agotado), así que el APK de `v3.1.0`, como los de `v2.2.0` y `v3.0.0`, se compila con `-PbaseUrl=http://localhost:3000/`: solo funciona con BackVynils local y `adb reverse tcp:3000 tcp:3000`.
 
 ## Requisitos
 
@@ -159,15 +162,17 @@ Agrega `-PbaseUrl=...` para usar el backend local. Si hay varios dispositivos co
 
 | Tipo                                  | Comando                                                                                                                                                                                                                                                                                                                                                                                                                                  | Cantidad           | Necesita                                                            |
 |---------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|--------------------|---------------------------------------------------------------------|
-| Lint y unitarias (lo que corre la CI) | `./gradlew lint testDebugUnitTest --continue`                                                                                                                                                                                                                                                                                                                                                                                            | 507 unitarias      | Nada                                                                |
-| Instrumentadas sin E2E                | `./gradlew connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.notClass=com.example.vinilos.IngresoE2ETest,com.example.vinilos.CatalogoE2ETest,com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest,com.example.vinilos.ArtistasE2ETest,com.example.vinilos.ArtistaDetalleE2ETest,com.example.vinilos.CrearAlbumE2ETest,com.example.vinilos.ArtistasFavoritosE2ETest"` | 224                | Dispositivo                                                         |
-| Todas las instrumentadas (con E2E)    | `./gradlew connectedDebugAndroidTest -PbaseUrl=http://localhost:3000/`                                                                                                                                                                                                                                                                                                                                                                   | 265 (224 + 41 E2E) | Dispositivo, backend local con datos y `adb reverse` en un teléfono |
+| Lint y unitarias (lo que corre la CI) | `./gradlew lint testDebugUnitTest --continue`                                                                                                                                                                                                                                                                                                                                                                                            | 540 unitarias      | Nada                                                                |
+| Instrumentadas sin E2E                | `./gradlew connectedDebugAndroidTest "-Pandroid.testInstrumentationRunnerArguments.notClass=com.example.vinilos.EntryE2ETest,com.example.vinilos.CatalogE2ETest,com.example.vinilos.AlbumDetailE2ETest,com.example.vinilos.navigation.AlbumDetailBackendRealTest,com.example.vinilos.ArtistsE2ETest,com.example.vinilos.ArtistDetailE2ETest,com.example.vinilos.CreateAlbumE2ETest,com.example.vinilos.FavoriteArtistsE2ETest,com.example.vinilos.AddTrackE2ETest,com.example.vinilos.AddCommentE2ETest,com.example.vinilos.AssociateAlbumE2ETest"` | 253                | Dispositivo                                                         |
+| Todas las instrumentadas (con E2E)    | `./gradlew connectedDebugAndroidTest -PbaseUrl=http://localhost:3000/`                                                                                                                                                                                                                                                                                                                                                                   | 307 (253 + 54 E2E) | Dispositivo, backend local con datos y `adb reverse` en un teléfono |
 
 - El dispositivo debe estar **desbloqueado y con la pantalla encendida** durante toda la corrida.
 - Pasa `-PbaseUrl` también a las instrumentadas: la URL queda fija en la APK de prueba. Las E2E que crean datos deben correr contra el backend local.
 - Para una sola clase: `"-Pandroid.testInstrumentationRunnerArguments.class=com.example.vinilos.RotacionTest"` (instrumentadas) o `--tests "com.example.vinilos.viewmodel.CollectorsViewModelTest"` (unitarias).
-- Los reportes quedan en `app/build/reports/` (`tests/`, `androidTests/` y `lint-results-debug.html`). El lint debe quedar con 0 errores; los 7 avisos son esperados (dependencias y Gradle).
+- Los reportes quedan en `app/build/reports/` (`tests/`, `androidTests/` y `lint-results-debug.html`). El lint debe quedar con 0 errores; los 8 avisos son esperados (versiones de dependencias y del plugin de Android).
 - La [CI](.github/workflows/ci.yml) corre lint y unitarias con JDK 17 en cada Pull Request y en cada push a `develop` y `main`. Las instrumentadas necesitan un dispositivo y se corren a mano antes de integrar.
+- Cada ejecución de la CI publica sus informes (pruebas unitarias y lint) como el artefacto `informes-calidad`: en la pestaña **Actions**, la ejecución, sección **Artifacts**. Se conserva 14 días.
+- La prueba de cada criterio de aceptación (unitaria, de interfaz y E2E) está documentada por historia en `docs/pruebas/sprint-N/HUxx/`.
 
 ### Pruebas E2E y su evidencia
 
@@ -175,26 +180,31 @@ Las E2E recorren la app contra el backend real. Cada escenario se nombra con el 
 
 | Clase                         | Historia | Escenarios                                                                    |
 |-------------------------------|----------|-------------------------------------------------------------------------------|
-| `IngresoE2ETest`              | HU00     | `FN00-ESC01` a `ESC03`, más una prueba de navegación                          |
-| `CatalogoE2ETest`             | HU01     | `FN01-ESC01` a `ESC05`                                                        |
-| `AlbumDetalleE2ETest`         | HU02     | `FN02-ESC01`                                                                  |
-| `AlbumDetalleBackendRealTest` | HU02     | `FN02-ESC02` y `ESC03`                                                        |
-| `ArtistasE2ETest`             | HU03     | `FN03-ESC01` a `ESC07`                                                        |
-| `ArtistaDetalleE2ETest`       | HU04     | `FN04-ESC01` a `ESC07`                                                        |
-| `CrearAlbumE2ETest`           | HU07     | `FN07-ESC01` a `ESC07` (crea y borra álbumes: correr contra BackVynils local) |
-| `ArtistasFavoritosE2ETest`    | HU10     | `FN10-ESC01` a `ESC08` (agrega favoritos: correr contra BackVynils local)     |
+| `EntryE2ETest`                | HU00     | `FN00-ESC01` a `ESC03`, más una prueba de navegación                          |
+| `CatalogE2ETest`              | HU01     | `FN01-ESC01` a `ESC05`                                                        |
+| `AlbumDetailE2ETest`          | HU02     | `FN02-ESC01`                                                                  |
+| `AlbumDetailBackendRealTest`  | HU02     | `FN02-ESC02` y `ESC03`                                                        |
+| `ArtistsE2ETest`              | HU03     | `FN03-ESC01` a `ESC07`                                                        |
+| `ArtistDetailE2ETest`         | HU04     | `FN04-ESC01` a `ESC07`                                                        |
+| `CreateAlbumE2ETest`          | HU07     | `FN07-ESC01` a `ESC07` (crea y borra álbumes: correr contra BackVynils local) |
+| `FavoriteArtistsE2ETest`      | HU10     | `FN10-ESC01` a `ESC08` (agrega favoritos: correr contra BackVynils local)     |
+| `AddTrackE2ETest`             | HU08     | `FN08-ESC01` a `ESC07` (agrega canciones: correr contra BackVynils local)     |
+| `AddCommentE2ETest`           | HU09     | `FN09-ESC01` a `ESC03` (publica comentarios: correr contra BackVynils local)  |
+| `AssociateAlbumE2ETest`       | HU15     | `FN15-ESC01` a `ESC03` (asocia álbumes: correr contra BackVynils local)       |
 
-Total: **41 pruebas E2E**. Para correrlas y traer la evidencia (con `connectedDebugAndroidTest` la app se desinstala al terminar y la evidencia se pierde):
+Total: **54 pruebas E2E**. Para correrlas y traer la evidencia (con `connectedDebugAndroidTest` la app se desinstala al terminar y la evidencia se pierde):
 
 ```bash
 ./gradlew installDebug installDebugAndroidTest -PbaseUrl=http://localhost:3000/
 adb reverse tcp:3000 tcp:3000                    # solo en un teléfono
 adb shell rm -rf /storage/emulated/0/Android/data/com.example.vinilos/files/e2e-evidencia
-adb shell am instrument -w -e class com.example.vinilos.IngresoE2ETest,com.example.vinilos.CatalogoE2ETest,com.example.vinilos.AlbumDetalleE2ETest,com.example.vinilos.navigation.AlbumDetalleBackendRealTest,com.example.vinilos.ArtistasE2ETest,com.example.vinilos.ArtistaDetalleE2ETest,com.example.vinilos.CrearAlbumE2ETest,com.example.vinilos.ArtistasFavoritosE2ETest com.example.vinilos.test/androidx.test.runner.AndroidJUnitRunner
+adb shell am instrument -w -e class com.example.vinilos.EntryE2ETest,com.example.vinilos.CatalogE2ETest,com.example.vinilos.AlbumDetailE2ETest,com.example.vinilos.navigation.AlbumDetailBackendRealTest,com.example.vinilos.ArtistsE2ETest,com.example.vinilos.ArtistDetailE2ETest,com.example.vinilos.CreateAlbumE2ETest,com.example.vinilos.FavoriteArtistsE2ETest,com.example.vinilos.AddTrackE2ETest,com.example.vinilos.AddCommentE2ETest,com.example.vinilos.AssociateAlbumE2ETest com.example.vinilos.test/com.example.vinilos.VinilosTestRunner
 adb pull /storage/emulated/0/Android/data/com.example.vinilos/files/e2e-evidencia ./e2e-evidencia
 ```
 
-Debe terminar en `OK (41 tests)`. En Git Bash antepone `MSYS_NO_PATHCONV=1` a los `adb` que llevan rutas del dispositivo.
+Debe terminar en `OK (54 tests)`. En Git Bash antepone `MSYS_NO_PATHCONV=1` a los `adb` que llevan rutas del dispositivo.
+
+Las pruebas buscan textos en español. El runner `VinilosTestRunner` deja la app en español en Android 13 o superior aunque el sistema esté en inglés; por debajo de API 33 el dispositivo debe estar en español.
 
 ## Problemas frecuentes
 
@@ -222,16 +232,18 @@ docs/pruebas/  evidencia de pruebas por sprint e historia
 openspec/      specs vigentes (specs/), cambios en curso (changes/) y archivados (changes/archive/)
 ```
 
-**MVVM** con capa de datos por **Repository**: la vista dibuja el estado que expone el `ViewModel` y le envía los eventos; los repositorios son interfaces con su implementación (`*RepositoryImpl`) y hablan con el backend solo a través del `ServiceAdapter`, que construye una sola vez el cliente de red y traduce los errores de red y del servidor a `ErrorDeCarga` (un 404, a `RecursoNoEncontrado`). Cada repositorio convierte y ordena en un dispatcher inyectado (`Dispatchers.Default`), fuera del hilo principal.
+**MVVM** con capa de datos por **Repository**: la vista dibuja el estado que expone el `ViewModel` y le envía los eventos; los repositorios son interfaces con su implementación (`*RepositoryImpl`) y hablan con el backend solo a través del `ServiceAdapter`, que construye una sola vez el cliente de red y traduce los errores de red y del servidor a `LoadError` (un 404, a `ResourceNotFound`). Cada repositorio convierte y ordena en un dispatcher inyectado (`Dispatchers.Default`), fuera del hilo principal.
 
-**Sin conexión:** los repositorios guardan en Room la última respuesta de cada consulta de lectura: catálogo y detalle de álbumes, coleccionistas, listado de artistas, detalle de cada artista abierto y favoritos confirmados. Al abrir una de esas pantallas se muestra lo guardado mientras se consulta el backend; si la consulta falla, se conserva con un aviso breve, y la pantalla de error queda solo para cuando no hay nada guardado. Las escrituras (crear un álbum, agregar un favorito, comentar un álbum y asociar un álbum a un artista) siguen necesitando conexión. El detalle está en los cambios OpenSpec `add-cache-catalogo` y `add-cache-consultas`.
+**Sin conexión:** los repositorios guardan en Room la última respuesta de cada consulta de lectura: catálogo y detalle de álbumes, coleccionistas, listado de artistas, detalle de cada artista abierto y favoritos confirmados. Al abrir una de esas pantallas se muestra lo guardado mientras se consulta el backend; si la consulta falla, se conserva con un aviso breve, y la pantalla de error queda solo para cuando no hay nada guardado. Las escrituras (crear un álbum, agregar una canción, agregar un favorito, comentar un álbum y asociar un álbum a un artista) siguen necesitando conexión. El detalle está en los cambios OpenSpec `add-cache-catalogo` y `add-cache-consultas`.
 
 **Escribir solo lo que cambió:** cada repositorio recuerda en memoria lo último que guardó y la versión (`ETag`) de cada respuesta. Si una consulta llega con la misma versión o con el mismo contenido, no escribe en Room; si cambió, guarda solo las filas nuevas o modificadas y borra las que ya no llegan. El cliente de la API tiene además una caché HTTP en `cacheDir/http`: una consulta repetida envía `If-None-Match` y, si nada cambió, el backend responde 304 sin cuerpo. Ver el cambio OpenSpec `optimizar-cache-e-imagenes`.
+
+**Idiomas:** la app está en español (por defecto) y en inglés. Los textos están en `values/` y `values-en/`, y `ParidadDeTraduccionesTest` comprueba que ambos tengan los mismos textos.
 
 Los diagramas están en la página de cada sprint en la wiki.
 
 ## Flujo de trabajo
 
-- Gitflow con `main`, `develop` y `feature/*`: cada historia se integra a `develop` por Pull Request (*squash and merge*, dos revisores y `Closes #n`), y cada release se etiqueta sobre `main`.
+- Gitflow con `main`, `develop`, `feature/*` y `release/*`: cada historia se integra a `develop` por Pull Request (*squash and merge*, dos revisores y `Closes #n`); cada release pasa de `develop` a `main` por una rama `release/*`, se integra con *merge commit* y se etiqueta sobre `main`.
 - Commits y títulos de PR con Conventional Commits en español (`feat(catalogo): ...`).
 - El comportamiento se especifica con [OpenSpec](https://github.com/Fission-AI/OpenSpec) en `openspec/`, con requisitos y escenarios verificables por capacidad.

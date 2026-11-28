@@ -2,9 +2,9 @@ package com.example.vinilos.viewmodel
 
 import com.example.vinilos.MainDispatcherRule
 import com.example.vinilos.data.model.Album
-import com.example.vinilos.data.model.AlbumNuevo
-import com.example.vinilos.data.model.AlbumResumen
-import com.example.vinilos.data.remote.ErrorDeCarga
+import com.example.vinilos.data.model.NewAlbum
+import com.example.vinilos.data.model.AlbumSummary
+import com.example.vinilos.data.remote.LoadError
 import com.example.vinilos.data.repository.AlbumRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -15,38 +15,42 @@ import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 
-/** La lectura de lo guardado y cada consulta quedan pendientes hasta que la prueba las completa. */
+/** Reading the cached data and each query remain pending until the test completes them. */
 private class CatalogoConCacheFalso : AlbumRepository {
-    val lecturas = mutableListOf<CompletableDeferred<List<AlbumResumen>>>()
-    val consultas = mutableListOf<CompletableDeferred<Result<List<AlbumResumen>>>>()
+    val lecturas = mutableListOf<CompletableDeferred<List<AlbumSummary>>>()
+    val consultas = mutableListOf<CompletableDeferred<Result<List<AlbumSummary>>>>()
 
-    override suspend fun obtenerAlbumesGuardados(): List<AlbumResumen> =
-        CompletableDeferred<List<AlbumResumen>>().also { lecturas += it }.await()
-    override suspend fun obtenerAlbumGuardado(id: Int): Album = error("No se usa en esta prueba")
+    override suspend fun getCachedAlbums(): List<AlbumSummary> =
+        CompletableDeferred<List<AlbumSummary>>().also { lecturas += it }.await()
+    override suspend fun getCachedAlbum(id: Int): Album = error("No se usa en esta prueba")
 
-    override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> =
-        CompletableDeferred<Result<List<AlbumResumen>>>().also { consultas += it }.await()
+    override suspend fun getAlbums(): Result<List<AlbumSummary>> =
+        CompletableDeferred<Result<List<AlbumSummary>>>().also { consultas += it }.await()
 
-    fun leer(guardados: List<AlbumResumen>) = lecturas.last().complete(guardados)
+    fun leer(guardados: List<AlbumSummary>) = lecturas.last().complete(guardados)
 
-    fun responder(resultado: Result<List<AlbumResumen>>) = consultas.last().complete(resultado)
+    fun responder(resultado: Result<List<AlbumSummary>>) = consultas.last().complete(resultado)
 
-    override suspend fun obtenerAlbum(id: Int): Result<Album> = error("No se usa en esta prueba")
-    override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> = error("No se usa en esta prueba")
+    override suspend fun getAlbum(id: Int): Result<Album> = error("No se usa en esta prueba")
+    override suspend fun createAlbum(album: NewAlbum): Result<Int> = error("No se usa en esta prueba")
+    override suspend fun addTrack(
+        albumId: Int,
+        cancion: com.example.vinilos.data.model.Track
+    ): Result<Unit> = error("No se usa en esta prueba")
 }
 
-/** Carga inicial con catálogo guardado (add-cache-catalogo, D5). */
+/** Initial load with a cached catalog (add-cache-catalogo, D5). */
 @OptIn(ExperimentalCoroutinesApi::class)
 class AlbumsViewModelCacheTest {
 
     @get:Rule
     val dispatcherRule = MainDispatcherRule()
 
-    private val opera = AlbumResumen(102, "A Night at the Opera", null, "Rock", "Queen", "1975")
-    private val buscando = AlbumResumen(100, "Buscando América", null, "Salsa", "Rubén Blades", "1984")
-    private val poeta = AlbumResumen(101, "Poeta del pueblo", null, "Salsa", "Rubén Blades", "1979")
+    private val opera = AlbumSummary(102, "A Night at the Opera", null, "Rock", "Queen", "1975")
+    private val buscando = AlbumSummary(100, "Buscando América", null, "Salsa", "Rubén Blades", "1984")
+    private val poeta = AlbumSummary(101, "Poeta del pueblo", null, "Salsa", "Rubén Blades", "1979")
 
-    private fun TestScope.abrir(guardados: List<AlbumResumen>): Pair<AlbumsViewModel, CatalogoConCacheFalso> {
+    private fun TestScope.abrir(guardados: List<AlbumSummary>): Pair<AlbumsViewModel, CatalogoConCacheFalso> {
         val repositorio = CatalogoConCacheFalso()
         val viewModel = AlbumsViewModel(repositorio)
         advanceUntilIdle()
@@ -56,26 +60,26 @@ class AlbumsViewModelCacheTest {
     }
 
     @Test
-    fun sinGuardadosYConRedPasaDeCargandoAExito() = runTest {
+    fun sinGuardadosYConRedPasaDeLoadingASuccess() = runTest {
         val repositorio = CatalogoConCacheFalso()
         val viewModel = AlbumsViewModel(repositorio)
-        assertEquals(AlbumsUiState.Cargando, viewModel.uiState.value)
+        assertEquals(AlbumsUiState.Loading, viewModel.uiState.value)
         advanceUntilIdle()
         repositorio.leer(emptyList())
         advanceUntilIdle()
-        assertEquals(AlbumsUiState.Cargando, viewModel.uiState.value)
+        assertEquals(AlbumsUiState.Loading, viewModel.uiState.value)
 
         repositorio.responder(Result.success(listOf(opera, buscando)))
         advanceUntilIdle()
 
-        assertEquals(AlbumsUiState.Exito(listOf(opera, buscando)), viewModel.uiState.value)
+        assertEquals(AlbumsUiState.Success(listOf(opera, buscando)), viewModel.uiState.value)
     }
 
     @Test
     fun sinGuardadosYSinRedTerminaEnError() = runTest {
         val (viewModel, repositorio) = abrir(emptyList())
 
-        repositorio.responder(Result.failure(ErrorDeCarga()))
+        repositorio.responder(Result.failure(LoadError()))
         advanceUntilIdle()
 
         assertEquals(AlbumsUiState.Error, viewModel.uiState.value)
@@ -85,40 +89,40 @@ class AlbumsViewModelCacheTest {
     fun conGuardadosLosMuestraDeInmediatoMientrasConsulta() = runTest {
         val (viewModel, repositorio) = abrir(listOf(opera, buscando))
 
-        assertEquals(AlbumsUiState.Exito(listOf(opera, buscando), actualizando = true), viewModel.uiState.value)
+        assertEquals(AlbumsUiState.Success(listOf(opera, buscando), actualizando = true), viewModel.uiState.value)
         assertEquals(1, repositorio.consultas.size)
 
         repositorio.responder(Result.success(listOf(opera, buscando, poeta)))
         advanceUntilIdle()
 
-        assertEquals(AlbumsUiState.Exito(listOf(opera, buscando, poeta)), viewModel.uiState.value)
+        assertEquals(AlbumsUiState.Success(listOf(opera, buscando, poeta)), viewModel.uiState.value)
     }
 
     @Test
     fun conGuardadosYSinRedConservaLosGuardadosYAvisa() = runTest {
         val (viewModel, repositorio) = abrir(listOf(opera, buscando))
 
-        repositorio.responder(Result.failure(ErrorDeCarga()))
+        repositorio.responder(Result.failure(LoadError()))
         advanceUntilIdle()
 
         assertEquals(
-            AlbumsUiState.Exito(listOf(opera, buscando), errorAlActualizar = true),
+            AlbumsUiState.Success(listOf(opera, buscando), errorAlActualizar = true),
             viewModel.uiState.value
         )
 
         viewModel.avisoMostrado()
 
-        assertEquals(AlbumsUiState.Exito(listOf(opera, buscando)), viewModel.uiState.value)
+        assertEquals(AlbumsUiState.Success(listOf(opera, buscando)), viewModel.uiState.value)
     }
 
     @Test
-    fun conGuardadosYRespuestaVaciaTerminaEnVacio() = runTest {
+    fun conGuardadosYRespuestaVaciaTerminaEnEmpty() = runTest {
         val (viewModel, repositorio) = abrir(listOf(opera))
 
         repositorio.responder(Result.success(emptyList()))
         advanceUntilIdle()
 
-        assertEquals(AlbumsUiState.Vacio(), viewModel.uiState.value)
+        assertEquals(AlbumsUiState.Empty(), viewModel.uiState.value)
     }
 
     @Test
@@ -127,7 +131,7 @@ class AlbumsViewModelCacheTest {
         val viewModel = AlbumsViewModel(repositorio)
         advanceUntilIdle()
 
-        // Mientras se lee lo guardado el estado es Cargando, así que albumCreado vuelve a cargar.
+        // While the cached data is being read the state is Loading, so albumCreado reloads it.
         viewModel.albumCreado(103)
         advanceUntilIdle()
         repositorio.lecturas.first().complete(listOf(opera))
@@ -138,7 +142,7 @@ class AlbumsViewModelCacheTest {
 
         assertEquals(2, repositorio.lecturas.size)
         assertEquals(1, repositorio.consultas.size)
-        assertEquals(AlbumsUiState.Exito(listOf(opera, buscando)), viewModel.uiState.value)
+        assertEquals(AlbumsUiState.Success(listOf(opera, buscando)), viewModel.uiState.value)
     }
 
     @Test
@@ -152,27 +156,27 @@ class AlbumsViewModelCacheTest {
         advanceUntilIdle()
 
         assertEquals(2, repositorio.consultas.size)
-        assertEquals(AlbumsUiState.Exito(listOf(opera, buscando)), viewModel.uiState.value)
+        assertEquals(AlbumsUiState.Success(listOf(opera, buscando)), viewModel.uiState.value)
     }
 
     @Test
-    fun reintentarDesdeErrorVuelveALeerLoGuardado() = runTest {
+    fun retryDesdeErrorVuelveALeerLoGuardado() = runTest {
         val (viewModel, repositorio) = abrir(emptyList())
-        repositorio.responder(Result.failure(ErrorDeCarga()))
+        repositorio.responder(Result.failure(LoadError()))
         advanceUntilIdle()
 
-        viewModel.reintentar()
+        viewModel.retry()
         advanceUntilIdle()
 
         assertEquals(2, repositorio.lecturas.size)
-        assertEquals(AlbumsUiState.Cargando, viewModel.uiState.value)
+        assertEquals(AlbumsUiState.Loading, viewModel.uiState.value)
     }
 
-    // ---------- Álbum creado sin esperar la consulta (optimizar-cache-e-imagenes, D7) ----------
+    // ---------- Album created without waiting for the query (optimizar-cache-e-imagenes, D7) ----------
 
-    private val abbey = AlbumResumen(205, "Abbey Road", null, "Rock", "", "1969")
+    private val abbey = AlbumSummary(205, "Abbey Road", null, "Rock", "", "1969")
 
-    /** Catálogo cargado con [opera] y sin consultas pendientes. */
+    /** Catalog loaded with [opera] and no pending queries. */
     private fun TestScope.catalogoCargado(): Pair<AlbumsViewModel, CatalogoConCacheFalso> {
         val (viewModel, repositorio) = abrir(listOf(opera))
         repositorio.responder(Result.success(listOf(opera)))
@@ -186,18 +190,18 @@ class AlbumsViewModelCacheTest {
 
         viewModel.albumCreado(abbey.id)
 
-        assertEquals(AlbumsUiState.Exito(listOf(opera), actualizando = true), viewModel.uiState.value)
+        assertEquals(AlbumsUiState.Success(listOf(opera), actualizando = true), viewModel.uiState.value)
         advanceUntilIdle()
         repositorio.leer(listOf(abbey, opera))
         advanceUntilIdle()
-        assertEquals(AlbumsUiState.Exito(listOf(abbey, opera), actualizando = true), viewModel.uiState.value)
+        assertEquals(AlbumsUiState.Success(listOf(abbey, opera), actualizando = true), viewModel.uiState.value)
         assertEquals(2, repositorio.consultas.size)
 
-        // Mientras tanto, otro dispositivo agregó otro álbum: aparece cuando responde la consulta.
+        // Meanwhile, another device added another album: it appears once the query responds.
         repositorio.responder(Result.success(listOf(abbey, opera, poeta)))
         advanceUntilIdle()
 
-        assertEquals(AlbumsUiState.Exito(listOf(abbey, opera, poeta)), viewModel.uiState.value)
+        assertEquals(AlbumsUiState.Success(listOf(abbey, opera, poeta)), viewModel.uiState.value)
     }
 
     @Test
@@ -208,11 +212,11 @@ class AlbumsViewModelCacheTest {
         repositorio.leer(listOf(abbey, opera))
         advanceUntilIdle()
 
-        repositorio.responder(Result.failure(ErrorDeCarga()))
+        repositorio.responder(Result.failure(LoadError()))
         advanceUntilIdle()
 
-        assertEquals(AlbumsUiState.Exito(listOf(abbey, opera), errorAlActualizar = true), viewModel.uiState.value)
-        assertEquals(AlbumNuevoCatalogo(abbey.id), viewModel.albumNuevo.value)
+        assertEquals(AlbumsUiState.Success(listOf(abbey, opera), errorAlActualizar = true), viewModel.uiState.value)
+        assertEquals(NewAlbumCatalogo(abbey.id), viewModel.albumNuevo.value)
     }
 
     @Test
@@ -224,14 +228,14 @@ class AlbumsViewModelCacheTest {
         repositorio.leer(listOf(opera))
         advanceUntilIdle()
 
-        assertEquals(AlbumsUiState.Exito(listOf(opera), actualizando = true), viewModel.uiState.value)
-        repositorio.responder(Result.failure(ErrorDeCarga()))
+        assertEquals(AlbumsUiState.Success(listOf(opera), actualizando = true), viewModel.uiState.value)
+        repositorio.responder(Result.failure(LoadError()))
         advanceUntilIdle()
-        assertEquals(AlbumsUiState.Exito(listOf(opera), errorAlActualizar = true), viewModel.uiState.value)
+        assertEquals(AlbumsUiState.Success(listOf(opera), errorAlActualizar = true), viewModel.uiState.value)
     }
 
     @Test
-    fun conElCatalogoVacioElAlbumCreadoGuardadoTambienSeVeDeInmediato() = runTest {
+    fun conElCatalogoEmptyElAlbumCreadoGuardadoTambienSeVeDeInmediato() = runTest {
         val (viewModel, repositorio) = abrir(emptyList())
         repositorio.responder(Result.success(emptyList()))
         advanceUntilIdle()
@@ -241,6 +245,6 @@ class AlbumsViewModelCacheTest {
         repositorio.leer(listOf(abbey))
         advanceUntilIdle()
 
-        assertEquals(AlbumsUiState.Exito(listOf(abbey), actualizando = true), viewModel.uiState.value)
+        assertEquals(AlbumsUiState.Success(listOf(abbey), actualizando = true), viewModel.uiState.value)
     }
 }

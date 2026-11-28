@@ -1,8 +1,8 @@
 package com.example.vinilos.data.repository
 
 import android.database.sqlite.SQLiteException
-import com.example.vinilos.data.local.ColeccionistaDao
-import com.example.vinilos.data.local.ColeccionistaEntity
+import com.example.vinilos.data.local.CollectorDao
+import com.example.vinilos.data.local.CollectorEntity
 import com.example.vinilos.data.model.Collector
 import com.example.vinilos.data.remote.CollectorApi
 import com.example.vinilos.data.remote.CollectorDto
@@ -15,37 +15,37 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
- * Coleccionistas del backend. Con [coleccionistaDao], el listado además se guarda en el dispositivo
- * (add-cache-consultas); sin él, se comporta como antes.
- * Retrofit y Room hacen su I/O en sus propios hilos; lo que corre en [dispatcher] (`Dispatchers.Default`
- * por defecto) es el trabajo de CPU: convertir la respuesta. Así se puede llamar desde el hilo principal sin
- * bloquearlo.
+ * Backend collectors. With [coleccionistaDao], the listing is also stored on the device
+ * (add-cache-consultas); without it, it behaves as before.
+ * Retrofit and Room do their I/O on their own threads; what runs on [dispatcher] (`Dispatchers.Default`
+ * by default) is CPU work: converting the response. This way it can be called from the main thread without
+ * blocking it.
  */
 class CollectorRepositoryImpl(
     private val adaptador: ServiceAdapter,
     private val api: CollectorApi = adaptador.api(),
-    private val coleccionistaDao: ColeccionistaDao? = null,
+    private val coleccionistaDao: CollectorDao? = null,
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : CollectorRepository {
 
-    /** Protege la comparación, la escritura y la actualización de lo que sigue (optimizar-cache-e-imagenes, D4). */
+    /** Protects the comparison, the write and the update of whatever follows (optimizar-cache-e-imagenes, D4). */
     private val escritura = Mutex()
-    private val copia = CopiaTabla<Int, ColeccionistaEntity> { it.id }
+    private val copia = CopiaTabla<Int, CollectorEntity> { it.id }
     private var versionGuardada: String? = null
 
     /**
-     * Si la consulta sale bien, lo guardado queda igual a la respuesta, en el orden del backend (D4). Solo se
-     * escriben los coleccionistas nuevos o cambiados (una fila cambia también si cambió su posición).
+     * If the query succeeds, what's stored is left equal to the response, in the backend's order (D4). Only
+     * the new or changed collectors are written (a row also changes if its position changed).
      */
-    override suspend fun obtenerColeccionistas(): Result<List<Collector>> = withContext(dispatcher) {
-        adaptador.llamar { api.getCollectors().conVersion() }
+    override suspend fun getCollectors(): Result<List<Collector>> = withContext(dispatcher) {
+        adaptador.call { api.getCollectors().conVersion() }
             .map { respuesta -> respuesta.valor.mapNotNull { it.aModelo() } to respuesta.version }
-            .onSuccess { (coleccionistas, version) -> guardar(coleccionistas, version) }
+            .onSuccess { (coleccionistas, version) -> save(coleccionistas, version) }
             .map { (coleccionistas, _) -> coleccionistas }
     }
 
-    /** Vacío si no hay caché o si no se pudo leer: la caché es una mejora, nunca una condición. */
-    override suspend fun obtenerColeccionistasGuardados(): List<Collector> = withContext(dispatcher) {
+    /** Empty if there's no cache or it couldn't be read: the cache is an enhancement, never a precondition. */
+    override suspend fun getCachedCollectors(): List<Collector> = withContext(dispatcher) {
         val dao = coleccionistaDao ?: return@withContext emptyList()
         try {
             dao.todos().map { Collector(it.id, it.nombre, it.correo) }
@@ -55,17 +55,17 @@ class CollectorRepositoryImpl(
     }
 
     /**
-     * Punto único de escritura (D4 y D5). Si no termina normalmente, se descarta lo que se recordaba y la
-     * siguiente consulta reemplaza todo. Un fallo del almacenamiento no cambia el resultado de la consulta; la
-     * cancelación y los errores de programación se relanzan.
+     * Single write point (D4 and D5). If it doesn't finish normally, whatever was remembered is discarded and the
+     * next query replaces everything. A storage failure does not change the query's result; the
+     * cancellation and programming errors are rethrown.
      */
-    private suspend fun guardar(coleccionistas: List<Collector>, version: String?) {
+    private suspend fun save(coleccionistas: List<Collector>, version: String?) {
         val dao = coleccionistaDao ?: return
         escritura.withLock {
             try {
                 if (version != null && version == versionGuardada) return@withLock
                 val cambios = copia.cambiosPara(
-                    coleccionistas.mapIndexed { posicion, it -> ColeccionistaEntity(it.id, it.name, it.email, posicion) }
+                    coleccionistas.mapIndexed { posicion, it -> CollectorEntity(it.id, it.name, it.email, posicion) }
                 )
                 if (!cambios.vacios) {
                     dao.aplicar(cambios)

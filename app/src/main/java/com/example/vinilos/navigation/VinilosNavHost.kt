@@ -18,71 +18,86 @@ import com.example.vinilos.data.model.Session
 import com.example.vinilos.data.repository.AlbumRepository
 import com.example.vinilos.data.repository.ArtistRepository
 import com.example.vinilos.data.repository.CollectorRepository
-import com.example.vinilos.data.repository.ComentarioRepository
+import com.example.vinilos.data.repository.CommentRepository
 import com.example.vinilos.data.repository.FavoriteRepository
-import com.example.vinilos.ui.artistas.AccionesAsociarAlbum
-import com.example.vinilos.ui.artistas.PantallaArtistas
-import com.example.vinilos.ui.artistas.PantallaDetalleArtista
-import com.example.vinilos.ui.catalogo.PantallaCatalogo
-import com.example.vinilos.ui.comentar.AccionesComentarAlbum
-import com.example.vinilos.ui.comentar.PantallaComentarAlbum
-import com.example.vinilos.ui.crear.AccionesCrearAlbum
-import com.example.vinilos.ui.crear.PantallaCrearAlbum
-import com.example.vinilos.ui.detalle.PantallaDetalleAlbum
-import com.example.vinilos.ui.ingreso.PantallaColeccionistas
-import com.example.vinilos.ui.ingreso.PantallaIngreso
-import com.example.vinilos.ui.inicio.PantallaInicio
+import com.example.vinilos.ui.artistas.AssociateAlbumActions
+import com.example.vinilos.ui.artistas.ArtistsScreen
+import com.example.vinilos.ui.artistas.ArtistDetailScreen
+import com.example.vinilos.ui.catalog.CatalogScreen
+import com.example.vinilos.ui.comentar.AddCommentActions
+import com.example.vinilos.ui.comentar.AddCommentScreen
+import com.example.vinilos.ui.create.AddTrackActions
+import com.example.vinilos.ui.create.CreateAlbumActions
+import com.example.vinilos.ui.create.AddTrackScreen
+import com.example.vinilos.ui.create.CreateAlbumScreen
+import com.example.vinilos.ui.detail.AlbumDetailScreen
+import com.example.vinilos.ui.entry.CollectorsScreen
+import com.example.vinilos.ui.entry.EntryScreen
+import com.example.vinilos.ui.home.HomeScreen
 import com.example.vinilos.viewmodel.AlbumViewModel
+import com.example.vinilos.viewmodel.AddTrackViewModel
 import com.example.vinilos.viewmodel.AlbumsViewModel
-import com.example.vinilos.viewmodel.ArtistaDetalleViewModel
+import com.example.vinilos.viewmodel.ArtistDetailViewModel
 import com.example.vinilos.viewmodel.ArtistsViewModel
-import com.example.vinilos.viewmodel.AsociarAlbumViewModel
+import com.example.vinilos.viewmodel.AssociateAlbumViewModel
 import com.example.vinilos.viewmodel.CollectorsViewModel
-import com.example.vinilos.viewmodel.ComentarAlbumViewModel
-import com.example.vinilos.viewmodel.CrearAlbumViewModel
+import com.example.vinilos.viewmodel.AddCommentViewModel
+import com.example.vinilos.viewmodel.CreateAlbumViewModel
 import com.example.vinilos.viewmodel.EnvioAlbum
-import com.example.vinilos.viewmodel.FavoritoViewModel
+import com.example.vinilos.viewmodel.TrackSubmission
+import com.example.vinilos.viewmodel.FavoriteViewModel
 import com.example.vinilos.viewmodel.SessionViewModel
 
-object Rutas {
+object Routes {
     const val INGRESO = "ingreso"
     const val COLECCIONISTAS = "coleccionistas"
     const val INICIO = "inicio"
     const val CATALOGO = "catalogo"
     const val ARTISTAS = "artistas"
 
-    /** Detalle del artista (HU04). El tipo distingue a un músico de una banda con el mismo id. */
+    /** Artist detail (HU04). The type distinguishes a musician from a band with the same id. */
     const val DETALLE_ARTISTA = "artista/{tipo}/{id}"
 
-    /** Detalle del álbum (HU02). */
+    /** Album detail (HU02). */
     const val DETALLE_ALBUM = "album/{id}"
 
-    /** Formulario para crear un álbum (HU07), solo para el Coleccionista. */
+    /** Form to create an album (HU07), only for the Collector. */
     const val CREAR_ALBUM = "crear-album"
 
-    /** Comentar un álbum (HU09), solo para el Coleccionista. */
+    /** Form to add a track to the album (HU08), only for the Collector. */
+    const val AGREGAR_CANCION = "album/{id}/agregar-cancion"
+
+    /** Comment on an album (HU09), only for the Collector. */
     const val COMENTAR_ALBUM = "album/{id}/comentar"
 
     fun detalleArtista(tipo: ArtistType, id: Int) = "artista/${tipo.name}/$id"
 
     fun detalleAlbum(id: Int) = "album/$id"
 
-    fun comentarAlbum(id: Int) = "album/$id/comentar"
+    fun addTrack(id: Int) = "album/$id/agregar-cancion"
+
+    fun addComment(id: Int) = "album/$id/comentar"
 }
 
-/** Clave con la que el formulario le entrega al catálogo el id del álbum creado. */
+/** Key with which the form delivers to the catalog the id of the created album. */
 private const val ClaveAlbumCreado = "album_creado"
 
-/** Clave con la que la pantalla de comentar le avisa al detalle que debe actualizarse (add-comentar-album, D7). */
-private const val ClaveComentarioPublicado = "comentario_publicado"
+/** Result with which the form requests a reload and notifies the album detail screen. */
+private const val ClaveTrackAgregada = "cancion_agregada"
 
-/** Clave con la que el detalle del artista avisa al listado que un favorito ya no está disponible. */
+/** Key with which the comment screen notifies the detail screen that it must be refreshed (add-comentar-album, D7). */
+private const val ClaveCommentPublicado = "comentario_publicado"
+
+/** Key with which the artist detail screen notifies the list that a favorite is no longer available. */
 private const val ClaveArtistaEliminado = "artista_eliminado"
 
+/** Key with which the add-track form notifies the detail screen that the album no longer exists. */
+private const val ClaveAlbumEliminado = "album_eliminado"
+
 /**
- * Grafo de navegación: ingreso -> (coleccionistas) -> inicio -> catálogo -> detalle del álbum |
- * crear álbum, artistas -> detalle del artista -> detalle del álbum, y detalle del álbum -> comentar. Al entrar al
- * inicio el ingreso queda en la pila (para poder cambiar de perfil) y el selector sale de ella.
+ * Navigation graph: entry -> (collectors) -> home -> catalog -> album detail |
+ * create album, artists -> artist detail -> album detail, and album detail -> comment. On entering
+ * home, entry stays on the stack (to be able to switch profile) and the selector is popped off it.
  */
 @Composable
 fun VinilosNavHost(
@@ -92,52 +107,56 @@ fun VinilosNavHost(
     artistRepository: ArtistRepository,
     albumRepository: AlbumRepository,
     favoriteRepository: FavoriteRepository,
-    comentarioRepository: ComentarioRepository,
+    comentarioRepository: CommentRepository,
     modifier: Modifier = Modifier
 ) {
     fun irAlInicio() {
-        navController.navigate(Rutas.INICIO) {
-            popUpTo(Rutas.INGRESO) { inclusive = false }
+        navController.navigate(Routes.INICIO) {
+            popUpTo(Routes.INGRESO) { inclusive = false }
         }
     }
 
-    /** Dos toques rápidos no deben sacar también el catálogo. */
+    /** Two quick taps shouldn't also pop the catalog. */
     fun cerrarFormulario() {
-        if (navController.currentDestination?.route == Rutas.CREAR_ALBUM) navController.popBackStack()
+        if (navController.currentDestination?.route == Routes.CREAR_ALBUM) navController.popBackStack()
     }
 
-    /** Igual que [cerrarFormulario]: solo se cierra si comentar sigue siendo la pantalla actual. */
+    fun cerrarFormularioTrack() {
+        if (navController.currentDestination?.route == Routes.AGREGAR_CANCION) navController.popBackStack()
+    }
+
+    /** Same as [cerrarFormulario]: only closes if comment screen is still the current destination. */
     fun cerrarComentar() {
-        if (navController.currentDestination?.route == Rutas.COMENTAR_ALBUM) navController.popBackStack()
+        if (navController.currentDestination?.route == Routes.COMENTAR_ALBUM) navController.popBackStack()
     }
 
     NavHost(
         navController = navController,
-        startDestination = Rutas.INGRESO,
+        startDestination = Routes.INGRESO,
         modifier = modifier
     ) {
-        composable(Rutas.INGRESO) {
-            // Volver al ingreso (desde el selector o el inicio) deja la sesión sin perfil.
+        composable(Routes.INGRESO) {
+            // Returning to entry (from the selector or home) leaves the session without a profile.
             LaunchedEffect(Unit) { sessionViewModel.clear() }
-            PantallaIngreso(
+            EntryScreen(
                 onVisitante = {
                     sessionViewModel.enterAsVisitor()
                     irAlInicio()
                 },
-                onColeccionista = { navController.navigate(Rutas.COLECCIONISTAS) }
+                onColeccionista = { navController.navigate(Routes.COLECCIONISTAS) }
             )
         }
-        composable(Rutas.COLECCIONISTAS) {
+        composable(Routes.COLECCIONISTAS) {
             val viewModel: CollectorsViewModel = viewModel(
                 factory = viewModelFactory {
                     initializer { CollectorsViewModel(collectorRepository) }
                 }
             )
             val estado by viewModel.uiState.collectAsStateWithLifecycle()
-            PantallaColeccionistas(
+            CollectorsScreen(
                 estado = estado,
-                onBuscar = viewModel::buscar,
-                onReintentar = viewModel::reintentar,
+                onBuscar = viewModel::search,
+                onReintentar = viewModel::retry,
                 onSeleccionar = { coleccionista ->
                     sessionViewModel.enterAsCollector(coleccionista)
                     irAlInicio()
@@ -150,15 +169,15 @@ fun VinilosNavHost(
                 onAvisoMostrado = viewModel::avisoMostrado
             )
         }
-        composable(Rutas.INICIO) {
+        composable(Routes.INICIO) {
             val session by sessionViewModel.session.collectAsStateWithLifecycle()
-            PantallaInicio(
+            HomeScreen(
                 session = session,
-                onVerAlbumes = { navController.navigate(Rutas.CATALOGO) },
-                onVerArtistas = { navController.navigate(Rutas.ARTISTAS) }
+                onVerAlbumes = { navController.navigate(Routes.CATALOGO) },
+                onVerArtistas = { navController.navigate(Routes.ARTISTAS) }
             )
         }
-        composable(Rutas.CATALOGO) { entrada ->
+        composable(Routes.CATALOGO) { entrada ->
             val session by sessionViewModel.session.collectAsStateWithLifecycle()
             val viewModel: AlbumsViewModel = viewModel(
                 factory = viewModelFactory {
@@ -173,35 +192,35 @@ fun VinilosNavHost(
             LaunchedEffect(albumCreado) {
                 albumCreado?.let { id ->
                     viewModel.albumCreado(id)
-                    // Se borra para que girar la pantalla no repita el aviso ni la consulta.
+                    // Cleared so rotating the screen doesn't repeat the notice or the query.
                     entrada.savedStateHandle[ClaveAlbumCreado] = null
                 }
             }
-            PantallaCatalogo(
+            CatalogScreen(
                 estado = estado,
                 session = session,
                 onActualizar = viewModel::actualizar,
-                onReintentar = viewModel::reintentar,
+                onReintentar = viewModel::retry,
                 onAvisoMostrado = viewModel::avisoMostrado,
                 onSeleccionar = { id ->
-                    navController.navigate(Rutas.detalleAlbum(id)) { launchSingleTop = true }
+                    navController.navigate(Routes.detalleAlbum(id)) { launchSingleTop = true }
                 },
                 onAtras = { navController.popBackStack() },
                 albumNuevo = albumNuevo,
-                onCrearAlbum = { navController.navigate(Rutas.CREAR_ALBUM) { launchSingleTop = true } },
+                onCreateAlbum = { navController.navigate(Routes.CREAR_ALBUM) { launchSingleTop = true } },
                 onAvisoCreadoMostrado = viewModel::avisoCreadoMostrado,
                 onDesplazadoAlNuevo = viewModel::desplazadoAlNuevo
             )
         }
-        composable(Rutas.CREAR_ALBUM) {
+        composable(Routes.CREAR_ALBUM) {
             val session by sessionViewModel.session.collectAsStateWithLifecycle()
-            val viewModel: CrearAlbumViewModel = viewModel(
+            val viewModel: CreateAlbumViewModel = viewModel(
                 factory = viewModelFactory {
-                    initializer { CrearAlbumViewModel(albumRepository) }
+                    initializer { CreateAlbumViewModel(albumRepository) }
                 }
             )
             val estado by viewModel.uiState.collectAsStateWithLifecycle()
-            // La pila se restaura al morir el proceso, pero la sesión no.
+            // The stack is restored when the process dies, but the session is not.
             LaunchedEffect(session) {
                 if (!session.collectorActionsEnabled) cerrarFormulario()
             }
@@ -212,22 +231,22 @@ fun VinilosNavHost(
                     cerrarFormulario()
                 }
             }
-            PantallaCrearAlbum(
+            CreateAlbumScreen(
                 estado = estado,
                 session = session,
-                acciones = AccionesCrearAlbum(
+                acciones = CreateAlbumActions(
                     onNombre = viewModel::cambiarNombre,
                     onPortada = viewModel::cambiarPortada,
                     onFecha = viewModel::cambiarFecha,
                     onGenero = viewModel::cambiarGenero,
                     onDisquera = viewModel::cambiarDisquera,
                     onDescripcion = viewModel::cambiarDescripcion,
-                    onCrear = viewModel::crear,
+                    onCrear = viewModel::create,
                     onCancelar = ::cerrarFormulario
                 )
             )
         }
-        composable(Rutas.ARTISTAS) { entrada ->
+        composable(Routes.ARTISTAS) { entrada ->
             val viewModel: ArtistsViewModel = viewModel(
                 factory = viewModelFactory {
                     initializer { ArtistsViewModel(artistRepository) }
@@ -239,18 +258,18 @@ fun VinilosNavHost(
                 .collectAsStateWithLifecycle()
             LaunchedEffect(artistaEliminado) {
                 if (artistaEliminado) {
-                    // El artista ya no existe en el backend: se vuelve a consultar para que el
-                    // listado no lo siga mostrando (popBackStack por sí solo no alcanza).
-                    viewModel.reintentar()
+                    // The artist no longer exists on the backend: it's re-fetched so the
+                    // list stops showing it (popBackStack alone isn't enough).
+                    viewModel.retry()
                     entrada.savedStateHandle[ClaveArtistaEliminado] = false
                 }
             }
-            PantallaArtistas(
+            ArtistsScreen(
                 estado = estado,
-                onBuscar = viewModel::buscar,
-                onReintentar = viewModel::reintentar,
+                onBuscar = viewModel::search,
+                onReintentar = viewModel::retry,
                 onSeleccionar = { artista ->
-                    navController.navigate(Rutas.detalleArtista(artista.type, artista.id)) {
+                    navController.navigate(Routes.detalleArtista(artista.type, artista.id)) {
                         launchSingleTop = true
                     }
                 },
@@ -259,7 +278,7 @@ fun VinilosNavHost(
             )
         }
         composable(
-            Rutas.DETALLE_ARTISTA,
+            Routes.DETALLE_ARTISTA,
             arguments = listOf(
                 navArgument("tipo") { type = NavType.StringType },
                 navArgument("id") { type = NavType.IntType }
@@ -268,51 +287,51 @@ fun VinilosNavHost(
             val argumentos = requireNotNull(entrada.arguments)
             val tipo = ArtistType.valueOf(requireNotNull(argumentos.getString("tipo")))
             val artistId = argumentos.getInt("id")
-            // Ligado a la entrada de navegación: sobrevive a la rotación y a la ida y vuelta al álbum.
-            val viewModel: ArtistaDetalleViewModel = viewModel(
+            // Bound to the navigation entry: survives rotation and going back and forth to the album.
+            val viewModel: ArtistDetailViewModel = viewModel(
                 factory = viewModelFactory {
-                    initializer { ArtistaDetalleViewModel(tipo, artistId, artistRepository) }
+                    initializer { ArtistDetailViewModel(tipo, artistId, artistRepository) }
                 }
             )
             val estado by viewModel.uiState.collectAsStateWithLifecycle()
             val session by sessionViewModel.session.collectAsStateWithLifecycle()
             val coleccionista = (session as? Session.Collector)?.collector
             if (coleccionista != null) {
-                // Solo el Coleccionista comprueba y guarda favoritos; el Visitante no ve el botón.
-                val favoritoViewModel: FavoritoViewModel = viewModel(
+                // Only the Collector checks and saves favorites; the Visitor doesn't see the button.
+                val favoritoViewModel: FavoriteViewModel = viewModel(
                     key = "favorito-$artistId",
                     factory = viewModelFactory {
                         initializer {
-                            FavoritoViewModel(coleccionista.id, artistId, tipo, favoriteRepository)
+                            FavoriteViewModel(coleccionista.id, artistId, tipo, favoriteRepository)
                         }
                     }
                 )
                 val estadoFavorito by favoritoViewModel.uiState.collectAsStateWithLifecycle()
-                // HU15: la ventana vive en la misma entrada que el detalle, así que el álbum asociado se
-                // entrega directo al ViewModel del detalle, sin savedStateHandle (add-agregar-album-artista, D5).
-                val asociarViewModel: AsociarAlbumViewModel = viewModel(
+                // HU15: the sheet lives in the same entry as the detail screen, so the associated album is
+                // delivered directly to the detail ViewModel, without savedStateHandle (add-agregar-album-artista, D5).
+                val associateViewModel: AssociateAlbumViewModel = viewModel(
                     key = "asociar-$tipo-$artistId",
                     factory = viewModelFactory {
-                        initializer { AsociarAlbumViewModel(tipo, artistId, albumRepository, artistRepository) }
+                        initializer { AssociateAlbumViewModel(tipo, artistId, albumRepository, artistRepository) }
                     }
                 )
-                val estadoAsociar by asociarViewModel.uiState.collectAsStateWithLifecycle()
+                val estadoAsociar by associateViewModel.uiState.collectAsStateWithLifecycle()
                 LaunchedEffect(estadoAsociar.albumAsociado) {
                     estadoAsociar.albumAsociado?.let {
                         viewModel.albumAsociado(it)
-                        asociarViewModel.asociadoNotificado()
+                        associateViewModel.asociadoNotificado()
                     }
                 }
-                PantallaDetalleArtista(
+                ArtistDetailScreen(
                     estado = estado,
                     onSeleccionarAlbum = { idAlbum ->
-                        navController.navigate(Rutas.detalleAlbum(idAlbum)) { launchSingleTop = true }
+                        navController.navigate(Routes.detalleAlbum(idAlbum)) { launchSingleTop = true }
                     },
-                    onReintentar = viewModel::reintentar,
+                    onReintentar = viewModel::retry,
                     onAtras = { navController.popBackStack() },
                     estadoFavorito = estadoFavorito,
-                    onAgregarFavorito = favoritoViewModel::agregarFavorito,
-                    onReintentarFavorito = favoritoViewModel::reintentarComprobacion,
+                    onAgregarFavorito = favoritoViewModel::addFavorite,
+                    onReintentarFavorito = favoritoViewModel::retryCheck,
                     onConfirmacionFavoritoMostrada = favoritoViewModel::confirmacionMostrada,
                     onVolverAlListado = {
                         navController.previousBackStackEntry?.savedStateHandle
@@ -321,30 +340,30 @@ fun VinilosNavHost(
                     },
                     onAvisoMostrado = viewModel::avisoMostrado,
                     estadoAsociar = estadoAsociar,
-                    accionesAsociar = AccionesAsociarAlbum(
-                        onBuscar = asociarViewModel::buscar,
-                        onSeleccionar = asociarViewModel::seleccionar,
-                        onAsociar = asociarViewModel::asociar,
-                        onCancelar = asociarViewModel::cancelar,
-                        onReintentarCarga = asociarViewModel::reintentarCarga
+                    accionesAsociar = AssociateAlbumActions(
+                        onBuscar = associateViewModel::search,
+                        onSeleccionar = associateViewModel::select,
+                        onAsociar = associateViewModel::associate,
+                        onCancelar = associateViewModel::cancelar,
+                        onReintentarCarga = associateViewModel::retryLoad
                     ),
-                    onAgregarAlbum = asociarViewModel::abrir,
+                    onAgregarAlbum = associateViewModel::abrir,
                     onAlbumAsociadoMostrado = viewModel::albumAsociadoMostrado
                 )
             } else {
-                PantallaDetalleArtista(
+                ArtistDetailScreen(
                     estado = estado,
                     onSeleccionarAlbum = { idAlbum ->
-                        navController.navigate(Rutas.detalleAlbum(idAlbum)) { launchSingleTop = true }
+                        navController.navigate(Routes.detalleAlbum(idAlbum)) { launchSingleTop = true }
                     },
-                    onReintentar = viewModel::reintentar,
+                    onReintentar = viewModel::retry,
                     onAtras = { navController.popBackStack() },
                     onAvisoMostrado = viewModel::avisoMostrado
                 )
             }
         }
         composable(
-            Rutas.DETALLE_ALBUM,
+            Routes.DETALLE_ALBUM,
             arguments = listOf(navArgument("id") { type = NavType.IntType })
         ) { entrada ->
             val id = requireNotNull(entrada.arguments).getInt("id")
@@ -355,45 +374,117 @@ fun VinilosNavHost(
             )
             val estado by viewModel.uiState.collectAsStateWithLifecycle()
             val session by sessionViewModel.session.collectAsStateWithLifecycle()
+            val cancionAgregadaViewModel by viewModel.avisoTrackAgregada.collectAsStateWithLifecycle()
+            val cancionAgregada by entrada.savedStateHandle
+                .getStateFlow(ClaveTrackAgregada, false)
+                .collectAsStateWithLifecycle()
+            LaunchedEffect(cancionAgregada) {
+                if (cancionAgregada) {
+                    // Cleared immediately (not when the notice finishes showing) so rotating
+                    // the screen while "Track added" is visible doesn't repeat the GET /albums/{id}.
+                    // The notice itself is controlled by the ViewModel (see AlbumViewModel.cancionAgregada),
+                    // which does survive rotation.
+                    viewModel.cancionAgregada()
+                    entrada.savedStateHandle[ClaveTrackAgregada] = false
+                }
+            }
             val comentarioPublicado by entrada.savedStateHandle
-                .getStateFlow(ClaveComentarioPublicado, false)
+                .getStateFlow(ClaveCommentPublicado, false)
                 .collectAsStateWithLifecycle()
             LaunchedEffect(comentarioPublicado) {
                 if (comentarioPublicado) {
                     viewModel.actualizar()
-                    // Se borra para que girar la pantalla no repita la consulta.
-                    entrada.savedStateHandle[ClaveComentarioPublicado] = false
+                    // Cleared so rotating the screen doesn't repeat the query.
+                    entrada.savedStateHandle[ClaveCommentPublicado] = false
                 }
             }
-            PantallaDetalleAlbum(
+            val albumEliminado by entrada.savedStateHandle
+                .getStateFlow(ClaveAlbumEliminado, false)
+                .collectAsStateWithLifecycle()
+            LaunchedEffect(albumEliminado) {
+                if (albumEliminado) {
+                    // The album no longer exists on the backend (the form found out while saving): it's
+                    // re-fetched so the detail screen shows "not available" instead of continuing to
+                    // show the cached album with "Add track" enabled.
+                    viewModel.actualizar()
+                    entrada.savedStateHandle[ClaveAlbumEliminado] = false
+                }
+            }
+            AlbumDetailScreen(
                 estado = estado,
                 onAtras = { navController.popBackStack() },
-                onReintentar = viewModel::reintentar,
+                onReintentar = viewModel::retry,
                 onAvisoMostrado = viewModel::avisoMostrado,
-                // El Visitante no ve el botón de comentar (add-comentar-album, D8).
+                session = session,
+                onAddTrack = { navController.navigate(Routes.addTrack(id)) },
+                mostrarAvisoTrackAgregada = cancionAgregadaViewModel,
+                onAvisoTrackAgregadaMostrado = viewModel::avisoTrackAgregadaMostrado,
+                // The Visitor doesn't see the comment button (add-comentar-album, D8).
                 onComentar = if (session.collectorActionsEnabled) {
-                    { navController.navigate(Rutas.comentarAlbum(id)) { launchSingleTop = true } }
+                    { navController.navigate(Routes.addComment(id)) { launchSingleTop = true } }
                 } else {
                     null
                 }
             )
         }
         composable(
-            Rutas.COMENTAR_ALBUM,
+            Routes.AGREGAR_CANCION,
+            arguments = listOf(navArgument("id") { type = NavType.IntType })
+        ) { entrada ->
+            val id = requireNotNull(entrada.arguments).getInt("id")
+            val session by sessionViewModel.session.collectAsStateWithLifecycle()
+            val viewModel: AddTrackViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer { AddTrackViewModel(id, albumRepository) }
+                }
+            )
+            val estado by viewModel.uiState.collectAsStateWithLifecycle()
+            LaunchedEffect(session) {
+                if (!session.collectorActionsEnabled) cerrarFormularioTrack()
+            }
+            LaunchedEffect(estado.envio) {
+                if (estado.envio == TrackSubmission.Agregada) {
+                    navController.previousBackStackEntry?.savedStateHandle
+                        ?.set(ClaveTrackAgregada, true)
+                    cerrarFormularioTrack()
+                }
+            }
+            AddTrackScreen(
+                estado = estado,
+                session = session,
+                acciones = AddTrackActions(
+                    onNombre = viewModel::cambiarNombre,
+                    onDuracion = viewModel::cambiarDuracion,
+                    onGuardar = viewModel::save,
+                    onCancelar = ::cerrarFormularioTrack,
+                    onAtras = ::cerrarFormularioTrack,
+                    onAlbumNotAvailable = {
+                        // Unlike "cancel", the album no longer exists: the detail screen is notified
+                        // so it refreshes and stops showing it as available (instead of falling back
+                        // to its stale cache with "Add track" still enabled).
+                        navController.previousBackStackEntry?.savedStateHandle
+                            ?.set(ClaveAlbumEliminado, true)
+                        cerrarFormularioTrack()
+                    }
+                )
+            )
+        }
+        composable(
+            Routes.COMENTAR_ALBUM,
             arguments = listOf(navArgument("id") { type = NavType.IntType })
         ) {
             val session by sessionViewModel.session.collectAsStateWithLifecycle()
             val coleccionista = (session as? Session.Collector)?.collector
-            // La pila se restaura al morir el proceso, pero la sesión no.
+            // The stack is restored when the process dies, but the session is not.
             if (coleccionista == null) {
                 LaunchedEffect(Unit) { cerrarComentar() }
                 return@composable
             }
             val albumId = requireNotNull(it.arguments).getInt("id")
-            val viewModel: ComentarAlbumViewModel = viewModel(
+            val viewModel: AddCommentViewModel = viewModel(
                 factory = viewModelFactory {
                     initializer {
-                        ComentarAlbumViewModel(albumId, coleccionista.id, albumRepository, comentarioRepository)
+                        AddCommentViewModel(albumId, coleccionista.id, albumRepository, comentarioRepository)
                     }
                 }
             )
@@ -401,22 +492,22 @@ fun VinilosNavHost(
             LaunchedEffect(estado.salir) {
                 if (estado.salir) {
                     if (estado.publicado) {
-                        navController.previousBackStackEntry?.savedStateHandle?.set(ClaveComentarioPublicado, true)
+                        navController.previousBackStackEntry?.savedStateHandle?.set(ClaveCommentPublicado, true)
                     }
                     cerrarComentar()
                 }
             }
-            PantallaComentarAlbum(
+            AddCommentScreen(
                 estado = estado,
                 session = session,
-                acciones = AccionesComentarAlbum(
+                acciones = AddCommentActions(
                     onCalificar = viewModel::calificar,
                     onOpinion = viewModel::cambiarOpinion,
-                    onPublicar = viewModel::publicar,
+                    onPublicar = viewModel::post,
                     onSalir = viewModel::pedirSalir,
                     onContinuarEscribiendo = viewModel::continuarEscribiendo,
                     onDescartar = viewModel::descartar,
-                    onReintentarAlbum = viewModel::reintentar
+                    onReintentarAlbum = viewModel::retry
                 )
             )
         }

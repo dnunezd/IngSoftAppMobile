@@ -2,12 +2,12 @@ package com.example.vinilos.viewmodel
 
 import com.example.vinilos.MainDispatcherRule
 import com.example.vinilos.data.model.Album
-import com.example.vinilos.data.model.AlbumNuevo
-import com.example.vinilos.data.model.AlbumResumen
-import com.example.vinilos.data.model.Comentario
-import com.example.vinilos.data.remote.ErrorDeCarga
+import com.example.vinilos.data.model.NewAlbum
+import com.example.vinilos.data.model.AlbumSummary
+import com.example.vinilos.data.model.Comment
+import com.example.vinilos.data.remote.LoadError
 import com.example.vinilos.data.repository.AlbumRepository
-import com.example.vinilos.data.repository.AlbumNoDisponible
+import com.example.vinilos.data.repository.AlbumNotAvailable
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
@@ -23,27 +23,31 @@ private class AlbumRepositoryFalso(
 ) : AlbumRepository {
     val consultas = mutableListOf<Pair<Int, CompletableDeferred<Result<Album>>>>()
 
-    override suspend fun obtenerAlbum(id: Int): Result<Album> {
+    override suspend fun getAlbum(id: Int): Result<Album> {
         val respuesta = CompletableDeferred<Result<Album>>()
         consultas += id to respuesta
         return if (ignoraCancelacion) withContext(NonCancellable) { respuesta.await() }
         else respuesta.await()
     }
 
-    /** Detalles guardados en el dispositivo (add-cache-consultas). */
+    /** Details saved on the device (add-cache-consultas). */
     val guardados = mutableMapOf<Int, Album>()
 
-    /** Si no es null, la lectura de lo guardado espera a que la prueba lo complete. */
+    /** If not null, reading the cached data waits until the test completes it. */
     var lecturaEnEspera: CompletableDeferred<Unit>? = null
 
-    override suspend fun obtenerAlbumGuardado(id: Int): Album? {
+    override suspend fun getCachedAlbum(id: Int): Album? {
         lecturaEnEspera?.await()
         return guardados[id]
     }
 
-    override suspend fun obtenerAlbumes(): Result<List<AlbumResumen>> = error("No se usa en esta prueba")
-    override suspend fun obtenerAlbumesGuardados(): List<AlbumResumen> = error("No se usa en esta prueba")
-    override suspend fun crearAlbum(album: AlbumNuevo): Result<Int> = error("No se usa en esta prueba")
+    override suspend fun getAlbums(): Result<List<AlbumSummary>> = error("No se usa en esta prueba")
+    override suspend fun getCachedAlbums(): List<AlbumSummary> = error("No se usa en esta prueba")
+    override suspend fun createAlbum(album: NewAlbum): Result<Int> = error("No se usa en esta prueba")
+    override suspend fun addTrack(
+        albumId: Int,
+        cancion: com.example.vinilos.data.model.Track
+    ): Result<Unit> = error("No se usa en esta prueba")
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -58,63 +62,63 @@ class AlbumViewModelTest {
     )
 
     @Test
-    fun cargandoPasaAExitoConElAlbumDelIdSolicitado() = runTest {
+    fun cargandoPasaASuccessConElAlbumDelIdSolicitado() = runTest {
         val repositorio = AlbumRepositoryFalso()
         val viewModel = AlbumViewModel(101, repositorio)
 
-        assertEquals(AlbumUiState.Cargando, viewModel.uiState.value)
+        assertEquals(AlbumUiState.Loading, viewModel.uiState.value)
         advanceUntilIdle()
         assertEquals(listOf(101), repositorio.consultas.map { it.first })
 
         repositorio.consultas.single().second.complete(Result.success(album))
         advanceUntilIdle()
 
-        assertEquals(AlbumUiState.Exito(album), viewModel.uiState.value)
+        assertEquals(AlbumUiState.Success(album), viewModel.uiState.value)
     }
 
     @Test
-    fun cargandoPasaANoDisponibleCuandoElAlbumNoExiste() = runTest {
+    fun cargandoPasaANotAvailableCuandoElAlbumNoExiste() = runTest {
         val repositorio = AlbumRepositoryFalso()
         val viewModel = AlbumViewModel(999, repositorio)
-        assertEquals(AlbumUiState.Cargando, viewModel.uiState.value)
+        assertEquals(AlbumUiState.Loading, viewModel.uiState.value)
         advanceUntilIdle()
 
-        repositorio.consultas.single().second.complete(Result.failure(AlbumNoDisponible()))
+        repositorio.consultas.single().second.complete(Result.failure(AlbumNotAvailable()))
         advanceUntilIdle()
 
-        assertEquals(AlbumUiState.NoDisponible, viewModel.uiState.value)
+        assertEquals(AlbumUiState.NotAvailable, viewModel.uiState.value)
     }
 
     @Test
     fun cargandoPasaAErrorCuandoFallaLaConsulta() = runTest {
         val repositorio = AlbumRepositoryFalso()
         val viewModel = AlbumViewModel(101, repositorio)
-        assertEquals(AlbumUiState.Cargando, viewModel.uiState.value)
+        assertEquals(AlbumUiState.Loading, viewModel.uiState.value)
         advanceUntilIdle()
 
-        repositorio.consultas.single().second.complete(Result.failure(ErrorDeCarga()))
+        repositorio.consultas.single().second.complete(Result.failure(LoadError()))
         advanceUntilIdle()
 
         assertEquals(AlbumUiState.Error, viewModel.uiState.value)
     }
 
     @Test
-    fun reintentarPasaDeErrorACargandoYExitoConElMismoId() = runTest {
+    fun retryPasaDeErrorALoadingYSuccessConElMismoId() = runTest {
         val repositorio = AlbumRepositoryFalso()
         val viewModel = AlbumViewModel(101, repositorio)
         advanceUntilIdle()
-        repositorio.consultas.single().second.complete(Result.failure(ErrorDeCarga()))
+        repositorio.consultas.single().second.complete(Result.failure(LoadError()))
         advanceUntilIdle()
         assertEquals(AlbumUiState.Error, viewModel.uiState.value)
 
-        viewModel.reintentar()
-        assertEquals(AlbumUiState.Cargando, viewModel.uiState.value)
+        viewModel.retry()
+        assertEquals(AlbumUiState.Loading, viewModel.uiState.value)
         advanceUntilIdle()
         assertEquals(listOf(101, 101), repositorio.consultas.map { it.first })
         repositorio.consultas.last().second.complete(Result.success(album))
         advanceUntilIdle()
 
-        assertEquals(AlbumUiState.Exito(album), viewModel.uiState.value)
+        assertEquals(AlbumUiState.Success(album), viewModel.uiState.value)
     }
 
     @Test
@@ -130,12 +134,12 @@ class AlbumViewModelTest {
             val vigente = album.copy(id = 102, nombre = "Álbum vigente")
             repositorio.consultas[1].second.complete(Result.success(vigente))
             advanceUntilIdle()
-            assertEquals(AlbumUiState.Exito(vigente), viewModel.uiState.value)
+            assertEquals(AlbumUiState.Success(vigente), viewModel.uiState.value)
 
             repositorio.consultas[0].second.complete(Result.success(album))
             advanceUntilIdle()
 
-            assertEquals(AlbumUiState.Exito(vigente), viewModel.uiState.value)
+            assertEquals(AlbumUiState.Success(vigente), viewModel.uiState.value)
         } finally {
             repositorio.consultas.forEach { it.second.complete(Result.success(album)) }
             advanceUntilIdle()
@@ -147,17 +151,17 @@ class AlbumViewModelTest {
         val repositorio = AlbumRepositoryFalso()
         val viewModel = AlbumViewModel(999, repositorio)
         advanceUntilIdle()
-        repositorio.consultas.single().second.complete(Result.failure(AlbumNoDisponible()))
+        repositorio.consultas.single().second.complete(Result.failure(AlbumNotAvailable()))
         advanceUntilIdle()
 
-        viewModel.reintentar()
+        viewModel.retry()
         advanceUntilIdle()
 
-        assertEquals(AlbumUiState.NoDisponible, viewModel.uiState.value)
+        assertEquals(AlbumUiState.NotAvailable, viewModel.uiState.value)
         assertEquals(1, repositorio.consultas.size)
     }
 
-    // ---------- Detalle guardado (add-cache-consultas, D5) ----------
+    // ---------- Saved detail (add-cache-consultas, D5) ----------
 
     private val actualizado = album.copy(nombre = "Buscando América (remasterizado)")
 
@@ -167,12 +171,12 @@ class AlbumViewModelTest {
         val viewModel = AlbumViewModel(101, repositorio)
         advanceUntilIdle()
 
-        assertEquals(AlbumUiState.Exito(album, actualizando = true), viewModel.uiState.value)
+        assertEquals(AlbumUiState.Success(album, actualizando = true), viewModel.uiState.value)
 
         repositorio.consultas.single().second.complete(Result.success(actualizado))
         advanceUntilIdle()
 
-        assertEquals(AlbumUiState.Exito(actualizado), viewModel.uiState.value)
+        assertEquals(AlbumUiState.Success(actualizado), viewModel.uiState.value)
     }
 
     @Test
@@ -181,10 +185,10 @@ class AlbumViewModelTest {
         val viewModel = AlbumViewModel(101, repositorio)
         advanceUntilIdle()
 
-        repositorio.consultas.single().second.complete(Result.failure(ErrorDeCarga()))
+        repositorio.consultas.single().second.complete(Result.failure(LoadError()))
         advanceUntilIdle()
 
-        assertEquals(AlbumUiState.Exito(album, errorAlActualizar = true), viewModel.uiState.value)
+        assertEquals(AlbumUiState.Success(album, errorAlActualizar = true), viewModel.uiState.value)
     }
 
     @Test
@@ -192,24 +196,24 @@ class AlbumViewModelTest {
         val repositorio = AlbumRepositoryFalso().apply { guardados[101] = album }
         val viewModel = AlbumViewModel(101, repositorio)
         advanceUntilIdle()
-        repositorio.consultas.single().second.complete(Result.failure(ErrorDeCarga()))
+        repositorio.consultas.single().second.complete(Result.failure(LoadError()))
         advanceUntilIdle()
 
         viewModel.avisoMostrado()
 
-        assertEquals(AlbumUiState.Exito(album), viewModel.uiState.value)
+        assertEquals(AlbumUiState.Success(album), viewModel.uiState.value)
     }
 
     @Test
-    fun un404TerminaEnNoDisponibleAunqueHayaDetalleGuardado() = runTest {
+    fun un404TerminaEnNotAvailableAunqueHayaDetalleGuardado() = runTest {
         val repositorio = AlbumRepositoryFalso().apply { guardados[101] = album }
         val viewModel = AlbumViewModel(101, repositorio)
         advanceUntilIdle()
 
-        repositorio.consultas.single().second.complete(Result.failure(AlbumNoDisponible()))
+        repositorio.consultas.single().second.complete(Result.failure(AlbumNotAvailable()))
         advanceUntilIdle()
 
-        assertEquals(AlbumUiState.NoDisponible, viewModel.uiState.value)
+        assertEquals(AlbumUiState.NotAvailable, viewModel.uiState.value)
     }
 
     @Test
@@ -227,13 +231,13 @@ class AlbumViewModelTest {
         repositorio.lecturaEnEspera!!.complete(Unit)
         advanceUntilIdle()
 
-        assertEquals(AlbumUiState.Exito(otro, actualizando = true), viewModel.uiState.value)
+        assertEquals(AlbumUiState.Success(otro, actualizando = true), viewModel.uiState.value)
         assertEquals(listOf(102), repositorio.consultas.map { it.first })
         repositorio.consultas.single().second.complete(Result.success(otro))
         advanceUntilIdle()
     }
 
-    // ---------- Actualizar después de comentar (add-comentar-album, D7) ----------
+    // ---------- Refresh after commenting (add-comentar-album, D7) ----------
 
     private suspend fun kotlinx.coroutines.test.TestScope.conAlbumVisible(repositorio: AlbumRepositoryFalso): AlbumViewModel {
         val viewModel = AlbumViewModel(101, repositorio)
@@ -247,17 +251,17 @@ class AlbumViewModelTest {
     fun actualizarMantieneElAlbumALaVistaYLoReemplazaConLaRespuesta() = runTest {
         val repositorio = AlbumRepositoryFalso()
         val viewModel = conAlbumVisible(repositorio)
-        val comentado = album.copy(comentarios = listOf(Comentario("Gran prensado", 5)))
+        val comentado = album.copy(comentarios = listOf(Comment("Gran prensado", 5)))
 
         viewModel.actualizar()
         advanceUntilIdle()
-        assertEquals(AlbumUiState.Exito(album, actualizando = true), viewModel.uiState.value)
+        assertEquals(AlbumUiState.Success(album, actualizando = true), viewModel.uiState.value)
         assertEquals(listOf(101, 101), repositorio.consultas.map { it.first })
 
         repositorio.consultas.last().second.complete(Result.success(comentado))
         advanceUntilIdle()
 
-        assertEquals(AlbumUiState.Exito(comentado), viewModel.uiState.value)
+        assertEquals(AlbumUiState.Success(comentado), viewModel.uiState.value)
     }
 
     @Test
@@ -267,10 +271,10 @@ class AlbumViewModelTest {
 
         viewModel.actualizar()
         advanceUntilIdle()
-        repositorio.consultas.last().second.complete(Result.failure(ErrorDeCarga()))
+        repositorio.consultas.last().second.complete(Result.failure(LoadError()))
         advanceUntilIdle()
 
-        assertEquals(AlbumUiState.Exito(album, errorAlActualizar = true), viewModel.uiState.value)
+        assertEquals(AlbumUiState.Success(album, errorAlActualizar = true), viewModel.uiState.value)
     }
 
     @Test
@@ -278,11 +282,58 @@ class AlbumViewModelTest {
         val repositorio = AlbumRepositoryFalso()
         val viewModel = AlbumViewModel(101, repositorio)
         advanceUntilIdle()
-        repositorio.consultas.single().second.complete(Result.failure(ErrorDeCarga()))
+        repositorio.consultas.single().second.complete(Result.failure(LoadError()))
         advanceUntilIdle()
 
         viewModel.actualizar()
 
-        assertEquals(AlbumUiState.Cargando, viewModel.uiState.value)
+        assertEquals(AlbumUiState.Loading, viewModel.uiState.value)
+    }
+
+    // ---------- "Track added" notice (PR review: must not repeat the GET on rotation) ----------
+
+    @Test
+    fun cancionAgregadaPrendeElAvisoYDisparaUnaSolaActualizacion() = runTest {
+        val repositorio = AlbumRepositoryFalso()
+        val viewModel = conAlbumVisible(repositorio)
+        assertEquals(false, viewModel.avisoTrackAgregada.value)
+
+        viewModel.cancionAgregada()
+        advanceUntilIdle()
+
+        assertEquals(true, viewModel.avisoTrackAgregada.value)
+        assertEquals(listOf(101, 101), repositorio.consultas.map { it.first })
+    }
+
+    @Test
+    fun avisoTrackAgregadaMostradoApagaElAvisoSinRepetirLaConsulta() = runTest {
+        val repositorio = AlbumRepositoryFalso()
+        val viewModel = conAlbumVisible(repositorio)
+        viewModel.cancionAgregada()
+        advanceUntilIdle()
+        repositorio.consultas.last().second.complete(Result.success(album))
+        advanceUntilIdle()
+
+        viewModel.avisoTrackAgregadaMostrado()
+
+        assertEquals(false, viewModel.avisoTrackAgregada.value)
+        assertEquals(2, repositorio.consultas.size)
+    }
+
+    @Test
+    fun elAvisoDeTrackAgregadaSobreviveUnaRecreacionDelViewModelAunNoMostrado() = runTest {
+        // Simulates "rotating while the notice is shown": the ViewModel is not destroyed (it survives
+        // configuration changes), so its state isn't reset as it would be with a nav key.
+        val repositorio = AlbumRepositoryFalso()
+        val viewModel = conAlbumVisible(repositorio)
+
+        viewModel.cancionAgregada()
+        advanceUntilIdle()
+        repositorio.consultas.last().second.complete(Result.success(album))
+        advanceUntilIdle()
+
+        // The notice stays active (it hasn't been marked as shown) and the query isn't repeated again.
+        assertEquals(true, viewModel.avisoTrackAgregada.value)
+        assertEquals(2, repositorio.consultas.size)
     }
 }

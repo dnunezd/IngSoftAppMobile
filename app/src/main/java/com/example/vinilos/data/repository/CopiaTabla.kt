@@ -1,16 +1,16 @@
 package com.example.vinilos.data.repository
 
-import com.example.vinilos.data.local.CambiosDeTabla
+import com.example.vinilos.data.local.TableChanges
 
 /**
- * Copia en memoria de lo último que un repositorio escribió en una tabla de Room (optimizar-cache-e-imagenes,
- * D4). Sirve para saber qué cambió sin leer Room:
+ * In-memory copy of the last thing a repository wrote to a Room table (optimizar-cache-e-imagenes,
+ * D4). Used to know what changed without reading Room:
  *
- * - **Completa:** se conocen todas las filas de la tabla, así que se puede escribir solo la diferencia.
- * - **Parcial:** se conocen algunas filas (por ejemplo, los detalles abiertos). Al abrir la app no se conoce
- *   ninguna; una escritura de la tabla entera la reemplaza y la deja completa.
+ * - **Complete:** every row of the table is known, so only the difference needs to be written.
+ * - **Partial:** only some rows are known (for example, the opened details). When the app opens, none
+ *   is known; a write of the whole table replaces it and leaves it complete.
  *
- * No es segura entre hilos: el repositorio la usa siempre con su `Mutex` de escritura tomado.
+ * It is not thread-safe: the repository always uses it with its write `Mutex` held.
  */
 internal class CopiaTabla<K, E>(private val claveDe: (E) -> K) {
 
@@ -19,42 +19,42 @@ internal class CopiaTabla<K, E>(private val claveDe: (E) -> K) {
     var completa: Boolean = false
         private set
 
-    /** La fila guardada con esa clave, si se conoce. */
+    /** The stored row with that key, if known. */
     fun fila(clave: K): E? = filas[clave]
 
     /**
-     * Qué escribir para que la tabla entera quede igual a [nuevas]: con la copia completa, solo las filas nuevas
-     * o distintas y las claves que ya no llegan; si no, reemplazar la tabla.
+     * What to write so the whole table ends up equal to [nuevas]: with the complete copy, only the new
+     * or different rows and the keys that no longer arrive; otherwise, replace the table.
      */
-    fun cambiosPara(nuevas: List<E>): CambiosDeTabla<K, E> {
-        if (!completa) return CambiosDeTabla.reemplazar(nuevas)
+    fun cambiosPara(nuevas: List<E>): TableChanges<K, E> {
+        if (!completa) return TableChanges.reemplazar(nuevas)
         val clavesNuevas = nuevas.mapTo(HashSet(), claveDe)
-        val guardar = nuevas.filter { filas[claveDe(it)] != it }
+        val save = nuevas.filter { filas[claveDe(it)] != it }
         val borrar = filas.keys.filter { it !in clavesNuevas }
-        return CambiosDeTabla.diferencias(guardar, borrar)
+        return TableChanges.diferencias(save, borrar)
     }
 
-    /** Refleja unos cambios que ya quedaron escritos en Room. */
-    fun aplicar(cambios: CambiosDeTabla<K, E>) {
+    /** Reflects changes that have already been written to Room. */
+    fun aplicar(cambios: TableChanges<K, E>) {
         if (cambios.reemplazarTodo) {
-            filas = cambios.guardar.associateBy(claveDe)
+            filas = cambios.save.associateBy(claveDe)
             completa = true
         } else {
-            filas = filas - cambios.borrar.toSet() + cambios.guardar.associateBy(claveDe)
+            filas = filas - cambios.borrar.toSet() + cambios.save.associateBy(claveDe)
         }
     }
 
-    /** Se escribió una sola fila; la copia sigue completa o parcial como estaba. */
+    /** A single row was written; the copy remains complete or partial as it was. */
     fun guardada(fila: E) {
         filas = filas + (claveDe(fila) to fila)
     }
 
-    /** Se borró una sola fila. */
+    /** A single row was deleted. */
     fun borrada(clave: K) {
         filas = filas - clave
     }
 
-    /** No se sabe qué quedó en la tabla: la siguiente escritura de la tabla entera la reemplaza. */
+    /** It's unknown what ended up in the table: the next write of the whole table replaces it. */
     fun descartar() {
         filas = emptyMap()
         completa = false
@@ -62,14 +62,14 @@ internal class CopiaTabla<K, E>(private val claveDe: (E) -> K) {
 }
 
 /**
- * Versión (`ETag`) de la última respuesta escrita de cada consulta (optimizar-cache-e-imagenes, D5). Si una
- * respuesta llega con la misma versión, no hace falta compararla ni escribirla.
+ * Version (`ETag`) of the last written response of each query (optimizar-cache-e-imagenes, D5). If a
+ * response arrives with the same version, there's no need to compare it or write it.
  */
 internal class Versiones<K> {
 
     private val porConsulta = HashMap<K, String>()
 
-    /** La respuesta tiene versión y es la misma de lo último que se escribió para esa consulta. */
+    /** The response has a version and it's the same as the last one written for that query. */
     fun igual(consulta: K, version: String?): Boolean = version != null && porConsulta[consulta] == version
 
     fun anotar(consulta: K, version: String?) {
@@ -86,7 +86,7 @@ internal class Versiones<K> {
 }
 
 /**
- * Versión de algo que se arma con varias respuestas: solo sirve para comparar si todas sus partes tienen versión.
+ * Version of something assembled from several responses: it's only usable to compare if all of its parts have a version.
  */
 internal fun versionCompuesta(vararg partes: String?): String? =
     if (partes.any { it == null }) null else partes.joinToString("|")

@@ -1,10 +1,10 @@
 package com.example.vinilos.data.repository
 
 import android.database.sqlite.SQLiteException
-import com.example.vinilos.data.local.FavoritoDao
+import com.example.vinilos.data.local.FavoriteDao
 import com.example.vinilos.data.model.ArtistType
 import com.example.vinilos.data.remote.CollectorApi
-import com.example.vinilos.data.remote.RecursoNoEncontrado
+import com.example.vinilos.data.remote.ResourceNotFound
 import com.example.vinilos.data.remote.ServiceAdapter
 import com.example.vinilos.data.remote.conVersion
 import kotlinx.coroutines.CoroutineDispatcher
@@ -14,44 +14,44 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
- * Favoritos de artista del coleccionista (HU10): comprobar y guardar, sobre /collectors/{id}/... Con
- * [favoritoDao], los favoritos que el backend confirma además se guardan en el dispositivo
- * (add-cache-consultas); sin él, se comporta como antes.
- * Retrofit y Room hacen su I/O en sus propios hilos; lo que corre en [dispatcher] (`Dispatchers.Default`
- * por defecto) es el trabajo de CPU: revisar la respuesta. Así se puede llamar desde el hilo principal sin
- * bloquearlo.
+ * Collector's artist favorites (HU10): check and store, over /collectors/{id}/... With
+ * [favoritoDao], the favorites the backend confirms are also stored on the device
+ * (add-cache-consultas); without it, it behaves as before.
+ * Retrofit and Room do their I/O on their own threads; what runs on [dispatcher] (`Dispatchers.Default`
+ * by default) is CPU work: checking the response. This way it can be called from the main thread without
+ * blocking it.
  */
 class FavoriteRepositoryImpl(
     private val adaptador: ServiceAdapter,
     private val api: CollectorApi = adaptador.api(),
-    private val favoritoDao: FavoritoDao? = null,
+    private val favoritoDao: FavoriteDao? = null,
     private val dispatcher: CoroutineDispatcher = Dispatchers.Default
 ) : FavoriteRepository {
 
     /**
-     * Lo último que se escribió de los favoritos de cada coleccionista y su versión (optimizar-cache-e-imagenes,
-     * D4). Solo se tocan con [escritura] tomado.
+     * Last thing written of each collector's favorites and its version (optimizar-cache-e-imagenes,
+     * D4). Only touched with [escritura] held.
      */
     private val escritura = Mutex()
     private val copias = HashMap<Int, CopiaTabla<Int, Int>>()
     private val versiones = Versiones<Int>()
 
     /**
-     * Compara solo por id: en el backend los ids de músico y banda son globalmente únicos. La respuesta
-     * trae todos los favoritos del coleccionista, así que lo guardado de ese coleccionista queda igual a ella
-     * (D4); solo se agregan y se quitan las diferencias.
+     * Compares only by id: in the backend, musician and band ids are globally unique. The response
+     * brings all of the collector's favorites, so what's stored for that collector is left equal to it
+     * (D4); only the differences are added and removed.
      */
     override suspend fun esFavorito(collectorId: Int, artistId: Int): Result<Boolean> =
         withContext(dispatcher) {
-            adaptador.llamar {
+            adaptador.call {
                 val respuesta = api.getFavoritePerformers(collectorId).conVersion()
                 respuesta.valor.mapNotNull { it.id }.distinct() to respuesta.version
             }
-                .onSuccess { (ids, version) -> guardarFavoritos(collectorId, ids, version) }
+                .onSuccess { (ids, version) -> saveFavorites(collectorId, ids, version) }
                 .map { (ids, _) -> artistId in ids }
         }
 
-    private suspend fun guardarFavoritos(collectorId: Int, ids: List<Int>, version: String?) = escribir {
+    private suspend fun saveFavorites(collectorId: Int, ids: List<Int>, version: String?) = escribir {
         if (versiones.igual(collectorId, version)) return@escribir
         val copia = copias.getOrPut(collectorId) { CopiaTabla { it } }
         val cambios = copia.cambiosPara(ids)
@@ -72,11 +72,11 @@ class FavoriteRepositoryImpl(
     }
 
     /**
-     * Punto único de escritura (D4 y D5). Si el bloque no termina normalmente, se descarta lo que se recordaba
-     * y la siguiente comprobación reemplaza los favoritos. Un fallo del almacenamiento no cambia el resultado;
-     * la cancelación y los errores de programación se relanzan.
+     * Single write point (D4 and D5). If the block does not finish normally, whatever was remembered is discarded
+     * and the next check replaces the favorites. A storage failure does not change the result;
+     * the cancellation and programming errors are rethrown.
      */
-    private suspend fun escribir(bloque: suspend FavoritoDao.() -> Unit) {
+    private suspend fun escribir(bloque: suspend FavoriteDao.() -> Unit) {
         val dao = favoritoDao ?: return
         escritura.withLock {
             try {
@@ -89,9 +89,9 @@ class FavoriteRepositoryImpl(
         }
     }
 
-    override suspend fun agregarFavorito(collectorId: Int, artistId: Int, tipo: ArtistType): Result<Unit> =
+    override suspend fun addFavorite(collectorId: Int, artistId: Int, tipo: ArtistType): Result<Unit> =
         withContext(dispatcher) {
-            val resultado = adaptador.llamar {
+            val resultado = adaptador.call {
                 when (tipo) {
                     ArtistType.BANDA -> api.addFavoriteBand(collectorId, artistId)
                     ArtistType.MUSICO -> api.addFavoriteMusician(collectorId, artistId)
@@ -99,14 +99,14 @@ class FavoriteRepositoryImpl(
                 Unit
             }
             val error = resultado.exceptionOrNull()
-            if (error is RecursoNoEncontrado) {
-                Result.failure(ArtistaNoDisponible(error.cause))
+            if (error is ResourceNotFound) {
+                Result.failure(ArtistNotAvailable(error.cause))
             } else {
                 resultado.onSuccess {
                     escribir {
                         agregar(collectorId, artistId)
                         copias[collectorId]?.guardada(artistId)
-                        // Regla 3 de D4: si el favorito se quita en el backend, su versión anterior vuelve.
+                        // Rule 3 of D4: if the favorite is removed on the backend, its previous version comes back.
                         versiones.descartar(collectorId)
                     }
                 }

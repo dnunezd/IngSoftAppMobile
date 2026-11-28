@@ -1,8 +1,8 @@
 package com.example.vinilos.data.remote
 
 /**
- * Solo el campo que usa HU10 para comparar favoritos. Gson ignora el resto (name, image,
- * description) y deja en null el que falte; la comparación de favorito es solo por [id].
+ * Only the field HU10 uses to compare favorites. Gson ignores the rest (name, image,
+ * description) and leaves the missing one as null; the favorite comparison is only by [id].
  */
 data class PerformerDto(
     val id: Int?

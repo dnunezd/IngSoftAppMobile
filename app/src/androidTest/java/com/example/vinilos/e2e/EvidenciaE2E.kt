@@ -9,6 +9,7 @@ import android.graphics.pdf.PdfDocument
 import android.os.Build
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.isRoot
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.onRoot
 import androidx.test.platform.app.InstrumentationRegistry
@@ -19,13 +20,14 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * Evidencia de las pruebas E2E: un pantallazo por paso, un informe en Markdown y un PDF con el
- * resumen y las capturas, usando solo las APIs de Jetpack Compose Testing ya incluidas en el
- * proyecto (`captureToImage`) y `PdfDocument` de Android, sin dependencias nuevas.
+ * Evidence for the E2E tests: a screenshot per step, a Markdown report and a PDF with the
+ * summary and screenshots, using only the Jetpack Compose Testing APIs already included in the
+ * project (`captureToImage`) and Android's `PdfDocument`, with no new dependencies.
  *
- * Se guarda únicamente en el almacenamiento propio de la app en el dispositivo
- * (`.../files/e2e-evidencia/<carpeta>/`), fuera del repositorio: no es rastreable por git. Si se
- * trae al PC con `adb pull`, queda bajo una carpeta `e2e-evidencia/` ignorada (ver `.gitignore`).
+ * It is saved only in the app's own storage on the device
+ * (`.../files/e2e-evidencia/<folder>/`), outside the repository: it is not tracked by git. If
+ * it's pulled to the PC with `adb pull`, it ends up under an `e2e-evidencia/` folder that is
+ * ignored (see `.gitignore`).
  */
 object EvidenciaE2E {
 
@@ -34,7 +36,7 @@ object EvidenciaE2E {
 
     private class Paso(val nombre: String, val estado: String, val captura: File?, val hora: String)
 
-    /** Pasos registrados en esta ejecución, por carpeta: el PDF muestra solo la corrida actual. */
+    /** Steps recorded in this run, by folder: the PDF shows only the current run. */
     private val pasos = mutableMapOf<String, MutableList<Paso>>()
 
     private fun directorio(carpeta: String): File {
@@ -43,8 +45,8 @@ object EvidenciaE2E {
     }
 
     /**
-     * Captura el árbol Compose visible, agrega una fila al informe de [carpeta] para [paso] y
-     * regenera `<carpeta>.pdf` con todos los pasos registrados hasta ahora.
+     * Captures the visible Compose tree, adds a row to [carpeta]'s report for [paso] and
+     * regenerates `<carpeta>.pdf` with all the steps recorded so far.
      */
     fun capturar(rule: ComposeTestRule, carpeta: String, paso: String) {
         val directorio = directorio(carpeta)
@@ -54,25 +56,29 @@ object EvidenciaE2E {
             FileOutputStream(archivo).use { salida -> bitmap.compress(Bitmap.CompressFormat.PNG, 100, salida) }
             registrar(directorio, carpeta, paso, archivo, "Ok")
         } catch (e: Throwable) {
-            // Si no hay árbol Compose visible (p.ej. tras cerrar la actividad) o la API no soporta
-            // la captura (ver más abajo) se omite sin fallar la prueba: la evidencia es un
-            // complemento, no una aserción.
+            // If there's no visible Compose tree (e.g. after closing the activity) or the API doesn't
+            // support capturing (see below), it's skipped without failing the test: the evidence is a
+            // complement, not an assertion.
             registrar(directorio, carpeta, paso, null, "Sin captura: ${e.message}")
         }
     }
 
     /**
-     * `captureToImage()` usa `PixelCopy`, disponible solo desde API 26. En API 23-25 se captura la
-     * pantalla completa con `UiAutomation` (disponible desde API 18, sin dependencias nuevas); esa
-     * captura incluye la barra de estado y los botones de navegación, a diferencia de la de
+     * `captureToImage()` uses `PixelCopy`, available only since API 26. On API 23-25 the full
+     * screen is captured with `UiAutomation` (available since API 18, no new dependencies); that
+     * capture includes the status bar and the navigation buttons, unlike the one from
      * `captureToImage()`.
+     *
+     * With a popup open (a dialog or a bottom sheet) there is more than one Compose root and
+     * `onRoot()` doesn't know which one to capture; the full screen is also used in that case, which
+     * shows the window over the background screen.
      */
     private fun capturarBitmap(rule: ComposeTestRule): Bitmap =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O && rule.onAllNodes(isRoot()).fetchSemanticsNodes().size == 1) {
             rule.onRoot().captureToImage().asAndroidBitmap()
         } else {
-            // La pantalla del dispositivo puede ir un cuadro por detrás del árbol Compose (tras
-            // navegar, cerrar el teclado o recibir datos): se espera a que quede quieta.
+            // The device screen may lag one frame behind the Compose tree (after
+            // navigating, closing the keyboard, or receiving data): it waits until it settles.
             rule.waitForIdle()
             val uiAutomation = InstrumentationRegistry.getInstrumentation().uiAutomation
             runCatching { uiAutomation.waitForIdle(500, 5_000) }
@@ -92,16 +98,16 @@ object EvidenciaE2E {
         try {
             generarPdf(File(directorio, "$carpeta.pdf"), carpeta, lista)
         } catch (e: Throwable) {
-            // Igual que la captura: un PDF fallido no debe hacer fallar la prueba.
+            // Same as the screenshot: a failed PDF should not fail the test.
         }
     }
 
-    // Página A4 en puntos (1/72 de pulgada).
+    // A4 page in points (1/72 inch).
     private const val ANCHO = 595
     private const val ALTO = 842
     private const val MARGEN = 40f
 
-    /** Portada con el dispositivo y la tabla de pasos, y luego una página por paso con su captura. */
+    /** Cover page with the device and the step table, then one page per step with its screenshot. */
     private fun generarPdf(destino: File, carpeta: String, lista: List<Paso>) {
         val titulo = Paint(Paint.ANTI_ALIAS_FLAG).apply { textSize = 18f; isFakeBoldText = true }
         val subtitulo = Paint(Paint.ANTI_ALIAS_FLAG).apply { textSize = 14f; isFakeBoldText = true }
@@ -144,7 +150,7 @@ object EvidenciaE2E {
                     y += 18f
                     drawText("${paso.estado} · ${paso.hora}", MARGEN, y, texto)
                     y += 14f
-                    // Media resolución basta para leer la captura y mantiene el PDF liviano.
+                    // Half resolution is enough to read the screenshot and keeps the PDF lightweight.
                     val opciones = BitmapFactory.Options().apply { inSampleSize = 2 }
                     paso.captura?.let { BitmapFactory.decodeFile(it.path, opciones) }?.let { bitmap ->
                         val escala = minOf(

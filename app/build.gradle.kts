@@ -23,10 +23,10 @@ android {
         applicationId = "com.example.vinilos"
         minSdk = 23
         targetSdk = 37
-        versionCode = 6
-        versionName = "3.0.0"
+        versionCode = 7
+        versionName = "3.1.0"
 
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner = "com.example.vinilos.VinilosTestRunner"
         vectorDrawables {
             useSupportLibrary = true
         }
@@ -117,4 +117,12 @@ dependencies {
 configurations.matching { it.name.contains("AndroidTest", ignoreCase = true) }.configureEach {
     exclude(group = "com.google.guava", module = "listenablefuture")
     resolutionStrategy.force("androidx.concurrent:concurrent-futures:1.2.0")
+}
+
+// ParidadDeTraduccionesTest lee los strings.xml de cada idioma: si cambian, las pruebas unitarias
+// deben volver a correr (internacionalizar-ingles).
+tasks.withType<Test>().configureEach {
+    inputs.files(fileTree("src/main/res") { include("values*/strings.xml") })
+        .withPropertyName("traducciones")
+        .withPathSensitivity(PathSensitivity.RELATIVE)
 }

@@ -1,0 +1,912 @@
+package com.example.vinilos.ui.artistas
+
+import androidx.annotation.DrawableRes
+import androidx.annotation.PluralsRes
+import androidx.annotation.StringRes
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.outlined.DateRange
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import coil.compose.AsyncImage
+import com.example.vinilos.R
+import com.example.vinilos.data.model.ArtistAlbum
+import com.example.vinilos.data.model.ArtistType
+import com.example.vinilos.data.model.ArtistDetail
+import com.example.vinilos.data.model.ArtistMember
+import com.example.vinilos.data.model.ArtistPrize
+import com.example.vinilos.data.model.formatearFechaONula
+import com.example.vinilos.ui.idiomaDeLaApp
+import com.example.vinilos.ui.detail.AlbumCover
+import com.example.vinilos.ui.entry.OneTimeNotice
+import com.example.vinilos.ui.entry.RefreshingIndicator
+import com.example.vinilos.ui.theme.VinilosTheme
+import com.example.vinilos.viewmodel.ArtistDetailUiState
+import com.example.vinilos.viewmodel.AssociateAlbumUiState
+import com.example.vinilos.viewmodel.FavoriteUiState
+import com.example.vinilos.ui.entry.heading
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
+
+const val TagArtistDetail = "detalle_artista"
+const val TagListaArtistDetail = "detalle_artista_lista"
+const val TagProgresoArtistDetail = "detalle_artista_progreso"
+const val TagNombreArtistDetail = "detalle_artista_nombre"
+const val TagTipoArtistDetail = "detalle_artista_tipo"
+const val TagFechaArtistDetail = "detalle_artista_fecha"
+const val TagDescripcionArtistDetail = "detalle_artista_descripcion"
+const val TagContadorIntegrantes = "detalle_artista_contador_integrantes"
+const val TagContadorAlbumes = "detalle_artista_contador_albumes"
+const val TagContadorPrizes = "detalle_artista_contador_premios"
+const val TagBotonFavorito = "detalle_artista_boton_favorito"
+const val TagReintentarFavorito = "detalle_artista_reintentar_favorito"
+const val TagErrorFavorito = "detalle_artista_error_favorito"
+const val TagConfirmacionFavorito = "detalle_artista_confirmacion_favorito"
+const val TagNotAvailableFavorito = "detalle_artista_no_disponible_favorito"
+const val TagActualizandoArtistDetail = "detalle_artista_actualizando"
+
+/** Milliseconds the favorite confirmation stays visible before it hides itself. */
+private val DuracionConfirmacionFavorito = 2500.milliseconds
+
+fun tagAlbumArtista(id: Int) = "detalle_artista_album_$id"
+fun tagIntegrante(id: Int) = "detalle_artista_integrante_$id"
+
+private val EsquinaTarjeta = RoundedCornerShape(24.dp)
+private val EsquinaFila = RoundedCornerShape(20.dp)
+private val EsquinaMiniatura = RoundedCornerShape(12.dp)
+
+/**
+ * Detail screen for a musician or band with its members, albums and awards (HU04). [estadoFavorito]
+ * null fully hides the favorite section (HU10): this way it stays hidden for the Visitor
+ * without this screen needing to know about the session.
+ */
+@Composable
+fun ArtistDetailScreen(
+    estado: ArtistDetailUiState,
+    onSeleccionarAlbum: (Int) -> Unit,
+    onReintentar: () -> Unit,
+    onAtras: () -> Unit,
+    modifier: Modifier = Modifier,
+    estadoFavorito: FavoriteUiState? = null,
+    onAgregarFavorito: () -> Unit = {},
+    onReintentarFavorito: () -> Unit = {},
+    onConfirmacionFavoritoMostrada: () -> Unit = {},
+    // Go back to the list after "artist no longer available": by default it's the same as onAtras, but
+    // VinilosNavHost passes its own to flag the list and force a new query (without
+    // that, popBackStack alone wouldn't reload the list; see bug fixed in HU10).
+    onVolverAlListado: () -> Unit = onAtras,
+    onAvisoMostrado: () -> Unit = {},
+    // HU15: null hides "Add album" (Visitor), same as estadoFavorito.
+    estadoAsociar: AssociateAlbumUiState? = null,
+    accionesAsociar: AssociateAlbumActions = AssociateAlbumActions(),
+    onAgregarAlbum: (Set<Int>) -> Unit = {},
+    onAlbumAsociadoMostrado: () -> Unit = {}
+) {
+    // Handled here at the top (outside the LazyColumn) and not inside the card: that card is
+    // composed in an "item" without an explicit key, and a LaunchedEffect there could restart if the
+    // item recomposes/recycles, which prevented the 2.5s wait from completing.
+    if (estadoFavorito is FavoriteUiState.Favorito && estadoFavorito.mostrarConfirmacion) {
+        LaunchedEffect(estadoFavorito) {
+            delay(DuracionConfirmacionFavorito)
+            onConfirmacionFavoritoMostrada()
+        }
+    }
+    val exito = estado as? ArtistDetailUiState.Success
+    val avisos = remember { SnackbarHostState() }
+    OneTimeNotice(
+        mostrar = exito?.errorAlActualizar == true,
+        mensaje = stringResource(R.string.artista_error_actualizar),
+        avisos = avisos,
+        onMostrado = onAvisoMostrado
+    )
+    OneTimeNotice(
+        mostrar = exito?.mostrarAlbumAsociado == true,
+        mensaje = stringResource(R.string.asociar_album_asociado),
+        avisos = avisos,
+        onMostrado = onAlbumAsociadoMostrado
+    )
+    val descripcionActualizando = stringResource(R.string.artista_actualizando)
+    Box(
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .windowInsetsPadding(WindowInsets.safeDrawing)
+            .testTag(TagArtistDetail)
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            EncabezadoArtistas(
+                stringResource(R.string.artista_titulo),
+                onAtras,
+                accion = if (exito?.actualizando == true) {
+                    { RefreshingIndicator(descripcionActualizando, TagActualizandoArtistDetail) }
+                } else {
+                    null
+                }
+            )
+            // A single lazy column: an artist can have many albums and awards.
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .testTag(TagListaArtistDetail),
+                contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                when (estado) {
+                    ArtistDetailUiState.Loading -> {
+                        item { Loading() }
+                        item { SkeletonCard() }
+                        items(FILAS_DE_RELLENO) { SkeletonRow() }
+                    }
+                    ArtistDetailUiState.Error -> item {
+                        ErrorArtistas(stringResource(R.string.artista_error), onReintentar)
+                    }
+                    is ArtistDetailUiState.Success -> contenido(
+                        detalle = estado.detalle,
+                        onSeleccionarAlbum = onSeleccionarAlbum,
+                        estadoFavorito = estadoFavorito,
+                        onAgregarFavorito = onAgregarFavorito,
+                        onReintentarFavorito = onReintentarFavorito,
+                        onVolverAlListado = onVolverAlListado,
+                        onAgregarAlbum = if (estadoAsociar != null) onAgregarAlbum else null
+                    )
+                }
+            }
+        }
+        SnackbarHost(avisos, Modifier.align(Alignment.BottomCenter))
+    }
+    if (estadoAsociar != null && exito != null) {
+        AssociateAlbumDialog(estadoAsociar, exito.detalle.nombre, accionesAsociar)
+    }
+}
+
+private fun LazyListScope.contenido(
+    detalle: ArtistDetail,
+    onSeleccionarAlbum: (Int) -> Unit,
+    estadoFavorito: FavoriteUiState?,
+    onAgregarFavorito: () -> Unit,
+    onReintentarFavorito: () -> Unit,
+    onVolverAlListado: () -> Unit,
+    /** Null for the Visitor: they don't see "Add album" (HU15). */
+    onAgregarAlbum: ((Set<Int>) -> Unit)?
+) {
+    item(key = "tarjeta_principal") {
+        MainCard(
+            detalle = detalle,
+            estadoFavorito = estadoFavorito,
+            onAgregarFavorito = onAgregarFavorito,
+            onReintentarFavorito = onReintentarFavorito,
+            onVolverAlListado = onVolverAlListado
+        )
+    }
+    if (detalle.tipo == ArtistType.BANDA) {
+        item {
+            SectionTitle(
+                titulo = R.string.artista_integrantes,
+                contador = R.plurals.artista_integrantes_contador,
+                cantidad = detalle.integrantes.size,
+                tagContador = TagContadorIntegrantes
+            )
+        }
+        item {
+            if (detalle.integrantes.isEmpty()) {
+                EmptyBlock(R.string.artista_sin_integrantes, rememberVectorPainter(Icons.Outlined.Person))
+            } else {
+                MembersRow(detalle.integrantes)
+            }
+        }
+    }
+    item {
+        SectionTitle(
+            titulo = R.string.artista_albumes,
+            contador = R.plurals.artista_albumes_contador,
+            cantidad = detalle.albumes.size,
+            tagContador = TagContadorAlbumes,
+            accion = onAgregarAlbum?.let { agregar ->
+                { AddAlbumButton { agregar(detalle.albumes.map { it.id }.toSet()) } }
+            }
+        )
+    }
+    if (detalle.albumes.isEmpty()) {
+        item { EmptyBlock(R.string.artista_sin_albumes, painterResource(R.drawable.ic_cat_album)) }
+    } else {
+        items(detalle.albumes, key = { "album_${it.id}" }) { AlbumRow(it, onSeleccionarAlbum) }
+    }
+    item {
+        SectionTitle(
+            titulo = R.string.artista_premios,
+            contador = R.plurals.artista_premios_contador,
+            cantidad = detalle.premios.size,
+            tagContador = TagContadorPrizes
+        )
+    }
+    if (detalle.premios.isEmpty()) {
+        item { EmptyBlock(R.string.artista_sin_premios, painterResource(R.drawable.ic_det_trofeo)) }
+    } else {
+        items(detalle.premios, key = { "premio_${it.id}" }) { PrizeRow(it) }
+    }
+}
+
+@Composable
+private fun MainCard(
+    detalle: ArtistDetail,
+    estadoFavorito: FavoriteUiState?,
+    onAgregarFavorito: () -> Unit,
+    onReintentarFavorito: () -> Unit,
+    onVolverAlListado: () -> Unit
+) {
+    val porDefecto = painterResource(porDefectoDe(detalle.tipo))
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(EsquinaTarjeta)
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // If the URL doesn't respond, isn't an image, or doesn't exist, the default image is shown.
+        AsyncImage(
+            model = detalle.imagen?.takeIf { it.isNotBlank() },
+            contentDescription = stringResource(R.string.artistas_imagen_descripcion, detalle.nombre),
+            placeholder = porDefecto,
+            error = porDefecto,
+            fallback = porDefecto,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(112.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+        )
+        Text(
+            text = detalle.nombre,
+            style = MaterialTheme.typography.headlineMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.testTag(TagNombreArtistDetail)
+        )
+        EtiquetaTipo(detalle.tipo, Modifier.testTag(TagTipoArtistDetail))
+        val idioma = idiomaDeLaApp()
+        remember(detalle.fecha, idioma) { formatearFechaONula(detalle.fecha, idioma) }
+            ?.let { DateBlock(detalle.tipo, it) }
+        detalle.descripcion?.let {
+            Text(
+                text = it,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .testTag(TagDescripcionArtistDetail)
+            )
+        }
+        if (estadoFavorito != null) {
+            FavoriteSection(
+                nombre = detalle.nombre,
+                estado = estadoFavorito,
+                onAgregar = onAgregarFavorito,
+                onReintentar = onReintentarFavorito,
+                onVolverAlListado = onVolverAlListado
+            )
+        }
+    }
+}
+
+/** Favorite button and its associated messages (HU10); fully hidden for the Visitor. */
+@Composable
+private fun FavoriteSection(
+    nombre: String,
+    estado: FavoriteUiState,
+    onAgregar: () -> Unit,
+    onReintentar: () -> Unit,
+    onVolverAlListado: () -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        when (estado) {
+            FavoriteUiState.NotAvailable -> FavoriteNotAvailableCard(onVolverAlListado)
+            // Saving retries with the same add action (onAgregar); the error
+            // card replaces the main button instead of showing alongside it.
+            FavoriteUiState.ErrorGuardado -> SaveErrorCard(
+                onReintentar = onAgregar,
+                modifier = Modifier.testTag(TagErrorFavorito)
+            )
+            else -> {
+                val esFavorito = estado is FavoriteUiState.Favorito
+                val botonActivo = estado == FavoriteUiState.NoFavorito
+                val textoBoton = when (estado) {
+                    FavoriteUiState.Guardando -> stringResource(R.string.favoritos_guardando)
+                    is FavoriteUiState.Favorito -> stringResource(R.string.favoritos_favorito)
+                    else -> stringResource(R.string.favoritos_agregar)
+                }
+                Button(
+                    onClick = onAgregar,
+                    enabled = botonActivo,
+                    shape = RoundedCornerShape(50),
+                    colors = ButtonDefaults.buttonColors(
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .testTag(TagBotonFavorito)
+                ) {
+                    Icon(
+                        imageVector = if (esFavorito) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                        contentDescription = null,
+                        tint = if (esFavorito) MaterialTheme.colorScheme.error else LocalContentColor.current
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(textoBoton)
+                }
+
+                if (esFavorito) {
+                    FavoriteLockNotice()
+                }
+
+                if (estado == FavoriteUiState.ErrorComprobacion) {
+                    Text(
+                        text = stringResource(R.string.favoritos_error_comprobacion),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.testTag(TagErrorFavorito)
+                    )
+                    TextButton(onClick = onReintentar, modifier = Modifier.testTag(TagReintentarFavorito)) {
+                        Text(stringResource(R.string.favoritos_reintentar))
+                    }
+                }
+
+                if (estado is FavoriteUiState.Favorito && estado.mostrarConfirmacion) {
+                    Text(
+                        text = stringResource(R.string.favoritos_confirmacion, nombre),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.testTag(TagConfirmacionFavorito)
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** Note below the button already marked as favorite: confirms it's already a favorite (HU10). */
+@Composable
+private fun FavoriteLockNotice() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Lock,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(18.dp)
+        )
+        Text(
+            text = stringResource(R.string.favoritos_bloqueado_nota),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/**
+ * Error card for saving the favorite (HU10), with the same visual language as `TarjetaError`
+ * in album creation (HU07): errorContainer background, warning icon and retry button.
+ */
+@Composable
+private fun SaveErrorCard(onReintentar: () -> Unit, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(MaterialTheme.colorScheme.errorContainer)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Icon(
+                imageVector = Icons.Filled.Warning,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error
+            )
+            Text(
+                text = stringResource(R.string.favoritos_error_guardado),
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onErrorContainer
+            )
+        }
+        Button(
+            onClick = onReintentar,
+            shape = RoundedCornerShape(50),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(imageVector = Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.favoritos_reintentar_guardado))
+        }
+    }
+}
+
+/** Card shown when the artist no longer exists in the backend (HU10): message and return to the list. */
+@Composable
+private fun FavoriteNotAvailableCard(onVolverAlListado: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(24.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Icon(
+            imageVector = Icons.Filled.Warning,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.error
+        )
+        Text(
+            text = stringResource(R.string.favoritos_no_disponible),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.testTag(TagNotAvailableFavorito)
+        )
+        Text(
+            text = stringResource(R.string.favoritos_no_disponible_descripcion),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center
+        )
+        Button(
+            onClick = onVolverAlListado,
+            shape = RoundedCornerShape(50),
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(stringResource(R.string.favoritos_volver_artistas))
+        }
+    }
+}
+
+@Composable
+private fun DateBlock(tipo: ArtistType, fecha: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Icon(Icons.Outlined.DateRange, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+        Column {
+            Text(
+                text = stringResource(
+                    if (tipo == ArtistType.BANDA) R.string.artista_fecha_creacion else R.string.artista_fecha_nacimiento
+                ),
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = fecha,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.testTag(TagFechaArtistDetail)
+            )
+        }
+    }
+}
+
+/** Section title, with the counter on the right only when there are items. */
+@Composable
+private fun SectionTitle(
+    @StringRes titulo: Int,
+    @PluralsRes contador: Int,
+    cantidad: Int,
+    tagContador: String,
+    accion: (@Composable () -> Unit)? = null
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text(
+            text = stringResource(titulo),
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+            modifier = Modifier.weight(1f).heading()
+        )
+        if (cantidad > 0) {
+            Text(
+                text = pluralStringResource(contador, cantidad, cantidad),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.testTag(tagContador)
+            )
+        }
+        accion?.invoke()
+    }
+}
+
+/** "Add album" next to the albums section title, only for the Collector (HU15). */
+@Composable
+private fun AddAlbumButton(onClick: () -> Unit) {
+    Button(
+        onClick = onClick,
+        shape = RoundedCornerShape(50),
+        // Visual height of 40 dp; Material 3 keeps the 48 dp touch target.
+        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
+        modifier = Modifier.testTag(TagBotonAgregarAlbum)
+    ) {
+        Icon(imageVector = Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+        Spacer(Modifier.width(4.dp))
+        Text(stringResource(R.string.asociar_agregar_album), style = MaterialTheme.typography.labelLarge)
+    }
+}
+
+/** Section with no items: gray block with an icon and the message, as in the Figma frame. */
+@Composable
+private fun EmptyBlock(@StringRes mensaje: Int, icono: Painter) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(EsquinaFila)
+            .background(MaterialTheme.colorScheme.surfaceVariant)
+            .padding(vertical = 18.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
+    ) {
+        Icon(
+            painter = icono,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp)
+        )
+        Text(
+            text = stringResource(mensaje),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/** Members are not selectable: no criterion requires it and the mockup shows no indicator. */
+@Composable
+private fun MembersRow(integrantes: List<ArtistMember>) {
+    LazyRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        items(integrantes, key = { it.id }) { Member(it) }
+    }
+}
+
+@Composable
+private fun Member(integrante: ArtistMember) {
+    val porDefecto = painterResource(R.drawable.ic_artista_por_defecto)
+    Column(
+        modifier = Modifier
+            .width(84.dp)
+            .testTag(tagIntegrante(integrante.id)),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        AsyncImage(
+            model = integrante.imagen?.takeIf { it.isNotBlank() },
+            contentDescription = stringResource(R.string.artistas_imagen_descripcion, integrante.nombre),
+            placeholder = porDefecto,
+            error = porDefecto,
+            fallback = porDefecto,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(64.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+        )
+        Text(
+            text = integrante.nombre,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.onBackground,
+            textAlign = TextAlign.Center,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis
+        )
+    }
+}
+
+@Composable
+private fun AlbumRow(album: ArtistAlbum, onSeleccionar: (Int) -> Unit) {
+    val descripcion = stringResource(R.string.artistas_seleccionar_descripcion, album.nombre)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(EsquinaFila)
+            .testTag(tagAlbumArtista(album.id))
+            .semantics { contentDescription = descripcion }
+            .background(MaterialTheme.colorScheme.surface)
+            .clickable { onSeleccionar(album.id) }
+            .padding(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        // Same cover as the catalog: the disc icon shows while loading and if the cover is missing or fails to load.
+        AlbumCover(
+            url = album.portada,
+            contentDescription = stringResource(R.string.artistas_imagen_descripcion, album.nombre),
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(56.dp)
+                .clip(EsquinaMiniatura)
+        )
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                text = album.nombre,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+            album.anio?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun PrizeRow(premio: ArtistPrize) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(EsquinaFila)
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(40.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                painter = painterResource(R.drawable.ic_det_trofeo),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(22.dp)
+            )
+        }
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                text = premio.nombre,
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = premio.organizacion,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            val idioma = idiomaDeLaApp()
+            remember(premio.fecha, idioma) { formatearFechaONula(premio.fecha, idioma) }?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun Loading() {
+    val descripcion = stringResource(R.string.artista_cargando)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .semantics(mergeDescendants = true) { contentDescription = descripcion }
+            .testTag(TagProgresoArtistDetail),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)
+    ) {
+        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 3.dp)
+        Text(
+            text = descripcion,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+/** Placeholder card while loading, with the same shape as the main card. */
+@Composable
+private fun SkeletonCard() {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(EsquinaTarjeta)
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Filler(Modifier.size(112.dp), CircleShape)
+        Filler(Modifier.width(180.dp).height(24.dp), CircleShape)
+        Filler(Modifier.width(70.dp).height(22.dp), CircleShape)
+        Filler(Modifier.fillMaxWidth().height(52.dp), RoundedCornerShape(16.dp))
+    }
+}
+
+/** Placeholder row while loading, with the same shape as an album row. */
+@Composable
+private fun SkeletonRow() {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(EsquinaFila)
+            .background(MaterialTheme.colorScheme.surface)
+            .padding(10.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Filler(Modifier.size(56.dp), EsquinaMiniatura)
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Filler(Modifier.width(150.dp).height(14.dp), CircleShape)
+            Filler(Modifier.width(60.dp).height(12.dp), CircleShape)
+        }
+    }
+}
+
+@Composable
+private fun Filler(modifier: Modifier, forma: Shape) {
+    Box(modifier.clip(forma).background(MaterialTheme.colorScheme.surfaceVariant))
+}
+
+@DrawableRes
+private fun porDefectoDe(tipo: ArtistType): Int =
+    if (tipo == ArtistType.BANDA) R.drawable.ic_banda_por_defecto else R.drawable.ic_artista_por_defecto
+
+private const val FILAS_DE_RELLENO = 3
+
+private val BandaDeEjemplo = ArtistDetail(
+    id = 101,
+    nombre = "Queen",
+    imagen = null,
+    descripcion = "Banda británica de rock formada en Londres en 1970.",
+    tipo = ArtistType.BANDA,
+    fecha = "1970-01-01T00:00:00.000Z",
+    integrantes = listOf(ArtistMember(1, "Brian May", null), ArtistMember(2, "Roger Taylor", null)),
+    albumes = listOf(
+        ArtistAlbum(103, "A Day at the Races", null, "1976"),
+        ArtistAlbum(102, "A Night at the Opera", null, "1975")
+    ),
+    premios = listOf(ArtistPrize(1, "Grammy Award", "NARAS", "1978-12-10T00:00:00.000Z"))
+)
+
+@Preview(showBackground = true, heightDp = 1100, name = "Banda con datos")
+@Composable
+private fun PreviewBanda() = VinilosTheme {
+    ArtistDetailScreen(ArtistDetailUiState.Success(BandaDeEjemplo), {}, {}, {})
+}
+
+@Preview(showBackground = true, heightDp = 800, name = "Músico sin álbumes ni premios")
+@Composable
+private fun PreviewSinDatos() = VinilosTheme {
+    val musico = BandaDeEjemplo.copy(
+        nombre = "Rubén Blades",
+        tipo = ArtistType.MUSICO,
+        fecha = "1948-07-16T00:00:00.000Z",
+        integrantes = emptyList(),
+        albumes = emptyList(),
+        premios = emptyList()
+    )
+    ArtistDetailScreen(ArtistDetailUiState.Success(musico), {}, {}, {})
+}
+
+@Preview(showBackground = true, heightDp = 800, name = "Banda sin integrantes")
+@Composable
+private fun PreviewSinIntegrantes() = VinilosTheme {
+    ArtistDetailScreen(ArtistDetailUiState.Success(BandaDeEjemplo.copy(integrantes = emptyList())), {}, {}, {})
+}
+
+@Preview(showBackground = true, heightDp = 800, name = "Cargando")
+@Composable
+private fun PreviewLoading() = VinilosTheme {
+    ArtistDetailScreen(ArtistDetailUiState.Loading, {}, {}, {})
+}
+
+@Preview(showBackground = true, heightDp = 800, name = "Error")
+@Composable
+private fun PreviewError() = VinilosTheme {
+    ArtistDetailScreen(ArtistDetailUiState.Error, {}, {}, {})
+}
