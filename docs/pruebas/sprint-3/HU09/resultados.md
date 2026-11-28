@@ -58,6 +58,27 @@ El backend guardó el comentario con el coleccionista 101 (Jaime Monsalve) y la 
 | Faltaba la ilustración del vinilo en el éxito | Vinilo con la marca de publicado (`07_comentario_publicado.jpg`, recapturada) |
 | Imports | `Session` importado en `VinilosNavHost` y orden corregido en `VinilosNavHostTest` |
 
+## Prueba de cada criterio de aceptación
+
+Revisión del 2026-11-28 sobre `develop` (`278dedc`): 540 unitarias sin fallos ([CI](https://github.com/dnunezd/IngSoftAppMobile/actions/runs/46088992565)) y las pruebas de interfaz de la pantalla (`AccesibilidadPantallasTest` y `PantallasEnInglesTest`) con `OK (144 tests)` en cada dispositivo, en una sola corrida de las clases de interfaz de HU00, HU03, HU04 y HU09 en el Nexus 5X (API 23), el Pixel 8 (API 34) y el Motorola Edge 30.
+
+| # | Criterio | Unitaria | Interfaz (Compose Test) | E2E (`AddCommentE2ETest`) |
+|---|---|---|---|---|
+| 1 | Se ve el nombre del álbum que se va a comentar | `muestraElAlbumGuardadoSinConsultarElBackend`, `sinAlbumGuardadoLoConsulta`, `siElBackendYaNoTieneElAlbumMuestraError` | `addComment`, `addCommentEnIngles` | `elColeccionistaPublicaUnComment` |
+| 2 | Calificación con 5 estrellas, de 1 a 5 | `calificarGuardaLaEstrellaElegida`, `unaCalificacionFueraDeRangoSeIgnora`, `cadaCalificacionTieneSuNivel` | `addComment` | `elColeccionistaPublicaUnComment` |
+| 3 | Campo de opinión con el texto de ayuda "Escribe tu opinión" | `laOpinionConservaSoloLosPrimeros400Caracteres`, `elLimiteDeLaOpinionEsDe400Caracteres` | `addComment` | `elColeccionistaPublicaUnComment` |
+| 4 | "Publicar comentario" deshabilitado sin calificación u opinión | `sinCalificacionNoSePuedePublicar`, `sinOpinionOConSoloEspaciosNoSePuedePublicar`, `conCalificacionYOpinionSePuedePublicar`, `sinCamposCompletosNoEnviaNada` | — | `elColeccionistaPublicaUnComment` |
+| 5 | Publicar guarda la opinión y la calificación con el álbum y el coleccionista, y muestra "Comentario publicado" | `publicaLaOpinionSinEspaciosLaCalificacionYElColeccionista`, `alPublicarseQuedaPublicado`, `dosToquesSeguidosEnvianUnSoloComment`, `publicaEnLaRutaDelAlbumConLaOpinionLaCalificacionYElColeccionista` | `comentarioPublicado`, `lasEstrellasDelCommentPublicadoSonSoloDeLectura` | `elColeccionistaPublicaUnComment` |
+| 6 | Si falla: "No se pudo publicar, intenta de nuevo" y se conserva lo escrito | `siFallaQuedaFallidoYConservaLoEscrito`, `despuesDelErrorSePuedeReintentar`, `editarDespuesDelErrorOcultaElError`, `unErrorDelServidorEsLoadError`, `sinConexionEsLoadError`, `datosInvalidosEsLoadError` | — | `siFallaLaPublicacionSeConservaLoEscritoYReintentarLaPublica` |
+| 7 | El Visitante no ve el formulario para comentar | `ingresarComoVisitanteNoTieneColeccionistaNiAcciones` (la regla del rol, en `SessionViewModelTest`) | **Ninguna** | **Ninguna** |
+
+Además, salir con algo escrito pregunta "¿Descartar comentario?": `conAlgoEscritoPreguntaAntesDeSalir`, `continuarEscribiendoCierraElDialogoYConservaLoEscrito`, `descartarSale` (unitarias), `descartarComment` (interfaz) y `salirConAlgoEscritoPreguntaSiDescartarElComment` (E2E).
+
+Pendiente:
+
+- **Criterio 7:** ninguna prueba comprueba que el botón "Comentar álbum" no aparezca para el Visitante en el detalle del álbum. Solo está probada la regla general del rol.
+- **Pantalla de comentar:** no tiene una clase de Compose Test propia para sus estados (vacío, botón deshabilitado, publicando, error). Solo la dibujan las pruebas de accesibilidad y de inglés; sus estados se prueban en el `ViewModel` y en las E2E.
+
 ## Pruebas E2E (T09-5)
 
 Clase `AddCommentE2ETest` (cambio de OpenSpec [`add-e2e-comentar-album`](../../../../openspec/changes/add-e2e-comentar-album)). Recorre la app desde el ingreso, como la persona, con los tres escenarios más importantes: salir sin publicar, el flujo completo y el error con reintento. ESC01 y ESC02 van contra BackVynils; como publican comentarios, se corren contra el backend **local**, sobre un álbum propio (`POST /albums`) que se borra al terminar con sus comentarios. ESC03 usa `MockWebServer` para provocar el error.
