@@ -1,6 +1,8 @@
 # HU04: Consultar el detalle de un artista · pruebas E2E
 
-Evidencia de la tarea T04-5 (issue #28). Las pruebas están en [`ArtistaDetalleE2ETest`](../../../../app/src/androidTest/java/com/example/vinilos/ArtistaDetalleE2ETest.kt) y la especificación del cambio en `openspec/changes/add-e2e-detalle-artista/`. Cada escenario genera un PDF con una captura por paso, guardado en [`e2e/`](e2e).
+Las pruebas unitarias y de interfaz, con la prueba de cada criterio de aceptación, están en [resultados.md](resultados.md).
+
+Evidencia de la tarea T04-5 (issue #28). Las pruebas están en [`ArtistDetailE2ETest`](../../../../app/src/androidTest/java/com/example/vinilos/ArtistDetailE2ETest.kt) y la especificación del cambio en `openspec/changes/add-e2e-detalle-artista/`. Cada escenario genera un PDF con una captura por paso, guardado en [`e2e/`](e2e).
 
 Todos los escenarios recorren la app como **Visitante**, desde el inicio y el listado de artistas (HU03). Los que van contra el backend real no asumen datos fijos: antes de abrir la app consultan el listado y los detalles reales y eligen el artista que cumple la condición del escenario; si no existe, el escenario se omite en lugar de fallar.
 
@@ -31,7 +33,7 @@ ESC05 y ESC06 usan `MockWebServer` porque un error de carga no se puede provocar
 | Premios con nombre, organización y fecha                         | ESC01, ESC02                                                                                                                      |
 | "Sin álbumes" y "Sin premios"                                    | ESC04                                                                                                                             |
 | Imagen por defecto si la imagen o la portada no carga            | ESC01, ESC06                                                                                                                      |
-| Indicador de carga                                               | No se cubre con E2E: contra el backend real la carga es demasiado rápida para observarla. Lo cubre `ArtistaDetalleViewModelTest`. |
+| Indicador de carga                                               | No se cubre con E2E: contra el backend real la carga es demasiado rápida para observarla. Lo cubre `ArtistDetailViewModelTest`. |
 | "No se pudo cargar el artista" y "Reintentar"                    | ESC05                                                                                                                             |
 
 ## Resultados
@@ -40,8 +42,8 @@ Emulador Pixel 8 (API 34), 2026-11-07.
 
 | Ejecución                                                                           | Resultado                                                                                              |
 |-------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|
-| `ArtistaDetalleE2ETest` contra el backend desplegado (evidencia de esta carpeta)    | `OK (7 tests)`, ninguno omitido; 30 capturas en "Ok"                                                   |
-| `ArtistaDetalleE2ETest` contra BackVynils local (`-PbaseUrl=http://10.0.2.2:3000/`) | `OK (7 tests)`; ESC04 omitido, porque los datos de ejemplo no tienen un artista sin álbumes ni premios |
+| `ArtistDetailE2ETest` contra el backend desplegado (evidencia de esta carpeta)    | `OK (7 tests)`, ninguno omitido; 30 capturas en "Ok"                                                   |
+| `ArtistDetailE2ETest` contra BackVynils local (`-PbaseUrl=http://10.0.2.2:3000/`) | `OK (7 tests)`; ESC04 omitido, porque los datos de ejemplo no tienen un artista sin álbumes ni premios |
 | Suite instrumentada completa                                                        | `OK (138 tests)`                                                                                       |
 | `testDebugUnitTest` y `lintDebug`                                                   | 220 sin fallos; 0 errores de lint                                                                      |
 
@@ -52,6 +54,6 @@ En la revisión del PR se corrió la clase 3 veces por dispositivo, en paralelo,
 ```bash
 ./gradlew installDebug installDebugAndroidTest        # backend desplegado (por defecto)
 adb shell rm -rf /sdcard/Android/data/com.example.vinilos/files/e2e-evidencia
-adb shell am instrument -w -e class com.example.vinilos.ArtistaDetalleE2ETest com.example.vinilos.test/com.example.vinilos.VinilosTestRunner
+adb shell am instrument -w -e class com.example.vinilos.ArtistDetailE2ETest com.example.vinilos.test/com.example.vinilos.VinilosTestRunner
 adb pull /sdcard/Android/data/com.example.vinilos/files/e2e-evidencia ./e2e-evidencia
 ```
